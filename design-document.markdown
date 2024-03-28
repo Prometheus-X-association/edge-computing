@@ -6,11 +6,11 @@ Replace the title with `<BB name> Design Document`.
 Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml.com/) diagrams are recommended; see examples below.
 You should also remove this paragraph._
 
-_This BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
+This BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
 
 Two main high level objectives are targeted by these services: 
   - goal 1: privacy preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
-  - goal 2: efficient near-data processing: optimize performance and resource utilization_
+  - goal 2: efficient near-data processing: optimize performance and resource utilization
 
 
 ## Technical usage scenarios & Features
@@ -18,6 +18,11 @@ Two main high level objectives are targeted by these services:
 
 _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
+
+In general, the main goal is to move the processing functions close to the data, and execute them on-site. If the execution capability is available in the node storing the data, the processing function (FaaS based operation) or container (CaaS based operation) is launched there (e.g. by the Kubernetes/Knative platform). By these means, we can avoid the transmission of a large amount of data. (goal 2)
+
+As a more realistic use case, the data is also moved but only within a pre-defined privacy zone. This privacy zone encompasses worker nodes (using Kubernetes terminology) where we can deploy the processing functios on-demand. (goal 1)
+
 
 ### Features/main functionalities
 
