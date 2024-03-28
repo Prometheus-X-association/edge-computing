@@ -6,9 +6,11 @@ Replace the title with `<BB name> Design Document`.
 Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml.com/) diagrams are recommended; see examples below.
 You should also remove this paragraph._
 
-_Summary of the BB in 1-2 concise paragraphs.
-What does it do?
-What are the main components?_
+_This BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
+
+Two main high level objectives are targeted by these services: 
+  - goal 1: privacy preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
+  - goal 2: efficient near-data processing: optimize performance and resource utilization_
 
 
 ## Technical usage scenarios & Features
