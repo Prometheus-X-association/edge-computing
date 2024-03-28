@@ -1,4 +1,4 @@
-# _BB Design Document Template_
+# _Edge Computing Design Document_
 
 _This is just a template.
 Replace italic text with your own content.
