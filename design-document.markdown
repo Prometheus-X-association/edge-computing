@@ -54,23 +54,23 @@ These may be defined later with UCs but have to be indentified here and be part 
 
 ### Infrastructure-related requirements
 
-**R1.** BB-2 MUST have access to infrastructure (of e.g. a Cloud Provider or private one)
-BB-2 must be able to deploy (and start/stop/destroy) a Kubernetes cluster to Cloud Provider's infrastructure via IaaS offering
-BB-2 must be able to manage its Kubernetes cluster(s)
-BB-2 might have access to managed Kubernetes cluster of Cloud Provider
-BB-2 must be able to configure CNI plugins of Kubernetes and Istio service mesh
+  - **R1.** BB-2 MUST have access to infrastructure (of e.g. a Cloud Provider or private one)
+  - **R2.** BB-2 MUST be able to deploy (and start/stop/destroy) a Kubernetes cluster to Cloud Provider's infrastructure via IaaS offering
+  - **R3.** BB-2 MUST be able to manage its Kubernetes cluster(s)
+  - **R4.** BB-2 MIGHT have access to managed Kubernetes cluster of Cloud Provider
+  - **R5.** BB-2 MUST be able to configure CNI plugins of Kubernetes and Istio service mesh
 
 ### Requirements related to data processing and assurance
 
-BB-2 must be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector BB
-BB-2 must support Container-as-a-Service OR Function-as-a-Service based operation
-BB-2 must support privacy-aware scheduling in its Kubernetes cluster 
-BB-2 must support data-availability-aware scheduling in its Kubernetes cluster 
-BB-2 must support privacy preserving data sharing among nodes
-BB-2 should provide access to an application agnostic FL platform for BB-1
-BB-2 should provide FaaS (or CaaS) APIs to data processing/assurance BBs
+  - **R6.** BB-2 MUST be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector BB
+  - **R7.** BB-2 MUST support Container-as-a-Service OR Function-as-a-Service based operation
+  - **R8.** BB-2 MUST support privacy-aware scheduling in its Kubernetes cluster 
+  - **R9.** BB-2 MUST support data-availability-aware scheduling in its Kubernetes cluster 
+  - **R10.** BB-2 MUST support privacy preserving data sharing among nodes
+  - **R11.** BB-2 SHOULD provide access to an application agnostic FL platform for BB-1
+  - **R12.** BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing/assurance BBs
 
-Annotation of DATA with policy-zone and geographical info must be supported
+  - **R13.** Annotation of DATA with policy-zone and geographical info MUST be supported
 
 
 ## Integrations
