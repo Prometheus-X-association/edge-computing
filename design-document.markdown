@@ -18,8 +18,10 @@ Two main high level objectives are targeted by these services:
 ## Technical usage scenarios & Features
 
 
+<!---
 _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
+--->
 
 In general, the main goal is to move the processing functions close to the data, and execute them on-site. If the execution capability is available in the node storing the data, the processing function (FaaS based operation) or container (CaaS based operation) is launched there (e.g. by the Kubernetes/Knative platform). By these means, we can avoid the transmission of a large amount of data. (goal 2)
 
