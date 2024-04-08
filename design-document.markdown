@@ -50,6 +50,7 @@ _See also the Requirements spreadsheets
 Functional requirements should be extended with extra-functional ones:
 Timeliness (expected response time@request size), Througput (number of requess served by the BB),etc.
 These may be defined later with UCs but have to be indentified here and be part of configuration/deplomyent options_
+--->
 
 ### Infrastructure-related requirements
 
