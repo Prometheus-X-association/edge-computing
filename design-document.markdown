@@ -83,6 +83,13 @@ _What other BBs does this BB interact with directly (without the connector)?
 How?
 Why?_
 
+  - Cloud Providers
+  - Connector
+  - Contract
+  - BB-1 Decentralized AI training
+  - BB-8 Data Veracity Assurance
+  - BB-9a PLRS ?
+
 ### Integrations via Connector
 
 _What other BBs does this BB integrate with intermediated by the connector?
