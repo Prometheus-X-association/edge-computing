@@ -42,6 +42,7 @@ A bullet point list is recommended._
 
 ## Requirements
 
+<!---
 _High-level BB requirements with identifiers.
 eg * **R1.** BB MUST communicate with [other BB]_
 
@@ -49,6 +50,26 @@ _See also the Requirements spreadsheets
 Functional requirements should be extended with extra-functional ones:
 Timeliness (expected response time@request size), Througput (number of requess served by the BB),etc.
 These may be defined later with UCs but have to be indentified here and be part of configuration/deplomyent options_
+
+### Infrastructure-related requirements
+
+**R1.** BB-2 MUST have access to infrastructure (of e.g. a Cloud Provider or private one)
+BB-2 must be able to deploy (and start/stop/destroy) a Kubernetes cluster to Cloud Provider's infrastructure via IaaS offering
+BB-2 must be able to manage its Kubernetes cluster(s)
+BB-2 might have access to managed Kubernetes cluster of Cloud Provider
+BB-2 must be able to configure CNI plugins of Kubernetes and Istio service mesh
+
+### Requirements related to data processing and assurance
+
+BB-2 must be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector BB
+BB-2 must support Container-as-a-Service OR Function-as-a-Service based operation
+BB-2 must support privacy-aware scheduling in its Kubernetes cluster 
+BB-2 must support data-availability-aware scheduling in its Kubernetes cluster 
+BB-2 must support privacy preserving data sharing among nodes
+BB-2 should provide access to an application agnostic FL platform for BB-1
+BB-2 should provide FaaS (or CaaS) APIs to data processing/assurance BBs
+
+Annotation of DATA with policy-zone and geographical info must be supported
 
 
 ## Integrations
