@@ -1,12 +1,14 @@
 # _Edge Computing Design Document_
 
+<!---
 _This is just a template.
 Replace italic text with your own content.
 Replace the title with `<BB name> Design Document`.
 Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml.com/) diagrams are recommended; see examples below.
 You should also remove this paragraph._
+--->
 
-This BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
+The Edge Computing (Decentralized AI processing) BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
 
 Two main high level objectives are targeted by these services: 
   - goal 1: privacy preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
