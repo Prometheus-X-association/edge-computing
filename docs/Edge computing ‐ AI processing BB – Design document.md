@@ -1,4 +1,4 @@
-# _Edge Computing Design Document_
+# Edge computing - AI processing BB – Design Document
 
 <!---
 _This is just a template.
