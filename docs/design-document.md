@@ -8,10 +8,10 @@ Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml
 You should also remove this paragraph._
 --->
 
-The Edge Computing (Decentralized AI processing) BB provides value added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
+The Edge Computing (Decentralized AI processing) BB provides value-added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
 
-Two main high level objectives are targeted by these services: 
-  - goal 1: privacy preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
+Two main high-level objectives are targeted by these services: 
+  - goal 1: privacy-preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
   - goal 2: efficient near-data processing: optimize performance and resource utilization
 
 
@@ -25,7 +25,7 @@ See "BB info for use cases (WP2)" spreadsheet._
 
 In general, the main goal is to move the processing functions close to the data, and execute them on-site. If the execution capability is available in the node storing the data, the processing function (FaaS based operation) or container (CaaS based operation) is launched there (e.g. by the Kubernetes/Knative platform). By these means, we can avoid the transmission of a large amount of data. (goal 2)
 
-As a more realistic use case, the data is also moved but only within a pre-defined privacy zone. This privacy zone encompasses worker nodes (using Kubernetes terminology) where we can deploy the processing functios on-demand. (goal 1)
+As a more realistic use case, the data is also moved but only within a pre-defined privacy zone. This privacy zone encompasses worker nodes (using Kubernetes terminology) where we can deploy the processing functions on demand. (goal 1)
 
 
 ### Features/main functionalities
@@ -48,20 +48,41 @@ What services, features does it offer, why these are useful.
 A bullet point list is recommended._
 -->
 
-#### scenario 1: privacy preserving AI processing
+#### scenario 0: set up infrastructure
+  - Launch VMs spanning across multiple Cloud Providers infrastructure via IaaS
+  - Deploy Kubernetes cluster to the VMs
+  - Worker nodes / edge sites metadata includes Cloud Provider info
+    - to be able to check privacy-zone memberships
+  - Perform optional configurations (e.g. CNI, Istio for tenant isolation)
+  - Tailor-made Kubernetes/Knative scheduler controls placement decisions (data, function/container)
+
+#### scenario 1: privacy-preserving AI processing
   - General BB triggers a processing function on Data A
     - Input: processing function (or container), Data A to be processed
   - privacy zone of Data A is determined
     - based on metadata gained from the Data Provider via Connector (PDC / EDC Connector)
-  - tailor-made Kubernetes/KNative scheduler selects the worker node(s) / edge site(s) within the privacy zone
+  - privacy zones of worker nodes / edge sites are determined
+  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
   - processing function is deployed to the selected worker node(s) (Edge Site 1)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
   - Data A is moved to Edge Site 1 via the Connector (PDC / EDC Connector)
-    - privacy preserving data sharing is requested (EDC)
+    - privacy-preserving data sharing is requested (EDC)
   - processing function is executed on Data A at Edge Site 1
   - result is provided
   - Data A is deleted at Edge Site 1
+  - processing function / container is destroyed at Edge Site 1
+
+#### scenario 2: efficient near-data processing
+  - General BB triggers a processing function on Data A
+    - Input: processing function (or container), Data A to be processed
+    - Precondition: worker node is "collocated" with Data A (Data A is directly available from the worker node)
+  - tailor-made Kubernetes/Knative scheduler selects the worker node (Edge Site 1) collocated with Data A
+  - processing function is deployed to Edge Site 1
+    - option 1: container (CaaS)
+    - option 2: function (FaaS)
+  - processing function is executed on Data A at Edge Site 1
+  - result is provided
   - processing function / container is destroyed at Edge Site 1
 
 
@@ -83,7 +104,7 @@ These may be defined later with UCs but have to be indentified here and be part 
   - **R2.** BB-2 MUST be able to deploy (and start/stop/destroy) a Kubernetes cluster to Cloud Provider's infrastructure via IaaS offering
   - **R3.** BB-2 MUST be able to manage its Kubernetes cluster(s)
   - **R4.** BB-2 MIGHT have access to managed Kubernetes cluster of Cloud Provider
-  - **R5.** BB-2 MUST be able to configure CNI plugins of Kubernetes and Istio service mesh
+  - **R5.** BB-2 SHOULD be able to configure CNI plugins of Kubernetes and Istio service mesh
 
 ### Requirements related to data processing and assurance
 
@@ -91,11 +112,10 @@ These may be defined later with UCs but have to be indentified here and be part 
   - **R7.** BB-2 MUST support Container-as-a-Service OR Function-as-a-Service based operation
   - **R8.** BB-2 MUST support privacy-aware scheduling in its Kubernetes cluster 
   - **R9.** BB-2 MUST support data-availability-aware scheduling in its Kubernetes cluster 
-  - **R10.** BB-2 MUST support privacy preserving data sharing among nodes
-  - **R11.** BB-2 SHOULD provide access to an application agnostic FL platform for BB-1
-  - **R12.** BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing/assurance BBs
+  - **R10.** BB-2 MUST support privacy-preserving data sharing among nodes
+  - **R11.** BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing/assurance BBs
 
-  - **R13.** Annotation of DATA with policy-zone and geographical info MUST be supported
+  - **R12.** Annotation of DATA with privacy zone and geographical info MUST be supported
 
 
 ## Integrations
