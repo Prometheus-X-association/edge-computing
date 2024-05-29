@@ -61,6 +61,8 @@ A bullet point list is recommended._
     - privacy preserving data sharing is requested (EDC)
   - processing function is executed on Data A at Edge Site 1
   - result is provided
+  - Data A is deleted at Edge Site 1
+  - processing function / container is destroyed at Edge Site 1
 
 
 ## Requirements
