@@ -29,16 +29,39 @@ As a more realistic use case, the data is also moved but only within a pre-defin
 
 
 ### Features/main functionalities
-
+<!--
 _In-depth description of BB features (details).
 Again, an enumeration (ie bullet points) is useful. Take input from description for WP2_
+-->
+
+  - control the placement of data: keep within pre-defined privacy zones
+  - only trustworthy infrastructure is used for data processing
+    - trustworthy: contract needed between Data Provider and Cloud Provider
+  - efficient (green) operation: minimizing data transfers if near-data / on-site processing is available
+  - moving the processing functions / containers dynamically 
 
 ### Technical usage scenarios
-
+<!--
 _In-depth description of the use cases of the BB.
 Explain why would one want to use this BB.
 What services, features does it offer, why these are useful.
 A bullet point list is recommended._
+-->
+
+#### scenario 1: privacy preserving AI processing
+  - General BB triggers a processing function on Data A
+    - Input: processing function (or container), Data A to be processed
+  - privacy zone of Data A is determined
+    - based on metadata gained from the Data Provider via Connector (PDC / EDC Connector)
+  - tailor-made Kubernetes/KNative scheduler selects the worker node(s) / edge site(s) within the privacy zone
+  - processing function is deployed to the selected worker node(s) (Edge Site 1)
+    - option 1: container (CaaS)
+    - option 2: function (FaaS)
+  - Data A is moved to Edge Site 1 via the Connector (PDC / EDC Connector)
+    - privacy preserving data sharing is requested (EDC)
+  - processing function is executed on Data A at Edge Site 1
+  - result is provided
+
 
 ## Requirements
 
