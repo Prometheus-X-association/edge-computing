@@ -191,38 +191,6 @@ _What components make up this BB?
 If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
 
-<!--
-_An example class diagram using Mermaid:_
-
-```mermaid
----
-title: Class Diagram Example (from Mermaid docs)
----
-
-classDiagram
-    Animal <|-- Duck
-    Animal <|-- Fish
-    Animal <|-- Zebra
-    Animal : +int age
-    Animal : +String gender
-    Animal: +isMammal()
-    Animal: +mate()
-    class Duck{
-        +String beakColor
-        +swim()
-        +quack()
-    }
-    class Fish{
-        -int sizeInFeet
-        -canEat()
-    }
-    class Zebra{
-        +bool is_wild
-        +run()
-    }
-```
--->
-
 ![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
 
@@ -237,56 +205,6 @@ The sequence diagram shows how the component communicates with other components.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
-<!--
-```mermaid
----
-title: Sequence Diagram Example (Connector Data Exchange)
----
-
-sequenceDiagram
-    participant prov as Participant (Data Provider)
-    participant provconn as Provider Data Space Connector
-    participant contract as Contract Service
-    participant catalogue as Catalogue Service
-    participant consconn as Data Consumer Connector
-    participant cons as Participant (Data Consumer)
-
-    prov -) catalogue: Trigger data exchange
-    catalogue -) consconn: contract & data exchange info
-    consconn -) provconn: data request (w/ contract)
-    provconn -) contract: Verify contract & policies
-    Note over provconn: Policy verification & Access control
-    provconn -) prov: Get data
-    prov -) provconn: data
-    provconn -) consconn: data
-    Note over consconn: Policy verification & Access control
-    consconn -) cons: data
-```
-
-_Example of a statechart using Mermaid:_
-
-This statechart shows the internal state changes of the component.
-
-```mermaid
----
-title: Statechart Example (Traffic Light)
----
-
-stateDiagram-v2
-    direction LR
-    [*] --> Off
-    Off --> On: turnOn
-    state On {
-        direction LR
-        [*] --> Red
-        Red --> RedYellow: timeRed
-        RedYellow --> Green: timeRedYellow
-        Green --> Yellow: timeGreen
-        Yellow --> Red: timeYellow
-    }
-    On --> Off: turnOff
-```
--->
 
 ## Configuration and deployment settings
 
