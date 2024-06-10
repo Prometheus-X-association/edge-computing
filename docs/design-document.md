@@ -287,6 +287,7 @@ stateDiagram-v2
 ```
 -->
 
+![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
 
 ## Configuration and deployment settings
