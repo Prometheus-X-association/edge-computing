@@ -218,6 +218,9 @@ classDiagram
     }
 ```
 
+![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
+
+
 
 ## Dynamic Behaviour
 
