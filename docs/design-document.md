@@ -226,7 +226,6 @@ classDiagram
 ![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
 
-
 ## Dynamic Behaviour
 
 _What is the behaviour of the BB, how does it operate?
@@ -235,6 +234,8 @@ UML sequence diagrams and/or statecharts are recommended._
 _Example sequence diagram using Mermaid:_
 
 The sequence diagram shows how the component communicates with other components.
+
+![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
 <!--
 ```mermaid
@@ -286,9 +287,6 @@ stateDiagram-v2
     On --> Off: turnOff
 ```
 -->
-
-![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
-
 
 ## Configuration and deployment settings
 
