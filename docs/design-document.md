@@ -158,6 +158,7 @@ _What data does this BB receive?
 What data does this BB produce?
 If possible, elaborate on the details (data format, contents, etc) and also add potential data requirements._
 
+<!--
 _Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
 
 ```plantuml
@@ -179,6 +180,8 @@ $ java -jar plantuml.jar -tsvg json.puml
 _Gives:_
 
 ![PlantUML JSON Example](diagrams/json.svg)
+-->
+
 
 _Please add a short description, also estimating the workload for a typical transaction of your BB (e.g. "100.000 record/submission", "traces of n*10.000s of events", etc.)._
 
@@ -188,6 +191,7 @@ _What components make up this BB?
 If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
 
+<!--
 _An example class diagram using Mermaid:_
 
 ```mermaid
@@ -217,6 +221,10 @@ classDiagram
         +run()
     }
 ```
+-->
+
+![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
+
 
 
 ## Dynamic Behaviour
@@ -228,6 +236,7 @@ _Example sequence diagram using Mermaid:_
 
 The sequence diagram shows how the component communicates with other components.
 
+<!--
 ```mermaid
 ---
 title: Sequence Diagram Example (Connector Data Exchange)
@@ -276,6 +285,8 @@ stateDiagram-v2
     }
     On --> Off: turnOff
 ```
+-->
+
 
 
 ## Configuration and deployment settings
