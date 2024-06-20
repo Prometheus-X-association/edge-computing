@@ -58,16 +58,17 @@ A bullet point list is recommended._
 
 #### scenario 1: privacy-preserving AI processing
   - General BB triggers a processing function on Data A
-    - Input: processing function (or container), Data A to be processed
+    - Input: processing reference to thee function (or container), Data A to be processed
   - privacy zone of Data A is determined
-    - based on metadata gained from the Data Provider via Connector (PDC / EDC Connector)
+    - based on metadata gained from the Data Provider via Connector (PDC)
   - privacy zones of worker nodes / edge sites are determined
   - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
+  - processing function is gathered via the Connector (from the Catalog)
   - processing function is deployed to the selected worker node(s) (Edge Site 1)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - Data A is moved to Edge Site 1 via the Connector (PDC / EDC Connector)
-    - privacy-preserving data sharing is requested (EDC)
+  - Data A is moved to Edge Site 1 via the Connector (PDC)
+    - privacy-preserving data sharing is requested
   - processing function is executed on Data A at Edge Site 1
   - result is provided
   - Data A is deleted at Edge Site 1
@@ -75,9 +76,10 @@ A bullet point list is recommended._
 
 #### scenario 2: efficient near-data processing
   - General BB triggers a processing function on Data A
-    - Input: processing function (or container), Data A to be processed
+    - Input: reference to the processing function (or container), Data A to be processed
     - Precondition: worker node is "collocated" with Data A (Data A is directly available from the worker node)
   - tailor-made Kubernetes/Knative scheduler selects the worker node (Edge Site 1) collocated with Data A
+  - processing function is gathered via the Connector (from the Catalog)
   - processing function is deployed to Edge Site 1
     - option 1: container (CaaS)
     - option 2: function (FaaS)
@@ -131,6 +133,7 @@ Why?_
   - Cloud Providers
   - Connector
   - Contract
+  - Consent
   - BB-1 Decentralized AI training
   - BB-8 Data Veracity Assurance
   - BB-9a PLRS ?
