@@ -219,12 +219,12 @@ The sequence diagram shows how the component communicates with other components.
 
 |Other Actors|Description|
 |-|-|
-|DataProvider|...|
-|Connector|...|
-|Contract|...|
-|Catalog|...|
-|Consent|...|
-|Processing BB (Consumer)|..|
+|DataProvider|Storing the data including personal data|
+|Connector|The connector of the data provider equipped with the capability of privacy preserving data sharing and function sharing|
+|Contract|Prometheus-X core component|
+|Catalog|Prometheus-X core component extended with function sharing capability|
+|Consent|Prometheus-X core component|
+|Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data.|
 
 
 ## Configuration and deployment settings
