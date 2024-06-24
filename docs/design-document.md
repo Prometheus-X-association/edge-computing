@@ -208,6 +208,24 @@ The sequence diagram shows how the component communicates with other components.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
+|BB Component|Description|
+|-|-|
+|EdgeAPI|Entry point of the BB|
+|PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the Data|
+|Scheduler|Custom Kubernetes Scheduler|
+|ArtifactBuilder|Build the software artifacts to be deployed|
+|Wrapper|Wrapper functions/sevrives added to the container/function artifact|
+|WorkerNode|Kubernetes worker node (edge node) which can execute the container/function|
+
+|Other Actors|Description|
+|-|-|
+|DataProvider|...|
+|Connector|...|
+|Contract|...|
+|Catalog|...|
+|Consent|...|
+|Processing BB (Consumer)|..|
+
 
 ## Configuration and deployment settings
 
