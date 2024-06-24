@@ -224,7 +224,7 @@ The sequence diagram shows how the component communicates with other components.
 |Contract|Prometheus-X core component|
 |Catalog|Prometheus-X core component extended with function sharing capability|
 |Consent|Prometheus-X core component|
-|Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data.|
+|Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data and the consent related information as well.|
 
 
 ## Configuration and deployment settings
