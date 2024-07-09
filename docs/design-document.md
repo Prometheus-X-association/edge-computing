@@ -58,7 +58,7 @@ A bullet point list is recommended._
 
 #### scenario 1: privacy-preserving AI processing
   - General BB triggers a processing function on Data A
-    - Input: processing reference to thee function (or container), Data A to be processed
+    - Input: processing reference to the function (or container), Data A to be processed
   - privacy zone of Data A is determined
     - based on metadata gained from the Data Provider via Connector (PDC)
   - privacy zones of worker nodes / edge sites are determined
@@ -122,7 +122,9 @@ These may be defined later with UCs but have to be indentified here and be part 
 
 ## Integrations
 
+<!--
 _See "01_BB Connections" spreadsheet_
+-->
 
 ### Direct Integrations with Other BBs
 
@@ -136,7 +138,7 @@ Why?_
   - Consent
   - BB-1 Decentralized AI training
   - BB-8 Data Veracity Assurance
-  - BB-9a PLRS ?
+<!--  - BB-9a PLRS ? -->
 
 ### Integrations via Connector
 
