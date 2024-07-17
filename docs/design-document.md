@@ -212,6 +212,11 @@ The sequence diagram shows how the component communicates with other components.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
+Assumptions:
+- two different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (DataConsumer)
+- consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
+- consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
+
 |BB Component|Description|
 |-|-|
 |EdgeAPI|Entry point of the BB|
@@ -230,11 +235,6 @@ The sequence diagram shows how the component communicates with other components.
 |Catalog|Prometheus-X core component extended with function sharing capability|
 |Consent|Prometheus-X core component|
 |Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data and the consent related information as well.|
-
-Assumptions:
-- two different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (DataConsumer)
-- consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
-- consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
 
 ## Configuration and deployment settings
 
