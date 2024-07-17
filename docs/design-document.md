@@ -216,7 +216,7 @@ The sequence diagram shows how the component communicates with other components.
 |-|-|
 |EdgeAPI|Entry point of the BB|
 |PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the Data|
-|Connector|The connector functionality of the data consumer is delegated to the Edge Computing BB, counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
+|ConnectorEdge|The connector functionality of the data consumer is delegated to the Edge Computing BB, counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
 |Scheduler|Custom Kubernetes Scheduler|
 |ArtifactBuilder|Build the software artifacts to be deployed|
 |Wrapper|Wrapper functions/sevrives added to the container/function artifact|
@@ -234,7 +234,7 @@ The sequence diagram shows how the component communicates with other components.
 Assumptions:
 - two different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (DataConsumer)
 - consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
-- consent related tasks are handled by the Processing BB in advance (Edge Computing BB is added to the loop)
+- consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
 
 ## Configuration and deployment settings
 
