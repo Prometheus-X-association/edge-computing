@@ -1,53 +1,69 @@
 @startuml
 
-database DataProvider order 10
-participant Connector order 20
-participant Contract order 30
-participant Consent order 35
-participant Catalog order 40
-participant ProcessingBBtheConsumer order 50
-
-boundary EdgeAPI order 60
-participant PrivacyZoneMgr order 70
-control Scheduler order 80
-participant ArtifactBuilder order 90
-participant Wrapper order 100
-participant WorkerNode order 110
-
-ProcessingBBtheConsumer -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
+box "Data Provider" #LightGreen
+    database DataProvider order 10
+    participant Connector order 20
+end box
+    
+box "PTX Core" #LightGrey
+    participant Contract order 30
+    participant Consent order 35
+    participant Catalog order 40
+end box
+box "Data Consumer" #LightGreen
+    participant ProcessingBB order 50
+end box
+box "Edge Computing BB" #LightBlue
+    boundary EdgeAPI order 60
+    participant ConnectorEdge order 70
+    participant PrivacyZoneMgr order 65
+    control Scheduler order 80
+    participant ArtifactBuilder order 90
+    participant Wrapper order 100
+    participant WorkerNode order 110
+end box
+	
+ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
 EdgeAPI -> Catalog : getAccessInfo(Data PD)
 Catalog -> EdgeAPI : AccessInfo of DataProvider
 
 EdgeAPI -> PrivacyZoneMgr : getPZData(DataProvider DP, PrivateData PD)
-PrivacyZoneMgr -> Connector : getPZData(DataProvider DP, PrivateData PD)
+PrivacyZoneMgr -> ConnectorEdge : getPZData(DataProvider DP, PrivateData PD)
+ConnectorEdge -> Connector : getPZData(DataProvider DP, PrivateData PD)
 Connector -> Contract : verify contracts (DataProvider, CloudProviders)
 Contract -> Connector : OK, list of CPs
-Connector -> PrivacyZoneMgr : PZData (including list of CPs) of DataProvider DP, PrivateData PD
-PrivacyZoneMgr -> EdgeAPI : PZData (including list of CPs) of DataProvider DP, PrivateData PD
+Connector -> ConnectorEdge : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
+ConnectorEdge -> PrivacyZoneMgr : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
+PrivacyZoneMgr -> EdgeAPI : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
 
-EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
-Scheduler -> ArtifactBuilder : buildArtifact(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
-ArtifactBuilder -> Connector : requestFunction(Function F)
+EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
+Scheduler -> ArtifactBuilder : buildArtifact(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
+ArtifactBuilder -> ConnectorEdge : requestFunction(Function F)
+ConnectorEdge -> Connector : requestFunction(Function F)
 Connector -> Catalog : requestFunction(Function F)
 Catalog -> Connector : function F
-Connector -> ArtifactBuilder : function F
+Connector -> ConnectorEdge : function F
+ConnectorEdge -> ArtifactBuilder : function F
 ArtifactBuilder -> Scheduler : done, Artifact A
+
 Scheduler -> Scheduler : schedule(Artifact A)
 Scheduler -> WorkerNode : deployArtifact(Artifact A)
 WorkerNode -> Wrapper : init(Artifact A)
-Wrapper -> Connector : requestData/wPrivacyPreserving(PrivateData PD, Contract C, Consent Cons(F on PD))
+Wrapper -> ConnectorEdge : requestData/wPrivacyPreserving(PrivateData PD,\n Contract C, Consent Cons(F on PD))
+ConnectorEdge -> Connector : requestData/wPrivacyPreserving(PrivateData PD,\n Contract C, Consent Cons(F on PD))
 
-Connector -> Contract : verifyContract(DataProvider DP, DataConsumer ProcessingBBtheConsumer)
+Connector -> Contract : verifyContract(DataProvider DP, DataConsumer ProcessingBB)
 Contract -> Connector : OK
 Connector -> Consent : verifyConsent(DataProvider DP, User U, PrivateData PD, Function F)
 Consent -> Connector : OK
-
 Connector -> DataProvider : getData(Data D)
 DataProvider -> Connector : Data D
-Connector -> Wrapper : Data D (privacy preserving sending of PrivateData)
+
+Connector -> ConnectorEdge : Data D (privacy preserving sending of PrivateData)
+ConnectorEdge -> Wrapper : Data D (privacy preserving sending of PrivateData)
 Wrapper -> Wrapper : execute(Function A)
 Wrapper -> EdgeAPI : result
-EdgeAPI -> ProcessingBBtheConsumer : result
+EdgeAPI -> ProcessingBB : result
 
 @enduml
 
