@@ -214,6 +214,7 @@ The sequence diagram shows how the component communicates with other components.
 |-|-|
 |EdgeAPI|Entry point of the BB|
 |PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the Data|
+|Connector|The connector functionality of the data consumer is delegated to the Edge Computing BB, counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
 |Scheduler|Custom Kubernetes Scheduler|
 |ArtifactBuilder|Build the software artifacts to be deployed|
 |Wrapper|Wrapper functions/sevrives added to the container/function artifact|
