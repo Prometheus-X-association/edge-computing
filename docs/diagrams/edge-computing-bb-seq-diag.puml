@@ -10,7 +10,7 @@ box "PTX Core" #LightGrey
     participant Consent order 35
     participant Catalog order 40
 end box
-box "Data Consumer" #LightGreen
+box "Data Consumer" #Orange
     participant ProcessingBB order 50
 end box
 box "Edge Computing BB" #LightBlue
@@ -23,21 +23,23 @@ box "Edge Computing BB" #LightBlue
     participant WorkerNode order 110
 end box
 	
-ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
+ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, \nPrivateData PD, Contract C, \nConsent Cons(F on PD), \nAccessToken T)
 EdgeAPI -> Catalog : getAccessInfo(Data PD)
 Catalog -> EdgeAPI : AccessInfo of DataProvider
 
-EdgeAPI -> PrivacyZoneMgr : getPZData(DataProvider DP, PrivateData PD)
-PrivacyZoneMgr -> ConnectorEdge : getPZData(DataProvider DP, PrivateData PD)
+== Gathering Privacy Zone Data == 
+EdgeAPI -> PrivacyZoneMgr : getPZData(DataProvider DP, \nPrivateData PD)
+PrivacyZoneMgr -> ConnectorEdge : getPZData(DataProvider DP, \nPrivateData PD)
 ConnectorEdge -> Connector : getPZData(DataProvider DP, PrivateData PD)
-Connector -> Contract : verify contracts (DataProvider, CloudProviders)
+Connector -> Contract : verify contracts (DataProvider, \nCloudProviders)
 Contract -> Connector : OK, list of CPs
 Connector -> ConnectorEdge : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
-ConnectorEdge -> PrivacyZoneMgr : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
-PrivacyZoneMgr -> EdgeAPI : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
+ConnectorEdge -> PrivacyZoneMgr : PZData (including list of CPs) of \nDataProvider DP, PrivateData PD
+PrivacyZoneMgr -> EdgeAPI : PZData (including list of CPs) of \nDataProvider DP, PrivateData PD
 
-EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
-Scheduler -> ArtifactBuilder : buildArtifact(Function F, PrivateData PD,\n Contract C, Consent Cons(F on PD), AccessToken T)
+== Building and Deploying Artifact ==
+EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\nContract C, Consent Cons(F on PD), AccessToken T)
+Scheduler -> ArtifactBuilder : buildArtifact(Function F, \nPrivateData PD, Contract C, \nConsent Cons(F on PD), \nAccessToken T)
 ArtifactBuilder -> ConnectorEdge : requestFunction(Function F)
 ConnectorEdge -> Connector : requestFunction(Function F)
 Connector -> Catalog : requestFunction(Function F)
@@ -48,13 +50,16 @@ ArtifactBuilder -> Scheduler : done, Artifact A
 
 Scheduler -> Scheduler : schedule(Artifact A)
 Scheduler -> WorkerNode : deployArtifact(Artifact A)
-WorkerNode -> Wrapper : init(Artifact A)
-Wrapper -> ConnectorEdge : requestData/wPrivacyPreserving(PrivateData PD,\n Contract C, Consent Cons(F on PD))
-ConnectorEdge -> Connector : requestData/wPrivacyPreserving(PrivateData PD,\n Contract C, Consent Cons(F on PD))
 
-Connector -> Contract : verifyContract(DataProvider DP, DataConsumer ProcessingBB)
+== Executing the Function on Private Data ==
+WorkerNode -> Wrapper : init(Artifact A)
+activate Wrapper
+Wrapper -> ConnectorEdge : requestData/wPrivacyPreserving(PrivateData PD,\nContract C, Consent Cons(F on PD), AccessToken T)
+ConnectorEdge -> Connector : requestData/wPrivacyPreserving(PrivateData PD,\nContract C, Consent Cons(F on PD))
+
+Connector -> Contract : verifyContract(DataProvider DP,\nDataConsumer ProcessingBB)
 Contract -> Connector : OK
-Connector -> Consent : verifyConsent(DataProvider DP, User U, PrivateData PD, Function F)
+Connector -> Consent : verifyConsent(DataProvider DP, User U, \nPrivateData PD, Function F)
 Consent -> Connector : OK
 Connector -> DataProvider : getData(Data D)
 DataProvider -> Connector : Data D
@@ -63,6 +68,7 @@ Connector -> ConnectorEdge : Data D (privacy preserving sending of PrivateData)
 ConnectorEdge -> Wrapper : Data D (privacy preserving sending of PrivateData)
 Wrapper -> Wrapper : execute(Function A)
 Wrapper -> EdgeAPI : result
+destroy Wrapper
 EdgeAPI -> ProcessingBB : result
 
 @enduml
