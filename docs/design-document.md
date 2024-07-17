@@ -163,6 +163,8 @@ _What data does this BB receive?
 What data does this BB produce?
 If possible, elaborate on the details (data format, contents, etc) and also add potential data requirements._
 
+TODO: add data structures, extensions related to Connector, Catalog, and maybe Consent
+
 <!--
 _Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
 
