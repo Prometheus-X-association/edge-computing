@@ -285,7 +285,9 @@ _Candidates for tools that can be used to implement the test cases: Selenium_
 
 ## Partners & roles
 
+- BME will lead the task, work on the design and implementation of the BB, integrate privacy-aware scheduler algorithms
 - Fraunhofer ISST / University of Koblenz will provide support in the integration of technology (such as the *Prometheus-X Connector* and *Prometheus-X Contract/Consent Manager*) to support federation of edge clouds with data spaces in this context.
+- University of Oslo will design and implement novel scheduler algorithms, evaluate the methods
 
 ## Usage in the dataspace
 _Specify the Dataspace Enalbing Service Chain in which the BB will be used. This assumes that during development the block (lead) follows the service chain, contributes to tis detailed design and implements the block to meet the integration requirements of the chain._
