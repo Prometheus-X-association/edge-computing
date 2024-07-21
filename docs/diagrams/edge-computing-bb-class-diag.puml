@@ -25,7 +25,8 @@ class Catalog {
     {method} FunctionProvider getAccessInfo(\n  Function F)
 }
 note right of Catalog::getAccessInfo {
-    ID and Connector of the Provider
+    ID and Connector
+    of the Provider
 }
 class Contract {
     {method} status verifyContract(\n  Provider P, Consumer C)
@@ -40,7 +41,7 @@ class DataProvider {
     {method} data getData(Data D)
 }
 class FunctionProvider {
-    {method} function getFunction(Function F)
+    {method} function getFunction(\n  Function F)
 }
 class ProcessingBB {
     Data and Function consumer
@@ -132,6 +133,7 @@ PrivacyPreservingPDC --> Contract : verifyContracts(DP, CPs)
 PrivacyPreservingPDC --> Contract : verifyContract(P, C)
 PrivacyPreservingPDC --> Consent : verifyConsent(Cons)
 PrivacyPreservingPDC --> DataProvider : getData(PD)
+PrivacyPreservingPDC --> FunctionProvider : getFunction(F)
 Wrapper --> Wrapper : execute(F)
 Wrapper --> Wrapper : sendResult()
 
