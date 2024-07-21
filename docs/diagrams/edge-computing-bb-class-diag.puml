@@ -39,6 +39,9 @@ class DataProvider {
     {method} data getData(PrivateData PD)
     {method} data getData(Data D)
 }
+class FunctionProvider {
+    {method} function getFunction(Function F)
+}
 class ProcessingBB {
     Data and Function consumer
     ==
@@ -96,6 +99,7 @@ class WorkerNode {
 }
 
 DataProvider *-- PrivacyPreservingPDC
+FunctionProvider *-- PrivacyPreservingPDC
 EdgeAPI *-- PrivacyPreservingPDC
 
 PDC <|-- PrivacyPreservingPDC
@@ -145,6 +149,8 @@ together {
     class Scheduler
     abstract class Wrapper
 }
+
+DataProvider -[hidden]> FunctionProvider
 
 @enduml
 
