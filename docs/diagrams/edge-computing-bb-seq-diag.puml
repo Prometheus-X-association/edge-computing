@@ -16,8 +16,8 @@ box "PTX Core" #LightGrey
 end box
 box "Edge Computing BB" #LightBlue
     boundary EdgeAPI order 60
-    participant PrivacyZoneMgr order 65
-    participant ConnectorEdge order 70
+    participant ConnectorEdge order 65
+    participant PrivacyZoneMgr order 70
     control Scheduler order 80
     participant ArtifactBuilder order 90
     participant Wrapper order 100
@@ -26,7 +26,7 @@ end box
 
 hnote over ProcessingBB, Contract: Gathering Contracts & Consent
 
-ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contracts (Cd, Cf), Consent Cons(F on PD), AccessToken T)
+ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contract Cd, Contract Cf, Consent Cons(F on PD), AccessToken T)
 EdgeAPI -> Catalog : getAccessInfo(PrivateData PD)
 Catalog -> EdgeAPI : ID of DataProvider, AccessInfo of its Connector
 
@@ -41,8 +41,8 @@ ConnectorEdge -> PrivacyZoneMgr : PrivacyZoneData PZData
 PrivacyZoneMgr -> EdgeAPI : PrivacyZoneData PZData
 
 == Building and Deploying Artifact ==
-EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\nContracts (Cd, Cf), Consent Cons(F on PD), AccessToken T, \nPrivacyZoneData PZData)
-Scheduler -> ArtifactBuilder : buildArtifact(Function F, \nPrivateData PD, \nContracts (Cd, Cf), \nConsent Cons(F on PD), \nAccessToken T)
+EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\nContract Cd, Contract Cf,\nConsent Cons(F on PD), AccessToken T, \nPrivacyZoneData PZData)
+Scheduler -> ArtifactBuilder : buildArtifact(Function F, \nPrivateData PD, \nContract Cd, Contract Cf, \nConsent Cons(F on PD), \nAccessToken T)
 ArtifactBuilder -> ConnectorEdge : requestFunction(Function F)
 ConnectorEdge -> Catalog : getAccessInfo(Function F)
 Catalog -> ConnectorEdge : ID of FunctionProvider, AccessInfo of its Connector
