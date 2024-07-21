@@ -1,75 +1,83 @@
 @startuml
 
-box "Data Provider" #LightGreen
-    database DataProvider order 10
-    participant Connector order 20
-end box
-    
-box "PTX Core" #LightGrey
-    participant Contract order 30
-    participant Consent order 35
-    participant Catalog order 40
-end box
 box "Data Consumer" #Orange
-    participant ProcessingBB order 50
+    participant "ProcessingBB\n/w Connector" as ProcessingBB order 5
+end box
+box "Data and Function Providers" #LightGreen
+    database "Function\nProvider" as FunctionProvider order 10
+    participant ConnectorFP order 15
+    database "Data\nProvider" as DataProvider order 20
+    participant ConnectorDP order 25
+end box
+box "PTX Core" #LightGrey
+    participant Catalog order 30
+    participant Consent order 40
+    participant Contract order 50
 end box
 box "Edge Computing BB" #LightBlue
     boundary EdgeAPI order 60
-    participant ConnectorEdge order 70
     participant PrivacyZoneMgr order 65
+    participant ConnectorEdge order 70
     control Scheduler order 80
     participant ArtifactBuilder order 90
     participant Wrapper order 100
     participant WorkerNode order 110
 end box
-	
-ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, \nPrivateData PD, Contract C, \nConsent Cons(F on PD), \nAccessToken T)
-EdgeAPI -> Catalog : getAccessInfo(Data PD)
-Catalog -> EdgeAPI : AccessInfo of DataProvider
+
+hnote over ProcessingBB, Contract: Gathering Contracts & Consent
+
+ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contracts (Cd, Cf), Consent Cons(F on PD), AccessToken T)
+EdgeAPI -> Catalog : getAccessInfo(PrivateData PD)
+Catalog -> EdgeAPI : ID of DataProvider, AccessInfo of its Connector
 
 == Gathering Privacy Zone Data == 
 EdgeAPI -> PrivacyZoneMgr : getPZData(DataProvider DP, \nPrivateData PD)
 PrivacyZoneMgr -> ConnectorEdge : getPZData(DataProvider DP, \nPrivateData PD)
-ConnectorEdge -> Connector : getPZData(DataProvider DP, PrivateData PD)
-Connector -> Contract : verify contracts (DataProvider, \nCloudProviders)
-Contract -> Connector : OK, list of CPs
-Connector -> ConnectorEdge : PZData (including list of CPs) of \n DataProvider DP, PrivateData PD
-ConnectorEdge -> PrivacyZoneMgr : PZData (including list of CPs) of \nDataProvider DP, PrivateData PD
-PrivacyZoneMgr -> EdgeAPI : PZData (including list of CPs) of \nDataProvider DP, PrivateData PD
+ConnectorEdge -> ConnectorDP : getPZData(DataProvider DP, PrivateData PD)
+ConnectorDP -> Contract : verify contracts (DataProvider, CloudProviders)\nget list of contracted CPs, other privacy constraints
+Contract -> ConnectorDP : OK, list of CPs and other privacy constraints
+ConnectorDP -> ConnectorEdge : PrivacyZoneData PZData (of DataProvider DP, PrivateData PD)
+ConnectorEdge -> PrivacyZoneMgr : PrivacyZoneData PZData
+PrivacyZoneMgr -> EdgeAPI : PrivacyZoneData PZData
 
 == Building and Deploying Artifact ==
-EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\nContract C, Consent Cons(F on PD), AccessToken T)
-Scheduler -> ArtifactBuilder : buildArtifact(Function F, \nPrivateData PD, Contract C, \nConsent Cons(F on PD), \nAccessToken T)
+EdgeAPI -> Scheduler : requestEdgeProc(Function F, PrivateData PD,\nContracts (Cd, Cf), Consent Cons(F on PD), AccessToken T, \nPrivacyZoneData PZData)
+Scheduler -> ArtifactBuilder : buildArtifact(Function F, \nPrivateData PD, \nContracts (Cd, Cf), \nConsent Cons(F on PD), \nAccessToken T)
 ArtifactBuilder -> ConnectorEdge : requestFunction(Function F)
-ConnectorEdge -> Connector : requestFunction(Function F)
-Connector -> Catalog : requestFunction(Function F)
-Catalog -> Connector : function F
-Connector -> ConnectorEdge : function F
-ConnectorEdge -> ArtifactBuilder : function F
-ArtifactBuilder -> Scheduler : done, Artifact A
+ConnectorEdge -> Catalog : getAccessInfo(Function F)
+Catalog -> ConnectorEdge : ID of FunctionProvider, AccessInfo of its Connector
 
+ConnectorEdge -> ConnectorFP : requestFunction(Function F, Contract Cf)
+ConnectorFP -> Contract : verifyContract(Contract Cf)
+Contract -> ConnectorFP : OK
+ConnectorFP -> FunctionProvider : getFunction(\nFunction F)
+FunctionProvider -> ConnectorFP : Function F
+ConnectorFP -> ConnectorEdge : Function F
+
+ConnectorEdge -> ArtifactBuilder : Function F
+ArtifactBuilder -> Scheduler : done, Artifact A
 Scheduler -> Scheduler : schedule(Artifact A)
 Scheduler -> WorkerNode : deployArtifact(Artifact A)
 
 == Executing the Function on Private Data ==
 WorkerNode -> Wrapper : init(Artifact A)
 activate Wrapper
-Wrapper -> ConnectorEdge : requestData/wPrivacyPreserving(PrivateData PD,\nContract C, Consent Cons(F on PD), AccessToken T)
-ConnectorEdge -> Connector : requestData/wPrivacyPreserving(PrivateData PD,\nContract C, Consent Cons(F on PD))
+Wrapper -> ConnectorEdge : requestData/wPrivacyPreserving(PrivateData PD,\nContract Cd, Consent Cons(F on PD), AccessToken T)
+ConnectorEdge -> ConnectorDP : requestData/wPrivacyPreserving(PrivateData PD, Contract Cd, Consent Cons(F on PD))
 
-Connector -> Contract : verifyContract(DataProvider DP,\nDataConsumer ProcessingBB)
-Contract -> Connector : OK
-Connector -> Consent : verifyConsent(DataProvider DP, User U, \nPrivateData PD, Function F)
-Consent -> Connector : OK
-Connector -> DataProvider : getData(Data D)
-DataProvider -> Connector : Data D
+ConnectorDP -> Contract : verifyContract(Contract Cd)
+Contract -> ConnectorDP : OK
+ConnectorDP -> Consent : verifyConsent(Consent Cons(F on PD))
+Consent -> ConnectorDP : OK
+ConnectorDP -> DataProvider : getData(\nPrivateData PD)
+DataProvider -> ConnectorDP : PrivateData PD
 
-Connector -> ConnectorEdge : Data D (privacy preserving sending of PrivateData)
-ConnectorEdge -> Wrapper : Data D (privacy preserving sending of PrivateData)
-Wrapper -> Wrapper : execute(Function A)
-Wrapper -> EdgeAPI : result
+ConnectorDP -> ConnectorEdge : PrivateData PD (privacy preserving sending of PrivateData)
+ConnectorEdge -> Wrapper : PrivateData PD (privacy preserving sending of PrivateData)
+Wrapper -> Wrapper : execute(Function F)
+Wrapper -> EdgeAPI : Result R
 destroy Wrapper
-EdgeAPI -> ProcessingBB : result
+EdgeAPI -> ProcessingBB : Result R
 
 @enduml
 
