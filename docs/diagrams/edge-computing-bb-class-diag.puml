@@ -1,70 +1,94 @@
 @startuml
 
 class EdgeAPI {
-  {method} result requestEdgeProc(Function F, Data D)
-  {method} result requestEdgeProc(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
+    {method} result requestEdgeProc(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T)
+    ..
+    {method} result requestEdgeProc(\n  Function F, Data D,\n  Contract Cd, Contract Cf)
 }
 class PrivacyZoneMgr {
-  {method} PZdata getPZdata(DataProvider DP, PrivateData PD)
+    {method} PZdata getPZdata(\n  DataProvider DP, PrivateData PD)
 }
 class PDC {
-  {method} data requestData(Data D)
-  {method} data requestPrivateData(PrivateData PD, Contract C, Consent Cons(F on PD))
-  {method} function requestFunction(Function F)
+    {method} data requestData(\n  Data D, Contract C)
+    ..
+    {method} data requestPrivateData(\n  PrivateData PD, Contract C,\n  Consent Cons(F on PD))
 }
 class PrivacyPreservingPDC {
-  {method} data requestData(Data D)
-  {method} data requestPrivateData(PrivateData PD, Contract C, Consent Cons(F on PD))
-  {method} function requestFunction(Function F)
-  {method} PZdata getPZdata(DataProvider DP, PrivateData D)
-  {method} data requestData/wPrivacyPreserving(PrivateData PD, Contract C, Consent Cons(F on PD))
+    {method} PZdata getPZdata(\n  DataProvider DP, PrivateData PD)
+    ..
+    {method} data requestData/wPrivacyPreserving(\n  PrivateData PD, Contract Cd,\n  Consent Cons(F on PD))
+    ..
+    {method} function requestFunction(\n  Function F, Contract Cf)
 }
 class Catalog {
-  {method} DataProvider getAccessInfo(Data D)
-  {method} function requestFunction(Function F)
+    {method} DataProvider getAccessInfo(\n  PrivateData PD)
+    {method} FunctionProvider getAccessInfo(\n  Function F)
+}
+note right of Catalog::getAccessInfo {
+    ID and Connector of the Provider
 }
 class Contract {
-  {method} status verifyContract(DataProvider DP, CloudProvider CP)
-  {method} status verifyContract(DataProvider DP, DataConsumer DC)
+    {method} status verifyContract(\n  Provider P, Consumer C)
+    {method} status verifyContracts(\n  DataProvider DP, CloudProviderList CPs)
+    {method} CPlist getContractedCloudProviders(\n  DataProvider DP)
 }
 class Consent {
-  {method} status verifyConsent(DataProvider DP, User U, PrivateData PD, Function F)
+    {method} status verifyConsent(\n  Consent Cons(F on PD))
 }
 class DataProvider {
-  {method} data getData(Data D)
+    {method} data getData(PrivateData PD)
+    {method} data getData(Data D)
 }
-class ProcessingBBtheDataConsumer {
+class ProcessingBB {
+    Data and Function consumer
+    ==
+    {field} Contract Cd
+    {field} Contract Cf
+    {field} Consent Cons(F on PD)
+    {field} AccessToken T
 }
+note right of ProcessingBB::Cd {
+    DataProvider - ProcessingBB
+}
+note right of ProcessingBB::Cf {
+    FunctionProvider - ProcessingBB
+}
+
 class Scheduler {
-  {method} result requestEdgeProc(Function F, Data D)
-  {method} result requestEdgeProc(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
-  {method} void schedule(artifact)
+    {method} result requestEdgeProc(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T,\n  PrivacyZoneData PZData)
+    ..
+    {method} result requestEdgeProc(\n Function F, Data D)
+    ..
+    {method} void schedule(artifact A)
 }
-class ArtifactBuilder {
-  {method} artifact buildArtifact(Function F, Data D, Contract C)
-  {method} artifact buildArtifact(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
+abstract class ArtifactBuilder {
+    {method} artifact buildArtifact(\n  Function F, Data D,\n  Contract Cd, Contract Cf)
+    ..
+    {method} artifact buildArtifact(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T)
 }
 class CaaSBuilder {
-  {method} artifact buildArtifact(Container F, Data D, Contract C)
-  {method} artifact buildArtifact(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
+    {method} containerArtifact buildArtifact(\n  Function F, Data D,\n  Contract Cd, Contract Cf)
+    ..
+    {method} containerArtifact buildArtifact(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T)
 }
 class FaaSBuilder {
-  {method} artifact buildArtifact(Function F, Data D, Contract C)
-  {method} artifact buildArtifact(Function F, PrivateData PD, Contract C, Consent Cons(F on PD), AccessToken T)
+    {method} functionArtifact buildArtifact(\n  Function F, Data D,\n  Contract Cd, Contract Cf)
+    ..
+    {method} functionArtifact buildArtifact(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T)
 }
 class Wrapper {
   {method} status init(Artifact A)
-  {method} status execute(Artifact A)
+  {method} status execute(Function F)
   {method} result sendResult()
 }
 class CaaSWrapper {
-  {method} status init(Artifact A)
-  {method} status execute(Artifact A)
+  {method} status init(containerArtifact A)
+  {method} status execute(Function F)
   {method} result sendResult()
 }
 class FaaSWrapper {
-  {method} status init(Artifact A)
-  {method} status execute(Artifact A)
+  {method} status init(functionArtifact A)
+  {method} status execute(Function F)
   {method} result sendResult()
 }
 class WorkerNode {
@@ -72,6 +96,7 @@ class WorkerNode {
 }
 
 DataProvider *-- PrivacyPreservingPDC
+EdgeAPI *-- PrivacyPreservingPDC
 
 PDC <|-- PrivacyPreservingPDC
 
@@ -80,31 +105,46 @@ ArtifactBuilder <|-- FaaSBuilder
 Wrapper <|-- CaaSWrapper
 Wrapper <|-- FaaSWrapper
 
-WorkerNode *-- CaaSWrapper
+WorkerNode *-- Wrapper
 
-ProcessingBBtheDataConsumer --> EdgeAPI : requestEdgeProc(F, PD, C, Cons(F on PD), T)
+ProcessingBB --> EdgeAPI : requestEdgeProc(F, PD, Cd, Cf, Cons, T)
 EdgeAPI --> Catalog : getAccessInfo(PD)
-EdgeAPI --> Catalog : verifyFunction(A)
 EdgeAPI --> PrivacyZoneMgr : getPZData(DP, PD)
 PrivacyZoneMgr --> PrivacyPreservingPDC : getPZData(DP, PD)
+PrivacyPreservingPDC --> PrivacyPreservingPDC : getPZData(DP, PD)
 
-EdgeAPI --> Scheduler : requestEdgeProc(F, PD)
-Scheduler --> ArtifactBuilder : buildArtifact(F, PD, C, Cons(F on PD), T)
+EdgeAPI --> Scheduler : requestEdgeProc(F, PD, Cd, Cf, Cons, T, PZData)
+Scheduler --> ArtifactBuilder : buildArtifact(F, PD, Cd, Cf, Cons, T)
 ArtifactBuilder --> PrivacyPreservingPDC : requestFunction(Function F)
-PrivacyPreservingPDC --> Catalog : requestFunction(Function F)
+PrivacyPreservingPDC --> Catalog : getAccessInfo(Function F)
+PrivacyPreservingPDC --> PrivacyPreservingPDC : requestFunction(F, Cf)
 
 Scheduler --> Scheduler : schedule(A)
 Scheduler --> WorkerNode : deployArtifact(A)
 WorkerNode --> Wrapper : init(A)
-Wrapper --> PrivacyPreservingPDC : requestData/wPrivacyPreserving(PD, C, Cons(F on PD)
-PrivacyPreservingPDC --> Contract : verifyContract(DP, CP)
-PrivacyPreservingPDC --> Contract : verifyContract(DP, ProcessingBBtheDataConsumer)
-PrivacyPreservingPDC --> Consent : verifyConsent(DP, Cons(F on PD))
-PrivacyPreservingPDC --> DataProvider : getData(D)
-Wrapper --> Wrapper : execute(A)
+Wrapper --> PrivacyPreservingPDC : requestData/wPrivacyPreserving(PD, Cd, Cons)
+PrivacyPreservingPDC --> PrivacyPreservingPDC : requestData/wPrivacyPreserving(PD, Cd, Cons)
+PrivacyPreservingPDC --> Contract : verifyContracts(DP, CPs)
+PrivacyPreservingPDC --> Contract : verifyContract(P, C)
+PrivacyPreservingPDC --> Consent : verifyConsent(Cons)
+PrivacyPreservingPDC --> DataProvider : getData(PD)
+Wrapper --> Wrapper : execute(F)
 Wrapper --> Wrapper : sendResult()
 
-EdgeAPI --> EdgeAPI : sendResult()
+together {
+    class PDC
+    class PrivacyPreservingPDC
+    class Catalog
+    class Contract
+    class Consent
+}
+
+together {
+    class EdgeAPI
+    class PrivacyZoneMgr
+    class Scheduler
+    class Wrapper
+}
 
 @enduml
 
