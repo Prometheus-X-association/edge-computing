@@ -76,7 +76,7 @@ class FaaSBuilder {
     ..
     {method} functionArtifact buildArtifact(\n  Function F, PrivateData PD,\n  Contract Cd, Contract Cf,\n  Consent Cons(F on PD), AccessToken T)
 }
-class Wrapper {
+abstract class Wrapper {
   {method} status init(Artifact A)
   {method} status execute(Function F)
   {method} result sendResult()
@@ -143,7 +143,7 @@ together {
     class EdgeAPI
     class PrivacyZoneMgr
     class Scheduler
-    class Wrapper
+    abstract class Wrapper
 }
 
 @enduml
