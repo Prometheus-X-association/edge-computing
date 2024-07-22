@@ -51,10 +51,10 @@ ConnectorEdge -> ConnectorFP : requestFunction(Function F, Contract Cf)
 ConnectorFP -> Contract : verifyContract(Contract Cf)
 Contract -> ConnectorFP : OK
 ConnectorFP -> FunctionProvider : getFunction(\nFunction F)
-FunctionProvider -> ConnectorFP : Function F
-ConnectorFP -> ConnectorEdge : Function F
+FunctionProvider -> ConnectorFP : function f
+ConnectorFP -> ConnectorEdge : function f
 
-ConnectorEdge -> ArtifactBuilder : Function F
+ConnectorEdge -> ArtifactBuilder : function f
 ArtifactBuilder -> Scheduler : done, Artifact A
 Scheduler -> Scheduler : schedule(Artifact A)
 Scheduler -> WorkerNode : deployArtifact(Artifact A)
@@ -70,11 +70,11 @@ Contract -> ConnectorDP : OK
 ConnectorDP -> Consent : verifyConsent(Consent Cons(F on PD))
 Consent -> ConnectorDP : OK
 ConnectorDP -> DataProvider : getData(\nPrivateData PD)
-DataProvider -> ConnectorDP : PrivateData PD
+DataProvider -> ConnectorDP : pdata pd
 
-ConnectorDP -> ConnectorEdge : PrivateData PD (privacy preserving sending of PrivateData)
-ConnectorEdge -> Wrapper : PrivateData PD (privacy preserving sending of PrivateData)
-Wrapper -> Wrapper : execute(Function F)
+ConnectorDP -> ConnectorEdge : pdata pd (privacy preserving sending of PrivateData)
+ConnectorEdge -> Wrapper : pdata pd (privacy preserving sending of PrivateData)
+Wrapper -> Wrapper : execute(function f)
 Wrapper -> EdgeAPI : Result R
 destroy Wrapper
 EdgeAPI -> ProcessingBB : Result R
