@@ -170,7 +170,7 @@ Internal data types and variables used in the diagrams.
 |Data Type|Variable|Description|
 |-|-|-|
 |PrivateData|PD|referene/ID of the private data|
-|data|data|the exact (private) data|
+|pdata|pd|the exact private data|
 |Function|F|reference/ID of the function to be applied to the private data|
 |function|f|the exact function|
 |Contract|Cd and Cf|contracts between the ProcessingBB and DataProvider and FunctionProvider, respectively|
