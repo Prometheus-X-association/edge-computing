@@ -165,6 +165,21 @@ If possible, elaborate on the details (data format, contents, etc) and also add 
 
 TODO: add data structures, extensions related to Connector, Catalog, and maybe Consent
 
+Internal data types and variables used in the diagrams.
+
+|Data Type|Variable|Description|
+|-|-|-|
+|PrivateData|PD|referene/ID of the private data|
+|data|data|the exact (private) data|
+|Function|F|reference/ID of the function to be applied to the private data|
+|function|f|the exact function|
+|Contract|Cd and Cf|contracts between the ProcessingBB and DataProvider and FunctionProvider, respectively|
+|Consent|Cons(F on PD)|the consent from the User which allows the execution of the function on private data|
+|AccessToken|T|token created by the DataProvider related to the user's consent|
+|PrivacyZoneData|PZData|describing the privacy zone information related to the DataProvider and PrivateData|
+|Artifact|A|software artifact: container (CaaS) or function (CaaS) depending on the infrastructure|
+|Result|R|the result of the function execution on private data|
+
 <!--
 _Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
 
