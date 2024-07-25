@@ -51,42 +51,48 @@ A bullet point list is recommended._
 #### scenario 0: set up infrastructure
   - Launch VMs spanning across multiple Cloud Providers infrastructure via IaaS
   - Deploy Kubernetes cluster to the VMs
-  - Worker nodes / edge sites metadata includes Cloud Provider info
+  - Set metadata of Worker nodes / edge sites including Cloud Provider info
     - to be able to check privacy-zone memberships
   - Perform optional configurations (e.g. CNI, Istio for tenant isolation)
   - Tailor-made Kubernetes/Knative scheduler controls placement decisions (data, function/container)
 
 #### scenario 1: privacy-preserving AI processing
-  - General BB triggers a processing function on Data A
-    - Input: processing reference to the function (or container), Data A to be processed
-  - privacy zone of Data A is determined
-    - based on metadata gained from the Data Provider via Connector (PDC)
-  - privacy zones of worker nodes / edge sites are determined
+  - General BB triggers a processing function to be executed on PrivateData
+    - goal: keep the data within the privacy zone determined by the contract between the Data- and Cloud Providers
+    - using only reliable infrastructure
+  - privacy zone of PrivateData is determined
+    - making use of Connector and Contract services
+  - privacy zones of worker nodes / edge sites have already been determined
+  - software artifact is created
+    - processing function is gathered via the Connector
+    - consent related data (e.g. AccessToken) is also added
   - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
-  - processing function is gathered via the Connector (from the Catalog)
-  - processing function is deployed to the selected worker node(s) (Edge Site 1)
+    - making use of novel scheduler algorithms
+    - other optimization constraints, objectives can also be taken into account
+  - software artifact is deployed to the selected worker node(s) / reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - Data A is moved to Edge Site 1 via the Connector (PDC)
-    - privacy-preserving data sharing is requested
-  - processing function is executed on Data A at Edge Site 1
+  - PrivateData is gathered by the artifact
+    - privacy-preserving data sharing is requested from the Connector
+  - processing function is executed on PrivateData at a reliable Edge Site
   - result is provided
-  - Data A is deleted at Edge Site 1
-  - processing function / container is destroyed at Edge Site 1
+  - PrivateData is deleted at the Edge Site
+  - software artifact (function / container) is destroyed at the Edge Site
 
 #### scenario 2: efficient near-data processing
-  - General BB triggers a processing function on Data A
-    - Input: reference to the processing function (or container), Data A to be processed
-    - Precondition: worker node is "collocated" with Data A (Data A is directly available from the worker node)
-  - tailor-made Kubernetes/Knative scheduler selects the worker node (Edge Site 1) collocated with Data A
-  - processing function is gathered via the Connector (from the Catalog)
-  - processing function is deployed to Edge Site 1
+  - General BB triggers a processing function to be executed on PrivateData
+    - precondition: worker node(s) is/are "collocated" with PrivateData (it is directly available from the worker node)
+  - software artifact is created
+    - processing function is gathered via the Connector
+  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) collocated with PrivateData
+    - making use of novel scheduler algorithms
+    - other optimization constraints, objectives can also be taken into account
+  - software artifact is deployed to the selected worker node(s) / local Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - processing function is executed on Data A at Edge Site 1
+  - processing function is executed on PrivateData at a local Edge Site
   - result is provided
-  - processing function / container is destroyed at Edge Site 1
-
+  - software artifact (function / container) is destroyed at the Edge Site
 
 ## Requirements
 
@@ -250,6 +256,25 @@ Assumptions:
 |Catalog|Prometheus-X core component extended with function sharing capability|
 |Consent|Prometheus-X core component|
 |Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data and the consent related information as well.|
+
+### scenario 1: privacy-preserving AI processing
+  - General BB triggers a processing function on PrivateData PD
+    - Input: processing reference to the function (or container), Data A to be processed
+  - privacy zone of Data A is determined
+    - based on metadata gained from the Data Provider via Connector (PDC)
+  - privacy zones of worker nodes / edge sites are determined
+  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
+  - processing function is gathered via the Connector (from the Catalog)
+  - processing function is deployed to the selected worker node(s) (Edge Site 1)
+    - option 1: container (CaaS)
+    - option 2: function (FaaS)
+  - Data A is moved to Edge Site 1 via the Connector (PDC)
+    - privacy-preserving data sharing is requested
+  - processing function is executed on Data A at Edge Site 1
+  - result is provided
+  - Data A is deleted at Edge Site 1
+  - processing function / container is destroyed at Edge Site 1
+
 
 ## Configuration and deployment settings
 
