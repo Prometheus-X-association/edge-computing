@@ -79,6 +79,8 @@ A bullet point list is recommended._
   - PrivateData is deleted at the Edge Site
   - software artifact (function / container) is destroyed at the Edge Site
 
+More details: [here](##dynamic-behaviour)
+
 #### scenario 2: efficient near-data processing
   - General BB triggers a processing function to be executed on PrivateData
     - precondition: worker node(s) is/are "collocated" with PrivateData (it is directly available from the worker node)
