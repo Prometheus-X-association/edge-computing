@@ -293,7 +293,7 @@ The main steps of the operation are detailed below.
   - Processing BB triggers the execution of Function F on PrivateData PD via EdgeAPI
     - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
   - EdgeAPI gets access info to PD (ID of DataProvider, RestAPI of its Connector)
-  - --- Gathering
+  - ---
   - PrivacyZoneMgr gathers/calculates Privacy Zone information PZData related to DataProvider DP and PrivateData PD
     - making use of Connectors (ConnectorEdge, ConnectorDP)
     - and Contract services
