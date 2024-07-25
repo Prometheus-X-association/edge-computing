@@ -118,12 +118,12 @@ These may be defined later with UCs but have to be indentified here and be part 
 
 ### Requirements related to data processing and assurance
 
-  - **R6.** [FUNC] BB-2 MUST be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector BB
+  - **R6.** [FUNC] BB-2 MUST be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector
   - **R7.** [FUNC] BB-2 MUST support Container-as-a-Service OR Function-as-a-Service based operation
   - **R8.** [FUNC] BB-2 MUST support privacy-aware scheduling in its Kubernetes cluster 
   - **R9.** [FUNC] BB-2 MUST support data-availability-aware scheduling in its Kubernetes cluster 
   - **R10.** [FUNC] BB-2 MUST support privacy-preserving data sharing among nodes
-  - **R11.** [FUNC] BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing/assurance BBs
+  - **R11.** [FUNC] BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing BBs
 
   - **R12.** [FUNC] Annotation of DATA with privacy zone and geographical info MUST be supported
 
