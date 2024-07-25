@@ -289,23 +289,40 @@ Assumptions:
 The main steps of the operation are detailed below.
 
 ### Detailed steps of the operation realizing scenario 1 (privacy-preserving AI processing)
-  - General BB triggers a processing function on PrivateData PD
-    - Input: processing reference to the function (or container), Data A to be processed
-  - privacy zone of Data A is determined
-    - based on metadata gained from the Data Provider via Connector (PDC)
-  - privacy zones of worker nodes / edge sites are determined
+  - Processing BB gathers Contracts (Cd: Processing BB - DataProvider, Cf: Processing BB - FunctionProvider), Consent Cons(F on PD), AccessToken T making use of its own connector (not shown in the diagram)
+  - Processing BB triggers the execution of Function F on PrivateData PD via EdgeAPI
+    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
+  - EdgeAPI gets access info to PD (ID of DataProvider, RestAPI of its Connector)
+  - ---
+  - PrivacyZoneMgr gathers/calculates Privacy Zone information PZData related to DataProvider DP and PrivateData PD
+    - making use of Connectors (ConnectorEdge, ConnectorDP)
+    - and Contract services
+  - privacy zones of worker nodes / edge sites have already been determined
+  - --- 
+  - Scheduler is requested to execute F on PD
+    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T, PrivacyZoneData PZData
+  - ArtifactBuilder is invoked to build the software artifact
+    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
+  - Function F is requested via Connectors
+    - ConnectorEdge uses Catalog to get the FunctionProvider's Connecor (ConnectorFP)
+    - ConnectorFP is requested for Function F
+    - Contract is checked
+    - function f is provided
+  - Software artifact is built (including a Wrapper)
   - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
-  - processing function is gathered via the Connector (from the Catalog)
-  - processing function is deployed to the selected worker node(s) (Edge Site 1)
+  - software artifact is deployed to the selected worker node(s) / reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - Data A is moved to Edge Site 1 via the Connector (PDC)
-    - privacy-preserving data sharing is requested
-  - processing function is executed on Data A at Edge Site 1
-  - result is provided
-  - Data A is deleted at Edge Site 1
-  - processing function / container is destroyed at Edge Site 1
-
+  - ---
+  - PrivateData PD is gathered by the artifact
+    - privacy-preserving data sharing is requested from the ConnectorEdge
+    - Input: reference/ID of PrivateData PD, Contract Cd, Consent Cons(F on PD), AccessToken T
+    - ConnectorPD verifies Contract Cd and Consent Cons(F on PD)
+    - pdata pd is provided
+  - processing function f is executed on pdata pd at a reliable Edge Site (WorkerNode)
+  - Result R is provided
+  - pdata pd is deleted at the Edge Site (WorkerNode)
+  - software artifact (function / container) is destroyed at the Edge Site (WorkerNode)
 
 ## Configuration and deployment settings
 
