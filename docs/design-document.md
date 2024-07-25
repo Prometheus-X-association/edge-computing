@@ -79,7 +79,7 @@ A bullet point list is recommended._
   - PrivateData is deleted at the Edge Site
   - software artifact (function / container) is destroyed at the Edge Site
 
-More details: [here](##dynamic-behaviour)
+More details of the communications are given [here](#dynamic-behaviour)
 
 #### scenario 2: efficient near-data processing
   - General BB triggers a processing function to be executed on PrivateData
