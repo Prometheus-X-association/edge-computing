@@ -154,6 +154,7 @@ Why?_
   - BB-1 Decentralized AI training
     - tight integration with the specific protocol
   - BB-8 Data Veracity Assurance
+    - check the configuration data to be exchanged
 <!--  - BB-9a PLRS ? -->
 
 ### Integrations via Connector
@@ -184,11 +185,11 @@ If possible, elaborate on the details (data format, contents, etc) and also add 
 
 TODO: add data structures, extensions related to Connector, Catalog, and maybe Consent
 
-Internal data types and variables used in the diagrams.
+The following internal data types and variables are used in the subsequent diagrams.
 
 |Data Type|Variable|Description|
 |-|-|-|
-|PrivateData|PD|referene/ID of the private data|
+|PrivateData|PD|reference/ID of the private data|
 |pdata|pd|the exact private data|
 |Function|F|reference/ID of the function to be applied to the private data|
 |function|f|the exact function|
@@ -228,9 +229,13 @@ _Please add a short description, also estimating the workload for a typical tran
 
 ## Architecture
 
+<!--
 _What components make up this BB?
 If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
+-->
+
+The architecture of the Edge Computing BB is described by the following class diagram. The purpose and tasks of the components are given in the next section dealing with the dynamic behaviour.
 
 ![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
@@ -242,12 +247,13 @@ UML sequence diagrams and/or statecharts are recommended._
 
 _Example sequence diagram using Mermaid:_
 
-The sequence diagram shows how the component communicates with other components.
+The following sequence diagram shows how the components communicate with each other, assuming the most relevant scenario: scenario 1.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
 Assumptions:
-- two different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (DataConsumer)
+- three different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (Consumer), FunctionProvider - Processing BB (Consumer)
+  - the latter can be omitted when the Processing BB is the FunctionProvider
 - consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
 - consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
 
