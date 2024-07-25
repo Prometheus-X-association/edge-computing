@@ -1,5 +1,4 @@
 # Edge computing - AI processing BB – Design Document
-
 <!---
 _This is just a template.
 Replace italic text with your own content.
@@ -14,10 +13,7 @@ Two main high-level objectives are targeted by these services:
   - goal 1: privacy-preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
   - goal 2: efficient near-data processing: optimize performance and resource utilization
 
-
 ## Technical usage scenarios & Features
-
-
 <!---
 _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
@@ -26,7 +22,6 @@ See "BB info for use cases (WP2)" spreadsheet._
 In general, the main goal is to move the processing functions close to the data, and execute them on-site. If the execution capability is available in the node storing the data, the processing function (FaaS based operation) or container (CaaS based operation) is launched there (e.g. by the Kubernetes/Knative platform). By these means, we can avoid the transmission of a large amount of data. (goal 2)
 
 As a more realistic use case, the data is also moved but only within a pre-defined privacy zone. This privacy zone encompasses worker nodes (using Kubernetes terminology) where we can deploy the processing functions on demand. (goal 1)
-
 
 ### Features/main functionalities
 <!--
@@ -97,7 +92,6 @@ More details of the communications related to scenario 1 are given here: [Dynami
   - software artifact (function / container) is destroyed at the Edge Site
 
 ## Requirements
-
 <!---
 _High-level BB requirements with identifiers.
 eg * **R1.** BB MUST communicate with [other BB]_
@@ -129,13 +123,11 @@ These may be defined later with UCs but have to be indentified here and be part 
 
 
 ## Integrations
-
 <!--
 _See "01_BB Connections" spreadsheet_
 -->
 
 ### Direct Integrations with Other BBs
-
 <!--
 _What other BBs does this BB interact with directly (without the connector)?
 How?
@@ -158,7 +150,6 @@ Why?_
 <!--  - BB-9a PLRS ? -->
 
 ### Integrations via Connector
-
 <!--
 _What other BBs does this BB integrate with intermediated by the connector?
 Why?_
@@ -228,17 +219,30 @@ _Gives:_
 _Please add a short description, also estimating the workload for a typical transaction of your BB (e.g. "100.000 record/submission", "traces of n*10.000s of events", etc.)._
 
 ## Architecture
-
 <!--
 _What components make up this BB?
 If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
 -->
 
-The architecture of the Edge Computing BB is described by the following class diagram. The purpose and tasks of the components are given in the next section dealing with the dynamic behaviour.
+The architecture of the Edge Computing BB is described by the following class diagram.
 
 ![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
+The purpose and tasks of the BB components are given in the table below.
+
+|BB Component|Description|
+|-|-|
+|EdgeAPI|Entry point of the BB|
+|PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the PrivateData|
+|PDC|Prometheus-X DataSpace Connector (core component)|
+|PrivacyPreservingPDC|Extended PDC equipped with the capability of privacy preserving data sharing and with function sharing (part of the BB)|
+|Scheduler|Custom Kubernetes Scheduler taking also privacy related information into account|
+|ArtifactBuilder|Build the software artifacts to be deployed (abstract class)|
+|CaaS/FaaSBuilder|CaaS and FaaS based implementation of the ArtifactBuilder|
+|Wrapper|Wrapper functions/serivces/data (e.g. AccessToken) added to the software artifact (abstract class)|
+|CaaS/FaaSWrapper|CaaS and FaaS based implementation of the Wrapper|
+|WorkerNode|Kubernetes/Knative worker node (edge node) which can execute the container/function|
 
 ## Dynamic Behaviour
 
