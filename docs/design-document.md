@@ -136,23 +136,34 @@ _See "01_BB Connections" spreadsheet_
 
 ### Direct Integrations with Other BBs
 
+<!--
 _What other BBs does this BB interact with directly (without the connector)?
 How?
 Why?_
+-->
 
   - Cloud Providers
   - Connector
+    - introduce the concept of Private Zone
+    - support Function sharing
+    - support privacy-preserving Data sharing
   - Contract
+    - support DataProvider - CloudProvider contracts including Privacy Zone information
   - Consent
+    - (if it is not available) introduce consent (and its verification) enabling the execution of processing function on private data 
   - BB-1 Decentralized AI training
+    - tight integration with the specific protocol
   - BB-8 Data Veracity Assurance
 <!--  - BB-9a PLRS ? -->
 
 ### Integrations via Connector
 
+<!--
 _What other BBs does this BB integrate with intermediated by the connector?
 Why?_
+-->
 
+Not expected.
 
 ## Relevant Standards
 
