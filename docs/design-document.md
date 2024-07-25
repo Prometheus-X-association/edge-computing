@@ -245,18 +245,22 @@ The purpose and tasks of the BB components are given in the table below.
 |WorkerNode|Kubernetes/Knative worker node (edge node) which can execute the container/function|
 
 ## Dynamic Behaviour
-
+<!--
 _What is the behaviour of the BB, how does it operate?
 UML sequence diagrams and/or statecharts are recommended._
 
 _Example sequence diagram using Mermaid:_
+-->
 
-The following sequence diagram shows how the components communicate with each other, assuming the most relevant scenario: scenario 1.
+The following sequence diagram shows how the components communicate with each other, assuming the most complex and relevant operation: scenario 1.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
 Assumptions:
-- three different contracts are considered: DataProvider - CloudProvider, DataProvider - Processing BB (Consumer), FunctionProvider - Processing BB (Consumer)
+- three different contracts are considered:
+  - DataProvider - CloudProvider
+  - DataProvider - Processing BB (Consumer)
+  - FunctionProvider - Processing BB (Consumer)
   - the latter can be omitted when the Processing BB is the FunctionProvider
 - consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
 - consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
@@ -265,22 +269,26 @@ Assumptions:
 |-|-|
 |EdgeAPI|Entry point of the BB|
 |PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the Data|
-|ConnectorEdge|The connector functionality of the data consumer is delegated to the Edge Computing BB, counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
+|ConnectorEdge|The connector functionality of the data consumer is delegated to the Edge Computing BB, it is the counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
 |Scheduler|Custom Kubernetes Scheduler|
 |ArtifactBuilder|Build the software artifacts to be deployed|
-|Wrapper|Wrapper functions/sevrives added to the container/function artifact|
+|Wrapper|Wrapper functions/serivces/data added to the container/function artifact|
 |WorkerNode|Kubernetes worker node (edge node) which can execute the container/function|
 
 |Other Actors|Description|
 |-|-|
+|Processing BB (Consumer)|The triggering BB which plays the role of the data and function consumer. It also provides the consent related information gathered in advance making use of its own connector (not shown in the diagram).|
+|FunctionProvider|Storing the processing function to be executed (it can be the Processing BB itself)|
+|ConnectorFP|The connector of the function provider equipped with the capability of function sharing|
 |DataProvider|Storing the data including personal data|
-|Connector|The connector of the data provider equipped with the capability of privacy preserving data sharing and function sharing|
-|Contract|Prometheus-X core component|
+|ConnectorDP|The connector of the data provider equipped with the capability of privacy preserving data sharing|
+|Contract|Prometheus-X core component (might be extended)|
 |Catalog|Prometheus-X core component extended with function sharing capability|
-|Consent|Prometheus-X core component|
-|Processing BB (Consumer)|The triggering BB which plays the role of the data consumer. It provides the function to be executed on the data and the consent related information as well.|
+|Consent|Prometheus-X core component (might be extended)|
 
-### scenario 1: privacy-preserving AI processing
+The main steps of the operation are detailed below.
+
+### Detailed steps of the operation realizing scenario 1 (privacy-preserving AI processing)
   - General BB triggers a processing function on PrivateData PD
     - Input: processing reference to the function (or container), Data A to be processed
   - privacy zone of Data A is determined
