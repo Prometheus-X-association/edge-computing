@@ -165,8 +165,11 @@ _Any data type / data format standards the BB adheres to_
 
 ### Mapping to Data Space Reference Architecture Models
 
-_Mapping to [DSSC](https://dssc.eu/space/DDP/117211137/DSSC+Delivery+Plan+-+Summary+of+assets+publication) or [IDS RAM](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/)_
+This building block integrates an instance of the Prometheus-X Dataspace Connector (PDC) to act as a data provider to:
+- Receive requests by other building blocks ("TriggeringBB" via their connectors) acting as data consumers or service consumers
+- Respond to requests by other building blocks ("TriggeringBB" via their connectors) acting as data consumers or service consumers
 
+[Connector](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3_5_0_system_layer/3_5_2_ids_connector), [Data Provider](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space), [Data Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) and [Service Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) are defined in [IDS-RAM 4.0](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space).
 
 ## Input / Output Data
 
