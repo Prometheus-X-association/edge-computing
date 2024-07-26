@@ -184,7 +184,7 @@ The following internal data types and variables are used in the subsequent diagr
 |pdata|pd|the exact private data|
 |Function|F|reference/ID of the function to be applied to the private data|
 |function|f|the exact function|
-|Contract|Cd and Cf|contracts between the ProcessingBB and DataProvider and FunctionProvider, respectively|
+|Contract|Cd and Cf|contracts between the TriggeringBB and DataProvider and FunctionProvider, respectively|
 |Consent|Cons(F on PD)|the consent from the User which allows the execution of the function on private data|
 |AccessToken|T|token created by the DataProvider related to the user's consent|
 |PrivacyZoneData|PZData|describing the privacy zone information related to the DataProvider and PrivateData|
@@ -259,11 +259,11 @@ The following sequence diagram shows how the components communicate with each ot
 Assumptions:
 - three different contracts are considered:
   - DataProvider - CloudProvider
-  - DataProvider - Processing BB (Consumer)
-  - FunctionProvider - Processing BB (Consumer)
-  - the latter can be omitted when the Processing BB is the FunctionProvider
+  - DataProvider - Triggering BB (Consumer)
+  - FunctionProvider - Triggering BB (Consumer)
+  - the latter can be omitted when the Triggering BB is the FunctionProvider
 - consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
-- consent related tasks are handled by the Processing BB in advance (Edge Computing BB with its connector is added to the loop)
+- consent related tasks are handled by the Triggering BB in advance (Edge Computing BB with its connector is added to the loop)
 
 |BB Component|Description|
 |-|-|
@@ -277,8 +277,8 @@ Assumptions:
 
 |Other Actors|Description|
 |-|-|
-|Processing BB (Consumer)|The triggering BB which plays the role of the data and function consumer. It also provides the consent related information gathered in advance making use of its own connector (not shown in the diagram).|
-|FunctionProvider|Storing the processing function to be executed (it can be the Processing BB itself)|
+|Triggering BB (Consumer)|The triggering BB which plays the role of the data and function consumer. It also provides the consent related information gathered in advance making use of its own connector (not shown in the diagram).|
+|FunctionProvider|Storing the processing function to be executed (it can be the Triggering BB itself)|
 |ConnectorFP|The connector of the function provider equipped with the capability of function sharing|
 |DataProvider|Storing the data including personal data|
 |ConnectorDP|The connector of the data provider equipped with the capability of privacy preserving data sharing|
@@ -289,8 +289,8 @@ Assumptions:
 The main steps of the operation are detailed below.
 
 ### Detailed steps of the operation realizing scenario 1 (privacy-preserving AI processing)
-  - Processing BB gathers Contracts (Cd: Processing BB - DataProvider, Cf: Processing BB - FunctionProvider), Consent Cons(F on PD), AccessToken T making use of its own connector (not shown in the diagram)
-  - Processing BB triggers the execution of Function F on PrivateData PD via EdgeAPI
+  - Triggering BB gathers Contracts (Cd: Triggering BB - DataProvider, Cf: Triggering BB - FunctionProvider), Consent Cons(F on PD), AccessToken T making use of its own connector (not shown in the diagram)
+  - Triggering BB triggers the execution of Function F on PrivateData PD via EdgeAPI
     - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
   - EdgeAPI gets access info to PD (ID of DataProvider, RestAPI of its Connector)
   - ---

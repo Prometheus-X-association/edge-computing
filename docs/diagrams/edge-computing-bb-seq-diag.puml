@@ -1,7 +1,7 @@
 @startuml
 
 box "Data Consumer" #Orange
-    participant "ProcessingBB\n/w Connector" as ProcessingBB order 5
+    participant "TriggeringBB\n/w Connector" as TriggeringBB order 5
 end box
 box "Data and Function Providers" #LightGreen
     database "Function\nProvider" as FunctionProvider order 10
@@ -24,9 +24,9 @@ box "Edge Computing BB" #LightBlue
     participant WorkerNode order 110
 end box
 
-hnote over ProcessingBB, Contract: Gathering Contracts & Consent
+hnote over TriggeringBB, Contract: Gathering Contracts & Consent
 
-ProcessingBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contract Cd, Contract Cf, Consent Cons(F on PD), AccessToken T)
+TriggeringBB -> EdgeAPI : requestEdgeProc(Function F, PrivateData PD, Contract Cd, Contract Cf, Consent Cons(F on PD), AccessToken T)
 EdgeAPI -> Catalog : getAccessInfo(PrivateData PD)
 Catalog -> EdgeAPI : ID of DataProvider, AccessInfo of its Connector
 
@@ -77,7 +77,7 @@ ConnectorEdge -> Wrapper : pdata pd (privacy preserving sending of PrivateData)
 Wrapper -> Wrapper : execute(function f)
 Wrapper -> EdgeAPI : Result R
 destroy Wrapper
-EdgeAPI -> ProcessingBB : Result R
+EdgeAPI -> TriggeringBB : Result R
 
 @enduml
 

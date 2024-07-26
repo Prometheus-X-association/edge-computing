@@ -43,7 +43,7 @@ class DataProvider {
 class FunctionProvider {
     {method} function getFunction(\n  Function F)
 }
-class ProcessingBB {
+class TriggeringBB {
     Data and Function consumer
     ==
     {field} Contract Cd
@@ -51,11 +51,11 @@ class ProcessingBB {
     {field} Consent Cons(F on PD)
     {field} AccessToken T
 }
-note right of ProcessingBB::Cd {
-    DataProvider - ProcessingBB
+note right of TriggeringBB::Cd {
+    DataProvider - TriggeringBB
 }
-note right of ProcessingBB::Cf {
-    FunctionProvider - ProcessingBB
+note right of TriggeringBB::Cf {
+    FunctionProvider - TriggeringBB
 }
 
 class Scheduler {
@@ -112,7 +112,7 @@ Wrapper <|-- FaaSWrapper
 
 WorkerNode *-- Wrapper
 
-ProcessingBB --> EdgeAPI : requestEdgeProc(F, PD, Cd, Cf, Cons, T)
+TriggeringBB --> EdgeAPI : requestEdgeProc(F, PD, Cd, Cf, Cons, T)
 EdgeAPI --> Catalog : getAccessInfo(PD)
 EdgeAPI --> PrivacyZoneMgr : getPZData(DP, PD)
 PrivacyZoneMgr --> PrivacyPreservingPDC : getPZData(DP, PD)
