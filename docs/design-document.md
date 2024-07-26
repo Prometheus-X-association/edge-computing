@@ -185,7 +185,7 @@ The following internal data types and variables are used in the subsequent diagr
 |-|-|-|
 |PrivateData|PD|reference/ID of the private data|
 |pdata|pd|the exact private data|
-|Function|F|reference/ID of the function to be applied to the private data|
+|Function|F|reference/ID of the function to be applied to the private data (function-specific configuration data can also be included)|
 |function|f|the exact function|
 |Contract|Cd and Cf|contracts between the TriggeringBB and DataProvider and FunctionProvider, respectively|
 |Consent|Cons(F on PD)|the consent from the User which allows the execution of the function on private data|
