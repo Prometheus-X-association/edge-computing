@@ -165,11 +165,15 @@ _Any data type / data format standards the BB adheres to_
 
 ### Mapping to Data Space Reference Architecture Models
 
-This building block integrates an instance of the Prometheus-X Dataspace Connector (PDC) to act as a data provider to:
-- Receive requests by other building blocks ("TriggeringBB" via their connectors) acting as data consumers or service consumers
-- Respond to requests by other building blocks ("TriggeringBB" via their connectors) acting as data consumers or service consumers
+This building block integrates an instance of the _Prometheus-X Dataspace Connector (PDC)_ to act as a data provider to:
+
+- Receive requests by other building blocks ("TriggeringBB" via their PDC) acting as data consumers or service consumers
+- Respond to requests by other building blocks ("TriggeringBB" via their PDC) acting as data consumers or service consumers
 
 [Connector](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3_5_0_system_layer/3_5_2_ids_connector), [Data Provider](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space), [Data Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) and [Service Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) are defined in [IDS-RAM 4.0](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space).
+
+This building block interacts with the _Catalog_, _Contract_ and _Consent_ components provided by the _(Personal) Data Space Intermediary_.
+[Data Space Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) and [Personal Data Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary#Personal-data-intermediaries) are defined in [DSSC blueprint](https://dssc.eu/space/BVE/357073006/Data+Spaces+Blueprint+v1.0). The services offered by the Data (Space) Intermediary are described as [Core Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) or [Enabling Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) by DSSC blueprint and defined as [Data Intermediation Services](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R0868#d1e965-1-1) by the [Data Governance Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R0868).
 
 ## Input / Output Data
 
