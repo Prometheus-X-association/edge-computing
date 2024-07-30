@@ -11,9 +11,11 @@ The Edge Computing (Decentralized AI processing) BB provides
 value-added services exploiting an underlying distributed edge
 computing infrastructure (e.g. owned and operated by Cloud Providers).
 
-Two main high-level objectives are targeted by these services: 
-  - goal 1: privacy-preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
-  - goal 2: efficient near-data processing: optimize performance and resource utilization
+Two main high-level objectives are targeted by these services:
+  - goal 1: privacy-preserving: keep the data close to the user, more
+    exactly within a pre-defined privacy zone
+  - goal 2: efficient near-data processing: optimize performance and
+    resource utilization
 
 ## Technical usage scenarios & Features
 <!---
@@ -21,9 +23,17 @@ _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
 --->
 
-In general, the main goal is to move the processing functions close to the data, and execute them on-site. If the execution capability is available in the node storing the data, the processing function (FaaS based operation) or container (CaaS based operation) is launched there (e.g. by the Kubernetes/Knative platform). By these means, we can avoid the transmission of a large amount of data. (goal 2)
+In general, the main goal is to move the processing functions close to
+the data, and execute them on-site. If the execution capability is
+available in the node storing the data, the processing function (FaaS
+based operation) or container (CaaS based operation) is launched there
+(e.g. by the Kubernetes/Knative platform). By these means, we can
+avoid the transmission of a large amount of data. (goal 2)
 
-As a more realistic use case, the data is also moved but only within a pre-defined privacy zone. This privacy zone encompasses worker nodes (using Kubernetes terminology) where we can deploy the processing functions on demand. (goal 1)
+As a more realistic use case, the data is also moved but only within a
+pre-defined privacy zone. This privacy zone encompasses worker nodes
+(using Kubernetes terminology) where we can deploy the processing
+functions on demand. (goal 1)
 
 ### Features/main functionalities
 <!--
@@ -31,11 +41,13 @@ _In-depth description of BB features (details).
 Again, an enumeration (ie bullet points) is useful. Take input from description for WP2_
 -->
 
-  - control the placement of data: keep within pre-defined privacy zones
+  - control the placement of data: keep within pre-defined privacy
+    zones
   - only trustworthy infrastructure is used for data processing
     - trustworthy: contract needed between Data Provider and Cloud Provider
-  - efficient (green) operation: minimizing data transfers if near-data / on-site processing is available
-  - moving the processing functions / containers dynamically 
+  - efficient (green) operation: minimizing data transfers if
+    near-data / on-site processing is available
+  - moving the processing functions / containers dynamically
 
 ### Technical usage scenarios
 <!--
