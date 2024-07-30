@@ -314,7 +314,7 @@ The high-level architecture of the Edge Computing BB is shown by the
 following figure.
 
 ![High-level architcture of the Edge Computing
-BB](diagrams/edge-computing-bb-archi.png)
+BB](diagrams/edge-computing-bb-arch.png)
 
 The architecture of the Edge Computing BB is described by the
 following class diagram.
