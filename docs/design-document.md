@@ -7,7 +7,9 @@ Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml
 You should also remove this paragraph._
 --->
 
-The Edge Computing (Decentralized AI processing) BB provides value-added services exploiting an underlying distributed edge computing infrastructure (e.g. owned and operated by Cloud Providers).
+The Edge Computing (Decentralized AI processing) BB provides
+value-added services exploiting an underlying distributed edge
+computing infrastructure (e.g. owned and operated by Cloud Providers).
 
 Two main high-level objectives are targeted by these services: 
   - goal 1: privacy-preserving: keep the data close to the user, more exactly within a pre-defined privacy zone
