@@ -58,52 +58,72 @@ A bullet point list is recommended._
 -->
 
 #### scenario 0: set up infrastructure
-  - Launch VMs spanning across multiple Cloud Providers infrastructure via IaaS
+  - Launch VMs spanning across multiple Cloud Providers infrastructure
+    via IaaS
   - Deploy Kubernetes cluster to the VMs
-  - Set metadata of Worker nodes / edge sites including Cloud Provider info
+  - Set metadata of Worker nodes / edge sites including Cloud Provider
+    info
     - to be able to check privacy-zone memberships
-  - Perform optional configurations (e.g. CNI, Istio for tenant isolation)
-  - Tailor-made Kubernetes/Knative scheduler controls placement decisions (data, function/container)
+  - Perform optional configurations (e.g. CNI, Istio for tenant
+    isolation)
+  - Tailor-made Kubernetes/Knative scheduler controls placement
+    decisions (data, function/container)
 
 #### scenario 1: privacy-preserving AI processing
-  - General BB triggers a processing function to be executed on PrivateData
-    - goal: keep the data within the privacy zone determined by the contract between the Data- and Cloud Providers
+  - General BB triggers a processing function to be executed on
+    PrivateData
+    - goal: keep the data within the privacy zone determined by the
+      contract between the Data- and Cloud Providers
     - using only reliable infrastructure
   - privacy zone of PrivateData is determined
     - making use of Connector and Contract services
-  - privacy zones of worker nodes / edge sites have already been determined
+  - privacy zones of worker nodes / edge sites have already been
+    determined
   - software artifact is created
     - processing function is gathered via the Connector
     - consent related data (e.g. AccessToken) is also added
-  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
+  - tailor-made Kubernetes/Knative scheduler selects the worker
+    node(s) / edge site(s) within the privacy zone
     - making use of novel scheduler algorithms
-    - other optimization constraints, objectives can also be taken into account
-  - software artifact is deployed to the selected worker node(s) / reliable Edge Site(s)
+    - other optimization constraints, objectives can also be taken
+      into account
+  - software artifact is deployed to the selected worker node(s) /
+    reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
   - PrivateData is gathered by the artifact
     - privacy-preserving data sharing is requested from the Connector
-  - processing function is executed on PrivateData at a reliable Edge Site
+  - processing function is executed on PrivateData at a reliable Edge
+    Site
   - result is provided
   - PrivateData is deleted at the Edge Site
-  - software artifact (function / container) is destroyed at the Edge Site
+  - software artifact (function / container) is destroyed at the Edge
+    Site
 
-More details of the communications related to scenario 1 are given here: [Dynamic Behaviour](#dynamic-behaviour)
+More details of the communications related to scenario 1 are given
+here: [Dynamic Behaviour](#dynamic-behaviour)
 
 #### scenario 2: efficient near-data processing
-  - General BB triggers a processing function to be executed on PrivateData
-    - precondition: worker node(s) is/are "collocated" with PrivateData (it is directly available from the worker node)
+  - General BB triggers a processing function to be executed on
+    PrivateData
+    - precondition: worker node(s) is/are "collocated" with
+      PrivateData (it is directly available from the worker node)
   - software artifact is created
     - processing function is gathered via the Connector
-  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) collocated with PrivateData
+  - tailor-made Kubernetes/Knative scheduler selects the worker
+    node(s) / edge site(s) collocated with PrivateData
     - making use of novel scheduler algorithms
-    - other optimization constraints, objectives can also be taken into account
-  - software artifact is deployed to the selected worker node(s) / local Edge Site(s)
+    - other optimization constraints, objectives can also be taken
+      into account
+  - software artifact is deployed to the selected worker node(s) /
+    local Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - processing function is executed on PrivateData at a local Edge Site
+  - processing function is executed on PrivateData at a local Edge
+    Site
   - result is provided
-  - software artifact (function / container) is destroyed at the Edge Site
+  - software artifact (function / container) is destroyed at the Edge
+    Site
 
 ## Requirements
 <!---
@@ -118,22 +138,35 @@ These may be defined later with UCs but have to be indentified here and be part 
 
 ### Infrastructure-related requirements
 
-  - **R1.** [OPS, SEC] BB-2 MUST have access to infrastructure (of e.g. a Cloud Provider or private one)
-  - **R2.** [OPS] BB-2 MUST be able to deploy (and start/stop/destroy) a Kubernetes cluster to Cloud Provider's infrastructure via IaaS offering
-  - **R3.** [OPS] BB-2 MUST be able to manage its Kubernetes cluster(s)
-  - **R4.** [OPS] BB-2 MIGHT have access to managed Kubernetes cluster of Cloud Provider
-  - **R5.** [OPS, SEC] BB-2 SHOULD be able to configure CNI plugins of Kubernetes and Istio service mesh
+  - **R1.** [OPS, SEC] BB-2 MUST have access to infrastructure (of
+    e.g. a Cloud Provider or private one)
+  - **R2.** [OPS] BB-2 MUST be able to deploy (and start/stop/destroy)
+    a Kubernetes cluster to Cloud Provider's infrastructure via IaaS
+    offering
+  - **R3.** [OPS] BB-2 MUST be able to manage its Kubernetes
+    cluster(s)
+  - **R4.** [OPS] BB-2 MIGHT have access to managed Kubernetes cluster
+    of Cloud Provider
+  - **R5.** [OPS, SEC] BB-2 SHOULD be able to configure CNI plugins of
+    Kubernetes and Istio service mesh
 
 ### Requirements related to data processing and assurance
 
-  - **R6.** [FUNC] BB-2 MUST be able to move data of Data Provider to given node of its Kubernetes cluster making use of Connector
-  - **R7.** [FUNC] BB-2 MUST support Container-as-a-Service OR Function-as-a-Service based operation
-  - **R8.** [FUNC] BB-2 MUST support privacy-aware scheduling in its Kubernetes cluster 
-  - **R9.** [FUNC] BB-2 MUST support data-availability-aware scheduling in its Kubernetes cluster 
-  - **R10.** [FUNC] BB-2 MUST support privacy-preserving data sharing among nodes
-  - **R11.** [FUNC] BB-2 SHOULD provide FaaS (or CaaS) APIs to data processing BBs
+  - **R6.** [FUNC] BB-2 MUST be able to move data of Data Provider to
+    given node of its Kubernetes cluster making use of Connector
+  - **R7.** [FUNC] BB-2 MUST support Container-as-a-Service OR
+    Function-as-a-Service based operation
+  - **R8.** [FUNC] BB-2 MUST support privacy-aware scheduling in its
+    Kubernetes cluster
+  - **R9.** [FUNC] BB-2 MUST support data-availability-aware
+    scheduling in its Kubernetes cluster
+  - **R10.** [FUNC] BB-2 MUST support privacy-preserving data sharing
+    among nodes
+  - **R11.** [FUNC] BB-2 SHOULD provide FaaS (or CaaS) APIs to data
+    processing BBs
 
-  - **R12.** [FUNC] Annotation of DATA with privacy zone and geographical info MUST be supported
+  - **R12.** [FUNC] Annotation of DATA with privacy zone and
+    geographical info MUST be supported
 
 
 ## Integrations
@@ -154,9 +187,12 @@ Why?_
     - support Function sharing
     - support privacy-preserving Data sharing
   - Contract
-    - support DataProvider - CloudProvider contracts including Privacy Zone information
+    - support DataProvider - CloudProvider contracts including Privacy
+      Zone information
   - Consent
-    - (if it is not available) introduce consent (and its verification) enabling the execution of processing function on private data 
+    - (if it is not available) introduce consent (and its
+      verification) enabling the execution of processing function on
+      private data
   - BB-1 Decentralized AI training
     - tight integration with the specific protocol
   - BB-8 Data Veracity Assurance
@@ -179,15 +215,41 @@ _Any data type / data format standards the BB adheres to_
 
 ### Mapping to Data Space Reference Architecture Models
 
-This building block integrates an instance of the _Prometheus-X Dataspace Connector (PDC)_ to act as a data provider to:
+This building block integrates an instance of the _Prometheus-X
+Dataspace Connector (PDC)_ to act as a data provider to:
 
-- Receive requests by other building blocks ("TriggeringBB" via their PDC) acting as data consumers or service consumers
-- Respond to requests by other building blocks ("TriggeringBB" via their PDC) acting as data consumers or service consumers
+- Receive requests by other building blocks ("TriggeringBB" via their
+  PDC) acting as data consumers or service consumers
+- Respond to requests by other building blocks ("TriggeringBB" via
+  their PDC) acting as data consumers or service consumers
 
-[Connector](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3_5_0_system_layer/3_5_2_ids_connector), [Data Provider](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space), [Data Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) and [Service Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space) are defined in [IDS-RAM 4.0](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space).
+[Connector](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3_5_0_system_layer/3_5_2_ids_connector),
+[Data
+Provider](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space),
+[Data
+Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space)
+and [Service
+Consumer](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space)
+are defined in [IDS-RAM
+4.0](https://docs.internationaldataspaces.org/ids-knowledgebase/v/ids-ram-4/layers-of-the-reference-architecture-model/3-layers-of-the-reference-architecture-model/3-1-business-layer/3_1_1_roles_in_the_ids#business-roles-in-the-international-data-space).
 
-This building block interacts with the _Catalog_, _Contract_ and _Consent_ components provided by the _(Personal) Data Space Intermediary_.
-[Data Space Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) and [Personal Data Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary#Personal-data-intermediaries) are defined in [DSSC blueprint](https://dssc.eu/space/BVE/357073006/Data+Spaces+Blueprint+v1.0). The services offered by the Data (Space) Intermediary are described as [Core Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) or [Enabling Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary) by DSSC blueprint and defined as [Data Intermediation Services](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R0868#d1e965-1-1) by the [Data Governance Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R0868).
+This building block interacts with the _Catalog_, _Contract_ and
+_Consent_ components provided by the _(Personal) Data Space
+Intermediary_.  [Data Space
+Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary)
+and [Personal Data
+Intermediary](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary#Personal-data-intermediaries)
+are defined in [DSSC
+blueprint](https://dssc.eu/space/BVE/357073006/Data+Spaces+Blueprint+v1.0). The
+services offered by the Data (Space) Intermediary are described as
+[Core
+Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary)
+or [Enabling
+Services](https://dssc.eu/space/BVE/367558657/Data+Space+Intermediary)
+by DSSC blueprint and defined as [Data Intermediation
+Services](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R0868#d1e965-1-1)
+by the [Data Governance
+Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R0868).
 
 ## Input / Output Data
 
@@ -195,9 +257,11 @@ _What data does this BB receive?
 What data does this BB produce?
 If possible, elaborate on the details (data format, contents, etc) and also add potential data requirements._
 
-TODO: add data structures, extensions related to Connector, Catalog, and maybe Consent
+TODO: add data structures, extensions related to Connector, Catalog,
+and maybe Consent
 
-The following internal data types and variables are used in the subsequent diagrams.
+The following internal data types and variables are used in the
+subsequent diagrams.
 
 |Data Type|Variable|Description|
 |-|-|-|
@@ -246,11 +310,14 @@ If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
 -->
 
-The architecture of the Edge Computing BB is described by the following class diagram.
+The architecture of the Edge Computing BB is described by the
+following class diagram.
 
-![Architcture of the Edge Computing BB: Class Diagram](diagrams/edge-computing-bb-class-diag.svg)
+![Architcture of the Edge Computing BB: Class
+Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
-The purpose and tasks of the BB components are given in the table below.
+The purpose and tasks of the BB components are given in the table
+below.
 
 |BB Component|Description|
 |-|-|
@@ -282,9 +349,12 @@ Assumptions:
   - DataProvider - CloudProvider
   - DataProvider - Triggering BB (Consumer)
   - FunctionProvider - Triggering BB (Consumer)
-  - the latter can be omitted when the Triggering BB is the FunctionProvider
-- consent: DataProvider, Private Data of User, Function which can be applied to the Private Data
-- consent related tasks are handled by the Triggering BB in advance (Edge Computing BB with its connector is added to the loop)
+  - the latter can be omitted when the Triggering BB is the
+    FunctionProvider
+- consent: DataProvider, Private Data of User, Function which can be
+  applied to the Private Data
+- consent related tasks are handled by the Triggering BB in advance
+  (Edge Computing BB with its connector is added to the loop)
 
 |BB Component|Description|
 |-|-|
@@ -310,40 +380,58 @@ Assumptions:
 The main steps of the operation are detailed below.
 
 ### Detailed steps of the operation realizing scenario 1 (privacy-preserving AI processing)
-  - Triggering BB gathers Contracts (Cd: Triggering BB - DataProvider, Cf: Triggering BB - FunctionProvider), Consent Cons(F on PD), AccessToken T making use of its own connector (not shown in the diagram)
-  - Triggering BB triggers the execution of Function F on PrivateData PD via EdgeAPI
-    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
-  - EdgeAPI gets access info to PD (ID of DataProvider, RestAPI of its Connector)
+  - Triggering BB gathers Contracts (Cd: Triggering BB - DataProvider,
+    Cf: Triggering BB - FunctionProvider), Consent Cons(F on PD),
+    AccessToken T making use of its own connector (not shown in the
+    diagram)
+  - Triggering BB triggers the execution of Function F on PrivateData
+    PD via EdgeAPI
+    - Input: reference/ID of Function F, reference/ID of PrivateData
+      PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
+  - EdgeAPI gets access info to PD (ID of DataProvider, RestAPI of its
+    Connector)
   - ---
-  - PrivacyZoneMgr gathers/calculates Privacy Zone information PZData related to DataProvider DP and PrivateData PD
+  - PrivacyZoneMgr gathers/calculates Privacy Zone information PZData
+    related to DataProvider DP and PrivateData PD
     - making use of Connectors (ConnectorEdge, ConnectorDP)
     - and Contract services
-  - privacy zones of worker nodes / edge sites have already been determined
+  - privacy zones of worker nodes / edge sites have already been
+    determined
   - --- 
   - Scheduler is requested to execute F on PD
-    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T, PrivacyZoneData PZData
+    - Input: reference/ID of Function F, reference/ID of PrivateData
+      PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T,
+      PrivacyZoneData PZData
   - ArtifactBuilder is invoked to build the software artifact
-    - Input: reference/ID of Function F, reference/ID of PrivateData PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
+    - Input: reference/ID of Function F, reference/ID of PrivateData
+      PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
   - Function F is requested via Connectors
-    - ConnectorEdge uses Catalog to get the FunctionProvider's Connecor (ConnectorFP)
+    - ConnectorEdge uses Catalog to get the FunctionProvider's
+      Connecor (ConnectorFP)
     - ConnectorFP is requested for Function F
     - Contract is checked
     - function f is provided
   - Software artifact is built (including a Wrapper)
-  - tailor-made Kubernetes/Knative scheduler selects the worker node(s) / edge site(s) within the privacy zone
-  - software artifact is deployed to the selected worker node(s) / reliable Edge Site(s)
+  - tailor-made Kubernetes/Knative scheduler selects the worker
+    node(s) / edge site(s) within the privacy zone
+  - software artifact is deployed to the selected worker node(s) /
+    reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
   - ---
   - PrivateData PD is gathered by the artifact
-    - privacy-preserving data sharing is requested from the ConnectorEdge
-    - Input: reference/ID of PrivateData PD, Contract Cd, Consent Cons(F on PD), AccessToken T
+    - privacy-preserving data sharing is requested from the
+      ConnectorEdge
+    - Input: reference/ID of PrivateData PD, Contract Cd, Consent
+      Cons(F on PD), AccessToken T
     - ConnectorPD verifies Contract Cd and Consent Cons(F on PD)
     - pdata pd is provided
-  - processing function f is executed on pdata pd at a reliable Edge Site (WorkerNode)
+  - processing function f is executed on pdata pd at a reliable Edge
+    Site (WorkerNode)
   - Result R is provided
   - pdata pd is deleted at the Edge Site (WorkerNode)
-  - software artifact (function / container) is destroyed at the Edge Site (WorkerNode)
+  - software artifact (function / container) is destroyed at the Edge
+    Site (WorkerNode)
 
 ## Configuration and deployment settings
 
@@ -394,9 +482,14 @@ _Candidates for tools that can be used to implement the test cases: Selenium_
 
 ## Partners & roles
 
-- BME will lead the task, work on the design and implementation of the BB, integrate privacy-aware scheduler algorithms
-- Fraunhofer ISST / University of Koblenz will provide support in the integration of technology (such as the *Prometheus-X Connector* and *Prometheus-X Contract/Consent Manager*) to support federation of edge clouds with data spaces in this context.
-- University of Oslo will design and implement novel scheduler algorithms, formalize the related problems and evaluate the methods
+- BME will lead the task, work on the design and implementation of the
+  BB, integrate privacy-aware scheduler algorithms
+- Fraunhofer ISST / University of Koblenz will provide support in the
+  integration of technology (such as the *Prometheus-X Connector* and
+  *Prometheus-X Contract/Consent Manager*) to support federation of
+  edge clouds with data spaces in this context.
+- University of Oslo will design and implement novel scheduler
+  algorithms, formalize the related problems and evaluate the methods
 
 ## Usage in the dataspace
 _Specify the Dataspace Enalbing Service Chain in which the BB will be used. This assumes that during development the block (lead) follows the service chain, contributes to tis detailed design and implements the block to meet the integration requirements of the chain._
