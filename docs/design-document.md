@@ -310,6 +310,12 @@ If applicable, insert a simple figure, eg a UML class diagram.
 What is the purpose of the components and what are their relationships?_
 -->
 
+The high-level architecture of the Edge Computing BB is shown by the
+following figure.
+
+![High-level architcture of the Edge Computing
+BB](diagrams/edge-computing-bb-archi.png)
+
 The architecture of the Edge Computing BB is described by the
 following class diagram.
 
