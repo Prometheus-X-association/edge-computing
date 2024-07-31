@@ -288,31 +288,31 @@ Customer-facing API (EdgeAPI):
 		Function F, PrivateData PD, 
 		Contract Cd, Contract Cf, 
 		Consent Cons(F on PD), AccessToken T)
-	  _output: Result R_
+	  output: Result R
 	- requestEdgeProc(
 		Function F, Data D, 
 		Contract Cd, Contract Cf)
-	  _output: Result R_
+	  output: Result R
 
 Connector-facing API (PrivacyPreservingPDC):
 
 	- getPZData(
 		DataProvider DP, PrivateData PD)
-	  _output: PrivacyZoneData PZData_
+	  output: PrivacyZoneData PZData
 	- requestFunction(
 		Function F, Contract Cf)
-	  _output: function f_
+	  output: function f
 	- requestData/wPrivacyPreserving(
 		PrivateData PD, 
 		Contract Cd, 
 		Consent Cons(F on PD))
-	  _output: pdata pd_
+	  output: pdata pd
 
 Catalog extension:
 
 	- getAccessInfo(
 		Function F)
-	  _output: ID of FunctionProvider and AccessInfo (e.g. REST API) of its Connector_
+	  output: ID of FunctionProvider and AccessInfo (e.g. REST API) of its Connector
 
 <!--
 _Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
