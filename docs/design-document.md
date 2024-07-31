@@ -187,7 +187,7 @@ Why?_
 
   - Cloud Providers
   - Connector
-    - introduce the concept of Private Zone
+    - introduce the concept of Privacy Zone
     - support Function sharing
     - support privacy-preserving Data sharing
   - Contract
@@ -209,7 +209,8 @@ _What other BBs does this BB integrate with intermediated by the connector?
 Why?_
 -->
 
-Not expected.
+The integration with all other BBs playing the role of the
+TriggeringBB is expected to be done via the Connector.
 
 ## Relevant Standards
 
