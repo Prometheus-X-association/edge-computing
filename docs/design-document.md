@@ -257,21 +257,22 @@ by the [Data Governance
 Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R0868).
 
 ## Input / Output Data
-
+<!--
 _What data does this BB receive?
 What data does this BB produce?
 If possible, elaborate on the details (data format, contents, etc) and also add potential data requirements._
+-->
 
-TODO: add data structures, extensions related to Connector, Catalog,
-and maybe Consent
-
-The following internal data types and variables are used in the
-subsequent diagrams.
+The following data types and variables are used in the subsequent
+diagrams and descriptions.
 
 |Data Type|Variable|Description|
 |-|-|-|
+|AccessInfo|access|ID of a Provider and access info (REST API) of its Connector|
 |PrivateData|PD|reference/ID of the private data|
 |pdata|pd|the exact private data|
+|Data|D|reference/ID of the NOT private data|
+|data|d|the exact NOT private data|
 |Function|F|reference/ID of the function to be applied to the private data (function-specific configuration data can also be included)|
 |function|f|the exact function|
 |Contract|Cd and Cf|contracts between the TriggeringBB and DataProvider and FunctionProvider, respectively|
@@ -280,6 +281,38 @@ subsequent diagrams.
 |PrivacyZoneData|PZData|describing the privacy zone information related to the DataProvider and PrivateData|
 |Artifact|A|software artifact: container (CaaS) or function (CaaS) depending on the infrastructure|
 |Result|R|the result of the function execution on private data|
+
+Customer-facing API (EdgeAPI):
+
+	- requestEdgeProc(
+		Function F, PrivateData PD, 
+		Contract Cd, Contract Cf, 
+		Consent Cons(F on PD), AccessToken T)
+	  _output: Result R_
+	- requestEdgeProc(
+		Function F, Data D, 
+		Contract Cd, Contract Cf)
+	  _output: Result R_
+
+Connector-facing API (PrivacyPreservingPDC):
+
+	- getPZData(
+		DataProvider DP, PrivateData PD)
+	  _output: PrivacyZoneData PZData_
+	- requestFunction(
+		Function F, Contract Cf)
+	  _output: function f_
+	- requestData/wPrivacyPreserving(
+		PrivateData PD, 
+		Contract Cd, 
+		Consent Cons(F on PD))
+	  _output: pdata pd_
+
+Catalog extension:
+
+	- getAccessInfo(
+		Function F)
+	  _output: ID of FunctionProvider and AccessInfo (e.g. REST API) of its Connector_
 
 <!--
 _Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
@@ -305,8 +338,17 @@ _Gives:_
 ![PlantUML JSON Example](diagrams/json.svg)
 -->
 
+<!--
+_Please add a short description, also estimating the workload for a
+typical transaction of your BB (e.g. "100.000 record/submission",
+"traces of n*10.000s of events", etc.)._
+-->
 
-_Please add a short description, also estimating the workload for a typical transaction of your BB (e.g. "100.000 record/submission", "traces of n*10.000s of events", etc.)._
+The performance and the typical workload for a transaction cannot be
+estimated in general because these parameters strongly depend on the
+specific processing function and the (private) data which the function
+is executed on.
+
 
 ## Architecture
 <!--
