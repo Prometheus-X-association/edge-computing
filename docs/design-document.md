@@ -3,7 +3,9 @@
 _This is just a template.
 Replace italic text with your own content.
 Replace the title with `<BB name> Design Document`.
-Using [Mermaid](http://mermaid.js.org/intro/) and/or [PlantUML](https://plantuml.com/) diagrams are recommended; see examples below.
+Using [Mermaid](http://mermaid.js.org/intro/) and/or
+[PlantUML](https://plantuml.com/) diagrams are recommended; see
+examples below.
 You should also remove this paragraph._
 --->
 
@@ -38,7 +40,8 @@ functions on demand. (goal 1)
 ### Features/main functionalities
 <!--
 _In-depth description of BB features (details).
-Again, an enumeration (ie bullet points) is useful. Take input from description for WP2_
+Again, an enumeration (ie bullet points) is useful. Take input from
+description for WP2_
 -->
 
   - control the placement of data: keep within pre-defined privacy
@@ -131,9 +134,12 @@ _High-level BB requirements with identifiers.
 eg * **R1.** BB MUST communicate with [other BB]_
 
 _See also the Requirements spreadsheets
+
 Functional requirements should be extended with extra-functional ones:
-Timeliness (expected response time@request size), Througput (number of requess served by the BB),etc.
-These may be defined later with UCs but have to be indentified here and be part of configuration/deplomyent options_
+Timeliness (expected response time@request size), Througput (number of
+requess served by the BB),etc.
+These may be defined later with UCs but have to be indentified here
+and be part of configuration/deplomyent options_
 --->
 
 ### Infrastructure-related requirements
@@ -180,9 +186,8 @@ _See "01_BB Connections" spreadsheet_
 
 ### Direct Integrations with Other BBs
 <!--
-_What other BBs does this BB interact with directly (without the connector)?
-How?
-Why?_
+_What other BBs does this BB interact with directly (without the
+connector)?  How?  Why?_ 
 -->
 
   - Cloud Providers
@@ -205,8 +210,8 @@ Why?_
 
 ### Integrations via Connector
 <!--
-_What other BBs does this BB integrate with intermediated by the connector?
-Why?_
+_What other BBs does this BB integrate with intermediated by the
+connector?  Why?_
 -->
 
 The integration with all other BBs playing the role of the
@@ -260,7 +265,8 @@ Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R0868).
 <!--
 _What data does this BB receive?
 What data does this BB produce?
-If possible, elaborate on the details (data format, contents, etc) and also add potential data requirements._
+If possible, elaborate on the details (data format, contents, etc) and
+also add potential data requirements._
 -->
 
 The following data types and variables are used in the subsequent
@@ -315,7 +321,8 @@ Catalog extension:
 	  output: ID of FunctionProvider and AccessInfo (e.g. REST API) of its Connector
 
 <!--
-_Mermaid has no such feature, but you may use PlantUML to automatically visualize JSON schemata; for example:_
+_Mermaid has no such feature, but you may use PlantUML to
+automatically visualize JSON schemata; for example:_
 
 ```plantuml
 @startjson
@@ -488,50 +495,81 @@ The main steps of the operation are detailed below.
 
 ## Configuration and deployment settings
 
-_What configuration options does this BB have?
-What is the configuration format?
-Provide examples.
-How is the component logging the operations? What are the error scenarios? What are the limits in terms of usage (e.g. number of requests, size of dataset, etc.)?_
+_What configuration options does this BB have?  What is the
+configuration format?  Provide examples.  How is the component logging
+the operations? What are the error scenarios? What are the limits in
+terms of usage (e.g. number of requests, size of dataset, etc.)?_
 
 
 ## Third Party Components & Licenses
-
+<!--
 _Does this BB rely on any 3rd-party components?
 See also the "EDGE third party/background components" spreadsheet.
+-->
+
+Our implementation will be built on Kubernetes and Knative which
+components are licensed under the Apache License 2.0.  Our BB will use
+the same licesne.
 
 
 ## Implementation Details
-
+<!--
 _This is optional: remove this heading if not needed.
-You can add details about implementation plans and lower-level design here._
+You can add details about implementation plans and lower-level design
+here._
+-->
 
+TBD
 
 ## OpenAPI Specification
-
+<!--
 _In the future: link your OpenAPI spec here._
+-->
+
+TBD
 
 ## Test specification
-
-_Test definitions and testing environment should be availaible, and the tests should be repeatable._
+<!--
+_Test definitions and testing environment should be availaible, and
+the tests should be repeatable._
+-->
 
 ### Test plan
-Testing strategy, tools and methods chosen, methods for acceptance criteria.
+<!--
+Testing strategy, tools and methods chosen, methods for acceptance
+criteria.
 To be detailed.
+-->
+
+TODO
+
 
 ### Internal unit tests
-
+<!--
 _Here specify the test cases for the units inside the BB.  
-Candidates for tools that can be used to implement the test cases: JUnit, Mockito, Pytest._
+Candidates for tools that can be used to implement the test cases:
+JUnit, Mockito, Pytest._
+-->
+
+TBD
 
 ### Component-level testing
-
+<!--
 _Here specify how to test this component/BB as a whole. This is similar to how other BBs will use this component.  
 Candidates for tools that can be used to implement the test cases: K6, Postman, stepci, Pact  
-An example tutorial is available [here](https://github.com/ftsrg-edu/swsv-labs/wiki/2b-Integration-testing)._
+An example tutorial is available
+[here](https://github.com/ftsrg-edu/swsv-labs/wiki/2b-Integration-testing)._
+-->
+
+TBD
 
 ### UI test (where relevant)
+<!--
+_Candidates for tools that can be used to implement the test cases:
+Selenium_
+-->
 
-_Candidates for tools that can be used to implement the test cases: Selenium_
+TBD
 
 ## Partners & roles
 
