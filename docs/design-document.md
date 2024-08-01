@@ -495,10 +495,15 @@ The main steps of the operation are detailed below.
 
 ## Configuration and deployment settings
 
+<!-- 
 _What configuration options does this BB have?  What is the
 configuration format?  Provide examples.  How is the component logging
 the operations? What are the error scenarios? What are the limits in
 terms of usage (e.g. number of requests, size of dataset, etc.)?_
+-->
+
+- TBD
+- Configuration of the Prometheus-X Data Space Connector (PDC) is documented by the PDC building block
 
 
 ## Third Party Components & Licenses
@@ -511,22 +516,20 @@ Our implementation will be built on Kubernetes and Knative which
 components are licensed under the Apache License 2.0.  Our BB will use
 the same licesne.
 
+<!--
 
 ## Implementation Details
-<!--
 _This is optional: remove this heading if not needed.
 You can add details about implementation plans and lower-level design
 here._
--->
 
 TBD
 
 ## OpenAPI Specification
-<!--
 _In the future: link your OpenAPI spec here._
--->
 
 TBD
+-->
 
 ## Test specification
 <!--
@@ -541,30 +544,29 @@ criteria.
 To be detailed.
 -->
 
-TODO
 
+
+<!--
 
 ### Internal unit tests
-<!--
 _Here specify the test cases for the units inside the BB.  
 Candidates for tools that can be used to implement the test cases:
 JUnit, Mockito, Pytest._
--->
+
 
 TBD
 
 ### Component-level testing
-<!--
+
 _Here specify how to test this component/BB as a whole. This is similar to how other BBs will use this component.  
 Candidates for tools that can be used to implement the test cases: K6, Postman, stepci, Pact  
 An example tutorial is available
 [here](https://github.com/ftsrg-edu/swsv-labs/wiki/2b-Integration-testing)._
--->
+
 
 TBD
 
 ### UI test (where relevant)
-<!--
 _Candidates for tools that can be used to implement the test cases:
 Selenium_
 -->
@@ -583,4 +585,7 @@ TBD
   algorithms, formalize the related problems and evaluate the methods
 
 ## Usage in the dataspace
-_Specify the Dataspace Enalbing Service Chain in which the BB will be used. This assumes that during development the block (lead) follows the service chain, contributes to tis detailed design and implements the block to meet the integration requirements of the chain._
+
+This building block is part of the service chain with the title "Decentralized AI Training". That service chain defines how these two building blocks can be integrated into one combined solution.
+
+Furthermore, it's planned to integrate and showcase this building block in the Use Case "Job Opening Prediction". Details of this use case are still under development, the design will be further discussed.
