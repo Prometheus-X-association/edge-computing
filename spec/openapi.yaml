@@ -1,0 +1,332 @@
+openapi: 3.0.0
+info:
+  title: Edge Computing
+  version: 0.0.1
+  contact:
+    email: sonkoly@tmit.bme.hu
+  description: >-
+    The Edge Computing (Decentralized AI processing) BB provides value-added
+    services exploiting an underlying distributed edge computing infrastructure.
+paths:
+  /requestEdgeProc:
+    post:
+      summary: Execute function on data
+      description: ''
+      operationId: requestEdgeProc
+      responses:
+        '200':
+          description: Successful function deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResult'
+        '401':
+          description: Unauthorized request due to invalid token
+        '403':
+          description: Request prohibited by contract/consent
+        '404':
+          description: Execution request parameters not found
+        '408':
+          description: Function deployment timeout
+        '412':
+          description: Undeployable request due to privacy zone restriction
+        '500':
+          description: Unexpected error
+        '503':
+          description: Insufficient compute resources or unavailable deployment service
+      tags:
+        - customerAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRequestBody'
+  /getPZData:
+    post:
+      summary: Collect privacy zone information
+      description: ''
+      operationId: getPZData
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyZoneData'
+        '404':
+          description: Privacy zone not found
+      tags:
+        - connectorAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PZDataRequestBody'
+  /requestFunction:
+    post:
+      summary: Obtain function resources
+      description: ''
+      operationId: requestFunction
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+        '403':
+          description: Request prohibited by contract
+        '404':
+          description: Function not found
+      tags:
+        - connectorAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FunctionRequestBody'
+  /requestPrivacyPreservingData:
+    post:
+      summary: Acquire private data
+      description: ''
+      operationId: requestPrivacyPreservingData
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateData'
+        '403':
+          description: Request prohibited by contract/consent
+        '404':
+          description: Private data not found
+      tags:
+        - connectorAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequestBody'
+  /requestPrivacyEdgeProc:
+    post:
+      summary: Execute function on private data
+      description: ''
+      operationId: requestPrivacyEdgeProc
+      responses:
+        '200':
+          description: Successful function deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateExecutionResult'
+      tags:
+        - customerAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivateExecutionRequestBody'
+externalDocs:
+  url: 'https://github.com/Prometheus-X-association/edge-computing'
+components:
+  schemas:
+    FunctionID:
+      type: string
+      description: Unique reference/ID of the function to be applied to the private data
+    ContractID:
+      type: string
+      description: Unique contract ID
+    ConsentID:
+      type: string
+      description: Unique consent ID
+    DataID:
+      type: string
+      description: Unique reference/ID of the private / NOT private data
+    AccessToken:
+      type: string
+      description: Unique token created by the DataProvider related to the user's consent
+    DataProviderID:
+      type: string
+      description: Unique reference/ID of the data provider
+    FunctionProviderID:
+      type: string
+      description: Unique reference/ID of the function provider
+    PrivacyZoneID:
+      type: string
+      description: Unique identifier of a privacy zone
+    ExecutionRequestBody:
+      type: object
+      description: Function execution parameters
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        data:
+          $ref: '#/components/schemas/DataID'
+        data_contract:
+          $ref: '#/components/schemas/ContractID'
+        func_contract:
+          $ref: '#/components/schemas/ContractID'
+    PrivateExecutionRequestBody:
+      type: object
+      description: Function execution parameters
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        data_contract:
+          $ref: '#/components/schemas/ContractID'
+        func_contract:
+          $ref: '#/components/schemas/ContractID'
+        consent:
+          $ref: '#/components/schemas/ConsentID'
+        token:
+          $ref: '#/components/schemas/AccessToken'
+    PZDataRequestBody:
+      type: object
+      description: Privacy zone properties
+      properties:
+        data_provider:
+          $ref: '#/components/schemas/DataProviderID'
+        private_data:
+          $ref: '#/components/schemas/DataID'
+    FunctionRequestBody:
+      type: object
+      description: Function properties
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        func_contract:
+          $ref: '#/components/schemas/ContractID'
+    DataRequestBody:
+      type: object
+      description: Data properties
+      properties:
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        data_contract:
+          $ref: '#/components/schemas/ContractID'
+        consent:
+          $ref: '#/components/schemas/ConsentID'
+    ExecutionResult:
+      type: object
+      description: The result of the function execution on data
+      required:
+        - uuid
+        - function
+        - data
+      properties:
+        uuid:
+          type: string
+          description: Unique operation identifier
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        data:
+          $ref: '#/components/schemas/DataID'
+        metrics:
+          type: object
+          description: Collected execution metrics
+          properties:
+            ret:
+              type: integer
+              description: Return value of the function
+            elapsedTime:
+              type: integer
+              description: Elapsed time of the function
+    PrivateExecutionResult:
+      type: object
+      description: The result of the function execution on data
+      required:
+        - uuid
+        - function
+        - private_data
+      properties:
+        uuid:
+          type: string
+          description: Unique operation identifier
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        metrics:
+          type: object
+          description: Collected execution metrics
+          properties:
+            ret:
+              type: integer
+              description: Return value of the function
+            elapsedTime:
+              type: integer
+              description: Elapsed time of the function
+    PrivacyZoneData:
+      type: object
+      description: >-
+        Describe the privacy zone information related to the DataProvider and
+        PrivateData
+      required:
+        - private_data
+        - zones
+      properties:
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        zones:
+          type: array
+          description: Collection of permitted privacy zones
+          items:
+            $ref: '#/components/schemas/PrivacyZoneID'
+    Function:
+      type: object
+      description: Description of the exact function
+      required:
+        - function
+        - func_provider
+        - uri
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        func_provider:
+          $ref: '#/components/schemas/FunctionProviderID'
+        uri:
+          type: string
+          description: Location description of function resources
+        configs:
+          type: array
+          description: Optional parameters of the function instance
+          items:
+            type: object
+            description: Config parameter
+    PrivateData:
+      type: object
+      description: Description of the exact private data
+      required:
+        - private_data
+        - data_provider
+        - uri
+      properties:
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        data_provider:
+          $ref: '#/components/schemas/DataProviderID'
+        uri:
+          type: string
+          description: Location description of the private data
+  links: {}
+  callbacks: {}
+tags:
+  - name: customerAPI
+    description: Customer-facing API (EdgeAPI)
+  - name: connectorAPI
+    description: Connector-facing API (PrivacyPreservingPDC)
+security: []
+servers: []
