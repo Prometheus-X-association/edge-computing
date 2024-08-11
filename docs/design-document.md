@@ -611,6 +611,54 @@ criteria.
 To be detailed.
 -->
 
+At a first step, the REST APIs of the BB will be tested making use of
+e.g. Postman to generate test requests. A mockup version of the BB
+will be responsible for checking the input parameters and their
+formats and for providing dummy answers.
+
+In addition, the Connector (PDC) related extensions, such as Privacy
+Zone information handling, will also be mimicked at this stage.
+
+As a second step, component related tests will be designed.  The
+following entities can be tested separately at this level:
+
+- ArtifactBuilder: the BB-internal Connector (ConnectorEdge) provides
+  a static function which should be used when building the artifact
+  (container at first, function later).  The result can be verified as
+  follows.
+
+- Testing the artifact: the manually or automatically deployed
+  artifact should gather the private data and execute the given
+  function.  The result can easily be verified for the test scenario.
+  Data Provider (mockup) for testing purpose is also needed.
+
+- Scheduler: we assume that the Privacy Zone information and the
+  software artifact are available in advance, then the placement
+  decision and the exact deployment process should be tested and
+  verified.
+
+As a third step, integration tests will be defined which can be used
+to validate the interoperation among the internal components of the
+BB.  First, the ArtifactBuilder - Scheduler cooperation can be tested
+which integrates the previously defined component tests.  Second, the
+Privacy Zone calculation process can be tested including the
+PrivacyZoneMgr, ConnectoEdge and EdgeAPI.  And third, the overall
+workflow can be tested involving each component.
+
+Finally, the integration tests with external BBs and the core
+components will be defined.  The relevant entities are the following
+(according to our current view):
+
+- Connector (Privacy Zone, Function sharing, privacy-preserving Data
+  sharing)
+- Contract (DataProvider - CloudProvider contracts including Privacy
+  Zone information)
+- Consent (consent and its verification enabling the execution of
+  processing function on private data)
+- BB-1 Decentralized AI training (tight integration with the specific
+  protocol)
+- BB-8 Data Veracity Assurance (configuration data to be exchanged)
+- Cloud Providers (IaaS operation)
 
 
 <!--
