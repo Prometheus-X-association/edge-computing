@@ -684,9 +684,10 @@ TBD
 ### UI test (where relevant)
 _Candidates for tools that can be used to implement the test cases:
 Selenium_
--->
 
 TBD
+-->
+
 
 ## Partners & roles
 
