@@ -534,12 +534,16 @@ You can add details about implementation plans and lower-level design
 here._
 
 TBD
+-->
 
 ## OpenAPI Specification
+<!--
 _In the future: link your OpenAPI spec here._
-
-TBD
 -->
+
+The curren version of the OpenAPI specification can be found here: 
+![Edge Computing BB - OpenAPI specification](spec/openapi.yaml)
+
 
 ## Test specification
 <!--
