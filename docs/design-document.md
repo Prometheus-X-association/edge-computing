@@ -658,7 +658,7 @@ components will be defined.  The relevant entities are the following
 - BB-1 Decentralized AI training (tight integration with the specific
   protocol)
 - BB-8 Data Veracity Assurance (configuration data to be exchanged)
-- Cloud Providers (IaaS operation)
+- Cloud Providers (basic IaaS operation)
 
 
 <!--
