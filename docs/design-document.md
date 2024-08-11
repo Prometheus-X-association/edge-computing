@@ -220,8 +220,18 @@ TriggeringBB is expected to be done via the Connector.
 ## Relevant Standards
 
 ### Data Format Standards
-
+<!--
 _Any data type / data format standards the BB adheres to_
+-->
+
+The main data format standards to be followed in internal and external
+data exchange will be:
+
+- [JSON](https://www.json.org/) or [JSON-LD](https://json-ld.org/) for
+  serialization in general
+- [YAML](https://yaml.org/) for Kubernetes and Knative related data
+  structures
+
 
 ### Mapping to Data Space Reference Architecture Models
 
