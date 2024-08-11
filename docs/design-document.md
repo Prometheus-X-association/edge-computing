@@ -542,7 +542,7 @@ _In the future: link your OpenAPI spec here._
 -->
 
 The curren version of the OpenAPI specification can be found here: 
-![Edge Computing BB - OpenAPI specification](spec/openapi.yaml)
+[Edge Computing BB - OpenAPI specification](spec/openapi.yaml)
 
 
 ## Test specification
