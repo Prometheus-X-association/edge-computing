@@ -512,8 +512,60 @@ the operations? What are the error scenarios? What are the limits in
 terms of usage (e.g. number of requests, size of dataset, etc.)?_
 -->
 
-- TBD
-- Configuration of the Prometheus-X Data Space Connector (PDC) is documented by the PDC building block
+### Configuration parameters
+
+The operational parameters of the BB will be described in a
+corresponding YAML configuration file.  It will be composed of the
+following relevant elements:
+
+- Scheduler algorithm to be used (we plan multiple options)
+- Initial content of the Privacy Zone database (to be defined later)
+- Description of the Kubernetes (or later Knative) infrastructure.  As
+  a first step, we plan a static configuration to be used describing
+  the worker nodes in different Cloud Provider domains and the related
+  parameters/metadata.  Later, the dynamic management of the overlay
+  infrastructure will also be supported, i.e., worker nodes can be
+  added/removed on-the-fly.
+
+Configuration of the Prometheus-X Data Space Connector (PDC) is
+documented by the PDC building block.
+
+### Logging
+
+The BB will use a [Prometheus](https://prometheus.io/) based
+monitoring service which is an open-source tool and a standard
+approach in Kubernetes systems.  Besides the relevant
+infrastructure-level operational data, the Edge Computing BB related
+logging information will also be integrated into the monitoring
+system.  Furthermore, customized alerting configuration will also be
+supported
+
+In addition, a [Grafana](https://grafana.com/) dashboard will be added
+where the operator of the BB can visually follow and inspect the
+relevant operational parameters.
+
+### Erros scenarios
+
+The following error scenarios are identified at the current design
+stage:
+
+- Authorization related issues
+  - Unauthorized request received due to invalid token
+  - Request prohibited by insufficient contract/consent
+  - Undeployable request due to privacy zone restriction
+
+- Dataspace related configuration issues
+  - Function not found in Catalog or at the Function Provider
+  - Private Data or Data not found in Catalog or at the Data Provider
+  - Privacy zone not found or cannot be calculated
+
+- Infrastructure related issues
+  - Insufficient compute resources or unavailable deployment service
+  - Function deployment timeout
+  - Execution request parameters not found or invalid
+
+Each error scenario results in refusing the request and providing the
+identified root cause.
 
 
 ## Third Party Components & Licenses
