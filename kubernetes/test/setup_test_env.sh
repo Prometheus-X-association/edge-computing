@@ -36,7 +36,7 @@ fi
 if ! command -v kind >/dev/null; then
 	# Binary
 	echo
-	echo ">>> Install Kind binary..."
+	echo ">>> Installing Kind binary..."
 	echo
 	sudo apt-get update && sudo apt-get install -y curl
 	[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-amd64
@@ -45,18 +45,35 @@ if ! command -v kind >/dev/null; then
 
 	# Completion
 	echo
-	echo ">>> Install bash completion..."
+	echo ">>> Installing bash completion..."
 	echo
 	sudo apt-get install -y bash-completion
 	mkdir -p /etc/bash_completion.d
 	kind completion bash | sudo tee /etc/bash_completion.d/kind-completion > /dev/null
+	sudo chmod a+r /etc/bash_completion.d/kind-completion
 fi
+
+# Check kubectl
+if ! command -v kubectl >/dev/null; then
+	# Binary
+	echo
+	echo ">>> Installing kubectl..."
+	echo
+	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+	kubectl version --client
+
+	# Completion
+	kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+	sudo chmod a+r /etc/bash_completion.d/kubectl
+fi
+
 
 # Setup cluster
 echo
 echo ">>> Prepare test cluster"
 echo
-kind create cluster -n ${TEST_ID} --wait=30s #--verbosity=2
+kind create cluster -n ${TEST_ID} --wait=30s --config cfg_dual_workers_infra.yaml #--verbosity=2
 echo
 kubectl cluster-info --context kind-${TEST_ID}
 echo
