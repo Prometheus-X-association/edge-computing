@@ -1,6 +1,14 @@
-kind:  Cluster
-apiVersion:  kind.x-k8s.io/v1alpha4
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: test-cluster
 nodes:
-  - role:  control-plane
-  - role:  worker
-  - role:  worker
+  - role: control-plane
+    labels:
+      privacy-zone.dataspace.prometheus-x.org/zone-C: true
+  - role: worker
+    labels:
+      privacy-zone.dataspace.prometheus-x.org/zone-A: true
+      privacy-zone.dataspace.prometheus-x.org/zone-B: true
+  - role: worker
+    labels:
+      privacy-zone.dataspace.prometheus-x.org/zone-B: true
