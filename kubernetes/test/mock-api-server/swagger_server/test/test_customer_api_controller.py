@@ -11,6 +11,7 @@ from swagger_server.models.private_execution_request_body import PrivateExecutio
 from swagger_server.models.private_execution_result import PrivateExecutionResult  # noqa: E501
 from swagger_server.test import BaseTestCase
 
+from swagger_server.test.examples import EXAMPLE_EDGE_PROC_REQ, EXAMPLE_PRIV_EDGE_PROC_REQ
 
 class TestCustomerAPIController(BaseTestCase):
     """CustomerAPIController integration test stubs"""
@@ -20,7 +21,7 @@ class TestCustomerAPIController(BaseTestCase):
 
         Execute function on data
         """
-        body = ExecutionRequestBody()
+        body = ExecutionRequestBody.from_dict(EXAMPLE_EDGE_PROC_REQ)
         response = self.client.open(
             '/requestEdgeProc',
             method='POST',
@@ -34,7 +35,7 @@ class TestCustomerAPIController(BaseTestCase):
 
         Execute function on private data
         """
-        body = PrivateExecutionRequestBody()
+        body = PrivateExecutionRequestBody.from_dict(EXAMPLE_PRIV_EDGE_PROC_REQ)
         response = self.client.open(
             '/requestPrivacyEdgeProc',
             method='POST',
