@@ -1,16 +1,16 @@
-FROM python:3.6-alpine
+FROM python:3.8-alpine
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY requirements.txt /usr/src/app/
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3.8 -m pip install --no-cache-dir -U -r requirements.txt
 
 COPY . /usr/src/app
 
 EXPOSE 8080
 
-ENTRYPOINT ["python3"]
+ENTRYPOINT ["python3.8"]
 
 CMD ["-m", "swagger_server"]
