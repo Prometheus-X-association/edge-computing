@@ -1,0 +1,187 @@
+openapi: 3.0.0
+info:
+  title: Edge Computing REST-API
+  version: 0.0.1
+  contact:
+    email: czentye.janos@vik.bme.hu
+  description: >-
+    The Edge Computing (Decentralized AI processing) BB-02 provides value-added
+    services exploiting an underlying distributed edge computing infrastructure.
+paths:
+  /requestEdgeProc:
+    post:
+      summary: Execute function on data
+      description: ''
+      operationId: requestEdgeProc
+      responses:
+        '200':
+          description: Successful function deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResult'
+        '403':
+          description: Request prohibited by contract/consent
+        '404':
+          description: Execution request parameters not found
+        '408':
+          description: Function deployment timeout
+        '412':
+          description: Undeployable request due to privacy zone restriction
+        '500':
+          description: Unexpected error
+        '503':
+          description: Insufficient compute resources or unavailable deployment service
+      tags:
+        - customerAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRequestBody'
+  /requestPrivacyEdgeProc:
+    post:
+      summary: Execute function on private data
+      description: ''
+      operationId: requestPrivacyEdgeProc
+      responses:
+        200:
+          description: Successful function deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateExecutionResult'
+        401:
+          description: Unauthorized request due to invalid token
+        403:
+          description: Request prohibited by contract/consent
+        404:
+          description: Execution request parameters not found
+        408:
+          description: Function deployment timeout
+        412:
+          description: Undeployable request due to privacy zone restriction
+        500:
+          description: Unexpected error
+        503:
+          description: Insufficient compute resources or unavailable deployment service
+      tags:
+        - customerAPI
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivateExecutionRequestBody'
+externalDocs:
+  url: 'https://github.com/Prometheus-X-association/edge-computing'
+components:
+  schemas:
+    ContractID:
+      type: string
+      description: Unique contract ID
+      example: CONTRACT42
+    ConsentID:
+      type: string
+      description: Unique consent ID
+      example: CONSENT42
+    FunctionID:
+      type: string
+      description: Unique reference/ID of the function to be applied to the private data
+      example: FUNCTIONDATA42
+    DataID:
+      type: string
+      description: Unique reference/ID of the data
+      example: DATA42
+    AccessToken:
+      type: string
+      description: Unique token created by the DataProvider related to the user's consent
+      example: TOKEN42
+    ExecutionRequestBody:
+      type: object
+      description: Function execution parameters
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        data:
+          $ref: '#/components/schemas/DataID'
+        data_contract:
+          $ref: '#/components/schemas/ContractID'
+        func_contract:
+          $ref: '#/components/schemas/ContractID'
+    PrivateExecutionRequestBody:
+      type: object
+      description: Function execution parameters
+      properties:
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        data_contract:
+          $ref: '#/components/schemas/ContractID'
+        func_contract:
+          $ref: '#/components/schemas/ContractID'
+        consent:
+          $ref: '#/components/schemas/ConsentID'
+        token:
+          $ref: '#/components/schemas/AccessToken'
+    OperationID:
+      type: string
+      description: Unique operation identifier
+      example: 11111111-2222-3333-4444-555555555555
+    ExecutionMetrics:
+      type: object
+      description: Collected execution metrics
+      properties:
+        ret:
+          type: integer
+          description: Return value of the function
+          example: 0
+        elapsedTime:
+          type: integer
+          description: Elapsed time of the function
+          example: 42
+    ExecutionResult:
+      type: object
+      description: The result of the function execution on data
+      required:
+        - uuid
+        - function
+        - data
+      properties:
+        uuid:
+          $ref: '#/components/schemas/OperationID'
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        data:
+          $ref: '#/components/schemas/DataID'
+        metrics:
+          $ref: '#/components/schemas/ExecutionMetrics'
+    PrivateExecutionResult:
+      type: object
+      description: The result of the function execution on data
+      required:
+        - uuid
+        - function
+        - private_data
+      properties:
+        uuid:
+          $ref: '#/components/schemas/OperationID'
+        function:
+          $ref: '#/components/schemas/FunctionID'
+        private_data:
+          $ref: '#/components/schemas/DataID'
+        metrics:
+          $ref: '#/components/schemas/ExecutionMetrics'
+  links: {}
+  callbacks: {}
+tags:
+  - name: customerAPI
+    description: Customer-facing API (EdgeAPI)
+  - name: connectorAPI
+    description: Connector-facing API (PrivacyPreservingPDC)
+security: []
+servers: []
