@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Edge Computing REST-API
+  title: PTX Edge Computing REST-API
   version: 0.0.1
   contact:
     email: czentye.janos@vik.bme.hu
