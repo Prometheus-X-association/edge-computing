@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Edge Computing REST-API
+  title: PTX Edge Computing REST-API
   description: The Edge Computing (Decentralized AI processing) BB-02 provides value-added
     services exploiting an underlying distributed edge computing infrastructure.
   contact:

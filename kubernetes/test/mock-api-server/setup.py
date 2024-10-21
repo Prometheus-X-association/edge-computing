@@ -13,17 +13,17 @@ VERSION = "1.0.0"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
-    "connexion",
+    "connexion>=2.6.0,<3.0",
     "swagger-ui-bundle>=0.0.2"
 ]
 
 setup(
     name=NAME,
     version=VERSION,
-    description="Edge Computing REST-API",
+    description="PTX Edge Computing REST-API",
     author_email="czentye.janos@vik.bme.hu",
     url="",
-    keywords=["Swagger", "Edge Computing REST-API"],
+    keywords=["Swagger", "PTX Edge Computing REST-API"],
     install_requires=REQUIRES,
     packages=find_packages(),
     package_data={'': ['swagger/swagger.yaml']},
