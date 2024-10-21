@@ -20,8 +20,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecutionResult'
-        '401':
-          description: Unauthorized request due to invalid token
         '403':
           description: Request prohibited by contract/consent
         '404':
@@ -128,6 +126,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateExecutionResult'
+        '401':
+          description: Unauthorized request due to invalid token
+        '403':
+          description: Request prohibited by contract/consent
+        '404':
+          description: Execution request parameters not found
+        '408':
+          description: Function deployment timeout
+        '412':
+          description: Undeployable request due to privacy zone restriction
+        '500':
+          description: Unexpected error
+        '503':
+          description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
       parameters: []
