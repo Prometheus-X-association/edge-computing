@@ -88,68 +88,94 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.customer_api_controller
 components:
   schemas:
-    ContractID:
-      type: string
-      description: Unique contract ID
-      example: CONTRACT42
-    ConsentID:
-      type: string
-      description: Unique consent ID
-      example: CONSENT42
-    FunctionID:
-      type: string
-      description: Unique reference/ID of the function to be applied to the private
-        data
-      example: FUNCTIONDATA42
-    DataID:
-      type: string
-      description: Unique reference/ID of the data
-      example: DATA42
-    AccessToken:
-      type: string
-      description: Unique token created by the DataProvider related to the user's
-        consent
-      example: TOKEN42
+    Metadata:
+      type: object
+      additionalProperties:
+        oneOf:
+        - type: string
+        - type: integer
+      description: Arbitrary key-value pairs
+      example:
+        privacy-zone: zone-A
+        CPU-limit: 2
     ExecutionRequestBody:
+      required:
+      - data
+      - data_contract
+      - func_contract
+      - function
       type: object
       properties:
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private
+            data
+          example: FunctionData42
         data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         data_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         func_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
+        metadata:
+          $ref: '#/components/schemas/Metadata'
       description: Function execution parameters
     PrivateExecutionRequestBody:
+      required:
+      - consent
+      - data_contract
+      - func_contract
+      - function
+      - private_data
+      - token
       type: object
       properties:
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private
+            data
+          example: FunctionData42
         private_data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         data_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         func_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         consent:
-          $ref: '#/components/schemas/ConsentID'
+          type: string
+          description: Unique consent ID
+          example: Consent42
         token:
-          $ref: '#/components/schemas/AccessToken'
+          type: string
+          description: Unique token created by the DataProvider related to the user's
+            consent
+          example: Token42
+        metadata:
+          $ref: '#/components/schemas/Metadata'
       description: Function execution parameters
-    OperationID:
-      type: string
-      description: Unique operation identifier
-      example: 11111111-2222-3333-4444-555555555555
     ExecutionMetrics:
       type: object
       properties:
         ret:
+          maximum: 255
+          minimum: 0
           type: integer
           description: Return value of the function
           example: 0
         elapsedTime:
+          minimum: 0
           type: integer
           description: Elapsed time of the function
           example: 42
@@ -165,17 +191,25 @@ components:
       type: object
       properties:
         uuid:
-          $ref: '#/components/schemas/OperationID'
+          type: string
+          description: Unique operation identifier
+          format: uuid
+          example: 11111111-2222-3333-4444-555555555555
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private
+            data
+          example: FunctionData42
         data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         metrics:
           $ref: '#/components/schemas/ExecutionMetrics'
       description: The result of the function execution on data
       example:
-        data: DATA42
-        function: FUNCTIONDATA42
+        data: Data42
+        function: FunctionData42
         metrics:
           ret: 0
           elapsedTime: 42
@@ -188,17 +222,25 @@ components:
       type: object
       properties:
         uuid:
-          $ref: '#/components/schemas/OperationID'
+          type: string
+          description: Unique operation identifier
+          format: uuid
+          example: 11111111-2222-3333-4444-555555555555
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private
+            data
+          example: FunctionData42
         private_data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         metrics:
           $ref: '#/components/schemas/ExecutionMetrics'
       description: The result of the function execution on data
       example:
-        private_data: DATA42
-        function: FUNCTIONDATA42
+        private_data: Data42
+        function: FunctionData42
         metrics:
           ret: 0
           elapsedTime: 42

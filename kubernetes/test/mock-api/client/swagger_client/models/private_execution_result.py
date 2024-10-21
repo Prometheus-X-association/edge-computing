@@ -28,9 +28,9 @@ class PrivateExecutionResult(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'uuid': 'OperationID',
-        'function': 'FunctionID',
-        'private_data': 'DataID',
+        'uuid': 'str',
+        'function': 'str',
+        'private_data': 'str',
         'metrics': 'ExecutionMetrics'
     }
 
@@ -58,9 +58,10 @@ class PrivateExecutionResult(object):
     def uuid(self):
         """Gets the uuid of this PrivateExecutionResult.  # noqa: E501
 
+        Unique operation identifier  # noqa: E501
 
         :return: The uuid of this PrivateExecutionResult.  # noqa: E501
-        :rtype: OperationID
+        :rtype: str
         """
         return self._uuid
 
@@ -68,9 +69,10 @@ class PrivateExecutionResult(object):
     def uuid(self, uuid):
         """Sets the uuid of this PrivateExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :param uuid: The uuid of this PrivateExecutionResult.  # noqa: E501
-        :type: OperationID
+        :type: str
         """
         if uuid is None:
             raise ValueError("Invalid value for `uuid`, must not be `None`")  # noqa: E501
@@ -81,9 +83,10 @@ class PrivateExecutionResult(object):
     def function(self):
         """Gets the function of this PrivateExecutionResult.  # noqa: E501
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this PrivateExecutionResult.  # noqa: E501
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
@@ -91,9 +94,10 @@ class PrivateExecutionResult(object):
     def function(self, function):
         """Sets the function of this PrivateExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this PrivateExecutionResult.  # noqa: E501
-        :type: FunctionID
+        :type: str
         """
         if function is None:
             raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
@@ -104,9 +108,10 @@ class PrivateExecutionResult(object):
     def private_data(self):
         """Gets the private_data of this PrivateExecutionResult.  # noqa: E501
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The private_data of this PrivateExecutionResult.  # noqa: E501
-        :rtype: DataID
+        :rtype: str
         """
         return self._private_data
 
@@ -114,9 +119,10 @@ class PrivateExecutionResult(object):
     def private_data(self, private_data):
         """Sets the private_data of this PrivateExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param private_data: The private_data of this PrivateExecutionResult.  # noqa: E501
-        :type: DataID
+        :type: str
         """
         if private_data is None:
             raise ValueError("Invalid value for `private_data`, must not be `None`")  # noqa: E501

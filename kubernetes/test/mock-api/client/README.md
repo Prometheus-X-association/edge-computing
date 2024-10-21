@@ -85,15 +85,10 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
- - [AccessToken](docs/AccessToken.md)
- - [ConsentID](docs/ConsentID.md)
- - [ContractID](docs/ContractID.md)
- - [DataID](docs/DataID.md)
  - [ExecutionMetrics](docs/ExecutionMetrics.md)
  - [ExecutionRequestBody](docs/ExecutionRequestBody.md)
  - [ExecutionResult](docs/ExecutionResult.md)
- - [FunctionID](docs/FunctionID.md)
- - [OperationID](docs/OperationID.md)
+ - [Metadata](docs/Metadata.md)
  - [PrivateExecutionRequestBody](docs/PrivateExecutionRequestBody.md)
  - [PrivateExecutionResult](docs/PrivateExecutionResult.md)
 

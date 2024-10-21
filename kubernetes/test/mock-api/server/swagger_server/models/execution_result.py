@@ -6,10 +6,7 @@ from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
 from swagger_server.models.base_model_ import Model
-from swagger_server.models.data_id import DataID  # noqa: F401,E501
 from swagger_server.models.execution_metrics import ExecutionMetrics  # noqa: F401,E501
-from swagger_server.models.function_id import FunctionID  # noqa: F401,E501
-from swagger_server.models.operation_id import OperationID  # noqa: F401,E501
 from swagger_server import util
 
 
@@ -18,22 +15,22 @@ class ExecutionResult(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, uuid: OperationID=None, function: FunctionID=None, data: DataID=None, metrics: ExecutionMetrics=None):  # noqa: E501
+    def __init__(self, uuid: str=None, function: str=None, data: str=None, metrics: ExecutionMetrics=None):  # noqa: E501
         """ExecutionResult - a model defined in Swagger
 
         :param uuid: The uuid of this ExecutionResult.  # noqa: E501
-        :type uuid: OperationID
+        :type uuid: str
         :param function: The function of this ExecutionResult.  # noqa: E501
-        :type function: FunctionID
+        :type function: str
         :param data: The data of this ExecutionResult.  # noqa: E501
-        :type data: DataID
+        :type data: str
         :param metrics: The metrics of this ExecutionResult.  # noqa: E501
         :type metrics: ExecutionMetrics
         """
         self.swagger_types = {
-            'uuid': OperationID,
-            'function': FunctionID,
-            'data': DataID,
+            'uuid': str,
+            'function': str,
+            'data': str,
             'metrics': ExecutionMetrics
         }
 
@@ -60,22 +57,24 @@ class ExecutionResult(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def uuid(self) -> OperationID:
+    def uuid(self) -> str:
         """Gets the uuid of this ExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :return: The uuid of this ExecutionResult.
-        :rtype: OperationID
+        :rtype: str
         """
         return self._uuid
 
     @uuid.setter
-    def uuid(self, uuid: OperationID):
+    def uuid(self, uuid: str):
         """Sets the uuid of this ExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :param uuid: The uuid of this ExecutionResult.
-        :type uuid: OperationID
+        :type uuid: str
         """
         if uuid is None:
             raise ValueError("Invalid value for `uuid`, must not be `None`")  # noqa: E501
@@ -83,22 +82,24 @@ class ExecutionResult(Model):
         self._uuid = uuid
 
     @property
-    def function(self) -> FunctionID:
+    def function(self) -> str:
         """Gets the function of this ExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this ExecutionResult.
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
     @function.setter
-    def function(self, function: FunctionID):
+    def function(self, function: str):
         """Sets the function of this ExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this ExecutionResult.
-        :type function: FunctionID
+        :type function: str
         """
         if function is None:
             raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
@@ -106,22 +107,24 @@ class ExecutionResult(Model):
         self._function = function
 
     @property
-    def data(self) -> DataID:
+    def data(self) -> str:
         """Gets the data of this ExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The data of this ExecutionResult.
-        :rtype: DataID
+        :rtype: str
         """
         return self._data
 
     @data.setter
-    def data(self, data: DataID):
+    def data(self, data: str):
         """Sets the data of this ExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param data: The data of this ExecutionResult.
-        :type data: DataID
+        :type data: str
         """
         if data is None:
             raise ValueError("Invalid value for `data`, must not be `None`")  # noqa: E501

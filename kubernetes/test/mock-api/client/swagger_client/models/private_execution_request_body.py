@@ -28,12 +28,13 @@ class PrivateExecutionRequestBody(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'function': 'FunctionID',
-        'private_data': 'DataID',
-        'data_contract': 'ContractID',
-        'func_contract': 'ContractID',
-        'consent': 'ConsentID',
-        'token': 'AccessToken'
+        'function': 'str',
+        'private_data': 'str',
+        'data_contract': 'str',
+        'func_contract': 'str',
+        'consent': 'str',
+        'token': 'str',
+        'metadata': 'Metadata'
     }
 
     attribute_map = {
@@ -42,10 +43,11 @@ class PrivateExecutionRequestBody(object):
         'data_contract': 'data_contract',
         'func_contract': 'func_contract',
         'consent': 'consent',
-        'token': 'token'
+        'token': 'token',
+        'metadata': 'metadata'
     }
 
-    def __init__(self, function=None, private_data=None, data_contract=None, func_contract=None, consent=None, token=None):  # noqa: E501
+    def __init__(self, function=None, private_data=None, data_contract=None, func_contract=None, consent=None, token=None, metadata=None):  # noqa: E501
         """PrivateExecutionRequestBody - a model defined in Swagger"""  # noqa: E501
         self._function = None
         self._private_data = None
@@ -53,27 +55,25 @@ class PrivateExecutionRequestBody(object):
         self._func_contract = None
         self._consent = None
         self._token = None
+        self._metadata = None
         self.discriminator = None
-        if function is not None:
-            self.function = function
-        if private_data is not None:
-            self.private_data = private_data
-        if data_contract is not None:
-            self.data_contract = data_contract
-        if func_contract is not None:
-            self.func_contract = func_contract
-        if consent is not None:
-            self.consent = consent
-        if token is not None:
-            self.token = token
+        self.function = function
+        self.private_data = private_data
+        self.data_contract = data_contract
+        self.func_contract = func_contract
+        self.consent = consent
+        self.token = token
+        if metadata is not None:
+            self.metadata = metadata
 
     @property
     def function(self):
         """Gets the function of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
@@ -81,10 +81,13 @@ class PrivateExecutionRequestBody(object):
     def function(self, function):
         """Sets the function of this PrivateExecutionRequestBody.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: FunctionID
+        :type: str
         """
+        if function is None:
+            raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
 
         self._function = function
 
@@ -92,9 +95,10 @@ class PrivateExecutionRequestBody(object):
     def private_data(self):
         """Gets the private_data of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The private_data of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: DataID
+        :rtype: str
         """
         return self._private_data
 
@@ -102,10 +106,13 @@ class PrivateExecutionRequestBody(object):
     def private_data(self, private_data):
         """Sets the private_data of this PrivateExecutionRequestBody.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param private_data: The private_data of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: DataID
+        :type: str
         """
+        if private_data is None:
+            raise ValueError("Invalid value for `private_data`, must not be `None`")  # noqa: E501
 
         self._private_data = private_data
 
@@ -113,9 +120,10 @@ class PrivateExecutionRequestBody(object):
     def data_contract(self):
         """Gets the data_contract of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique contract ID  # noqa: E501
 
         :return: The data_contract of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: ContractID
+        :rtype: str
         """
         return self._data_contract
 
@@ -123,10 +131,13 @@ class PrivateExecutionRequestBody(object):
     def data_contract(self, data_contract):
         """Sets the data_contract of this PrivateExecutionRequestBody.
 
+        Unique contract ID  # noqa: E501
 
         :param data_contract: The data_contract of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: ContractID
+        :type: str
         """
+        if data_contract is None:
+            raise ValueError("Invalid value for `data_contract`, must not be `None`")  # noqa: E501
 
         self._data_contract = data_contract
 
@@ -134,9 +145,10 @@ class PrivateExecutionRequestBody(object):
     def func_contract(self):
         """Gets the func_contract of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique contract ID  # noqa: E501
 
         :return: The func_contract of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: ContractID
+        :rtype: str
         """
         return self._func_contract
 
@@ -144,10 +156,13 @@ class PrivateExecutionRequestBody(object):
     def func_contract(self, func_contract):
         """Sets the func_contract of this PrivateExecutionRequestBody.
 
+        Unique contract ID  # noqa: E501
 
         :param func_contract: The func_contract of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: ContractID
+        :type: str
         """
+        if func_contract is None:
+            raise ValueError("Invalid value for `func_contract`, must not be `None`")  # noqa: E501
 
         self._func_contract = func_contract
 
@@ -155,9 +170,10 @@ class PrivateExecutionRequestBody(object):
     def consent(self):
         """Gets the consent of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique consent ID  # noqa: E501
 
         :return: The consent of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: ConsentID
+        :rtype: str
         """
         return self._consent
 
@@ -165,10 +181,13 @@ class PrivateExecutionRequestBody(object):
     def consent(self, consent):
         """Sets the consent of this PrivateExecutionRequestBody.
 
+        Unique consent ID  # noqa: E501
 
         :param consent: The consent of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: ConsentID
+        :type: str
         """
+        if consent is None:
+            raise ValueError("Invalid value for `consent`, must not be `None`")  # noqa: E501
 
         self._consent = consent
 
@@ -176,9 +195,10 @@ class PrivateExecutionRequestBody(object):
     def token(self):
         """Gets the token of this PrivateExecutionRequestBody.  # noqa: E501
 
+        Unique token created by the DataProvider related to the user's consent  # noqa: E501
 
         :return: The token of this PrivateExecutionRequestBody.  # noqa: E501
-        :rtype: AccessToken
+        :rtype: str
         """
         return self._token
 
@@ -186,12 +206,36 @@ class PrivateExecutionRequestBody(object):
     def token(self, token):
         """Sets the token of this PrivateExecutionRequestBody.
 
+        Unique token created by the DataProvider related to the user's consent  # noqa: E501
 
         :param token: The token of this PrivateExecutionRequestBody.  # noqa: E501
-        :type: AccessToken
+        :type: str
         """
+        if token is None:
+            raise ValueError("Invalid value for `token`, must not be `None`")  # noqa: E501
 
         self._token = token
+
+    @property
+    def metadata(self):
+        """Gets the metadata of this PrivateExecutionRequestBody.  # noqa: E501
+
+
+        :return: The metadata of this PrivateExecutionRequestBody.  # noqa: E501
+        :rtype: Metadata
+        """
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata):
+        """Sets the metadata of this PrivateExecutionRequestBody.
+
+
+        :param metadata: The metadata of this PrivateExecutionRequestBody.  # noqa: E501
+        :type: Metadata
+        """
+
+        self._metadata = metadata
 
     def to_dict(self):
         """Returns the model properties as a dict"""

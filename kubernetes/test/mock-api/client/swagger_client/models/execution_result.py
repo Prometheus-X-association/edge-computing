@@ -28,9 +28,9 @@ class ExecutionResult(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'uuid': 'OperationID',
-        'function': 'FunctionID',
-        'data': 'DataID',
+        'uuid': 'str',
+        'function': 'str',
+        'data': 'str',
         'metrics': 'ExecutionMetrics'
     }
 
@@ -58,9 +58,10 @@ class ExecutionResult(object):
     def uuid(self):
         """Gets the uuid of this ExecutionResult.  # noqa: E501
 
+        Unique operation identifier  # noqa: E501
 
         :return: The uuid of this ExecutionResult.  # noqa: E501
-        :rtype: OperationID
+        :rtype: str
         """
         return self._uuid
 
@@ -68,9 +69,10 @@ class ExecutionResult(object):
     def uuid(self, uuid):
         """Sets the uuid of this ExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :param uuid: The uuid of this ExecutionResult.  # noqa: E501
-        :type: OperationID
+        :type: str
         """
         if uuid is None:
             raise ValueError("Invalid value for `uuid`, must not be `None`")  # noqa: E501
@@ -81,9 +83,10 @@ class ExecutionResult(object):
     def function(self):
         """Gets the function of this ExecutionResult.  # noqa: E501
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this ExecutionResult.  # noqa: E501
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
@@ -91,9 +94,10 @@ class ExecutionResult(object):
     def function(self, function):
         """Sets the function of this ExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this ExecutionResult.  # noqa: E501
-        :type: FunctionID
+        :type: str
         """
         if function is None:
             raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
@@ -104,9 +108,10 @@ class ExecutionResult(object):
     def data(self):
         """Gets the data of this ExecutionResult.  # noqa: E501
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The data of this ExecutionResult.  # noqa: E501
-        :rtype: DataID
+        :rtype: str
         """
         return self._data
 
@@ -114,9 +119,10 @@ class ExecutionResult(object):
     def data(self, data):
         """Sets the data of this ExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param data: The data of this ExecutionResult.  # noqa: E501
-        :type: DataID
+        :type: str
         """
         if data is None:
             raise ValueError("Invalid value for `data`, must not be `None`")  # noqa: E501

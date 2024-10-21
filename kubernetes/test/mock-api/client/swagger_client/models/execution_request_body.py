@@ -28,42 +28,44 @@ class ExecutionRequestBody(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'function': 'FunctionID',
-        'data': 'DataID',
-        'data_contract': 'ContractID',
-        'func_contract': 'ContractID'
+        'function': 'str',
+        'data': 'str',
+        'data_contract': 'str',
+        'func_contract': 'str',
+        'metadata': 'Metadata'
     }
 
     attribute_map = {
         'function': 'function',
         'data': 'data',
         'data_contract': 'data_contract',
-        'func_contract': 'func_contract'
+        'func_contract': 'func_contract',
+        'metadata': 'metadata'
     }
 
-    def __init__(self, function=None, data=None, data_contract=None, func_contract=None):  # noqa: E501
+    def __init__(self, function=None, data=None, data_contract=None, func_contract=None, metadata=None):  # noqa: E501
         """ExecutionRequestBody - a model defined in Swagger"""  # noqa: E501
         self._function = None
         self._data = None
         self._data_contract = None
         self._func_contract = None
+        self._metadata = None
         self.discriminator = None
-        if function is not None:
-            self.function = function
-        if data is not None:
-            self.data = data
-        if data_contract is not None:
-            self.data_contract = data_contract
-        if func_contract is not None:
-            self.func_contract = func_contract
+        self.function = function
+        self.data = data
+        self.data_contract = data_contract
+        self.func_contract = func_contract
+        if metadata is not None:
+            self.metadata = metadata
 
     @property
     def function(self):
         """Gets the function of this ExecutionRequestBody.  # noqa: E501
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this ExecutionRequestBody.  # noqa: E501
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
@@ -71,10 +73,13 @@ class ExecutionRequestBody(object):
     def function(self, function):
         """Sets the function of this ExecutionRequestBody.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this ExecutionRequestBody.  # noqa: E501
-        :type: FunctionID
+        :type: str
         """
+        if function is None:
+            raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
 
         self._function = function
 
@@ -82,9 +87,10 @@ class ExecutionRequestBody(object):
     def data(self):
         """Gets the data of this ExecutionRequestBody.  # noqa: E501
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The data of this ExecutionRequestBody.  # noqa: E501
-        :rtype: DataID
+        :rtype: str
         """
         return self._data
 
@@ -92,10 +98,13 @@ class ExecutionRequestBody(object):
     def data(self, data):
         """Sets the data of this ExecutionRequestBody.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param data: The data of this ExecutionRequestBody.  # noqa: E501
-        :type: DataID
+        :type: str
         """
+        if data is None:
+            raise ValueError("Invalid value for `data`, must not be `None`")  # noqa: E501
 
         self._data = data
 
@@ -103,9 +112,10 @@ class ExecutionRequestBody(object):
     def data_contract(self):
         """Gets the data_contract of this ExecutionRequestBody.  # noqa: E501
 
+        Unique contract ID  # noqa: E501
 
         :return: The data_contract of this ExecutionRequestBody.  # noqa: E501
-        :rtype: ContractID
+        :rtype: str
         """
         return self._data_contract
 
@@ -113,10 +123,13 @@ class ExecutionRequestBody(object):
     def data_contract(self, data_contract):
         """Sets the data_contract of this ExecutionRequestBody.
 
+        Unique contract ID  # noqa: E501
 
         :param data_contract: The data_contract of this ExecutionRequestBody.  # noqa: E501
-        :type: ContractID
+        :type: str
         """
+        if data_contract is None:
+            raise ValueError("Invalid value for `data_contract`, must not be `None`")  # noqa: E501
 
         self._data_contract = data_contract
 
@@ -124,9 +137,10 @@ class ExecutionRequestBody(object):
     def func_contract(self):
         """Gets the func_contract of this ExecutionRequestBody.  # noqa: E501
 
+        Unique contract ID  # noqa: E501
 
         :return: The func_contract of this ExecutionRequestBody.  # noqa: E501
-        :rtype: ContractID
+        :rtype: str
         """
         return self._func_contract
 
@@ -134,12 +148,36 @@ class ExecutionRequestBody(object):
     def func_contract(self, func_contract):
         """Sets the func_contract of this ExecutionRequestBody.
 
+        Unique contract ID  # noqa: E501
 
         :param func_contract: The func_contract of this ExecutionRequestBody.  # noqa: E501
-        :type: ContractID
+        :type: str
         """
+        if func_contract is None:
+            raise ValueError("Invalid value for `func_contract`, must not be `None`")  # noqa: E501
 
         self._func_contract = func_contract
+
+    @property
+    def metadata(self):
+        """Gets the metadata of this ExecutionRequestBody.  # noqa: E501
+
+
+        :return: The metadata of this ExecutionRequestBody.  # noqa: E501
+        :rtype: Metadata
+        """
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata):
+        """Sets the metadata of this ExecutionRequestBody.
+
+
+        :param metadata: The metadata of this ExecutionRequestBody.  # noqa: E501
+        :type: Metadata
+        """
+
+        self._metadata = metadata
 
     def to_dict(self):
         """Returns the model properties as a dict"""

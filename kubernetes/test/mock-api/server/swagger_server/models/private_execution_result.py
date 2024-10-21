@@ -6,10 +6,7 @@ from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
 from swagger_server.models.base_model_ import Model
-from swagger_server.models.data_id import DataID  # noqa: F401,E501
 from swagger_server.models.execution_metrics import ExecutionMetrics  # noqa: F401,E501
-from swagger_server.models.function_id import FunctionID  # noqa: F401,E501
-from swagger_server.models.operation_id import OperationID  # noqa: F401,E501
 from swagger_server import util
 
 
@@ -18,22 +15,22 @@ class PrivateExecutionResult(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, uuid: OperationID=None, function: FunctionID=None, private_data: DataID=None, metrics: ExecutionMetrics=None):  # noqa: E501
+    def __init__(self, uuid: str=None, function: str=None, private_data: str=None, metrics: ExecutionMetrics=None):  # noqa: E501
         """PrivateExecutionResult - a model defined in Swagger
 
         :param uuid: The uuid of this PrivateExecutionResult.  # noqa: E501
-        :type uuid: OperationID
+        :type uuid: str
         :param function: The function of this PrivateExecutionResult.  # noqa: E501
-        :type function: FunctionID
+        :type function: str
         :param private_data: The private_data of this PrivateExecutionResult.  # noqa: E501
-        :type private_data: DataID
+        :type private_data: str
         :param metrics: The metrics of this PrivateExecutionResult.  # noqa: E501
         :type metrics: ExecutionMetrics
         """
         self.swagger_types = {
-            'uuid': OperationID,
-            'function': FunctionID,
-            'private_data': DataID,
+            'uuid': str,
+            'function': str,
+            'private_data': str,
             'metrics': ExecutionMetrics
         }
 
@@ -60,22 +57,24 @@ class PrivateExecutionResult(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def uuid(self) -> OperationID:
+    def uuid(self) -> str:
         """Gets the uuid of this PrivateExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :return: The uuid of this PrivateExecutionResult.
-        :rtype: OperationID
+        :rtype: str
         """
         return self._uuid
 
     @uuid.setter
-    def uuid(self, uuid: OperationID):
+    def uuid(self, uuid: str):
         """Sets the uuid of this PrivateExecutionResult.
 
+        Unique operation identifier  # noqa: E501
 
         :param uuid: The uuid of this PrivateExecutionResult.
-        :type uuid: OperationID
+        :type uuid: str
         """
         if uuid is None:
             raise ValueError("Invalid value for `uuid`, must not be `None`")  # noqa: E501
@@ -83,22 +82,24 @@ class PrivateExecutionResult(Model):
         self._uuid = uuid
 
     @property
-    def function(self) -> FunctionID:
+    def function(self) -> str:
         """Gets the function of this PrivateExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :return: The function of this PrivateExecutionResult.
-        :rtype: FunctionID
+        :rtype: str
         """
         return self._function
 
     @function.setter
-    def function(self, function: FunctionID):
+    def function(self, function: str):
         """Sets the function of this PrivateExecutionResult.
 
+        Unique reference/ID of the function to be applied to the private data  # noqa: E501
 
         :param function: The function of this PrivateExecutionResult.
-        :type function: FunctionID
+        :type function: str
         """
         if function is None:
             raise ValueError("Invalid value for `function`, must not be `None`")  # noqa: E501
@@ -106,22 +107,24 @@ class PrivateExecutionResult(Model):
         self._function = function
 
     @property
-    def private_data(self) -> DataID:
+    def private_data(self) -> str:
         """Gets the private_data of this PrivateExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :return: The private_data of this PrivateExecutionResult.
-        :rtype: DataID
+        :rtype: str
         """
         return self._private_data
 
     @private_data.setter
-    def private_data(self, private_data: DataID):
+    def private_data(self, private_data: str):
         """Sets the private_data of this PrivateExecutionResult.
 
+        Unique reference/ID of the data  # noqa: E501
 
         :param private_data: The private_data of this PrivateExecutionResult.
-        :type private_data: DataID
+        :type private_data: str
         """
         if private_data is None:
             raise ValueError("Invalid value for `private_data`, must not be `None`")  # noqa: E501
