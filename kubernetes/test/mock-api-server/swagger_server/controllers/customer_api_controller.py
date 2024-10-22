@@ -1,11 +1,9 @@
 import connexion
-import six
 
 from swagger_server.models.execution_request_body import ExecutionRequestBody  # noqa: E501
 from swagger_server.models.execution_result import ExecutionResult  # noqa: E501
 from swagger_server.models.private_execution_request_body import PrivateExecutionRequestBody  # noqa: E501
 from swagger_server.models.private_execution_result import PrivateExecutionResult  # noqa: E501
-from swagger_server import util
 
 
 def request_edge_proc(body):  # noqa: E501

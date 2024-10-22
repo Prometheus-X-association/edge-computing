@@ -1,12 +1,12 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from datetime import date, datetime  # noqa: F401
 
+from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
-from swagger_server.models.base_model_ import Model
 from swagger_server import util
+from swagger_server.models.base_model_ import Model
 
 
 class ExecutionMetrics(Model):
@@ -14,7 +14,8 @@ class ExecutionMetrics(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, ret: int=None, elapsed_time: int=None):  # noqa: E501
+
+    def __init__(self, ret: int = None, elapsed_time: int = None):  # noqa: E501
         """ExecutionMetrics - a model defined in Swagger
 
         :param ret: The ret of this ExecutionMetrics.  # noqa: E501

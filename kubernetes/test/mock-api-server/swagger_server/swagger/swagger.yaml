@@ -9,21 +9,21 @@ info:
 externalDocs:
   url: https://github.com/Prometheus-X-association/edge-computing
 servers:
-- url: /
+  - url: /
 tags:
-- name: customerAPI
-  description: Customer-facing API (EdgeAPI)
-- name: connectorAPI
-  description: Connector-facing API (PrivacyPreservingPDC)
+  - name: customerAPI
+    description: Customer-facing API (EdgeAPI)
+  - name: connectorAPI
+    description: Connector-facing API (PrivacyPreservingPDC)
 paths:
   /requestEdgeProc:
     post:
       tags:
-      - customerAPI
+        - customerAPI
       summary: Execute function on data
       description: ""
       operationId: request_edge_proc
-      parameters: []
+      parameters: [ ]
       requestBody:
         content:
           application/json:
@@ -53,11 +53,11 @@ paths:
   /requestPrivacyEdgeProc:
     post:
       tags:
-      - customerAPI
+        - customerAPI
       summary: Execute function on private data
       description: ""
       operationId: request_privacy_edge_proc
-      parameters: []
+      parameters: [ ]
       requestBody:
         content:
           application/json:
@@ -92,18 +92,18 @@ components:
       type: object
       additionalProperties:
         oneOf:
-        - type: string
-        - type: integer
+          - type: string
+          - type: integer
       description: Arbitrary key-value pairs
       example:
         privacy-zone: zone-A
         CPU-limit: 2
     ExecutionRequestBody:
       required:
-      - data
-      - data_contract
-      - func_contract
-      - function
+        - data
+        - data_contract
+        - func_contract
+        - function
       type: object
       properties:
         function:
@@ -128,12 +128,12 @@ components:
       description: Function execution parameters
     PrivateExecutionRequestBody:
       required:
-      - consent
-      - data_contract
-      - func_contract
-      - function
-      - private_data
-      - token
+        - consent
+        - data_contract
+        - func_contract
+        - function
+        - private_data
+        - token
       type: object
       properties:
         function:
@@ -185,9 +185,9 @@ components:
         elapsedTime: 42
     ExecutionResult:
       required:
-      - data
-      - function
-      - uuid
+        - data
+        - function
+        - uuid
       type: object
       properties:
         uuid:
@@ -216,9 +216,9 @@ components:
         uuid: 11111111-2222-3333-4444-555555555555
     PrivateExecutionResult:
       required:
-      - function
-      - private_data
-      - uuid
+        - function
+        - private_data
+        - uuid
       type: object
       properties:
         uuid:
@@ -245,6 +245,6 @@ components:
           ret: 0
           elapsedTime: 42
         uuid: 11111111-2222-3333-4444-555555555555
-  links: {}
-  callbacks: {}
+  links: { }
+  callbacks: { }
 

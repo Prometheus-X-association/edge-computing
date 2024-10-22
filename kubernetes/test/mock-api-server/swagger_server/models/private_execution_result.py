@@ -1,13 +1,13 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from datetime import date, datetime  # noqa: F401
 
+from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
+from swagger_server import util
 from swagger_server.models.base_model_ import Model
 from swagger_server.models.execution_metrics import ExecutionMetrics  # noqa: F401,E501
-from swagger_server import util
 
 
 class PrivateExecutionResult(Model):
@@ -15,7 +15,9 @@ class PrivateExecutionResult(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, uuid: str=None, function: str=None, private_data: str=None, metrics: ExecutionMetrics=None):  # noqa: E501
+
+    def __init__(self, uuid: str = None, function: str = None, private_data: str = None,
+                 metrics: ExecutionMetrics = None):  # noqa: E501
         """PrivateExecutionResult - a model defined in Swagger
 
         :param uuid: The uuid of this PrivateExecutionResult.  # noqa: E501

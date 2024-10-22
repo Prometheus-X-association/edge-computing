@@ -3,15 +3,12 @@
 from __future__ import absolute_import
 
 from flask import json
-from six import BytesIO
 
 from swagger_server.models.execution_request_body import ExecutionRequestBody  # noqa: E501
-from swagger_server.models.execution_result import ExecutionResult  # noqa: E501
 from swagger_server.models.private_execution_request_body import PrivateExecutionRequestBody  # noqa: E501
-from swagger_server.models.private_execution_result import PrivateExecutionResult  # noqa: E501
 from swagger_server.test import BaseTestCase
-
 from swagger_server.test.examples import EXAMPLE_EDGE_PROC_REQ, EXAMPLE_PRIV_EDGE_PROC_REQ
+
 
 class TestCustomerAPIController(BaseTestCase):
     """CustomerAPIController integration test stubs"""
@@ -47,4 +44,5 @@ class TestCustomerAPIController(BaseTestCase):
 
 if __name__ == '__main__':
     import unittest
+
     unittest.main()
