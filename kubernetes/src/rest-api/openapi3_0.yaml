@@ -14,23 +14,25 @@ paths:
       description: ''
       operationId: requestEdgeProc
       responses:
-        '200':
+        200:
           description: Successful function deployment
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecutionResult'
-        '403':
+        400:
+          description: Malformed deployment request
+        403:
           description: Request prohibited by contract/consent
-        '404':
+        404:
           description: Execution request parameters not found
-        '408':
+        408:
           description: Function deployment timeout
-        '412':
+        412:
           description: Undeployable request due to privacy zone restriction
-        '500':
+        500:
           description: Unexpected error
-        '503':
+        503:
           description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
@@ -53,6 +55,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateExecutionResult'
+        400:
+          description: Malformed deployment request
         401:
           description: Unauthorized request due to invalid token
         403:
@@ -80,58 +84,81 @@ externalDocs:
   url: 'https://github.com/Prometheus-X-association/edge-computing'
 components:
   schemas:
-    ContractID:
-      type: string
-      description: Unique contract ID
-      example: CONTRACT42
-    ConsentID:
-      type: string
-      description: Unique consent ID
-      example: CONSENT42
-    FunctionID:
-      type: string
-      description: Unique reference/ID of the function to be applied to the private data
-      example: FUNCTIONDATA42
-    DataID:
-      type: string
-      description: Unique reference/ID of the data
-      example: DATA42
-    AccessToken:
-      type: string
-      description: Unique token created by the DataProvider related to the user's consent
-      example: TOKEN42
+    Metadata:
+      type: object
+      description: Arbitrary key-value pairs
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: integer
+      example:
+        timeout: 42
+        privacy-zone: zone-A
+        CPU-demand: 42
     ExecutionRequestBody:
       type: object
       description: Function execution parameters
+      required:
+        - function
+        - data
+        - data_contract
+        - func_contract
       properties:
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private data
+          example: FunctionData42
         data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         data_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         func_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
+        metadata:
+          $ref: '#/components/schemas/Metadata'
     PrivateExecutionRequestBody:
       type: object
       description: Function execution parameters
+      required:
+        - function
+        - private_data
+        - data_contract
+        - func_contract
+        - consent
+        - token
       properties:
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private data
+          example: FunctionData42
         private_data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         data_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         func_contract:
-          $ref: '#/components/schemas/ContractID'
+          type: string
+          description: Unique contract ID
+          example: Contract42
         consent:
-          $ref: '#/components/schemas/ConsentID'
+          type: string
+          description: Unique consent ID
+          example: Consent42
         token:
-          $ref: '#/components/schemas/AccessToken'
-    OperationID:
-      type: string
-      description: Unique operation identifier
-      example: 11111111-2222-3333-4444-555555555555
+          type: string
+          description: Unique token created by the DataProvider related to the user's consent
+          example: Token42
+        metadata:
+          $ref: '#/components/schemas/Metadata'
     ExecutionMetrics:
       type: object
       description: Collected execution metrics
@@ -140,9 +167,12 @@ components:
           type: integer
           description: Return value of the function
           example: 0
+          minimum: 0
+          maximum: 255
         elapsedTime:
           type: integer
           description: Elapsed time of the function
+          minimum: 0
           example: 42
     ExecutionResult:
       type: object
@@ -153,11 +183,18 @@ components:
         - data
       properties:
         uuid:
-          $ref: '#/components/schemas/OperationID'
+          type: string
+          description: Unique operation identifier
+          format: uuid
+          example: 11111111-2222-3333-4444-555555555555
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private data
+          example: FunctionData42
         data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         metrics:
           $ref: '#/components/schemas/ExecutionMetrics'
     PrivateExecutionResult:
@@ -169,11 +206,18 @@ components:
         - private_data
       properties:
         uuid:
-          $ref: '#/components/schemas/OperationID'
+          type: string
+          description: Unique operation identifier
+          format: uuid
+          example: 11111111-2222-3333-4444-555555555555
         function:
-          $ref: '#/components/schemas/FunctionID'
+          type: string
+          description: Unique reference/ID of the function to be applied to the private data
+          example: FunctionData42
         private_data:
-          $ref: '#/components/schemas/DataID'
+          type: string
+          description: Unique reference/ID of the data
+          example: Data42
         metrics:
           $ref: '#/components/schemas/ExecutionMetrics'
   links: {}
