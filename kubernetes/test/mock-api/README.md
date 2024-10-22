@@ -40,13 +40,13 @@ $ python3.8 -m swagger_server
 and open your browser to here:
 
 ```
-http://localhost:8080/ui/
+http://localhost:8080/ptx-edge/v1/ui/
 ```
 
 Your Swagger definition lives here:
 
 ```
-http://localhost:8080/openapi.json
+http://localhost:8080/ptx-edge/v1/openapi.json
 ```
 
 ## Test
@@ -63,12 +63,12 @@ $ tox
 
 ## Running with Docker
 
-To run the server on a Docker container, please execute the following from the root directory:
+To run the server on a Docker container, please execute the following from the mockup root directory:
 
 ```bash
 # building the image
-docker build -t ptx-edge-api:0.0.1 .
+docker build -t ptx-edge-api:1.0 .
 
 # starting up a container
-docker run --rm -p 8080:8080 -it ptx-edge-api:0.0.1
+docker run --rm --name ptx-edge-api -p 8080:8080 -it ptx-edge-api:1.0
 ```

@@ -27,15 +27,15 @@ from swagger_server.test import BaseTestCase
 class TestCustomerAPIController(BaseTestCase):
     """CustomerAPIController integration test stubs"""
 
-    def test_request_edge_proc_ok(self):
-        """Test case for valid request_edge_proc request: HTTP 200
+    def test_request_edge_proc_a_ok(self):
+        """Test case for valid   request_edge_proc request: HTTP 200
 
         Execute function on data
         """
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -52,7 +52,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata = ""
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -68,7 +68,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.func_contract += "-restricted"
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -84,7 +84,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.function = ""
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -100,7 +100,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['timeout'] = 0
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -116,7 +116,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['privacy-zone'] = "zone-B"
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -132,22 +132,22 @@ class TestCustomerAPIController(BaseTestCase):
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['CPU-demand'] = 100
         response = self.client.open(
-            '/requestEdgeProc',
+            'ptx-edge/v1/requestEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
         self.assertStatus(response, 503,
                           'Response body is : ' + response.data.decode('utf-8'))
 
-    def test_request_privacy_edge_proc_ok(self):
-        """Test case for valid request_privacy_edge_proc request: HTTP 200
+    def test_request_privacy_edge_proc_a_ok(self):
+        """Test case for valid   request_privacy_edge_proc request: HTTP 200
 
         Execute function on private data
         """
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -164,7 +164,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata = ""
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -180,7 +180,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.token = ""
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -196,7 +196,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.consent += "-restricted"
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -212,7 +212,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.private_data = ""
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -228,7 +228,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['timeout'] = 0
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -244,7 +244,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['privacy-zone'] = "zone-B"
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')
@@ -260,7 +260,7 @@ class TestCustomerAPIController(BaseTestCase):
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['CPU-demand'] = 100
         response = self.client.open(
-            '/requestPrivacyEdgeProc',
+            'ptx-edge/v1/requestPrivacyEdgeProc',
             method='POST',
             data=json.dumps(body),
             content_type='application/json')

@@ -36,7 +36,7 @@ paths:
           description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -73,7 +73,7 @@ paths:
           description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -220,12 +220,15 @@ components:
           example: Data42
         metrics:
           $ref: '#/components/schemas/ExecutionMetrics'
-  links: {}
-  callbacks: {}
+  links: { }
+  callbacks: { }
 tags:
   - name: customerAPI
     description: Customer-facing API (EdgeAPI)
   - name: connectorAPI
     description: Connector-facing API (PrivacyPreservingPDC)
-security: []
-servers: []
+security: [ ]
+servers:
+  - url: /ptx-edge/v1
+    description: PTX Edge Computing
+

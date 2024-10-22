@@ -9,7 +9,8 @@ info:
 externalDocs:
   url: https://github.com/Prometheus-X-association/edge-computing
 servers:
-  - url: /
+  - url: /ptx-edge/v1
+    description: PTX Edge Computing
 tags:
   - name: customerAPI
     description: Customer-facing API (EdgeAPI)
