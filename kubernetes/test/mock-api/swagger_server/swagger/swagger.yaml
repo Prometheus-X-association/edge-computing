@@ -37,6 +37,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExecutionResult'
+        "400":
+          description: Malformed deployment request
         "403":
           description: Request prohibited by contract/consent
         "404":
@@ -71,6 +73,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateExecutionResult'
+        "400":
+          description: Malformed deployment request
         "401":
           description: Unauthorized request due to invalid token
         "403":
@@ -96,8 +100,9 @@ components:
           - type: integer
       description: Arbitrary key-value pairs
       example:
+        timeout: 42
         privacy-zone: zone-A
-        CPU-limit: 2
+        CPU-demand: 42
     ExecutionRequestBody:
       required:
         - data
