@@ -49,7 +49,7 @@ Your Swagger definition lives here:
 http://localhost:8080/ptx-edge/v1/openapi.json
 ```
 
-## Test
+## Testing the endpoints
 
 To prepare the integration tests, install tox:
 ```bash
