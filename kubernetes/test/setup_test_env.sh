@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Copyright 2024 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +51,9 @@ See more:
 
 EOF
 			sleep 3s;;
+	  *)
+	    echo "Invalid parameter: $flag"
+	    exit 1;;
 	esac
 done
 
@@ -77,9 +79,9 @@ if ! command -v docker >/dev/null; then
 
 		# Add support for Ubuntu 24.04
 		source /etc/lsb-release
-		if [ $DISTRIB_RELEASE = 24.04 ]; then
-			filename=$(echo $HOME/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
-			cat <<EOF > ~/${filename}
+		if [ "$DISTRIB_RELEASE" = 24.04 ]; then
+			filename=$(echo "$HOME"/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
+			cat <<EOF > ~/"$filename"
 abi <abi/4.0>,
 include <tunables/global>
 
@@ -89,12 +91,12 @@ include <tunables/global>
   include if exists <local/${filename}>
 }
 EOF
-			sudo mv ~/${filename} /etc/apparmor.d/${filename}
+			sudo mv ~/"$filename" /etc/apparmor.d/"$filename"
 			sudo systemctl restart apparmor.service
 		fi
 	else
 		# Privileged Docker
-		sudo usermod -aG docker ${USER}
+		sudo usermod -aG docker "$USER"
 		echo
 		echo ">>> Jump into new shell for docker group privilege..." && sleep 3s
 		echo
@@ -115,7 +117,7 @@ if ! command -v kind >/dev/null; then
 	echo ">>> Install Kind binary..."
 	echo
 	sudo apt-get update && sudo apt-get install -y curl
-	[ $(uname -m) = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
+	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
 	chmod +x ./kind
 	sudo mv -v ./kind /usr/local/bin/kind
 
@@ -163,13 +165,13 @@ fi
 
 #--------------------------------------------------------------------------------
 
-# Register cleanup
 cleanup_cluster () {
 	echo ">>> Cleanup..."
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	kind delete cluster -n ${TEST_K8S}
 }
 
+# Register cleanup
 trap cleanup_cluster ERR
 
 # Setup cluster
@@ -225,7 +227,7 @@ echo
 kubectl get pods ${TEST_ID} -n ${TEST_NS} -o wide
 
 echo
-if [[ $(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath={.status.phase}) == ${TEST_OK} ]]; then
+if [[ "$(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
 	echo ">>> Setup OK!"
 else
 	echo ">>> Setup failed!"
