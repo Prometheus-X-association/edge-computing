@@ -16,7 +16,7 @@ import random
 import uuid
 
 import connexion
-from flask import make_response
+from flask import make_response, abort
 
 from swagger_server.models.execution_metrics import ExecutionMetrics
 from swagger_server.models.execution_request_body import ExecutionRequestBody  # noqa: E501
@@ -38,25 +38,25 @@ def request_edge_proc(body):  # noqa: E501
     if connexion.request.is_json:
         req = ExecutionRequestBody.from_dict(connexion.request.get_json())  # noqa: E501
     else:
-        return http.HTTPStatus.BAD_REQUEST
+        return abort(http.HTTPStatus.BAD_REQUEST, "Wrong request format")
 
     if "restricted" in req.data_contract or "restricted" in req.func_contract:
-        return make_response("Request prohibited by contract/consent",
-                             http.HTTPStatus.FORBIDDEN)
+        return abort(http.HTTPStatus.FORBIDDEN,
+                     "Request prohibited by contract/consent")
     elif req.data in (None, "") or req.function in (None, ""):
-        return make_response("Execution request parameters not found",
-                             http.HTTPStatus.NOT_FOUND)
+        return abort(http.HTTPStatus.NOT_FOUND,
+                     "Execution request parameters not found")
     elif req.metadata.get("timeout", 100) < 42:
-        return make_response("Function deployment timeout",
-                             http.HTTPStatus.REQUEST_TIMEOUT)
+        return abort(http.HTTPStatus.REQUEST_TIMEOUT,
+                     "Function deployment timeout")
     elif req.metadata.get("privacy-zone", "zone-A") not in ("zone-A", "zone-C"):
-        return make_response("Undeployable request due to privacy zone restriction",
-                             http.HTTPStatus.PRECONDITION_FAILED)
+        return abort(http.HTTPStatus.PRECONDITION_FAILED,
+                     "Undeployable request due to privacy zone restriction")
     elif req.metadata.get("CPU-demand", 42) > 42:
-        return make_response("Insufficient compute resources or unavailable deployment service",
-                             http.HTTPStatus.SERVICE_UNAVAILABLE)
+        return abort(http.HTTPStatus.SERVICE_UNAVAILABLE,
+                     "Insufficient compute resources or unavailable deployment service")
     elif any(getattr(req, a) in (None, "") for a in req.swagger_types):
-        return make_response("Malformed deployment request", http.HTTPStatus.BAD_REQUEST)
+        return abort(http.HTTPStatus.BAD_REQUEST, "Malformed deployment request")
 
     resp = ExecutionResult(uuid=str(uuid.uuid4()), function=req.function, data=req.data,
                            metrics=ExecutionMetrics(ret=0, elapsed_time=random.randint(0, 10)))
@@ -76,32 +76,32 @@ def request_privacy_edge_proc(body):  # noqa: E501
     if connexion.request.is_json:
         req = PrivateExecutionRequestBody.from_dict(connexion.request.get_json())  # noqa: E501
     else:
-        return http.HTTPStatus.BAD_REQUEST
+        return abort(http.HTTPStatus.BAD_REQUEST, "Wrong request format")
 
     if req.consent in (None, "") or req.token in (None, ""):
-        return make_response("Unauthorized request due to invalid token",
-                             http.HTTPStatus.UNAUTHORIZED)
+        return abort(http.HTTPStatus.UNAUTHORIZED,
+                     "Unauthorized request due to invalid token")
     elif "restricted" in req.data_contract or "restricted" in req.func_contract or "restricted" in req.consent:
-        return make_response("Request prohibited by contract/consent",
-                             http.HTTPStatus.FORBIDDEN)
+        return abort(http.HTTPStatus.FORBIDDEN,
+                     "Request prohibited by contract/consent")
     elif req.private_data in (None, "") or req.function in (None, ""):
-        return make_response("Execution request parameters not found",
-                             http.HTTPStatus.NOT_FOUND)
+        return abort(http.HTTPStatus.NOT_FOUND,
+                     "Execution request parameters not found")
     elif req.metadata.get("timeout", 100) < 42:
-        return make_response("Function deployment timeout",
-                             http.HTTPStatus.REQUEST_TIMEOUT)
+        return abort(http.HTTPStatus.REQUEST_TIMEOUT,
+                     "Function deployment timeout")
     elif req.metadata.get("privacy-zone", "zone-A") not in ("zone-A", "zone-C"):
-        return make_response("Undeployable request due to privacy zone restriction",
-                             http.HTTPStatus.PRECONDITION_FAILED)
+        return abort(http.HTTPStatus.PRECONDITION_FAILED,
+                     "Undeployable request due to privacy zone restriction")
     elif req.metadata.get("CPU-demand", 42) > 42:
-        return make_response("Insufficient compute resources or unavailable deployment service",
-                             http.HTTPStatus.SERVICE_UNAVAILABLE)
+        return abort(http.HTTPStatus.SERVICE_UNAVAILABLE,
+                     "Insufficient compute resources or unavailable deployment service")
     elif any(getattr(req, a) in (None, "") for a in req.swagger_types):
-        return make_response("Malformed deployment request",
-                             http.HTTPStatus.BAD_REQUEST)
+        return abort(http.HTTPStatus.BAD_REQUEST,
+                     "Malformed deployment request")
 
     if any(getattr(req, a) in (None, "") for a in req.swagger_types):
-        return make_response("Unsupported format", http.HTTPStatus.BAD_REQUEST)
+        return abort(http.HTTPStatus.BAD_REQUEST, "Unsupported format")
     resp_body = PrivateExecutionResult(uuid=str(uuid.uuid4()), function=req.function, private_data=req.private_data,
                                        metrics=ExecutionMetrics(ret=0, elapsed_time=random.randint(0, 10)))
     return make_response(resp_body.to_dict(), http.HTTPStatus.OK)
