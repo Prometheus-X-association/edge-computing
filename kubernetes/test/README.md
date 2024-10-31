@@ -15,9 +15,9 @@ $ cd kubernetes/test
 $ ./setup_test_env.sh
 ```
 The script installs the required dependencies
-- Docker (latest)
-- Kind (v0.24.0)
-- Kubectl (v1.31.0)
+- [Docker](https://get.docker.com/) (latest)
+- [Kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.24.0) (v0.24.0)
+- [Kubectl](https://github.com/kubernetes/kubectl/releases/tag/v0.31.0) (v1.31.0)
 
 and performs a simple test deployment on a temporary Kubernetes
 cluster for validation.
