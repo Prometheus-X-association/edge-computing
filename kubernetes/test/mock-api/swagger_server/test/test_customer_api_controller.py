@@ -17,8 +17,10 @@ from __future__ import absolute_import
 import logging
 import pathlib
 import pprint
+import urllib.request
 
 from flask import json
+from flask_testing import LiveServerTestCase
 
 from swagger_server.models import ExecutionResult, PrivateExecutionResult
 from swagger_server.models.execution_request_body import ExecutionRequestBody  # noqa: E501
@@ -26,12 +28,19 @@ from swagger_server.models.private_execution_request_body import PrivateExecutio
 from swagger_server.test import BaseTestCase
 
 
-class TestCustomerAPIController(BaseTestCase):
+class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
     """CustomerAPIController integration test stubs"""
 
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
         super().__init__(*args, **kwargs)
+
+    def create_app(self):
+        app = BaseTestCase.create_app(self)
+        # app.config['LIVESERVER_PORT'] = 8888
+        app.config['LIVESERVER_PORT'] = 0  # Dynamic port selection
+        app.config['LIVESERVER_TIMEOUT'] = 3
+        return app
 
     def _call_api(self, url_path: str, body: ExecutionRequestBody or PrivateExecutionRequestBody,
                   method: str = 'POST') -> ExecutionResult or PrivateExecutionResult:
@@ -47,7 +56,17 @@ class TestCustomerAPIController(BaseTestCase):
             self.logger.debug(f"\nResponse body:\n{pprint.pformat(response.json)}\n")
         return response
 
-    #### ---------------------------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------
+
+    def test_live_server_is_up_and_running(self):
+        """Test case for checking available live API: HTTP 200
+        """
+        url = self.get_server_url() + "/ptx-edge/v1/openapi.json"
+        self.logger.info(f"\nUsed URL: {url}\n")
+        response = urllib.request.urlopen(url)
+        self.assertEqual(response.code, 200)
+
+    # ---------------------------------------------------------------------------------------------------------------
     def test_request_edge_proc_a_ok(self):
         """Test case for valid   request_edge_proc request: HTTP 200
 
@@ -124,7 +143,7 @@ class TestCustomerAPIController(BaseTestCase):
         response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
         self.assertStatus(response, 503)
 
-    #### ---------------------------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------
 
     def test_request_privacy_edge_proc_a_ok(self):
         """Test case for valid   request_privacy_edge_proc request: HTTP 200
