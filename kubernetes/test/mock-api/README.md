@@ -60,6 +60,10 @@ For manually executing the test cases defined in
 [test_customer_api_controller.py](swagger_server%2Ftest%2Ftest_customer_api_controller.py),
 run the following command from the root directory:
 ```bash
+$ nosetests -v
+```
+or with stdout capturing:
+```bash
 $ nosetests -v -s
 ```
 
