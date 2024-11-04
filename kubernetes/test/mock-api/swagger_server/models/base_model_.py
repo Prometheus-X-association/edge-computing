@@ -67,3 +67,6 @@ class Model(object):
     def __ne__(self, other):
         """Returns true if both objects are not equal"""
         return not self == other
+
+    def __bool__(self):
+        return all(getattr(self, attr) is not None for attr in self.attribute_map)

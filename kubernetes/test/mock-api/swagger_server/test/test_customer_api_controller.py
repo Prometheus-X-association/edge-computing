@@ -14,7 +14,9 @@
 # limitations under the License.
 from __future__ import absolute_import
 
+import logging
 import pathlib
+import pprint
 
 from flask import json
 
@@ -27,6 +29,25 @@ from swagger_server.test import BaseTestCase
 class TestCustomerAPIController(BaseTestCase):
     """CustomerAPIController integration test stubs"""
 
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        super().__init__(*args, **kwargs)
+
+    def _call_api(self, url_path: str, body: ExecutionRequestBody or PrivateExecutionRequestBody,
+                  method: str = 'POST') -> ExecutionResult or PrivateExecutionResult:
+        self.logger.debug(f"\nResponse body:\n{body.to_str()}\n")
+        response = self.client.open(url_path,
+                                    method=method,
+                                    data=json.dumps(body),
+                                    content_type='application/json')
+        resp_body = ExecutionResult.from_dict(json.loads(response.data.decode('utf-8')))
+        if bool(resp_body):
+            self.logger.debug(f"\nResponse body:\n{resp_body.to_str()}\n")
+        else:
+            self.logger.debug(f"\nResponse body:\n{pprint.pformat(response.json)}\n")
+        return response
+
+    #### ---------------------------------------------------------------------------------------------------------------
     def test_request_edge_proc_a_ok(self):
         """Test case for valid   request_edge_proc request: HTTP 200
 
@@ -34,14 +55,8 @@ class TestCustomerAPIController(BaseTestCase):
         """
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        resp_body = ExecutionResult.from_dict(json.loads(response.data.decode('utf-8')))
-        self.assert200(response,
-                       'Response body is : ' + resp_body.to_str())
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assert200(response)
 
     def test_request_edge_proc_fail400(self):
         """Test case for invalid request_edge_proc request: HTTP 400
@@ -51,13 +66,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata = ""
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 400,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 400)
 
     def test_request_edge_proc_fail403(self):
         """Test case for invalid request_edge_proc request: HTTP 403
@@ -67,13 +77,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.func_contract += "-restricted"
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 403,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 403)
 
     def test_request_edge_proc_fail404(self):
         """Test case for invalid request_edge_proc request: HTTP 404
@@ -83,13 +88,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.function = ""
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 404,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 404)
 
     def test_request_edge_proc_fail408(self):
         """Test case for invalid request_edge_proc request: HTTP 408
@@ -99,13 +99,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['timeout'] = 0
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 408,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 408)
 
     def test_request_edge_proc_fail412(self):
         """Test case for invalid request_edge_proc request: HTTP 412
@@ -115,13 +110,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['privacy-zone'] = "zone-B"
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 412,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 412)
 
     def test_request_edge_proc_fail503(self):
         """Test case for invalid request_edge_proc request: HTTP 503
@@ -131,13 +121,10 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         body.metadata['CPU-demand'] = 100
-        response = self.client.open(
-            'ptx-edge/v1/requestEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 503,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
+        self.assertStatus(response, 503)
+
+    #### ---------------------------------------------------------------------------------------------------------------
 
     def test_request_privacy_edge_proc_a_ok(self):
         """Test case for valid   request_privacy_edge_proc request: HTTP 200
@@ -146,14 +133,8 @@ class TestCustomerAPIController(BaseTestCase):
         """
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        resp_body = PrivateExecutionResult.from_dict(json.loads(response.data.decode('utf-8')))
-        self.assert200(response,
-                       'Response body is : ' + resp_body.to_str())
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assert200(response)
 
     def test_request_privacy_edge_proc_fail400(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 400
@@ -163,13 +144,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata = ""
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 400,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 400)
 
     def test_request_privacy_edge_proc_fail401(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 401
@@ -179,13 +155,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.token = ""
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 401,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 401)
 
     def test_request_privacy_edge_proc_fail403(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 403
@@ -195,13 +166,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.consent += "-restricted"
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 403,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 403)
 
     def test_request_privacy_edge_proc_fail404(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 404
@@ -211,13 +177,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.private_data = ""
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 404,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 404)
 
     def test_request_privacy_edge_proc_fail408(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 408
@@ -227,13 +188,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['timeout'] = 0
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 408,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 408)
 
     def test_request_privacy_edge_proc_fail412(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 412
@@ -243,13 +199,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['privacy-zone'] = "zone-B"
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 412,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 412)
 
     def test_request_privacy_edge_proc_fail503(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 503
@@ -259,13 +210,8 @@ class TestCustomerAPIController(BaseTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         body.metadata['CPU-demand'] = 100
-        response = self.client.open(
-            'ptx-edge/v1/requestPrivacyEdgeProc',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assertStatus(response, 503,
-                          'Response body is : ' + response.data.decode('utf-8'))
+        response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
+        self.assertStatus(response, 503)
 
 
 if __name__ == '__main__':
