@@ -5,7 +5,7 @@ info:
     services exploiting an underlying distributed edge computing infrastructure.
   contact:
     email: czentye.janos@vik.bme.hu
-  version: 0.0.1
+  version: 1.0.0
 externalDocs:
   url: https://github.com/Prometheus-X-association/edge-computing
 servers:

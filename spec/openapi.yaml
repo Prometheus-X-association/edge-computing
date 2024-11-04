@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Edge Computing
-  version: 0.0.1
+  version: 1.0.0
   contact:
     email: sonkoly.balazs@vik.bme.hu
   description: >-
