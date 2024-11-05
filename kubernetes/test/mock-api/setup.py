@@ -1,6 +1,5 @@
 # coding: utf-8
 
-import sys
 from setuptools import setup, find_packages
 
 NAME = "swagger_server"
@@ -13,6 +12,8 @@ VERSION = "1.0.0"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
+    "flask==1.1.4",
+    "markupsafe==2.0.1",
     "connexion>=2.6.0,<3.0",
     "swagger-ui-bundle>=0.0.2"
 ]

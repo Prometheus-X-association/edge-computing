@@ -1,4 +1,4 @@
-.travis.yaml
+.travis.yml
 .swagger-codegen-ignore
 README.md
 tox.ini
@@ -52,7 +52,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
-venv/
+.venv/
 .python-version
 
 # Translations
@@ -70,3 +70,8 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+.idea
+.*
+Dockerfile
+**/__pycache__

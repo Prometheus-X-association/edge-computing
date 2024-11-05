@@ -11,7 +11,7 @@ This example uses the [Connexion](https://github.com/zalando/connexion) library 
 Python 3.5.2+ (~= Python 3.8.20)
 
 ## Preparations
-Downgrade packages regarding Python3.8 in the following files:
+Downgrade required packages regarding Python3.8 using the following files:
 ```pycon
 # requirements.txt
 flask==1.1.4
@@ -27,12 +27,27 @@ markupsafe==2.0.1
 #jinja2<3.1.0
 #itsdangerous<2.1.0
 ```
+> **Warning**
+> 
+> The downgraded packages are obsolete and may contain vulnerability issues!
+> The mock server should be used only for testing purposes.
+
+## Virtual Environment Setup
+
+Create a virtual environment using the following commands:
+
+```bash
+$ python3.8 -m pip install venv
+$ python3.8 -m venv .venv
+$ source .venv/bin/activate
+
+(.venv) $ python3.8 -m pip install -U -r requirements.txt -r test-requirements.txt
+```
 
 ## Usage
 To run the mock server, please execute the following from the root directory:
 ```bash
-$ python3.8 -m pip install -U -r requirements.txt
-$ python3.8 -m swagger_server
+(.venv) $ python3.8 -m swagger_server
 ```
 
 and open your browser to here for the API documentation:
