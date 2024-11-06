@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import absolute_import
-
 import logging
 import pathlib
 import pprint
@@ -75,7 +73,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
         response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
-        self.assert200(response)
+        self.assertStatus(response, 202)
 
     def test_request_edge_proc_fail400(self):
         """Test case for invalid request_edge_proc request: HTTP 400
@@ -153,7 +151,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
         response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
-        self.assert200(response)
+        self.assertStatus(response, 202)
 
     def test_request_privacy_edge_proc_fail400(self):
         """Test case for invalid request_privacy_edge_proc request: HTTP 400

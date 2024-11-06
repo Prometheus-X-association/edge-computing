@@ -38,7 +38,7 @@ def request_edge_proc(body):  # noqa: E501
     if connexion.request.is_json:
         req = ExecutionRequestBody.from_dict(connexion.request.get_json())  # noqa: E501
     else:
-        return abort(http.HTTPStatus.BAD_REQUEST, "Wrong request format")
+        return abort(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported request format")
 
     if "restricted" in req.data_contract or "restricted" in req.func_contract:
         return abort(http.HTTPStatus.FORBIDDEN,
@@ -60,7 +60,7 @@ def request_edge_proc(body):  # noqa: E501
 
     resp = ExecutionResult(uuid=str(uuid.uuid4()), function=req.function, data=req.data,
                            metrics=ExecutionMetrics(ret=0, elapsed_time=random.randint(0, 10)))
-    return make_response(resp.to_dict(), http.HTTPStatus.OK)
+    return make_response(resp.to_dict(), http.HTTPStatus.ACCEPTED)
 
 
 def request_privacy_edge_proc(body):  # noqa: E501
@@ -76,7 +76,7 @@ def request_privacy_edge_proc(body):  # noqa: E501
     if connexion.request.is_json:
         req = PrivateExecutionRequestBody.from_dict(connexion.request.get_json())  # noqa: E501
     else:
-        return abort(http.HTTPStatus.BAD_REQUEST, "Wrong request format")
+        return abort(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported request format")
 
     if req.consent in (None, "") or req.token in (None, ""):
         return abort(http.HTTPStatus.UNAUTHORIZED,
@@ -104,4 +104,4 @@ def request_privacy_edge_proc(body):  # noqa: E501
         return abort(http.HTTPStatus.BAD_REQUEST, "Unsupported format")
     resp_body = PrivateExecutionResult(uuid=str(uuid.uuid4()), function=req.function, private_data=req.private_data,
                                        metrics=ExecutionMetrics(ret=0, elapsed_time=random.randint(0, 10)))
-    return make_response(resp_body.to_dict(), http.HTTPStatus.OK)
+    return make_response(resp_body.to_dict(), http.HTTPStatus.ACCEPTED)

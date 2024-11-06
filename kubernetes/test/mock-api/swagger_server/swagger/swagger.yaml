@@ -32,8 +32,8 @@ paths:
               $ref: '#/components/schemas/ExecutionRequestBody'
         required: true
       responses:
-        "200":
-          description: Successful function deployment
+        "202":
+          description: Function deployment accepted
           content:
             application/json:
               schema:
@@ -48,6 +48,8 @@ paths:
           description: Function deployment timeout
         "412":
           description: Undeployable request due to privacy zone restriction
+        "415":
+          description: Unsupported request format
         "500":
           description: Unexpected error
         "503":
@@ -68,8 +70,8 @@ paths:
               $ref: '#/components/schemas/PrivateExecutionRequestBody'
         required: true
       responses:
-        "200":
-          description: Successful function deployment
+        "202":
+          description: Function deployment accepted
           content:
             application/json:
               schema:
@@ -86,6 +88,8 @@ paths:
           description: Function deployment timeout
         "412":
           description: Undeployable request due to privacy zone restriction
+        "415":
+          description: Unsupported request format
         "500":
           description: Unexpected error
         "503":
@@ -114,8 +118,7 @@ components:
       properties:
         function:
           type: string
-          description: Unique reference/ID of the function to be applied to the private
-            data
+          description: Unique reference/ID of the function to be applied to the private data
           example: FunctionData42
         data:
           type: string
@@ -144,8 +147,7 @@ components:
       properties:
         function:
           type: string
-          description: Unique reference/ID of the function to be applied to the private
-            data
+          description: Unique reference/ID of the function to be applied to the private data
           example: FunctionData42
         private_data:
           type: string
@@ -165,8 +167,7 @@ components:
           example: Consent42
         token:
           type: string
-          description: Unique token created by the DataProvider related to the user's
-            consent
+          description: Unique token created by the DataProvider related to the user's consent
           example: Token42
         metadata:
           $ref: '#/components/schemas/Metadata'
@@ -203,8 +204,7 @@ components:
           example: 11111111-2222-3333-4444-555555555555
         function:
           type: string
-          description: Unique reference/ID of the function to be applied to the private
-            data
+          description: Unique reference/ID of the function to be applied to the private data
           example: FunctionData42
         data:
           type: string
@@ -234,8 +234,7 @@ components:
           example: 11111111-2222-3333-4444-555555555555
         function:
           type: string
-          description: Unique reference/ID of the function to be applied to the private
-            data
+          description: Unique reference/ID of the function to be applied to the private data
           example: FunctionData42
         private_data:
           type: string
