@@ -12,10 +12,10 @@ paths:
     post:
       summary: Execute function on data
       description: ''
-      operationId: requestEdgeProc
+      operationId: customer_api.request_edge_proc
       responses:
-        200:
-          description: Successful function deployment
+        "202":
+          description: Function deployment accepted
           content:
             application/json:
               schema:
@@ -30,6 +30,8 @@ paths:
           description: Function deployment timeout
         412:
           description: Undeployable request due to privacy zone restriction
+        "415":
+          description: Unsupported request format
         500:
           description: Unexpected error
         503:
@@ -47,10 +49,10 @@ paths:
     post:
       summary: Execute function on private data
       description: ''
-      operationId: requestPrivacyEdgeProc
+      operationId: customer_api.request_privacy_edge_proc
       responses:
-        200:
-          description: Successful function deployment
+        "202":
+          description: Function deployment accepted
           content:
             application/json:
               schema:
@@ -67,6 +69,8 @@ paths:
           description: Function deployment timeout
         412:
           description: Undeployable request due to privacy zone restriction
+        "415":
+          description: Unsupported request format
         500:
           description: Unexpected error
         503:
