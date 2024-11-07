@@ -1,6 +1,6 @@
-build:
+# Docker commands
+build: Dockerfile
 	docker build -t rest-api .
-	docker image prune -f
 	docker images --no-trunc rest-api
 
 run:
@@ -10,5 +10,24 @@ dev:
 	docker run --rm -ti -p 8080:8080 -v ./app:/usr/src/api/app rest-api \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
 
-.PHONY: build run dev
+
+# Local development in venv
+venv: requirements.txt
+	test -d .venv || (\
+		python3.12 -m venv --upgrade-deps .venv && \
+		. .venv/bin/activate && \
+		python3.12 -m pip install -U -r requirements.txt \
+		)
+
+dev-local: venv
+		. .venv/bin/activate && \
+		fastapi dev --port 8080 --reload app/main.py
+
+# Cleanup
+clean:
+	docker image prune -f
+	py3clean -v .
+	rm -rf .venv
+
+.PHONY: run dev clean
 .DEFAULT_GOAL := dev
