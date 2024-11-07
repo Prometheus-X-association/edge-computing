@@ -16,11 +16,11 @@ venv: requirements.txt
 	test -d .venv || (\
 		python3.12 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		python3.12 -m pip install -U -r requirements.txt \
+		python3.12 -m pip install -U -r requirements-dev.txt \
 		)
 
 dev-local: venv
-		. .venv/bin/activate && \
+		. .venv/bin/activate
 		fastapi dev --port 8080 --reload app/main.py
 
 # Cleanup
@@ -29,5 +29,6 @@ clean:
 	py3clean -v .
 	rm -rf .venv
 
-.PHONY: run dev clean
+.PHONY: build run dev venv dev-local clean
 .DEFAULT_GOAL := dev
+.ONESHELL: dev-local
