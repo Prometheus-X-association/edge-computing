@@ -18,11 +18,25 @@ import fastapi
 from app import VERSION
 from app.model.version import VersionResponse
 
-app = fastapi.FastAPI()
+app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
+                      description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
+                                  "services exploiting an underlying distributed edge computing infrastructure.",
+                      contact=dict(email="czentye.janos@vik.bme.hu"),
+                      version=VERSION,
+                      external_docs=dict(url="https://github.com/Prometheus-X-association/edge-computing",
+                                         description="Main project"),
+                      servers=[dict(url="/ptx-edge/v1",
+                                    description="PTX Edge Computing")],
+                      openapi_tags=[dict(name="customerAPI",
+                                         description="Customer-facing API (EdgeAPI)"),
+                                    dict(name="connectorAPI",
+                                         description="Connector-facing API (PrivacyPreservingAPI)"),],
+                      redoc_url=None)
 
 
 @app.get("/version")
 async def get_version() -> VersionResponse:
+    """Versions of the REST-API component"""
     return VersionResponse(api=VERSION, framework=fastapi.__version__)
 
 

@@ -1,0 +1,44 @@
+openapi: 3.1.0
+info:
+  title: PTX Edge Computing REST-API
+  description: The Edge Computing (Decentralized AI processing) BB-02 provides value-added
+    services exploiting an underlying distributed edge computing infrastructure.
+  contact:
+    email: czentye.janos@vik.bme.hu
+  version: 1.0.0
+servers:
+- url: /ptx-edge/v1
+  description: PTX Edge Computing
+paths:
+  /version:
+    get:
+      summary: Get Version
+      description: Versions of the REST-API component
+      operationId: get_version_version_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+components:
+  schemas:
+    VersionResponse:
+      properties:
+        api:
+          type: string
+          title: Api
+        framework:
+          type: string
+          title: Framework
+      type: object
+      required:
+      - api
+      - framework
+      title: VersionResponse
+tags:
+- name: customerAPI
+  description: Customer-facing API (EdgeAPI)
+- name: connectorAPI
+  description: Connector-facing API (PrivacyPreservingAPI)

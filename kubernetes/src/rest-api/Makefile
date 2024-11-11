@@ -7,7 +7,7 @@ run:
 	docker run --rm --name rest-api -ti -p 8080:8080 rest-api
 
 dev:
-	docker run --rm -ti -p 8080:8080 -v ./app:/usr/src/api/app rest-api \
+	docker run --rm --name rest-api -ti -p 8080:8080 -v ./app:/usr/src/api/app rest-api \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
 
 
@@ -16,12 +16,18 @@ venv: requirements.txt
 	test -d .venv || (\
 		python3.12 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		python3.12 -m pip install -U -r requirements-dev.txt \
+		python3.12 -m pip install -U -r requirements.txt -r requirements-dev.txt \
 		)
 
 dev-local: venv
 		. .venv/bin/activate
 		fastapi dev --port 8080 --reload app/main.py
+
+# Specification generation
+
+openapi: app/main.py
+	./scripts/generate_openapi.py --type yaml
+	#./scripts/generate_openapi.py --type json
 
 # Cleanup
 clean:
