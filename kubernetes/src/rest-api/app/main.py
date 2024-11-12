@@ -23,15 +23,20 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
                                   "services exploiting an underlying distributed edge computing infrastructure.",
                       contact=dict(email="czentye.janos@vik.bme.hu"),
+                      license_info=dict(name="Apache 2.0",
+                                        url="https://www.apache.org/licenses/LICENSE-2.0.html"),
                       version=VERSION,
-                      external_docs=dict(url="https://github.com/Prometheus-X-association/edge-computing",
-                                         description="Main project"),
                       servers=[dict(url="/ptx-edge/v1",
                                     description="PTX Edge Computing")],
                       openapi_tags=[dict(name="customerAPI",
-                                         description="Customer-facing API (EdgeAPI)"),
-                                    dict(name="connectorAPI",
-                                         description="Connector-facing API (PrivacyPreservingAPI)")],
+                                         description="Customer-facing API (EdgeAPI)",
+                                         external_docs=dict(
+                                             description="Prometheus-X",
+                                             url="https://github.com/Prometheus-X-association/edge-computing"),
+                                         ),
+                                    # dict(name="connectorAPI",
+                                    #      description="Connector-facing API (PrivacyPreservingAPI)")
+                                    ],
                       redoc_url=None)
 
 

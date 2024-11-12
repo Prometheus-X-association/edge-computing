@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
 import enum
 import pathlib
 import sys
@@ -40,6 +41,7 @@ def generate_openapi(_type: str, _dir: str | pathlib.Path) -> None:
     from app.main import app
     with open(_dir / f"openapi.{_type}", "w") as f:
         api_spec = app.openapi()
+        api_spec['info']['x-creation-date'] = datetime.datetime.today().isoformat(timespec='seconds')
         if _type == EXTFORMAT.yaml:
             import yaml
             yaml.dump(api_spec, f, indent=2, sort_keys=False)

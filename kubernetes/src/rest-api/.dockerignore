@@ -1,3 +1,8 @@
-.idea
 .*
 **/__pycache__
+scripts
+spec
+Dockerfile
+Makefile
+README.md
+requirements-dev.txt

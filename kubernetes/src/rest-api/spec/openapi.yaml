@@ -5,7 +5,11 @@ info:
     services exploiting an underlying distributed edge computing infrastructure.
   contact:
     email: czentye.janos@vik.bme.hu
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
+  x-creation-date: '2024-11-12T13:45:55'
 servers:
 - url: /ptx-edge/v1
   description: PTX Edge Computing
@@ -40,5 +44,6 @@ components:
 tags:
 - name: customerAPI
   description: Customer-facing API (EdgeAPI)
-- name: connectorAPI
-  description: Connector-facing API (PrivacyPreservingAPI)
+  external_docs:
+    description: Prometheus-X
+    url: https://github.com/Prometheus-X-association/edge-computing
