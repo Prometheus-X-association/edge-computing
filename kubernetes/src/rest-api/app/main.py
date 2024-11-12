@@ -33,10 +33,7 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                          external_docs=dict(
                                              description="Prometheus-X",
                                              url="https://github.com/Prometheus-X-association/edge-computing"),
-                                         ),
-                                    # dict(name="connectorAPI",
-                                    #      description="Connector-facing API (PrivacyPreservingAPI)")
-                                    ],
+                                         )],
                       redoc_url=None)
 
 

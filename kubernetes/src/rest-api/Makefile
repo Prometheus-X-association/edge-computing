@@ -20,14 +20,18 @@ venv: requirements.txt
 		)
 
 dev-local: venv
-		. .venv/bin/activate
-		fastapi dev --port 8080 --reload app/main.py
+		(\
+		. .venv/bin/activate && \
+		fastapi dev --port 8080 --reload app/main.py; \
+		)
 
 # Specification generation
 
 openapi: app/main.py
-	./scripts/generate_openapi.py --type yaml
-	#./scripts/generate_openapi.py --type json
+	(\
+	. .venv/bin/activate && \
+	./scripts/generate_openapi.py --type yaml \
+	)
 
 # Cleanup
 clean:
@@ -35,6 +39,6 @@ clean:
 	py3clean -v .
 	rm -rf .venv
 
-.PHONY: build run dev venv dev-local clean
+.PHONY: build run dev clean
 .DEFAULT_GOAL := dev
-.ONESHELL: dev-local
+#.ONESHELL: dev-local openapi

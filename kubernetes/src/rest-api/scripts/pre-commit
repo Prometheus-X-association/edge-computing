@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Pre commit hook for auto-generating OpenaAPI specification files
+#
+# Activation:
+#  - rename script to "pre-commit" without extension
+#  - copy into ".git/hooks"
+
+set -eou pipefail
+
+# If changes are applied in the REST-API files
+if [[ $(git diff --cached --name-only) =~ "rest-api/app" ]]; then
+  echo "Generation OpenAPI specification..."
+  cd kubernetes/src/rest-api
+  # Use make to implicitly activate virtualenv
+  make openapi
+  echo "Add new specifications:"
+  git add -v spec/openapi.*
+fi
+
+exit 0
