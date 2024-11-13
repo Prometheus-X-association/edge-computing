@@ -14,9 +14,9 @@ dev:
 # Local development in venv
 venv: requirements.txt
 	test -d .venv || (\
-		python3.12 -m venv --upgrade-deps .venv && \
+		python3.13 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		python3.12 -m pip install -U -r requirements.txt -r requirements-dev.txt \
+		python3.13 -m pip install -U -r requirements.txt -r requirements-dev.txt \
 		)
 
 dev-local: venv
