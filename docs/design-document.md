@@ -11,12 +11,12 @@ You should also remove this paragraph._
 
 The Edge Computing (Decentralized AI processing) BB provides
 value-added services exploiting an underlying distributed edge
-computing infrastructure (e.g. owned and operated by Cloud Providers).
+computing infrastructure (e.g., owned and operated by Cloud Providers).
 
 Two main high-level objectives are targeted by these services:
-  - goal 1: privacy-preserving: keep the data close to the user, more
+  - Goal 1: privacy-preserving - keep the data close to the user, more
     exactly within a pre-defined privacy zone
-  - goal 2: efficient near-data processing: optimize performance and
+  - Goal 2: efficient near-data processing - optimize performance and
     resource utilization
 
 ## Technical Usage Scenarios & Features
@@ -25,17 +25,17 @@ _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
 --->
 
-In general, the main goal is to move the processing functions close to
-the data, and execute them on-site. If the execution capability is
+In general, the main Goal is to move the processing functions close to
+the data and execute them on-site. If the execution capability is
 available in the node storing the data, the processing function (FaaS
 based operation) or container (CaaS based operation) is launched there
-(e.g. by the Kubernetes/Knative platform). By these means, we can
-avoid the transmission of a large amount of data. (goal 2)
+(e.g., by the Kubernetes/Knative platform). By these means, we can
+avoid the transmission of a large amount of data. (Goal 2)
 
 As a more realistic use case, the data is also moved but only within a
 pre-defined privacy zone. This privacy zone encompasses worker nodes
 (using Kubernetes terminology) where we can deploy the processing
-functions on demand. (goal 1)
+functions on demand. (Goal 1)
 
 ### Features/Main Functionalities
 <!--
@@ -44,13 +44,13 @@ Again, an enumeration (ie bullet points) is useful. Take input from
 description for WP2_
 -->
 
-  - control the placement of data: keep within pre-defined privacy
+  - Control the placement of data: keep within pre-defined privacy
     zones
-  - only trustworthy infrastructure is used for data processing
+  - Only trustworthy infrastructure is used for data processing
     - trustworthy: contract needed between Data Provider and Cloud Provider
-  - efficient (green) operation: minimizing data transfers if
+  - Efficient (green) operation: minimizing data transfers if
     near-data / on-site processing is available
-  - moving the processing functions / containers dynamically
+  - Moving the processing functions / containers dynamically
 
 ### Technical Usage Scenarios
 <!--
@@ -67,7 +67,7 @@ A bullet point list is recommended._
   - Set metadata of Worker nodes / edge sites including Cloud Provider
     info
     - to be able to check privacy-zone memberships
-  - Perform optional configurations (e.g. CNI, Istio for tenant
+  - Perform optional configurations (e.g., CNI, Istio for tenant
     isolation)
   - Tailor-made Kubernetes/Knative scheduler controls placement
     decisions (data, function/container)
@@ -78,32 +78,32 @@ A bullet point list is recommended._
     - goal: keep the data within the privacy zone determined by the
       contract between the Data- and Cloud Providers
     - using only reliable infrastructure
-  - privacy zone of PrivateData is determined
+  - Privacy zone of PrivateData is determined
     - making use of Connector and Contract services
-  - privacy zones of worker nodes / edge sites have already been
+  - Privacy zones of worker nodes / edge sites have already been
     determined
-  - software artifact is created
+  - Software artifact is created
     - processing function is gathered via the Connector
-    - consent related data (e.g. AccessToken) is also added
-  - tailor-made Kubernetes/Knative scheduler selects the worker
+    - consent related data (e.g., AccessToken) is also added
+  - Tailor-made Kubernetes/Knative scheduler selects the worker
     node(s) / edge site(s) within the privacy zone
     - making use of novel scheduler algorithms
     - other optimization constraints, objectives can also be taken
       into account
-  - software artifact is deployed to the selected worker node(s) /
+  - Software artifact is deployed to the selected worker node(s) /
     reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
   - PrivateData is gathered by the artifact
     - privacy-preserving data sharing is requested from the Connector
-  - processing function is executed on PrivateData at a reliable Edge
+  - Processing function is executed on PrivateData at a reliable Edge
     Site
-  - result is provided
+  - Result is provided
   - PrivateData is deleted at the Edge Site
-  - software artifact (function / container) is destroyed at the Edge
+  - Software artifact (function / container) is destroyed at the Edge
     Site
 
-More details of the communications related to scenario 1 are given
+More details of the communications related to Scenario 1 are given
 here: [Dynamic Behaviour](#dynamic-behaviour)
 
 #### Scenario 2: Efficient Near-data Processing
@@ -111,21 +111,21 @@ here: [Dynamic Behaviour](#dynamic-behaviour)
     PrivateData
     - precondition: worker node(s) is/are "collocated" with
       PrivateData (it is directly available from the worker node)
-  - software artifact is created
+  - Software artifact is created
     - processing function is gathered via the Connector
-  - tailor-made Kubernetes/Knative scheduler selects the worker
+  - Tailor-made Kubernetes/Knative scheduler selects the worker
     node(s) / edge site(s) collocated with PrivateData
     - making use of novel scheduler algorithms
     - other optimization constraints, objectives can also be taken
       into account
-  - software artifact is deployed to the selected worker node(s) /
+  - Software artifact is deployed to the selected worker node(s) /
     local Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
-  - processing function is executed on PrivateData at a local Edge
+  - Processing function is executed on PrivateData at a local Edge
     Site
-  - result is provided
-  - software artifact (function / container) is destroyed at the Edge
+  - Result is provided
+  - Software artifact (function / container) is destroyed at the Edge
     Site
 
 ## Requirements
@@ -145,10 +145,10 @@ and be part of configuration/deployment options_
 ### Infrastructure-related Requirements
 
   - **R1.** [OPS, SEC] BB-2 MUST have access to infrastructure (of
-    e.g. a Cloud Provider or private one)
+    e.g., a Cloud Provider or private one)
   - **R2.** [OPS] BB-2 MUST be able to deploy (and start/stop/destroy)
     a Kubernetes cluster to Cloud Provider's infrastructure via IaaS
-    offering
+    offerings
   - **R3.** [OPS] BB-2 MUST be able to manage its Kubernetes
     cluster(s)
   - **R4.** [OPS] BB-2 MIGHT have access to managed Kubernetes cluster
@@ -217,7 +217,55 @@ connector?  Why?_
 The integration with all other BBs playing the role of the
 TriggeringBB is expected to be done via the Connector.
 
+### Integration with Data Processing Chain Protocol
+
+Primarily, BB-02 can play an Infrastructure Service role in the DPC protocol.
+In general, it provides data processing capability by executing a processing
+function (obtained form a Function Provider on-the-fly) on a dataset (obtained
+from a Data Provider or a prior data processing service).
+
+The integration with the Service Chain Protocol should be straightforward as
+BB-02 uses the Connector to communicate with the dataspace components.
+
+The caller BB in the role of the TriggeringBB and the prior data processing
+service initiates the call of a function as the next data processing service
+(or data consumer).
+The result of the called processing functionality is propagated to the Chain
+Protocol, which can be 
+- the transformed data,
+- or just the processing result/status and the localization URI of the result
+(depending on the called function's implementation).
+
 ### Integration with Infrastructure Providers
+
+The Edge computing BB requires a set of computation platforms/VMs (even over
+multiple clouds) to operate the underlying orchestration framework
+(Kubernetes/Knative) and execute processing functions on them.
+
+In a managed approach, BB-02 uses a higher-level managed Kubernetes cloud service.
+The integration in this case only requires configuration capabilities from
+the cloud provider to be able to
+ - apply necessary Kubernetes extensions/manifests,
+ - define service access points (REST-API).
+
+In this case, BB-02 functionality is implemented as a Kubernetes 
+extension/application operated by the cloud provider.
+
+In a direct approach, BB-02 builds on lower-level IaaS cloud services.
+This approach assumes that the considered orchestration framework need to
+be set up, configured and managed by the BB owner/provider.
+This also allows for multi-cloud and edge cloud setups as well.
+The integration in this case requires configuration and availability
+capabilities from the cloud provider to be able to
+ - access to the compute infrastructure (VMs),
+ - deploy and provision orchestration framework (Kubernetes),
+ - apply necessary Kubernetes extensions/manifests,
+ - define service access points (REST-API),
+ - configure optional session encryption, request ingress and load balancing
+features.
+
+In this case, BB-02 functionality is deployed on a tailored Kubernetes instance
+that is managed and operated by the BB owner.
 
 ## Relevant Standards
 
@@ -330,7 +378,7 @@ Catalog extension:
 
 	- getAccessInfo(
 		Function F)
-	  output: ID of FunctionProvider and AccessInfo (e.g. REST API) of its Connector
+	  output: ID of FunctionProvider and AccessInfo (e.g., REST API) of its Connector
 
 <!--
 _Mermaid has no such feature, but you may use PlantUML to
@@ -359,7 +407,7 @@ _Gives:_
 
 <!--
 _Please add a short description, also estimating the workload for a
-typical transaction of your BB (e.g. "100.000 record/submission",
+typical transaction of your BB (e.g., "100.000 record/submission",
 "traces of n*10.000s of events", etc.)._
 -->
 
@@ -400,7 +448,7 @@ below.
 | Scheduler            | Custom Kubernetes Scheduler taking also privacy related information into account                                        |
 | ArtifactBuilder      | Build the software artifacts to be deployed (abstract class)                                                            |
 | CaaS/FaaSBuilder     | CaaS and FaaS based implementation of the ArtifactBuilder                                                               |
-| Wrapper              | Wrapper functions/services/data (e.g. AccessToken) added to the software artifact (abstract class)                      |
+| Wrapper              | Wrapper functions/services/data (e.g., AccessToken) added to the software artifact (abstract class)                      |
 | CaaS/FaaSWrapper     | CaaS and FaaS based implementation of the Wrapper                                                                       |
 | WorkerNode           | Kubernetes/Knative worker node (edge node) which can execute the container/function                                     |
 
@@ -412,20 +460,20 @@ UML sequence diagrams and/or statecharts are recommended._
 _Example sequence diagram using Mermaid:_
 -->
 
-The following sequence diagram shows how the components communicate with each other, assuming the most complex and relevant operation: scenario 1.
+The following sequence diagram shows how the components communicate with each other, assuming the most complex and relevant operation: Scenario 1.
 
 ![Dynamic Operation of the Edge Computing BB: Sequence Diagram (example)](diagrams/edge-computing-bb-seq-diag.svg)
 
 Assumptions:
-- three different contracts are considered:
+- Three different contracts are considered:
   - DataProvider - CloudProvider
   - DataProvider - Triggering BB (Consumer)
   - FunctionProvider - Triggering BB (Consumer)
   - the latter can be omitted when the Triggering BB is the
     FunctionProvider
-- consent: DataProvider, Private Data of User, Function which can be
+- Consent: DataProvider, Private Data of User, Function which can be
   applied to the Private Data
-- consent related tasks are handled by the Triggering BB in advance
+- Consent related tasks are handled by the Triggering BB in advance
   (Edge Computing BB with its connector is added to the loop)
 
 | BB Component    | Description                                                                                                                                                                                                                    |
@@ -451,7 +499,7 @@ Assumptions:
 
 The main steps of the operation are detailed below.
 
-### Detailed steps of the operation realizing scenario 1 (privacy-preserving AI processing)
+### Detailed steps of the operation realizing Scenario 1 (privacy-preserving AI processing)
   - Triggering BB gathers Contracts (Cd: Triggering BB - DataProvider,
     Cf: Triggering BB - FunctionProvider), Consent Cons(F on PD),
     AccessToken T making use of its own connector (not shown in the
@@ -467,7 +515,7 @@ The main steps of the operation are detailed below.
     related to DataProvider DP and PrivateData PD
     - making use of Connectors (ConnectorEdge, ConnectorDP)
     - and Contract services
-  - privacy zones of worker nodes / edge sites have already been
+  - Privacy zones of worker nodes / edge sites have already been
     determined
   - --- 
   - Scheduler is requested to execute F on PD
@@ -484,9 +532,9 @@ The main steps of the operation are detailed below.
     - Contract is checked
     - function f is provided
   - Software artifact is built (including a Wrapper)
-  - tailor-made Kubernetes/Knative scheduler selects the worker
+  - Tailor-made Kubernetes/Knative scheduler selects the worker
     node(s) / edge site(s) within the privacy zone
-  - software artifact is deployed to the selected worker node(s) /
+  - Software artifact is deployed to the selected worker node(s) /
     reliable Edge Site(s)
     - option 1: container (CaaS)
     - option 2: function (FaaS)
@@ -498,11 +546,11 @@ The main steps of the operation are detailed below.
       Cons(F on PD), AccessToken T
     - ConnectorPD verifies Contract Cd and Consent Cons(F on PD)
     - pdata pd is provided
-  - processing function f is executed on pdata pd at a reliable Edge
+  - Processing function f is executed on pdata pd at a reliable Edge
     Site (WorkerNode)
   - Result R is provided
   - pdata pd is deleted at the Edge Site (WorkerNode)
-  - software artifact (function / container) is destroyed at the Edge
+  - Software artifact (function / container) is destroyed at the Edge
     Site (WorkerNode)
 
 ## Configuration and Deployment Settings
@@ -510,8 +558,8 @@ The main steps of the operation are detailed below.
 <!-- 
 _What configuration options does this BB have?  What is the
 configuration format?  Provide examples.  How is the component logging
-the operations? What are the error scenarios? What are the limits in
-terms of usage (e.g. number of requests, size of dataset, etc.)?_
+the operations? What are the error Scenarios? What are the limits in
+terms of usage (e.g., number of requests, size of dataset, etc.)?_
 -->
 
 ### Configuration Parameters
@@ -548,7 +596,7 @@ relevant operational parameters.
 
 ### Error Scenarios
 
-The following error scenarios are identified at the current design
+The following error Scenarios are identified at the current design
 stage:
 
 - Authorization related issues
@@ -566,7 +614,7 @@ stage:
   - Function deployment timeout
   - Execution request parameters not found or invalid
 
-Each error scenario results in refusing the request and providing the
+Each error Scenario results in refusing the request and providing the
 identified root cause.
 
 
@@ -614,7 +662,7 @@ To be detailed.
 -->
 
 At a first step, the REST APIs of the BB will be tested making use of
-e.g. Postman to generate test requests. A mockup version of the BB
+e.g., Postman to generate test requests. A mockup version of the BB
 will be responsible for checking the input parameters and their
 formats and for providing dummy answers.
 
@@ -631,7 +679,7 @@ following entities can be tested separately at this level:
 
 - Testing the artifact: the manually or automatically deployed
   artifact should gather the private data and execute the given
-  function.  The result can easily be verified for the test scenario.
+  function.  The result can easily be verified for the test Scenario.
   Data Provider (mockup) for testing purpose is also needed.
 
 - Scheduler: we assume that the Privacy Zone information and the
