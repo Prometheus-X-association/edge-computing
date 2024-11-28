@@ -19,7 +19,7 @@ Two main high-level objectives are targeted by these services:
   - goal 2: efficient near-data processing: optimize performance and
     resource utilization
 
-## Technical usage scenarios & Features
+## Technical Usage Scenarios & Features
 <!---
 _Brief summary of use cases and features.
 See "BB info for use cases (WP2)" spreadsheet._
@@ -37,7 +37,7 @@ pre-defined privacy zone. This privacy zone encompasses worker nodes
 (using Kubernetes terminology) where we can deploy the processing
 functions on demand. (goal 1)
 
-### Features/main functionalities
+### Features/Main Functionalities
 <!--
 _In-depth description of BB features (details).
 Again, an enumeration (ie bullet points) is useful. Take input from
@@ -52,7 +52,7 @@ description for WP2_
     near-data / on-site processing is available
   - moving the processing functions / containers dynamically
 
-### Technical usage scenarios
+### Technical Usage Scenarios
 <!--
 _In-depth description of the use cases of the BB.
 Explain why would one want to use this BB.
@@ -60,7 +60,7 @@ What services, features does it offer, why these are useful.
 A bullet point list is recommended._
 -->
 
-#### scenario 0: set up infrastructure
+#### Scenario 0: Set up Infrastructure
   - Launch VMs spanning across multiple Cloud Providers infrastructure
     via IaaS
   - Deploy Kubernetes cluster to the VMs
@@ -72,7 +72,7 @@ A bullet point list is recommended._
   - Tailor-made Kubernetes/Knative scheduler controls placement
     decisions (data, function/container)
 
-#### scenario 1: privacy-preserving AI processing
+#### Scenario 1: Privacy-preserving AI Processing
   - General BB triggers a processing function to be executed on
     PrivateData
     - goal: keep the data within the privacy zone determined by the
@@ -106,7 +106,7 @@ A bullet point list is recommended._
 More details of the communications related to scenario 1 are given
 here: [Dynamic Behaviour](#dynamic-behaviour)
 
-#### scenario 2: efficient near-data processing
+#### Scenario 2: Efficient Near-data Processing
   - General BB triggers a processing function to be executed on
     PrivateData
     - precondition: worker node(s) is/are "collocated" with
@@ -136,13 +136,13 @@ eg * **R1.** BB MUST communicate with [other BB]_
 _See also the Requirements spreadsheets
 
 Functional requirements should be extended with extra-functional ones:
-Timeliness (expected response time@request size), Througput (number of
-requess served by the BB),etc.
-These may be defined later with UCs but have to be indentified here
-and be part of configuration/deplomyent options_
+Timeliness (expected response time@request size), Throughput (number of
+requests served by the BB),etc.
+These may be defined later with UCs but have to be identified here
+and be part of configuration/deployment options_
 --->
 
-### Infrastructure-related requirements
+### Infrastructure-related Requirements
 
   - **R1.** [OPS, SEC] BB-2 MUST have access to infrastructure (of
     e.g. a Cloud Provider or private one)
@@ -156,7 +156,7 @@ and be part of configuration/deplomyent options_
   - **R5.** [OPS, SEC] BB-2 SHOULD be able to configure CNI plugins of
     Kubernetes and Istio service mesh
 
-### Requirements related to data sharing and processing
+### Requirements Related to Data Sharing and Processing
 
   - **R6.** [FUNC] BB-2 MUST be able to move data from Data Provider
     to given node of its Kubernetes cluster making use of Connector
@@ -164,7 +164,7 @@ and be part of configuration/deplomyent options_
   - **R7.** [FUNC] BB-2 MUST be able to gather function from Function
     Provider making use of Connector and Catalog
   - **R8.** [FUNC] BB-2 MUST be able to build software artifact from
-    the function and contract/consent relatad parameters
+    the function and contract/consent related parameters
   - **R9.** [FUNC] BB-2 MUST support Container-as-a-Service OR
     Function-as-a-Service based operation
   - **R10.** [FUNC] BB-2 MUST support privacy-aware scheduling in its
@@ -216,6 +216,8 @@ connector?  Why?_
 
 The integration with all other BBs playing the role of the
 TriggeringBB is expected to be done via the Connector.
+
+### Integration with Infrastructure Providers
 
 ## Relevant Standards
 
@@ -282,21 +284,21 @@ also add potential data requirements._
 The following data types and variables are used in the subsequent
 diagrams and descriptions.
 
-|Data Type|Variable|Description|
-|-|-|-|
-|AccessInfo|access|ID of a Provider and access info (REST API) of its Connector|
-|PrivateData|PD|reference/ID of the private data|
-|pdata|pd|the exact private data|
-|Data|D|reference/ID of the NOT private data|
-|data|d|the exact NOT private data|
-|Function|F|reference/ID of the function to be applied to the private data (function-specific configuration data can also be included)|
-|function|f|the exact function|
-|Contract|Cd and Cf|contracts between the TriggeringBB and DataProvider and FunctionProvider, respectively|
-|Consent|Cons(F on PD)|the consent from the User which allows the execution of the function on private data|
-|AccessToken|T|token created by the DataProvider related to the user's consent|
-|PrivacyZoneData|PZData|describing the privacy zone information related to the DataProvider and PrivateData|
-|Artifact|A|software artifact: container (CaaS) or function (CaaS) depending on the infrastructure|
-|Result|R|the result of the function execution on private data|
+| Data Type       | Variable      | Description                                                                                                                |
+|-----------------|---------------|----------------------------------------------------------------------------------------------------------------------------|
+| AccessInfo      | access        | ID of a Provider and access info (REST API) of its Connector                                                               |
+| PrivateData     | PD            | reference/ID of the private data                                                                                           |
+| pdata           | pd            | the exact private data                                                                                                     |
+| Data            | D             | reference/ID of the NOT private data                                                                                       |
+| data            | d             | the exact NOT private data                                                                                                 |
+| Function        | F             | reference/ID of the function to be applied to the private data (function-specific configuration data can also be included) |
+| function        | f             | the exact function                                                                                                         |
+| Contract        | Cd and Cf     | contracts between the TriggeringBB and DataProvider and FunctionProvider, respectively                                     |
+| Consent         | Cons(F on PD) | the consent from the User which allows the execution of the function on private data                                       |
+| AccessToken     | T             | token created by the DataProvider related to the user's consent                                                            |
+| PrivacyZoneData | PZData        | describing the privacy zone information related to the DataProvider and PrivateData                                        |
+| Artifact        | A             | software artifact: container (CaaS) or function (CaaS) depending on the infrastructure                                     |
+| Result          | R             | the result of the function execution on private data                                                                       |
 
 Customer-facing API (EdgeAPI):
 
@@ -377,30 +379,30 @@ What is the purpose of the components and what are their relationships?_
 The high-level architecture of the Edge Computing BB is shown by the
 following figure.
 
-![High-level architcture of the Edge Computing
+![High-level Architecture of the Edge Computing
 BB](diagrams/edge-computing-bb-arch.png)
 
 The architecture of the Edge Computing BB is described by the
 following class diagram.
 
-![Architcture of the Edge Computing BB: Class
+![Architecture of the Edge Computing BB: Class
 Diagram](diagrams/edge-computing-bb-class-diag.svg)
 
 The purpose and tasks of the BB components are given in the table
 below.
 
-|BB Component|Description|
-|-|-|
-|EdgeAPI|Entry point of the BB|
-|PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the PrivateData|
-|PDC|Prometheus-X DataSpace Connector (core component)|
-|PrivacyPreservingPDC|Extended PDC equipped with the capability of privacy preserving data sharing and with function sharing (part of the BB)|
-|Scheduler|Custom Kubernetes Scheduler taking also privacy related information into account|
-|ArtifactBuilder|Build the software artifacts to be deployed (abstract class)|
-|CaaS/FaaSBuilder|CaaS and FaaS based implementation of the ArtifactBuilder|
-|Wrapper|Wrapper functions/serivces/data (e.g. AccessToken) added to the software artifact (abstract class)|
-|CaaS/FaaSWrapper|CaaS and FaaS based implementation of the Wrapper|
-|WorkerNode|Kubernetes/Knative worker node (edge node) which can execute the container/function|
+| BB Component         | Description                                                                                                             |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------|
+| EdgeAPI              | Entry point of the BB                                                                                                   |
+| PrivacyZoneMgr       | Gather, handle, process privacy zone data related to the DataProvider and the PrivateData                               |
+| PDC                  | Prometheus-X DataSpace Connector (core component)                                                                       |
+| PrivacyPreservingPDC | Extended PDC equipped with the capability of privacy preserving data sharing and with function sharing (part of the BB) |
+| Scheduler            | Custom Kubernetes Scheduler taking also privacy related information into account                                        |
+| ArtifactBuilder      | Build the software artifacts to be deployed (abstract class)                                                            |
+| CaaS/FaaSBuilder     | CaaS and FaaS based implementation of the ArtifactBuilder                                                               |
+| Wrapper              | Wrapper functions/services/data (e.g. AccessToken) added to the software artifact (abstract class)                      |
+| CaaS/FaaSWrapper     | CaaS and FaaS based implementation of the Wrapper                                                                       |
+| WorkerNode           | Kubernetes/Knative worker node (edge node) which can execute the container/function                                     |
 
 ## Dynamic Behaviour
 <!--
@@ -426,26 +428,26 @@ Assumptions:
 - consent related tasks are handled by the Triggering BB in advance
   (Edge Computing BB with its connector is added to the loop)
 
-|BB Component|Description|
-|-|-|
-|EdgeAPI|Entry point of the BB|
-|PrivacyZoneMgr|Gather, handle, process privazy zone data related to the DataProvider and the Data|
-|ConnectorEdge|The connector functionality of the data consumer is delegated to the Edge Computing BB, it is the counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing|
-|Scheduler|Custom Kubernetes Scheduler|
-|ArtifactBuilder|Build the software artifacts to be deployed|
-|Wrapper|Wrapper functions/serivces/data added to the container/function artifact|
-|WorkerNode|Kubernetes worker node (edge node) which can execute the container/function|
+| BB Component    | Description                                                                                                                                                                                                                    |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| EdgeAPI         | Entry point of the BB                                                                                                                                                                                                          |
+| PrivacyZoneMgr  | Gather, handle, process privacy zone data related to the DataProvider and the Data                                                                                                                                             |
+| ConnectorEdge   | The connector functionality of the data consumer is delegated to the Edge Computing BB, it is the counterpart of the provider's connector equipped with the capability of privacy preserving data sharing and function sharing |
+| Scheduler       | Custom Kubernetes Scheduler                                                                                                                                                                                                    |
+| ArtifactBuilder | Build the software artifacts to be deployed                                                                                                                                                                                    |
+| Wrapper         | Wrapper functions/services/data added to the container/function artifact                                                                                                                                                       |
+| WorkerNode      | Kubernetes worker node (edge node) which can execute the container/function                                                                                                                                                    |
 
-|Other Actors|Description|
-|-|-|
-|Triggering BB (Consumer)|The triggering BB which plays the role of the data and function consumer. It also provides the consent related information gathered in advance making use of its own connector (not shown in the diagram).|
-|FunctionProvider|Storing the processing function to be executed (it can be the Triggering BB itself)|
-|ConnectorFP|The connector of the function provider equipped with the capability of function sharing|
-|DataProvider|Storing the data including personal data|
-|ConnectorDP|The connector of the data provider equipped with the capability of privacy preserving data sharing|
-|Contract|Prometheus-X core component (might be extended)|
-|Catalog|Prometheus-X core component extended with function sharing capability|
-|Consent|Prometheus-X core component (might be extended)|
+| Other Actors             | Description                                                                                                                                                                                                |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Triggering BB (Consumer) | The triggering BB which plays the role of the data and function consumer. It also provides the consent related information gathered in advance making use of its own connector (not shown in the diagram). |
+| FunctionProvider         | Storing the processing function to be executed (it can be the Triggering BB itself)                                                                                                                        |
+| ConnectorFP              | The connector of the function provider equipped with the capability of function sharing                                                                                                                    |
+| DataProvider             | Storing the data including personal data                                                                                                                                                                   |
+| ConnectorDP              | The connector of the data provider equipped with the capability of privacy preserving data sharing                                                                                                         |
+| Contract                 | Prometheus-X core component (might be extended)                                                                                                                                                            |
+| Catalog                  | Prometheus-X core component extended with function sharing capability                                                                                                                                      |
+| Consent                  | Prometheus-X core component (might be extended)                                                                                                                                                            |
 
 The main steps of the operation are detailed below.
 
@@ -477,7 +479,7 @@ The main steps of the operation are detailed below.
       PD, Contracts Cd, Cf, Consent Cons(F on PD), AccessToken T
   - Function F is requested via Connectors
     - ConnectorEdge uses Catalog to get the FunctionProvider's
-      Connecor (ConnectorFP)
+      Connector (ConnectorFP)
     - ConnectorFP is requested for Function F
     - Contract is checked
     - function f is provided
@@ -503,7 +505,7 @@ The main steps of the operation are detailed below.
   - software artifact (function / container) is destroyed at the Edge
     Site (WorkerNode)
 
-## Configuration and deployment settings
+## Configuration and Deployment Settings
 
 <!-- 
 _What configuration options does this BB have?  What is the
@@ -512,7 +514,7 @@ the operations? What are the error scenarios? What are the limits in
 terms of usage (e.g. number of requests, size of dataset, etc.)?_
 -->
 
-### Configuration parameters
+### Configuration Parameters
 
 The operational parameters of the BB will be described in a
 corresponding YAML configuration file.  It will be composed of the
@@ -544,7 +546,7 @@ In addition, a [Grafana](https://grafana.com/) dashboard will be added
 where the operator of the BB can visually follow and inspect the
 relevant operational parameters.
 
-### Erros scenarios
+### Error Scenarios
 
 The following error scenarios are identified at the current design
 stage:
@@ -576,7 +578,7 @@ See also the "EDGE third party/background components" spreadsheet.
 
 Our implementation will be built on Kubernetes and Knative which
 components are licensed under the Apache License 2.0.  Our BB will use
-the same licesne.
+the same license.
 
 <!--
 
@@ -598,13 +600,13 @@ The curren version of the OpenAPI specification can be found here:
 [Edge Computing BB - OpenAPI specification](../spec/openapi.yaml)
 
 
-## Test specification
+## Test Specification
 <!--
-_Test definitions and testing environment should be availaible, and
+_Test definitions and testing environment should be available, and
 the tests should be repeatable._
 -->
 
-### Test plan
+### Test Plan
 <!--
 Testing strategy, tools and methods chosen, methods for acceptance
 criteria.
@@ -642,7 +644,7 @@ to validate the interoperation among the internal components of the
 BB.  First, the ArtifactBuilder - Scheduler cooperation can be tested
 which integrates the previously defined component tests.  Second, the
 Privacy Zone calculation process can be tested including the
-PrivacyZoneMgr, ConnectoEdge and EdgeAPI.  And third, the overall
+PrivacyZoneMgr, ConnectorEdge and EdgeAPI.  And third, the overall
 workflow can be tested involving each component.
 
 Finally, the integration tests with external BBs and the core
@@ -689,7 +691,7 @@ TBD
 -->
 
 
-## Partners & roles
+## Partners & Roles
 
 - BME will lead the task, work on the design and implementation of the
   BB, integrate privacy-aware scheduler algorithms
@@ -700,7 +702,7 @@ TBD
 - University of Oslo will design and implement novel scheduler
   algorithms, formalize the related problems and evaluate the methods
 
-## Usage in the dataspace
+## Usage in the Dataspace
 
 This building block is part of the service chain with the title "Decentralized AI Training". That service chain defines how these two building blocks can be integrated into one combined solution.
 
