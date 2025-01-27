@@ -87,8 +87,8 @@ Example output:
 $ tox
 GLOB sdist-make: /home/czentye/projects/PTX-edge-computing/kubernetes/test/mock-api/setup.py
 py38 inst-nodeps: /home/czentye/projects/PTX-edge-computing/kubernetes/test/mock-api/.tox/.tmp/package/1/swagger_server-1.0.0.zip
-py38 installed: attrs==25.1.0,certifi==2024.12.14,charset-normalizer==3.4.1,click==7.1.2,clickclick==20.10.2,connexion==2.14.2,coverage==7.6.1,distlib==0.3.9,filelock==3.16.1,Flask==1.1.4,Flask-Testing==0.8.0,idna==3.10,importlib_resources==6.4.5,inflection==0.5.1,itsdangerous==1.1.0,Jinja2==2.11.3,jsonschema==4.23.0,jsonschema-specifications==2023.12.1,MarkupSafe==2.0.1,nose==1.3.7,packaging==24.2,pkgutil_resolve_name==1.3.10,platformdirs==4.3.6,pluggy==1.5.0,py==1.11.0,python-dateutil==2.6.0,PyYAML==6.0.2,randomize==0.14,referencing==0.35.1,requests==2.32.3,rpds-py==0.20.1,six==1.17.0,swagger-ui-bundle==0.0.9,swagger_server @ file:///home/czentye/projects/PTX-edge-computing/kubernetes/test/mock-api/.tox/.tmp/package/1/swagger_server-1.0.0.zip#sha256=4d6d3e2757bc8dfb4ce8fc1da6d5ed7975c6e148b7b8b8869d5a7735c6696634,toml==0.10.2,tox==3.20.1,urllib3==2.2.3,virtualenv==20.29.1,Werkzeug==1.0.1,zipp==3.20.2
-py38 run-test-pre: PYTHONHASHSEED='1824225162'
+py38 installed: attrs==25.1.0,certifi==2024.12.14,charset-normalizer==3.4.1,click==7.1.2,clickclick==20.10.2,connexion==2.14.2,coverage==7.6.1,distlib==0.3.9,filelock==3.16.1,Flask==1.1.4,Flask-Testing==0.8.0,idna==3.10,importlib_resources==6.4.5,inflection==0.5.1,itsdangerous==1.1.0,Jinja2==2.11.3,jsonschema==4.23.0,jsonschema-specifications==2023.12.1,MarkupSafe==2.0.1,nose==1.3.7,packaging==24.2,pkgutil_resolve_name==1.3.10,platformdirs==4.3.6,pluggy==1.5.0,py==1.11.0,python-dateutil==2.6.0,PyYAML==6.0.2,randomize==0.14,referencing==0.35.1,requests==2.32.3,rpds-py==0.20.1,six==1.17.0,swagger-ui-bundle==0.0.9,swagger_server @ file:///home/czentye/projects/PTX-edge-computing/kubernetes/test/mock-api/.tox/.tmp/package/1/swagger_server-1.0.0.zip#sha256=5149ea483f09c5ee9e95ce9d1c7553d8c7f450aba5cc1bfbcc3bd434da745f9f,toml==0.10.2,tox==3.20.1,urllib3==2.2.3,virtualenv==20.29.1,Werkzeug==1.0.1,zipp==3.20.2
+py38 run-test-pre: PYTHONHASHSEED='274862753'
 py38 run-test: commands[0] | nosetests -v
 Test case for checking available live API: HTTP 200 ... ok
 Test case for valid   request_edge_proc request: HTTP 200 ... ok
@@ -106,14 +106,16 @@ Test case for invalid request_privacy_edge_proc request: HTTP 404 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 408 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 412 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 503 ... ok
+Test case for valid   get_version response: HTTP 200 ... ok
 
 ----------------------------------------------------------------------
-Ran 16 tests in 2.197s
+Ran 17 tests in 2.329s
 
 OK
 _____________________________________________________________________________________________________ summary _____________________________________________________________________________________________________
   py38: commands succeeded
   congratulations :)
+
 ```
 
 For manually executing the test cases defined in

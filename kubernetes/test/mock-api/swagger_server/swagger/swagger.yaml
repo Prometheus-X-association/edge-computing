@@ -17,6 +17,19 @@ tags:
   - name: connectorAPI
     description: Connector-facing API (PrivacyPreservingPDC)
 paths:
+  /version:
+    get:
+      summary: Get Version
+      description: Versions of the REST-API component
+      operationId: get_version_version_get
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+      x-openapi-router-controller: swagger_server.controllers.default_controller
   /requestEdgeProc:
     post:
       tags:
@@ -97,6 +110,22 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.customer_api_controller
 components:
   schemas:
+    VersionResponse:
+      title: VersionResponse
+      required:
+        - api
+        - framework
+      type: object
+      properties:
+        api:
+          title: Api
+          type: string
+        framework:
+          title: Framework
+          type: string
+      example:
+        framework: framework
+        api: api
     Metadata:
       type: object
       additionalProperties:
