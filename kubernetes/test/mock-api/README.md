@@ -140,8 +140,8 @@ To run the server on a Docker container, please execute the following from the m
 
 ```bash
 # building the image
-docker build -t ptx-edge-api:1.0 .
+docker build -t ptx-edge-api:0.1 .
 
 # starting up a container
-docker run --rm --name ptx-edge-api -p 8080:8080 -it ptx-edge-api:1.0
+docker run --rm --name ptx-edge-api -p 8080:8080 -it ptx-edge-api:0.1
 ```
