@@ -31,7 +31,7 @@ TEST_CMD='echo "Waiting to exit..." && sleep infinity'
 TEST_OK='Running'
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
-RET_VAL=0
+RET_VAL_OK=0
 
 
 #--------------------------------------------------------------------------------
@@ -232,7 +232,7 @@ if [[ "$(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath=\{.status.phase\}
 else
 	echo ">>> Setup failed!"
 	kind export logs "./$TEST_ID-failed" -n ${TEST_NS} --verbosity=2
-	RET_VAL=1
+	RET_VAL_OK=1
 fi
 echo
 
@@ -246,4 +246,4 @@ if [ ! $ROOTLESS = true ]; then
 fi
 
 echo "Done."
-exit ${RET_VAL}
+exit ${RET_VAL_OK}
