@@ -25,20 +25,44 @@ levels described as follows.
              component connected to the designed PTX K8s controller based on the same
              OpenAPI specification
 
+> [!IMPORTANT]
+>
+> The current setup creates a test environment based on the predefined **Level 1**.
 
-## Preparations and setup
+## Preparation and Setup
+
+The test environment can be configured with the enclosed [Makefile](Makefile).
+
+To install the test dependencies, execute the following command
+```bash
+make install
+```
+
+To configure and set up the test environment, execute the following command
+```bash
+make run
+```
+
+To tear down the test environment, use
+```bash
+make cleanup
+```
+
+The detailed description of the test environment is described below.
+
+## Test Environment
 
 The test environment can be set up locally based on Ubuntu 22.04 LTS by
 cloning the repository and executing the following script.
 ```bash
 $ git clone https://github.com/Prometheus-X-association/edge-computing.git
 $ cd kubernetes/test
-$ ./setup_test_env.sh
+$ ./setup_kind_test_env.sh
 ```
 The script installs the required dependencies
 - [Docker](https://get.docker.com/) (latest)
-- [Kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.24.0) (v0.24.0)
-- [Kubectl](https://github.com/kubernetes/kubectl/releases/tag/v0.31.0) (v1.31.0)
+- [Kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.24.0) (v0.26.0)
+- [Kubectl](https://github.com/kubernetes/kubectl/releases/tag/v0.31.0) (v1.32.0)
 
 and performs a simple test deployment on a temporary Kubernetes
 cluster for validation.
@@ -52,11 +76,22 @@ See more about rootless mode and its limitations in
 [here](https://docs.docker.com/engine/security/rootless/)
 and [here](https://kind.sigs.k8s.io/docs/user/rootless/).
 
+Other configuration parameters are
+
+- disabling the test deployment of a basic container at the end of the setup script
+```bash
+./setup_kind_test_env.sh -x
+```
+- and performing a minimal installation for production environments (e.g. no bash completions)
+```bash
+./setup_kind_test_env.sh -s
+```
+
 ## Extension Installation
 
 TBD
 
-## Unit tests
+## Unit Tests
 
 TBD
 

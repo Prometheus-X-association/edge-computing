@@ -17,11 +17,13 @@ set -eou pipefail
 
 #--------------------------------------------------------------------------------
 
-KIND_VER=v0.24.0
+KIND_VER=v0.26.0
 #KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-KUBECTL_VER=v1.31.0	# used by Kind v0.24.0
+KUBECTL_VER=v1.32.0	# used by Kind v0.26.0
 
 ROOTLESS=false
+NO_CHECK=false
+SLIM_SETUP=false
 
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
@@ -36,13 +38,13 @@ RET_VAL_OK=0
 
 #--------------------------------------------------------------------------------
 
-while getopts r flag; do
+while getopts rxs flag; do
 	case "${flag}" in
 		r)
 			ROOTLESS=true
 			cat << EOF
 
-Rootless setup is configured...
+Rootless setup is configured.
 
 It may cause performance degradation of misbehavior due to different restrictions!
 See more:
@@ -51,6 +53,12 @@ See more:
 
 EOF
 			sleep 3s;;
+	  x)
+	    echo "No setup validation is configured."
+	    NO_CHECK=true;;
+	  s)
+	    echo "Minimal install is configured."
+	    SLIM_SETUP=true;;
 	  *)
 	    echo "Invalid parameter: $flag"
 	    exit 1;;
@@ -121,15 +129,17 @@ if ! command -v kind >/dev/null; then
 	chmod +x ./kind
 	sudo mv -v ./kind /usr/local/bin/kind
 
-	# Bash completion
-	echo
-	echo ">>> Install bash completion..."
-	echo
-	sudo apt-get install -y bash-completion
-	mkdir -p /etc/bash_completion.d
-	kind completion bash | sudo tee /etc/bash_completion.d/kind-completion > /dev/null
-	sudo chmod a+r /etc/bash_completion.d/kind-completion
-	source ~/.bashrc
+  if [ $SLIM_SETUP = false ]; then
+    # Bash completion
+    echo
+    echo ">>> Install bash completion..."
+    echo
+    sudo apt-get install -y bash-completion
+    mkdir -p /etc/bash_completion.d
+    kind completion bash | sudo tee /etc/bash_completion.d/kind-completion > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/kind-completion
+    source ~/.bashrc
+	fi
 
 	# Rootless Kind
 	if [ $ROOTLESS = true ]; then
@@ -155,15 +165,26 @@ if ! command -v kubectl >/dev/null; then
 	curl -LO "https://dl.k8s.io/release/$KUBECTL_VER/bin/linux/amd64/kubectl"
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
-	# Bash completion
-	kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
-	sudo chmod a+r /etc/bash_completion.d/kubectl
+  if [ $SLIM_SETUP = false ]; then
+    # Bash completion
+    kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/kubectl
+	fi
 
 	echo
 	(set -x; kubectl version --client)
 fi
 
 #--------------------------------------------------------------------------------
+
+if [ $NO_CHECK = true ]; then
+  if [ $ROOTLESS = false ] && [ $SLIM_SETUP = false ]; then
+    echo
+    echo -e "\nReload shell session MANUALLY to make the non-root user access (no sudo) to Docker take effect!"
+    echo
+  fi
+  exit 0
+fi
 
 cleanup_cluster () {
 	echo ">>> Cleanup..."
@@ -239,7 +260,7 @@ echo
 # Cleanup
 cleanup_cluster
 
-if [ ! $ROOTLESS = true ]; then
+if [ $ROOTLESS = false ] && [ $SLIM_SETUP = false ]; then
 	echo
 	echo -e "\nReload shell session MANUALLY to make the non-root user access (no sudo) to Docker take effect!"
 	echo

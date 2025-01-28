@@ -11,7 +11,7 @@ This example uses the [Connexion](https://github.com/zalando/connexion) library 
 Python 3.5.2+ (~= Python 3.8.20)
 
 ## Preparations
-Downgrade required packages regarding Python3.8 using the following files:
+Downgrade required packages regarding Python3.8 using the following requirement files:
 ```pycon
 # requirements.txt
 flask==1.1.4
@@ -27,7 +27,7 @@ markupsafe==2.0.1
 #jinja2<3.1.0
 #itsdangerous<2.1.0
 ```
-> **Warning**
+> [!CAUTION]
 > 
 > The downgraded packages are obsolete and may contain vulnerability issues!
 > The mock server should be used only for testing purposes.
