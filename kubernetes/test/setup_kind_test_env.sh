@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2024 Janos Czentye
+# Copyright 2025 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ ROOTLESS=false
 NO_CHECK=false
 SLIM_SETUP=false
 
+TEST_CNTR="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
-TEST_IMG='busybox:1.36'
-TEST_CMD='echo "Waiting to exit..." && sleep infinity'
+TEST_IMG='busybox:latest'
+TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
 TEST_OK='Running'
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
-RET_VAL_OK=0
-
+RET_VAL=0
 
 #--------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ while getopts rxs flag; do
 			ROOTLESS=true
 			cat << EOF
 
-Rootless setup is configured.
+[x] Rootless setup is configured.
 
 It may cause performance degradation of misbehavior due to different restrictions!
 See more:
@@ -54,42 +54,37 @@ See more:
 EOF
 			sleep 3s;;
 	  x)
-	    echo "No setup validation is configured."
+	    echo "[x] No setup validation is configured."
 	    NO_CHECK=true;;
 	  s)
-	    echo "Minimal install is configured."
+	    echo "[x] Slim install is configured."
 	    SLIM_SETUP=true;;
 	  *)
-	    echo "Invalid parameter: $flag"
+	    echo "Invalid parameter: $flag !"
 	    exit 1;;
 	esac
 done
 
 #--------------------------------------------------------------------------------
 
-echo ">>> Setup dependencies..."
-
-# Check docker install
-if ! command -v docker >/dev/null; then
-	echo
-	echo ">>> Install Docker..."
-	echo
+function install_docker () {
+	echo -e "\n>>> Install Docker...\n"
 	sudo apt-get update && sudo apt-get install -y ca-certificates curl
 	curl -fsSL https://get.docker.com/ | sh
+}
 
-	if [ $ROOTLESS = true ]; then
-		# Rootless Docker
-		sudo apt-get update && sudo apt-get install -y uidmap
-		dockerd-rootless-setuptool.sh install
-		sudo loginctl enable-linger ubuntu
-		echo -e "\n# Rootless docker\nexport DOCKER_HOST=unix:///run/user/1000/docker.sock" >> ~/.bashrc
-		source ~/.bashrc
-
-		# Add support for Ubuntu 24.04
-		source /etc/lsb-release
-		if [ "$DISTRIB_RELEASE" = 24.04 ]; then
-			filename=$(echo "$HOME"/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
-			cat <<EOF > ~/"$filename"
+function setup_rootless_docker () {
+	echo -e "\n>>> Setup rootless Docker...\n"
+    sudo apt-get update && sudo apt-get install -y uidmap
+    dockerd-rootless-setuptool.sh install
+    sudo loginctl enable-linger "$USER"
+    echo -e "\n# Rootless docker\nexport DOCKER_HOST=unix:///run/user/1000/docker.sock" >> ~/.bashrc
+    source ~/.bashrc
+    # Add support for Ubuntu 24.04
+    source /etc/lsb-release
+    if [ "$DISTRIB_RELEASE" = 24.04 ]; then
+        filename=$(echo "$HOME"/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
+        cat <<EOF > ~/"$filename"
 abi <abi/4.0>,
 include <tunables/global>
 
@@ -99,107 +94,57 @@ include <tunables/global>
   include if exists <local/${filename}>
 }
 EOF
-			sudo mv ~/"$filename" /etc/apparmor.d/"$filename"
-			sudo systemctl restart apparmor.service
-		fi
-	else
-		# Privileged Docker
-		sudo usermod -aG docker "$USER"
-		echo
-		echo ">>> Jump into new shell for docker group privilege..." && sleep 3s
-		echo
-		exec sg docker "$0" "$@"
-	fi
-else
-	echo
-	echo ">>> Check Docker install..."
-	echo
-	docker run --rm hello-world
-fi
+        sudo mv ~/"$filename" /etc/apparmor.d/"$filename"
+        sudo systemctl restart apparmor.service
+    fi
+}
 
-
-# Install kind
-if ! command -v kind >/dev/null; then
-	# Binary
-	echo
-	echo ">>> Install Kind binary..."
-	echo
-	sudo apt-get update && sudo apt-get install -y curl
+function install_kind() {
+	echo -e "\n>>> Install Kind binary...\n"
+	sudo apt-get update && sudo apt-get install -y curl make
 	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
 	chmod +x ./kind
 	sudo mv -v ./kind /usr/local/bin/kind
+}
 
-  if [ $SLIM_SETUP = false ]; then
-    # Bash completion
-    echo
-    echo ">>> Install bash completion..."
-    echo
+function setup_kind_bash_completion () {
+    echo -e "\n>>> Install Kind bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
     kind completion bash | sudo tee /etc/bash_completion.d/kind-completion > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kind-completion
     source ~/.bashrc
-	fi
+}
 
-	# Rootless Kind
-	if [ $ROOTLESS = true ]; then
-		sudo su -c "mkdir -p /etc/systemd/system/user@.service.d/ &&
-			echo -e '[Service]\nDelegate=yes' > /etc/systemd/system/user@.service.d/delegate.conf"
-		sudo su -c "mkdir -p /etc/modules-load.d/ &&
-			echo -e 'ip6_tables\nip6table_nat\nip_tables\niptable_nat' > /etc/modules-load.d/iptables.conf"
-		sudo systemctl daemon-reload
-		sudo sysctl -w kernel.dmesg_restrict=0
-		systemctl --user restart docker
-	fi
+function setup_rootless_kind() {
+    echo -e "\n>>> Install rootless Kind...\n"
+    sudo su -c "mkdir -p /etc/systemd/system/user@.service.d/ &&
+        echo -e '[Service]\nDelegate=yes' > /etc/systemd/system/user@.service.d/delegate.conf"
+    sudo su -c "mkdir -p /etc/modules-load.d/ &&
+        echo -e 'ip6_tables\nip6table_nat\nip_tables\niptable_nat' > /etc/modules-load.d/iptables.conf"
+    sudo systemctl daemon-reload
+    sudo sysctl -w kernel.dmesg_restrict=0
+    systemctl --user restart docker
+}
 
-	echo
-	(set -x; kind version)
-fi
-
-# Check kubectl
-if ! command -v kubectl >/dev/null; then
-	# Binary
-	echo
-	echo ">>> Installing kubectl..."
-	echo
+function install_kubectl() {
+	echo -e "\n>>> Install kubectl...\n"
 	curl -LO "https://dl.k8s.io/release/$KUBECTL_VER/bin/linux/amd64/kubectl"
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+}
 
-  if [ $SLIM_SETUP = false ]; then
-    # Bash completion
+function setup_kubectl_bash_completion () {
+    echo -e "\n>>> Install Kubectl bash completion...\n"
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
-	fi
-
-	echo
-	(set -x; kubectl version --client)
-fi
+}
 
 #--------------------------------------------------------------------------------
 
-if [ $NO_CHECK = true ]; then
-  if [ $ROOTLESS = false ] && [ $SLIM_SETUP = false ]; then
-    echo
-    echo -e "\nReload shell session MANUALLY to make the non-root user access (no sudo) to Docker take effect!"
-    echo
-  fi
-  exit 0
-fi
-
-cleanup_cluster () {
-	echo ">>> Cleanup..."
-	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
-	kind delete cluster -n ${TEST_K8S}
-}
-
-# Register cleanup
-trap cleanup_cluster ERR #EXIT
-
-# Setup cluster
-echo
-echo ">>> Prepare test cluster with id: $TEST_K8S..."
-echo
-cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
+function setup_test_cluster(){
+    echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
+    # kind create cluster -n "$TEST_K8S" --wait=30s --config=cfg_dual_workers_infra.yaml
+    cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: $TEST_K8S
@@ -215,56 +160,120 @@ nodes:
     labels:
       $PZ_LAB/zone-B: true
 EOF
+    echo -e "\n>>> Kind cluster info:\n"
+    kubectl cluster-info --context kind-${TEST_K8S}
+    echo -e "\n>>> K8s setup:\n"
+    kubectl version
+    echo
+    kubectl get all -n kube-system
+    echo
+    kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
+}
 
-echo
-echo ">>> Kind cluster info:"
-echo
-kubectl cluster-info --context kind-${TEST_K8S}
-echo
-echo ">>> K8s setup:"
-echo
-kubectl version
-echo
-kubectl get all -n kube-system
-echo
-kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
+function perform_test_deployment () {
+    echo -e "\n>>> Perform a test deployment...\n"
+    # Validate K8s control plane
+    set -x
+    docker pull ${TEST_IMG}
+    kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
+    kubectl create namespace ${TEST_NS}
+    kubectl run ${TEST_ID} -n ${TEST_NS} --image ${TEST_IMG} --image-pull-policy='Never' --restart='Never' \
+    		--overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' -- /bin/sh -c "$TEST_CMD"
+    kubectl wait -n ${TEST_NS} --for=condition=Ready --timeout=10s pod/${TEST_ID}
+    set +x
+    # Pod failure test
+    echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
+    kubectl get pods ${TEST_ID} -n ${TEST_NS} -o wide
+    echo
+    if [[ "$(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
+    	echo -e "\n>>> Validation result: OK!\n"
+    else
+    	echo -e "\n>>> Validation result: FAILED!\n"
+    	kind export logs "./$TEST_ID-failed" -n ${TEST_NS} --verbosity=2
+    	RET_VAL=1
+    fi
+}
 
-# Validate control plane
-echo
-echo ">>> Perform a test deployment..."
-echo
-set -x
-docker pull ${TEST_IMG}
-kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
-kubectl create namespace ${TEST_NS}
-kubectl run ${TEST_ID} -n ${TEST_NS} --image ${TEST_IMG} --image-pull-policy='Never' --restart='Never' \
-		--overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' -- /bin/sh -c "$TEST_CMD"
-kubectl wait -n ${TEST_NS} --for=condition=Ready --timeout=10s pod/${TEST_ID}
-set +x
+function cleanup_test_cluster () {
+	echo -e "\n>>> Cleanup...\n"
+	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
+	kind delete cluster -n ${TEST_K8S}
+	docker rmi -f "$TEST_IMG"
+    docker image prune -f
+}
 
-echo
-echo ">>> Waiting for potential escalation..." && sleep 3s
-echo
-kubectl get pods ${TEST_ID} -n ${TEST_NS} -o wide
+#--------------------------------------------------------------------------------
 
-echo
-if [[ "$(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
-	echo ">>> Setup OK!"
-else
-	echo ">>> Setup failed!"
-	kind export logs "./$TEST_ID-failed" -n ${TEST_NS} --verbosity=2
-	RET_VAL_OK=1
+### Docker
+if ! command -v docker >/dev/null; then
+    # Binaries
+	install_docker
+	if [ $ROOTLESS = true ]; then
+	    # Rootless Docker
+		setup_rootless_docker
+	else
+		# Privileged Docker
+		sudo usermod -aG docker "$USER"
+		if [ $NO_CHECK = false ]; then
+            echo -e "\n>>> Jump into new shell for docker group privilege...\n"
+            sleep 3s
+            # New shell with docker group privilege
+            exec sg docker "$0" "$@"
+        fi
+	fi
 fi
-echo
-
-# Cleanup
-cleanup_cluster
-
-if [ $ROOTLESS = false ] && [ $SLIM_SETUP = false ]; then
-	echo
-	echo -e "\nReload shell session MANUALLY to make the non-root user access (no sudo) to Docker take effect!"
-	echo
+# Validation
+if [ $NO_CHECK = false ]; then
+    echo -e "\n>>> Check Docker install...\n"
+    # Docker check with simple container
+    docker run --rm "$TEST_CNTR" && docker rmi -f "$TEST_CNTR"
 fi
 
-echo "Done."
-exit ${RET_VAL_OK}
+### Kind
+if ! command -v kind >/dev/null; then
+	# Binary
+	install_kind
+    if [ $SLIM_SETUP = false ]; then
+        # Bash completion
+        setup_kind_bash_completion
+    fi
+	# Rootless Kind
+	if [ $ROOTLESS = true ]; then
+	    setup_rootless_kind
+	fi
+    # Validation
+	echo
+	(set -x; kind version)
+fi
+
+### Kubectl
+if ! command -v kubectl >/dev/null; then
+	# Binary
+	install_kubectl
+    if [ $SLIM_SETUP = false ]; then
+        # Bash completion
+        setup_kubectl_bash_completion
+    fi
+    # Validation
+	echo
+	(set -x; kubectl version --client)
+fi
+
+# Test deployment
+if [ $NO_CHECK = false ]; then
+    # Register cleanup
+    trap cleanup_test_cluster ERR #EXIT
+    # Setup cluster
+    setup_test_cluster
+    # Validation
+    perform_test_deployment
+    # Cleanup
+    cleanup_test_cluster
+fi
+
+if [ $ROOTLESS = false ] && [ $NO_CHECK = false ]; then
+    echo -e "Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!"
+fi
+
+echo -e "\nDone."
+exit $RET_VAL
