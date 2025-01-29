@@ -53,6 +53,6 @@ clean:
 	py3clean -v .
 	rm -rf .venv
 
-.PHONY: build run dev clean
+.PHONY: build run dev venv dev-local openapi clean
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi

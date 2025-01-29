@@ -3,18 +3,18 @@
 ## Overview
 
 Testings of the PTX-Edge extension on the Kubernetes ecosystem is
-fundamentally performed using the [Kind](https://kind.sigs.k8s.io/) tool.
+fundamentally performed using primarily the [kind](https://kind.sigs.k8s.io/) tool.
 
-However, during development testing tasks are conducted on different
-levels described as follows.
+However, during development of the ptx-edge K8s extension, testing tasks are conducted
+on different levels described as follows.
 
 - *Level 1*: Use a mock-up REST-API server based on an
              [OpenAPI specification](mock-api/swagger_server/swagger/swagger.yaml) 
-             as a standalone Docker container to validate feature endpoints
-             and basic data required
+             as a standalone Docker container to validate feature endpoints and
+             basic data required
 
-- *Level 2*: Use **Kind** -- a Kubernetes test deployment (based on Docker-in-Docker)
-             -- to initiate a mock-up REST-API instance
+- *Level 2*: Use **kind** -- a Kubernetes test deployment (based on Docker-in-Docker)
+             -- to initiate a test K8s environment with a mock-up REST-API instance
 
 - *Level 3*: Create a DiD test Kubernetes setup with basic PTX-EDGE features installed,
              where REST-API entrypoints are served by a standalone API component (based
@@ -31,7 +31,7 @@ levels described as follows.
 
 ## Preparation and Setup
 
-The test environment can be configured with the enclosed [Makefile](Makefile).
+The test environment can be easily configured with the enclosed [Makefile](Makefile).
 
 To install the test dependencies, execute the following command
 ```bash
@@ -48,21 +48,32 @@ To tear down the test environment, use
 make cleanup
 ```
 
-The detailed description of the test environment is described below.
+However, intermediate test steps can be performed by directly executing the dedicated
+helper scripts under ``kubernetes/test``.
+
+The detailed description of the used K8s test environment(s) is described below.
 
 ## Test Environment
 
-The test environment can be set up locally based on Ubuntu 22.04 LTS by
+### kind
+
+> **kind** is a tool for running local vanilla Kubernetes clusters using Docker
+> container “nodes”.
+> kind was primarily designed for testing Kubernetes itself, but may be used for
+> local development or CI.
+
+The test environment can be set up locally based on Ubuntu 22.04/24.04 LTS by
 cloning the repository and executing the following script.
 ```bash
 $ git clone https://github.com/Prometheus-X-association/edge-computing.git
-$ cd kubernetes/test
+$ cd edge-computing/kubernetes/test
 $ ./setup_kind_test_env.sh
 ```
+
 The script installs the required dependencies
 - [Docker](https://get.docker.com/) (latest)
-- [Kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.24.0) (v0.26.0)
-- [Kubectl](https://github.com/kubernetes/kubectl/releases/tag/v0.31.0) (v1.32.0)
+- [kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.24.0) (v0.26.0)
+- [kubectl](https://github.com/kubernetes/kubectl/releases/tag/v0.31.0) (v1.32.0)
 
 and performs a simple test deployment on a temporary Kubernetes
 cluster for validation.
@@ -87,6 +98,16 @@ Other configuration parameters are
 ./setup_kind_test_env.sh -s
 ```
 
+### Alternative: k3d
+
+> **k3d** is a small program made for running a K3s cluster in Docker.
+> [K3s](https://k3s.io/) is a lightweight, CNCF-certified Kubernetes distribution and
+> Sandbox project.
+> k3d uses a Docker image built from the K3s repository to spin up multiple K3s nodes
+> in Docker containers on any machine with Docker installed. 
+
+TBD
+
 ## Extension Installation
 
 TBD
@@ -101,4 +122,13 @@ The repository also provides a mockup REST-API under `mock-api` folder
 for testing purposes based on its 
 [OpenAPI3.0 specification](mock-api/swagger_server/swagger/swagger.yaml).
 
-See further the related [README.md](mock-api/README.md).
+The auto-generated mock API also provides test cases for the basic functionality
+of the defined REST-API endpoints.
+
+Testing the endpoint can be conducted by the following two approaches:
+
+- Executing the automated test cases using ``tox`` or ``nosetests`` tools.
+- Manual endpoint testing directly from the Swagger UI available on
+ http://localhost:8080/ptx-edge/v1/ui/
+
+Further descriptions can be found in the related [README.md](mock-api/README.md).

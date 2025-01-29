@@ -24,5 +24,5 @@ cleanup:
 	# kind delete cluster -n "test"
 	docker rmi -f ptx-edge-api:0.1
 
-.PHONY: cleanup
+.PHONY: install run cleanup
 .DEFAULT_GOAL := run
