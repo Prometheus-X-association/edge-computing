@@ -35,7 +35,7 @@ The test environment can be easily configured with the enclosed
 [kubernetes/test/Makefile](Makefile).
 
 To install the test dependencies on an *Ubuntu 22.04/24.04* VM,
-execute the following command:
+execute the following command in `kubernetes/test`:
 ```bash
 make install
 ```
@@ -126,12 +126,16 @@ for testing purposes based on its
 [OpenAPI3.0 specification](mock-api/swagger_server/swagger/swagger.yaml).
 
 The auto-generated mock API also provides test cases for the basic functionality
-of the defined REST-API endpoints.
+of the defined REST-API endpoints in [mock-api/swagger_server/test](mock-api/swagger_server/test).
+- [test_default_controller.py](mock-api/swagger_server/test/test_default_controller.py):
+  test cases of the default API (`/version`)
+- [test_customer_api_controller.py](mock-api/swagger_server/test/test_customer_api_controller.py):
+  test cases of the customer-facing API (`/requestEdgeProc`, `/requestPrivacyEdgeProc`)
 
-Testing the endpoint can be conducted by the following two approaches:
+Testing the endpoints can be performed using the following two approaches:
 
-- Executing the automated test cases using ``tox`` or ``nosetests`` tools.
+- Executing the automated test cases with ``tox`` or ``nosetests`` tools.
 - Manual endpoint testing directly from the Swagger UI available on
  http://localhost:8080/ptx-edge/v1/ui/
 
-Further descriptions can be found in the related [README.md](mock-api/README.md).
+Further descriptions can be found in the mockup's [README.md](mock-api/README.md).

@@ -125,12 +125,60 @@ use
 ```
 
 ## Example usage
-_Describe how to check some basic functionality of the BB._
-E.g.:
 
-Send the following requests to the designated endpoints:
-| Endpoint      | Example input | Expected output   |
-| ------------- | ------------- | ----------------- |
-| /hello        | World         | 200, Hello World! |
-|               |               |                   |
-|               |               |                   |
+The `ptx-edge` K8s extension provides a separate REST-API in
+[kubernetes/src/rest-api](kubernetes/src/rest-api) 
+to integrate its features with the PTX core components.
+
+The API uses the [FastAPI](https://fastapi.tiangolo.com/) Python package to implement
+its endpoints and also define the related OpenAPI3.1 specification directly from the
+Python software code.
+
+#### REST-API
+
+- The REST-API uses the following base URL: ``http://<service_name>:8080/ptx-edge/v1/``.
+- The interactive API interface (Swagger UI) lives here: ``http://<service_name>:8080/ptx-edge/v1/ui/``
+- The OpenAPI specification is available at ``http://<service_name>:8080/ptx-edge/v1/openapi.json``
+
+Additionally, the latest OpenAPI specification is auto-generated and updated at every commit
+and can be found [here](kubernetes/src/rest-api/spec/openapi.yaml).
+
+#### Testing
+
+For testing purposes, a mock-API is generated based on the BB-02's predefined
+[OpenAPI specification](kubernetes/test/mock-api/swagger_server/swagger/swagger.yaml).
+
+The detailed description of the mock-API and its internal test cases can be found
+in the related [Readme](kubernetes/test/mock-api/README.md).
+
+The REST-API endpoints can be easily tested in the following two appraoches:
+
+- Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.
+For example,
+```bash
+$ curl -sX 'GET' -H 'accept: application/json' 'http://localhost:8080/ptx-edge/v1/version' | python3 -m json.tool
+{
+    "api": "0.1",
+    "framework": "1.1.4"
+}
+
+```
+
+- Manually testing endpoints with in-line test data on the Swagger UI. 
+
+#### Examples:
+
+The following table contains example API calls with successful results.
+
+Further test cases for incorrect input data and other failures are collected in the
+mock-APIs unit tests in
+[kubernetes/test/mock-api/swagger_server/test/](kubernetes/test/mock-api/swagger_server/test)
+
+To validate the endpoints, send the following requests to the main REST-API using the URL:
+``http://<service_name>:8080/ptx-edge/v1/<endpoint>``.
+
+| Endpoint                | HTTP verb | Example input (JSON)                                                                                                                                                                                                                                                                                                          | Response Code | Expected output (JSON)                                                                                                                                                                           |
+|-------------------------|:---------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| /version                |    GET    | -                                                                                                                                                                                                                                                                                                                             |      200      | <pre>{"api": "0.1",<br/> "framework": "1.1.4"}</pre>                                                                                                                                             |
+| /requestEdgeProc        |   POST    | <pre lang="json">{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                                |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
+| /requestPrivacyEdgeProc |   POST    | <pre lang="json">{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"</pre>} |
