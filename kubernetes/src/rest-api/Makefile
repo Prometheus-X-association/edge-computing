@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Docker commands
-build: Dockerfile
+build:
 	docker build -t rest-api .
 	docker images --no-trunc rest-api
 
@@ -26,7 +26,7 @@ dev:
 
 
 # Local development in venv
-venv: requirements.txt
+venv:
 	test -d .venv || (\
 		python3.13 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
@@ -41,7 +41,7 @@ dev-local: venv
 
 # Specification generation
 
-openapi: app/main.py
+openapi:
 	(\
 	. .venv/bin/activate && \
 	./scripts/generate_openapi.py --type yaml \

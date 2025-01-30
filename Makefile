@@ -19,6 +19,8 @@ install: setup
 	@exit
 
 cleanup:
+	@echo "Not implemented yet!"
+	@exit
 
 .PHONY: setup install cleanup
 .DEFAULT_GOAL := install
