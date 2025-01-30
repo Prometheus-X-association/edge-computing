@@ -45,9 +45,37 @@ See the retailed Kubernetes-based architecture design in
 [kubernetes/design](kubernetes/design/) folder.
 
 ## Building instructions
-_Describe how to build the BB._
 
-E.g.: `docker build -t <bb name>:latest .` or `npm install` 
+Since BB-02 is basically a set of extensions to the Kubernetes framework, instead of 
+standalone containerized software modules, its installation and setup require different
+steps, and most of all, *an operating vanilla Kubernetes cluster* as a prerequisite.
+
+There are many methods and tools for setting up a production-grade Kubernetes cluster on
+a local machine, see for example the Kubernetes'
+[official documentation](https://kubernetes.io/docs/setup/), or pick any of the numerous
+[certified platforms](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/)
+or managed cloud services available online.
+
+The installation and configuration steps are grouped together into separate helper scripts with 
+a dedicated [Makefile](Makefile), which internally use dedicated Kubernetes packages 
+called [Helm charts](https://helm.sh/).
+
+To install the dependencies and the **ptx-edge extension** assuming a default `kubectl` 
+profile for a running Kubernetes cluster, use the following instruction:
+```bash
+make install
+```
+
+or execute the helper scripts directly:
+```bash
+# TBD
+```
+
+or install necessary resources/dependencies and the ptx-edge Helm charts
+manually:
+```bash
+# TBD
+```
 
 ## Running instructions
 _Describe how to run the BB._
