@@ -37,17 +37,17 @@ The test environment can be easily configured with the enclosed
 To install the test dependencies on an *Ubuntu 22.04/24.04* VM,
 execute the following command in `kubernetes/test`:
 ```bash
-make install
+$ make install
 ```
 
 To configure and set up the test environment, execute the following command:
 ```bash
-make run
+$ make run
 ```
 
 To tear down the test environment and delete all intermediate resources, use
 ```bash
-make cleanup
+$ make cleanup
 ```
 > [!NOTE]
 > 
@@ -84,7 +84,7 @@ cluster for validation.
 The setup script also supports a rootless installation by using
 the `-r` flag.
 ```bash
-./setup_kind_test_env.sh -r
+$ ./setup_kind_test_env.sh -r
 ```
 See more about rootless mode and its limitations in
 [here](https://docs.docker.com/engine/security/rootless/)
@@ -94,11 +94,11 @@ Other configuration parameters are
 
 - disabling the test deployment of a basic container at the end of the setup script
 ```bash
-./setup_kind_test_env.sh -x
+$ ./setup_kind_test_env.sh -x
 ```
 - and performing a minimal installation for production environments (e.g. no bash completions)
 ```bash
-./setup_kind_test_env.sh -s
+$ ./setup_kind_test_env.sh -s
 ```
 
 ### Alternative: k3d

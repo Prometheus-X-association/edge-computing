@@ -65,18 +65,18 @@ called [Helm charts](https://helm.sh/).
 To install the dependencies and the **ptx-edge extension** assuming a default `kubectl` 
 profile for a running Kubernetes cluster, use the following instruction:
 ```bash
-make install
+$ make install
 ```
 
 or execute the helper scripts directly:
 ```bash
-# TBD
+$ # TBD
 ```
 
 or install necessary resources/dependencies and the ptx-edge Helm charts
 manually:
 ```bash
-# TBD
+$ # TBD
 ```
 
 ### Development & Testing
@@ -115,13 +115,13 @@ but it does not wait until all the resources are running before it exits.
 To check the current status of the installed chart's components, use the following
 command:
 ```bash
-# TBD
+$ # TBD
 ```
 
 To keep track of a release's state, or to re-read configuration information, you can
 use
 ```bash
-# TBD
+$ # TBD
 ```
 
 ## Example usage
