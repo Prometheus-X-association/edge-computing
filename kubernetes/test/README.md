@@ -31,25 +31,28 @@ on different levels described as follows.
 
 ## Preparation and Setup
 
-The test environment can be easily configured with the enclosed [Makefile](Makefile).
+The test environment can be easily configured with the enclosed
+[kubernetes/test/Makefile](Makefile).
 
-To install the test dependencies, execute the following command
+To install the test dependencies on an *Ubuntu 22.04/24.04* VM,
+execute the following command:
 ```bash
 make install
 ```
 
-To configure and set up the test environment, execute the following command
+To configure and set up the test environment, execute the following command:
 ```bash
 make run
 ```
 
-To tear down the test environment, use
+To tear down the test environment and delete all intermediate resources, use
 ```bash
 make cleanup
 ```
-
-However, intermediate test steps can be performed by directly executing the dedicated
-helper scripts under ``kubernetes/test``.
+> [!NOTE]
+> 
+> These steps can be performed by directly executing the dedicated
+> helper scripts located in `kubernetes/test`.
 
 The detailed description of the used K8s test environment(s) is described below.
 
