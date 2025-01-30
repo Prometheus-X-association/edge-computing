@@ -24,7 +24,25 @@ pre-defined **privacy zone**. This privacy zone primarily encompasses a set of w
 rules and where processing functions can and should be deployed on demand.
 
 ## Design Document
-See the design document [here](docs/design-document.md).
+
+See the comprehensive design document [here](docs/design-document.md).
+
+Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes**
+container orchestration platform (realistically spanning multiple providers' domains/clouds), 
+its value-added services are implemented as standalone software containers, operated in a 
+dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
+
+The main components of the BB-02's functionality cover the following:
+
+- Provide a generic runtime environment for data-processing functions.
+- Provide the ability to deploy pre-built containers with privacy-preserving options.
+- Provide the capability of managing and orchestrating by privacy-zone labels.
+- Use the PTX Connector to interact with PTX core elements.
+- Implement and control the process of obtaining data for data consumer functions/software.
+- Implement a separate REST-API interface for the integration with PTX dataspace.
+
+See the retailed Kubernetes-based architecture design in
+[kubernetes/design](kubernetes/design/) folder.
 
 ## Building instructions
 _Describe how to build the BB._
