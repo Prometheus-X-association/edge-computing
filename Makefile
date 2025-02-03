@@ -12,15 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-setup:
+install:
+	(\
+		cd kubernetes/test && \
+		make $@ \
+	)
 
-install: setup
-	@echo "Not implemented yet!"
-	@exit
+run:
+	(\
+		cd kubernetes/test && \
+		make $@\
+	)
 
 cleanup:
 	@echo "Not implemented yet!"
 	@exit
 
-.PHONY: setup install cleanup
-.DEFAULT_GOAL := install
+.PHONY: install run cleanup
+.DEFAULT_GOAL := run

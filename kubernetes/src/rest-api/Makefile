@@ -36,7 +36,7 @@ venv:
 dev-local: venv
 		(\
 		. .venv/bin/activate && \
-		fastapi dev --port 8080 --reload app/main.py; \
+		fastapi dev --port 8080 --reload app/main.py \
 		)
 
 # Specification generation

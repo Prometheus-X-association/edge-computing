@@ -73,6 +73,12 @@ profile for a running Kubernetes cluster, use the following instruction:
 $ make install
 ```
 
+> ![IMPORTANT]
+> 
+> Since BB-02 is still under development, Makefile targets point 
+> directly to the targets in the test Makefile in `kubernetes/test`!
+
+
 or execute the helper scripts directly:
 ```bash
 $ # TBD
@@ -122,6 +128,16 @@ in `kubernetes/test/mock-api`.
 
 
 ## Running instructions
+
+To start `ptx-edge` components, run
+```bash
+make run
+```
+
+> ![IMPORTANT]
+> 
+> Since BB-02 is still under development, Makefile targets point 
+> directly to the targets in the test Makefile in `kubernetes/test`!
 
 The installed Helm chart launches the included `ptx-edge` services automatically,
 but it does not wait until all the resources are running before it exits.
@@ -189,7 +205,7 @@ The following table contains example API calls with successful results.
 
 Further test cases for incorrect input data and other failures are collected in the
 mock-APIs unit tests in
-[kubernetes/test/mock-api/swagger_server/test/](kubernetes/test/mock-api/swagger_server/test)
+[kubernetes/test/mock-api/swagger_server/test/](kubernetes/test/mock-api/swagger_server/test).
 
 To validate the endpoints, send the following requests to the main REST-API using the URL:
 ``http://<service_name>:8080/ptx-edge/v1/<endpoint>``.
