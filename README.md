@@ -73,7 +73,7 @@ profile for a running Kubernetes cluster, use the following instruction:
 $ make install
 ```
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > 
 > Since BB-02 is still under development, Makefile targets point 
 > directly to the targets in the test Makefile in `kubernetes/test`!
@@ -92,7 +92,7 @@ $ # TBD
 
 ### Development & Testing
 
-> [!IMPORTANT]
+> [!NOTE]
 > 
 > The BB-02 module is unique in that sense that it cannot be seamlessly run by a 
 > container framework, such as Docker or Podman, as it is inherently based on container 
@@ -134,7 +134,7 @@ To start `ptx-edge` components, run
 make run
 ```
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > 
 > Since BB-02 is still under development, Makefile targets point 
 > directly to the targets in the test Makefile in `kubernetes/test`!
