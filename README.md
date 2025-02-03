@@ -27,12 +27,12 @@ rules and where processing functions can and should be deployed on demand.
 
 See the comprehensive design document [here](docs/design-document.md).
 
-Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes**
+Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes** (K8s)
 container orchestration platform (realistically spanning multiple providers' domains/clouds), 
 its value-added services are implemented as standalone software containers, operated in a 
 dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
 
-The main components of the BB-02's functionality cover the following:
+The main components of the BB-02's functionality cover the followings:
 
 - Provide a generic runtime environment for data-processing functions.
 - Provide the ability to deploy pre-built containers with privacy-preserving options.
@@ -41,8 +41,13 @@ The main components of the BB-02's functionality cover the following:
 - Implement and control the process of obtaining data for data consumer functions/software.
 - Implement a separate REST-API interface for the integration with PTX dataspace.
 
-See the retailed Kubernetes-based architecture design in
+See the detailed Kubernetes-based architecture and their component binding to the main
+design document in
 [kubernetes/design](kubernetes/design) folder.
+
+![](kubernetes/design/Kubernetes_ref_architecture.png)
+*Binding of BB-02 components to K8s features.*
+
 
 ## Building instructions
 
@@ -50,7 +55,7 @@ See the retailed Kubernetes-based architecture design in
 
 Since BB-02 is basically a set of extensions to the Kubernetes framework, instead of 
 standalone containerized software modules, its installation and setup require different
-steps, and most of all, *an operating vanilla Kubernetes cluster* as a prerequisite.
+steps, and most of all, an operating **vanilla Kubernetes cluster** as a prerequisite.
 
 There are many methods and tools for setting up a production-grade Kubernetes cluster on
 a local machine, see for example the Kubernetes'
@@ -58,9 +63,9 @@ a local machine, see for example the Kubernetes'
 [certified platforms](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/)
 or managed cloud services available online.
 
-The installation and configuration steps are grouped together into separate helper scripts with 
-a dedicated [Makefile](Makefile), which internally use dedicated Kubernetes packages 
-called [Helm charts](https://helm.sh/).
+The installation and configuration steps are grouped together into separate helper scripts
+with a dedicated [Makefile](Makefile), which is intended to use Kubernetes packages 
+called [Helm charts](https://helm.sh/) internally.
 
 To install the dependencies and the **ptx-edge extension** assuming a default `kubectl` 
 profile for a running Kubernetes cluster, use the following instruction:
@@ -85,14 +90,14 @@ $ # TBD
 > 
 > The BB-02 module is unique in that sense that it cannot be seamlessly run by a 
 > container framework, such as Docker or Podman, as it is inherently based on container 
-> orchestration features of higher architecture level.
+> orchestration features of a higher architecture level.
 
 However, for development and testing purposes, full-fledged but lightweight clusters of
 different Kubernetes distributions can be set up on the fly even in a single virtual machine.
 
 For example, the [kind](https://kind.sigs.k8s.io/) and [k3d](https://k3d.io/stable/) tools
-are purposefully designed for creating and spinning up local, multi-node K8s clusters/sandboxes
-using `docker` with little hassle and resource usage.
+are purposefully designed for creating and spinning up local, *multi-node* K8s
+clusters/sandboxes using `docker` with little hassle and resource usage.
 These are meant for developers to test Kubernetes distributions on their (isolated)
 development machine, but are also suitable for local development, CI, and testing.
 
@@ -106,6 +111,15 @@ on special-built docker images, which
 
 See detailed description of these tools, their installation, and configuration for `ptx-edge` 
 in [kubernetes/test](kubernetes/test/README.md).
+
+Nevertheless, the `ptx-edge` extension's *customer-facing API* can be separately run
+in a single container as a mockup for integration test cases.
+
+See further in the *Level 1* testing setup in
+[kubernetes/test/README.md](kubernetes/test/README.md#rest-api-mockup)
+or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
+in `kubernetes/test/mock-api`.
+
 
 ## Running instructions
 
@@ -151,7 +165,7 @@ For testing purposes, a mock-API is generated based on the BB-02's predefined
 The detailed description of the mock-API and its internal test cases can be found
 in the related [Readme](kubernetes/test/mock-api/README.md).
 
-The REST-API endpoints can be easily tested in the following two appraoches:
+The REST-API endpoints can be easily tested in the following two approaches:
 
 - Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.
 For example,
@@ -166,7 +180,8 @@ $ curl -sX 'GET' \
 
 ```
 
-- Manually testing endpoints with in-line test data on the Swagger UI. 
+- Manually testing endpoints with in-line test data on its
+[Swagger UI](kubernetes/test/README.md#rest-api-mockup). 
 
 #### Examples:
 
@@ -179,8 +194,8 @@ mock-APIs unit tests in
 To validate the endpoints, send the following requests to the main REST-API using the URL:
 ``http://<service_name>:8080/ptx-edge/v1/<endpoint>``.
 
-| Endpoint                | HTTP verb | Example input (JSON)                                                                                                                                                                                                                                                                                                         | Response Code | Expected output (JSON)                                                                                                                                                                           |
-|-------------------------|:---------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| /version                |    GET    | -                                                                                                                                                                                                                                                                                                                            |      200      | <pre>{"api": "0.1",<br/> "framework": "1.1.4"}</pre>                                                                                                                                             |
-| /requestEdgeProc        |   POST    | <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                               |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
+| Endpoint                | HTTP verb | Example input (JSON)                                                                                                                                                                                                                                                                                              | Response Code | Example output (JSON)                                                                                                                                                                            |
+|-------------------------|:---------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| /version                |    GET    | -                                                                                                                                                                                                                                                                                                                 |      200      | <pre>{"api": "0.1",<br/> "framework": "1.1.4"}</pre>                                                                                                                                             |
+| /requestEdgeProc        |   POST    | <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                                |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
 | /requestPrivacyEdgeProc |   POST    | <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"}</pre> |
