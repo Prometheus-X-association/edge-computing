@@ -15,7 +15,7 @@
 
 set -eou pipefail
 
-#--------------------------------------------------------------------------------
+# Config --------------------------------------------------------------------------------
 
 KIND_VER=v0.26.0
 #KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
@@ -36,13 +36,13 @@ TEST_OK='Running'
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 RET_VAL=0
 
-#--------------------------------------------------------------------------------
+# Parameters --------------------------------------------------------------------------------
 
 while getopts rxs flag; do
 	case "${flag}" in
 		r)
 			ROOTLESS=true
-			cat << EOF
+			cat <<EOF
 
 [x] Rootless setup is configured.
 
@@ -52,23 +52,23 @@ See more:
 	- https://kind.sigs.k8s.io/docs/user/rootless/#restrictions
 
 EOF
-			sleep 3s;;
-	  x)
-	    echo "[x] No setup validation is configured."
-	    NO_CHECK=true;;
-	  s)
-	    echo "[x] Slim install is configured."
-	    SLIM_SETUP=true;;
-	  *)
-	    echo "Invalid parameter: $flag !"
-	    exit 1;;
-	esac
+            sleep 3s;;
+        x)
+            echo "[x] No setup validation is configured."
+            NO_CHECK=true;;
+        s)
+            echo "[x] Slim install is configured."
+            SLIM_SETUP=true;;
+        *)
+            echo "Invalid parameter: $flag !"
+            exit 1;;
+    esac
 done
 
-#--------------------------------------------------------------------------------
+# Install actions --------------------------------------------------------------------------------
 
 function install_docker () {
-	echo -e "\n>>> Install Docker...\n"
+	echo -e "\n>>> Install Docker[latest]...\n"
 	sudo apt-get update && sudo apt-get install -y ca-certificates curl
 	curl -fsSL https://get.docker.com/ | sh
 }
@@ -100,7 +100,7 @@ EOF
 }
 
 function install_kind() {
-	echo -e "\n>>> Install Kind binary...\n"
+	echo -e "\n>>> Install Kind binary[$KIND_VER]...\n"
 	sudo apt-get update && sudo apt-get install -y curl make
 	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
 	chmod +x ./kind
@@ -128,7 +128,7 @@ function setup_rootless_kind() {
 }
 
 function install_kubectl() {
-	echo -e "\n>>> Install kubectl...\n"
+	echo -e "\n>>> Install kubectl binary[$KUBECTL_VER]...\n"
 	curl -LO "https://dl.k8s.io/release/$KUBECTL_VER/bin/linux/amd64/kubectl"
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 }
@@ -139,7 +139,7 @@ function setup_kubectl_bash_completion () {
     sudo chmod a+r /etc/bash_completion.d/kubectl
 }
 
-#--------------------------------------------------------------------------------
+# Test actions --------------------------------------------------------------------------------
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
@@ -171,14 +171,15 @@ EOF
 }
 
 function perform_test_deployment () {
-    echo -e "\n>>> Perform a test deployment...\n"
+    echo -e "\n>>> Perform a test deployment using $TEST_IMG...\n"
     # Validate K8s control plane
     set -x
     docker pull ${TEST_IMG}
     kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
-    kubectl run ${TEST_ID} -n ${TEST_NS} --image ${TEST_IMG} --image-pull-policy='Never' --restart='Never' \
-    		--overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' -- /bin/sh -c "$TEST_CMD"
+    kubectl run ${TEST_ID} -n ${TEST_NS} --image ${TEST_IMG} --image-pull-policy='Never' \
+            --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
+            -- /bin/sh -c "$TEST_CMD"
     kubectl wait -n ${TEST_NS} --for=condition=Ready --timeout=10s pod/${TEST_ID}
     set +x
     # Pod failure test
@@ -202,7 +203,7 @@ function cleanup_test_cluster () {
     docker image prune -f
 }
 
-#--------------------------------------------------------------------------------
+# Main --------------------------------------------------------------------------------
 
 ### Docker
 if ! command -v docker >/dev/null; then
@@ -215,8 +216,7 @@ if ! command -v docker >/dev/null; then
 		# Privileged Docker
 		sudo usermod -aG docker "$USER"
 		if [ $NO_CHECK = false ]; then
-            echo -e "\n>>> Jump into new shell for docker group privilege...\n"
-            sleep 3s
+            echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
             # New shell with docker group privilege
             exec sg docker "$0" "$@"
         fi
