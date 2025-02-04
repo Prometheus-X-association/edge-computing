@@ -272,8 +272,12 @@ if [ $NO_CHECK = false ]; then
 fi
 
 if [ $ROOTLESS = false ] && [ $NO_CHECK = false ]; then
-    echo -e "Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!"
-fi
+    cat <<EOF
+#########################################################################################################
+##  Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!  ##
+#########################################################################################################
+EOF
+    fi
 
 echo -e "\nDone."
 exit $RET_VAL
