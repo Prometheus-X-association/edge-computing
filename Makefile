@@ -15,7 +15,7 @@
 setup:
 	cd kubernetes/test && make create
 
-run:
+run: setup
 	cd kubernetes/test && make run
 
 cleanup:

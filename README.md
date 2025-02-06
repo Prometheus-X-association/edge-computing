@@ -46,6 +46,7 @@ design document in
 [kubernetes/design](kubernetes/design) folder.
 
 ![](kubernetes/design/Kubernetes_ref_architecture.png)
+
 *Binding of BB-02 components to K8s features.*
 
 
@@ -133,6 +134,10 @@ To start `ptx-edge` components, run
 ```bash
 make run
 ```
+while for tearing down the components, execute
+```bash
+make cleanup
+```
 
 > [!IMPORTANT]
 > 
@@ -140,7 +145,7 @@ make run
 > directly to the targets in the test Makefile in `kubernetes/test`!
 
 The installed Helm chart launches the included `ptx-edge` services automatically,
-but it does not wait until all the resources are running before it exits.
+but it does not wait until all the resources are running before it exits!
 
 To check the current status of the installed chart's components, use the following
 command:
