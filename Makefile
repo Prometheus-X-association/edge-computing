@@ -13,14 +13,13 @@
 # limitations under the License.
 
 setup:
-	cd kubernetes/test && make $@
+	cd kubernetes/test && make create
 
 run:
-	cd kubernetes/test && make $@
+	cd kubernetes/test && make run
 
 cleanup:
-	@echo "Not implemented yet!"
-	@exit
+	cd kubernetes/test && make purge
 
 .PHONY: setup run cleanup
 .DEFAULT_GOAL := run
