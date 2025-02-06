@@ -70,7 +70,7 @@ called [Helm charts](https://helm.sh/) internally.
 To install the dependencies and the **ptx-edge extension** assuming a default `kubectl` 
 profile for a running Kubernetes cluster, use the following instruction:
 ```bash
-$ make install
+$ make setup
 ```
 
 > [!IMPORTANT]

@@ -25,7 +25,7 @@ ROOTLESS=false
 NO_CHECK=false
 SLIM_SETUP=false
 
-TEST_CNTR="hello-world:latest"
+CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
@@ -143,7 +143,7 @@ function setup_kubectl_bash_completion () {
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
-    # kind create cluster -n "$TEST_K8S" --wait=30s --config=cfg_dual_workers_infra.yaml
+    # kind create cluster -n "$TEST_K8S" --wait=30s --config=test_cluster_multi.yaml
     cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -165,7 +165,7 @@ EOF
     echo -e "\n>>> K8s setup:\n"
     kubectl version
     echo
-    kubectl get all -n kube-system
+    kubectl -n kube-system get all
     echo
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
@@ -177,16 +177,16 @@ function perform_test_deployment () {
     docker pull ${TEST_IMG}
     kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
-    kubectl run ${TEST_ID} -n ${TEST_NS} --image ${TEST_IMG} --image-pull-policy='Never' \
+    kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
             --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
             -- /bin/sh -c "$TEST_CMD"
-    kubectl wait -n ${TEST_NS} --for=condition=Ready --timeout=10s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=10s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
-    kubectl get pods ${TEST_ID} -n ${TEST_NS} -o wide
+    kubectl -n ${TEST_NS} get pods ${TEST_ID} -o wide
     echo
-    if [[ "$(kubectl get pods ${TEST_ID} -n ${TEST_NS} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
+    if [[ "$(kubectl -n ${TEST_NS} get pods ${TEST_ID} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
     	echo -e "\n>>> Validation result: OK!\n"
     else
     	echo -e "\n>>> Validation result: FAILED!\n"
@@ -199,8 +199,8 @@ function cleanup_test_cluster () {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	kind delete cluster -n ${TEST_K8S}
-	docker rmi -f "$TEST_IMG"
-    docker image prune -f
+	docker rmi -f "$TEST_IMG" "$(docker image ls -q kindest/node)"
+    #docker image prune -f
 }
 
 # Main --------------------------------------------------------------------------------
@@ -226,7 +226,7 @@ fi
 if [ $NO_CHECK = false ]; then
     echo -e "\n>>> Check Docker install...\n"
     # Docker check with simple container
-    docker run --rm "$TEST_CNTR" && docker rmi -f "$TEST_CNTR"
+    docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
 fi
 
 ### Kind
@@ -279,5 +279,5 @@ if [ $ROOTLESS = false ] && [ $NO_CHECK = false ]; then
 EOF
     fi
 
-echo -e "\nDone."
+echo -e "\nSetup is finished."
 exit $RET_VAL

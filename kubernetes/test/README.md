@@ -37,7 +37,7 @@ The test environment can be easily configured with the enclosed
 To install the test dependencies on an *Ubuntu 22.04/24.04* VM,
 execute the following command in `kubernetes/test`:
 ```bash
-$ make install
+$ make setup
 ```
 
 To configure and set up the test environment, execute the following command:
