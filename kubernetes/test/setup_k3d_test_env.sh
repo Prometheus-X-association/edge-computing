@@ -92,11 +92,11 @@ function setup_kubectl_bash_completion () {
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
-#    k3d cluster create "$TEST_K8S" --verbose --wait --timeout=30s --servers=1 --agents=2 \
+#    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=2 \
 #        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
 #        --k3s-node-label="$PZ_LAB/zone-A=true@agent:0" \
 #        --k3s-node-label="$PZ_LAB/zone-B=true@agent:*"
-    cat <<EOF | k3d cluster create "$TEST_K8S" --verbose --wait --timeout=30s --config=-
+    cat <<EOF | k3d cluster create "$TEST_K8S" --wait --timeout=30s --config=-
 kind: Simple
 apiVersion: k3d.io/v1alpha5
 metadata:
@@ -125,7 +125,7 @@ EOF
     kubectl version
     echo
     kubectl -n kube-system get all
-    echo
+    echo -e "\n>>> K3s nodes:\n"
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
@@ -134,7 +134,7 @@ function perform_test_deployment () {
     # Validate K8s control plane
     set -x
     docker pull ${TEST_IMG}
-    k3s image import -c ${TEST_K8S} ${TEST_IMG}
+    k3d image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
             --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \

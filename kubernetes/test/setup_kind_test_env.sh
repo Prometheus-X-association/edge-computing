@@ -169,7 +169,7 @@ EOF
     kubectl version
     echo
     kubectl -n kube-system get all
-    echo
+    echo -e "\n>>> K3s nodes:\n"
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
