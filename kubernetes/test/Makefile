@@ -33,7 +33,7 @@ run:
 	kubectl -n ${TEST} wait --for=condition=Ready --timeout=10s pod/${API}
 	kubectl -n ${TEST} expose pod/${API} --type NodePort --target-port ${PORT} --name ${API} \
 							--overrides='{"apiVersion":"v1","spec":{"ports":[{"nodePort":${NPORT},"port":${PORT}}]}}'
-	kubectl -n ${TEST} get nodes,all -o wide
+	kubectl -n ${TEST} get nodes,all,endpoints -o wide
 	$(eval NODE_IP := `kubectl get node ptx-edge-test-control-plane \
 								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
 	$(eval NODE_PORT := `kubectl get -n ${TEST} service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)

@@ -17,11 +17,9 @@ set -eou pipefail
 
 # Config --------------------------------------------------------------------------------
 
-KIND_VER=v0.26.0
-#KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-KUBECTL_VER=v1.32.0	# used by Kind v0.26.0
+K3D_VER=v5.8.1
+KUBECTL_VER=v1.31.4	# used by k3d v5.8.1
 
-ROOTLESS=false
 NO_CHECK=false
 SLIM_SETUP=false
 
@@ -40,19 +38,6 @@ RET_VAL=0
 
 while getopts rxs flag; do
 	case "${flag}" in
-		r)
-			ROOTLESS=true
-			cat <<EOF
-
-[x] Rootless setup is configured.
-
-It may cause performance degradation of misbehavior due to different restrictions!
-See more:
-	- https://docs.docker.com/engine/security/rootless/#known-limitations
-	- https://kind.sigs.k8s.io/docs/user/rootless/#restrictions
-
-EOF
-            sleep 3s;;
         x)
             echo "[x] No setup validation is configured."
             NO_CHECK=true;;
@@ -69,62 +54,23 @@ done
 
 function install_docker () {
 	echo -e "\n>>> Install Docker[latest]...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl make
 	curl -fsSL https://get.docker.com/ | sh
 }
 
-function setup_rootless_docker () {
-	echo -e "\n>>> Setup rootless Docker...\n"
-    sudo apt-get update && sudo apt-get install -y uidmap
-    dockerd-rootless-setuptool.sh install
-    sudo loginctl enable-linger "$USER"
-    echo -e "\n# Rootless docker\nexport DOCKER_HOST=unix:///run/user/1000/docker.sock" >> ~/.bashrc
-    source ~/.bashrc
-    # Add support for Ubuntu 24.04
-    source /etc/lsb-release
-    if [ "$DISTRIB_RELEASE" = 24.04 ]; then
-        filename=$(echo "$HOME"/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
-        cat <<EOF > ~/"$filename"
-abi <abi/4.0>,
-include <tunables/global>
-
-"$HOME/bin/rootlesskit" flags=(unconfined) {
-  userns,
-
-  include if exists <local/${filename}>
-}
-EOF
-        sudo mv ~/"$filename" /etc/apparmor.d/"$filename"
-        sudo systemctl restart apparmor.service
-    fi
-}
-
-function install_kind() {
-	echo -e "\n>>> Install Kind binary[$KIND_VER]...\n"
+function install_k3d() {
+	echo -e "\n>>> Install k3d binary[$K3D_VER]...\n"
 	sudo apt-get update && sudo apt-get install -y curl make
-	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
-	chmod +x ./kind
-	sudo mv -v ./kind /usr/local/bin/kind
+	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
 }
 
-function setup_kind_bash_completion () {
-    echo -e "\n>>> Install Kind bash completion...\n"
+function setup_k3d_bash_completion () {
+    echo -e "\n>>> Install k3d bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
-    kind completion bash | sudo tee /etc/bash_completion.d/kind > /dev/null
-    sudo chmod a+r /etc/bash_completion.d/kind
+    k3d completion bash | sudo tee /etc/bash_completion.d/k3d > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/k3d
     source ~/.bashrc
-}
-
-function setup_rootless_kind() {
-    echo -e "\n>>> Install rootless Kind...\n"
-    sudo su -c "mkdir -p /etc/systemd/system/user@.service.d/ &&
-        echo -e '[Service]\nDelegate=yes' > /etc/systemd/system/user@.service.d/delegate.conf"
-    sudo su -c "mkdir -p /etc/modules-load.d/ &&
-        echo -e 'ip6_tables\nip6table_nat\nip_tables\niptable_nat' > /etc/modules-load.d/iptables.conf"
-    sudo systemctl daemon-reload
-    sudo sysctl -w kernel.dmesg_restrict=0
-    systemctl --user restart docker
 }
 
 function install_kubectl() {
@@ -146,26 +92,36 @@ function setup_kubectl_bash_completion () {
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
-    # kind create cluster -n "$TEST_K8S" --wait=30s --config=test_cluster_multi.yaml
-    cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-name: $TEST_K8S
-nodes:
-    - role: control-plane
-        labels:
-            $PZ_LAB/zone-C: true
-    - role: worker
-        labels:
-            $PZ_LAB/zone-A: true
-            $PZ_LAB/zone-B: true
-    - role: worker
-        labels:
-            $PZ_LAB/zone-B: true
+#    k3d cluster create "$TEST_K8S" --verbose --wait --timeout=30s --servers=1 --agents=2 \
+#        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
+#        --k3s-node-label="$PZ_LAB/zone-A=true@agent:0" \
+#        --k3s-node-label="$PZ_LAB/zone-B=true@agent:*"
+    cat <<EOF | k3d cluster create "$TEST_K8S" --verbose --wait --timeout=30s --config=-
+kind: Simple
+apiVersion: k3d.io/v1alpha5
+metadata:
+    name: $TEST_K8S
+servers: 1
+agents: 2
+options:
+    k3d:
+        wait: true
+        timeout: "30s"
+    k3s:
+        nodeLabels:
+            - label: "$PZ_LAB/zone-C=true"
+              nodeFilters:
+                - server:0
+            - label: "$PZ_LAB/zone-A=true"
+              nodeFilters:
+                - agent:0
+            - label: "$PZ_LAB/zone-B=true"
+              nodeFilters:
+                - agent:*
 EOF
-    echo -e "\n>>> Kind cluster info:\n"
-    kubectl cluster-info --context kind-${TEST_K8S}
-    echo -e "\n>>> K8s setup:\n"
+    echo -e "\n>>> K3d cluster info:\n"
+    kubectl cluster-info --context k3d-${TEST_K8S}
+    echo -e "\n>>> K3s setup:\n"
     kubectl version
     echo
     kubectl -n kube-system get all
@@ -178,7 +134,7 @@ function perform_test_deployment () {
     # Validate K8s control plane
     set -x
     docker pull ${TEST_IMG}
-    kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
+    k3s image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
             --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
@@ -193,7 +149,6 @@ function perform_test_deployment () {
     	echo -e "\n>>> Validation result: OK!\n"
     else
     	echo -e "\n>>> Validation result: FAILED!\n"
-    	kind export logs "./$TEST_ID-failed" -n ${TEST_NS} --verbosity=2
     	RET_VAL=1
     fi
 }
@@ -201,9 +156,8 @@ function perform_test_deployment () {
 function cleanup_test_cluster () {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
-	kind delete cluster -n ${TEST_K8S}
-	docker rmi -f "$TEST_IMG" "$(docker image ls -q kindest/node)"
-    #docker image prune -f
+	k3d cluster delete ${TEST_K8S}
+	docker rmi -f "$TEST_IMG" "$(docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f reference="rancher/*")"
 }
 
 # Main --------------------------------------------------------------------------------
@@ -212,18 +166,13 @@ function cleanup_test_cluster () {
 if ! command -v docker >/dev/null; then
     # Binaries
 	install_docker
-	if [ $ROOTLESS = true ]; then
-	    # Rootless Docker
-		setup_rootless_docker
-	else
-		# Privileged Docker
-		sudo usermod -aG docker "$USER"
-		if [ $NO_CHECK = false ]; then
-            echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
-            # New shell with docker group privilege
-            exec sg docker "$0" "$@"
-        fi
-	fi
+    # Privileged Docker
+    sudo usermod -aG docker "$USER"
+    if [ $NO_CHECK = false ]; then
+        echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
+        # New shell with docker group privilege
+        exec sg docker "$0" "$@"
+    fi
 fi
 # Validation
 if [ $NO_CHECK = false ]; then
@@ -232,21 +181,17 @@ if [ $NO_CHECK = false ]; then
     docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
 fi
 
-### Kind
-if ! command -v kind >/dev/null; then
+### K3d
+if ! command -v k3d >/dev/null; then
 	# Binary
-	install_kind
+	install_k3d
     if [ $SLIM_SETUP = false ]; then
         # Bash completion
-        setup_kind_bash_completion
+        setup_k3d_bash_completion
     fi
-	# Rootless Kind
-	if [ $ROOTLESS = true ]; then
-	    setup_rootless_kind
-	fi
     # Validation
 	echo
-	(set -x; kind version)
+	(set -x; k3d version)
 fi
 
 ### Kubectl
@@ -274,7 +219,7 @@ if [ $NO_CHECK = false ]; then
     cleanup_test_cluster
 fi
 
-if [ $ROOTLESS = false ] && [ $NO_CHECK = false ]; then
+if [ $NO_CHECK = false ]; then
     cat <<EOF
 #########################################################################################################
 ##  Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!  ##
