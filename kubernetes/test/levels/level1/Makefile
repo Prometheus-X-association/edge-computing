@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-REST_API_IMG="ptx-edge-api:0.1"
-REST_API_NAME=ptx-edge-api
-REST_API_PORT=8080
+IMG="ptx-edge-api:0.1"
+NAME=ptx-edge-api
+PORT=8080
 
 setup:
-	docker build -t ${IMG} mock-api/
+	docker build -t ${IMG} ../../mock-api/
 
 run: setup
-	docker run --rm --name ${REST_API_NAME} -p ${PORT}:8080 -it ${IMG}
+	docker run --rm --name ${NAME} -p ${PORT}:8080 -it ${IMG}
 
 cleanup:
 	docker rmi -f ${IMG}

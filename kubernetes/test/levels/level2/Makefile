@@ -21,7 +21,7 @@ NPORT := 30080
 
 setup:
 	bash setup_kind_test_env.sh -xs
-	docker build -t ${IMG} mock-api/
+	docker build -t ${IMG} ../../mock-api/
 
 create: setup
 	kind create cluster -n ${CLUSTER} --wait=30s --config=test_cluster_single.yaml
