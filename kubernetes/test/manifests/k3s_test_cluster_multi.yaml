@@ -1,0 +1,21 @@
+kind: Simple
+apiVersion: k3d.io/v1alpha5
+metadata:
+  name: test-cluster
+servers: 1
+agents: 2
+options:
+  k3d:
+    wait: true
+    timeout: 30s
+  k3s:
+    nodeLabels:
+      - label: privacy-zone.dataspace.prometheus-x.org/zone-C=true
+        nodeFilters:
+          - server:0
+      - label: privacy-zone.dataspace.prometheus-x.org/zone-A=true
+        nodeFilters:
+          - agent:0
+      - label: privacy-zone.dataspace.prometheus-x.org/zone-B=true
+        nodeFilters:
+          - agent:*

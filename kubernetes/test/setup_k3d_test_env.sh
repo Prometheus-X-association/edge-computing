@@ -100,24 +100,24 @@ function setup_test_cluster(){
 kind: Simple
 apiVersion: k3d.io/v1alpha5
 metadata:
-    name: $TEST_K8S
+  name: $TEST_K8S
 servers: 1
 agents: 2
 options:
-    k3d:
-        wait: true
-        timeout: "30s"
-    k3s:
-        nodeLabels:
-            - label: "$PZ_LAB/zone-C=true"
-              nodeFilters:
-                - server:0
-            - label: "$PZ_LAB/zone-A=true"
-              nodeFilters:
-                - agent:0
-            - label: "$PZ_LAB/zone-B=true"
-              nodeFilters:
-                - agent:*
+  k3d:
+    wait: true
+    timeout: "30s"
+  k3s:
+    nodeLabels:
+      - label: "$PZ_LAB/zone-C=true"
+        nodeFilters:
+          - server:0
+      - label: "$PZ_LAB/zone-A=true"
+        nodeFilters:
+          - agent:0
+      - label: "$PZ_LAB/zone-B=true"
+        nodeFilters:
+          - agent:*
 EOF
     echo -e "\n>>> K3d cluster info:\n"
     kubectl cluster-info --context k3d-${TEST_K8S}
@@ -157,7 +157,7 @@ function cleanup_test_cluster () {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	k3d cluster delete ${TEST_K8S}
-	docker rmi -f "$TEST_IMG" "$(docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f reference="rancher/*")"
+	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" | xargs docker rmi -f "$TEST_IMG"
 }
 
 # Main --------------------------------------------------------------------------------
@@ -221,6 +221,7 @@ fi
 
 if [ $NO_CHECK = false ]; then
     cat <<EOF
+
 #########################################################################################################
 ##  Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!  ##
 #########################################################################################################

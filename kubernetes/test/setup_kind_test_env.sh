@@ -146,22 +146,22 @@ function setup_kubectl_bash_completion () {
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
-    # kind create cluster -n "$TEST_K8S" --wait=30s --config=test_cluster_multi.yaml
+    # kind create cluster -n "$TEST_K8S" --wait=30s --config=manifests/kind_test_cluster_multi.yaml
     cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: $TEST_K8S
 nodes:
-    - role: control-plane
-        labels:
-            $PZ_LAB/zone-C: true
-    - role: worker
-        labels:
-            $PZ_LAB/zone-A: true
-            $PZ_LAB/zone-B: true
-    - role: worker
-        labels:
-            $PZ_LAB/zone-B: true
+  - role: control-plane
+    labels:
+      $PZ_LAB/zone-C: true
+  - role: worker
+    labels:
+      $PZ_LAB/zone-A: true
+      $PZ_LAB/zone-B: true
+  - role: worker
+    labels:
+      $PZ_LAB/zone-B: true
 EOF
     echo -e "\n>>> Kind cluster info:\n"
     kubectl cluster-info --context kind-${TEST_K8S}

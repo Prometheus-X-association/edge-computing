@@ -24,7 +24,7 @@ setup:
 	docker build -t ${IMG} mock-api/
 
 create: setup
-	kind create cluster -n ${CLUSTER} --wait=30s --config=test_cluster_single.yaml
+	kind create cluster -n ${CLUSTER} --wait=30s --config=manifests/kind_test_cluster_single.yaml
 	kind load docker-image -n ${CLUSTER} ${IMG}
 
 run:

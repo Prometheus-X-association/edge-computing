@@ -111,8 +111,8 @@ function setup_kind_bash_completion () {
     echo -e "\n>>> Install Kind bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
-    kind completion bash | sudo tee /etc/bash_completion.d/kind-completion > /dev/null
-    sudo chmod a+r /etc/bash_completion.d/kind-completion
+    kind completion bash | sudo tee /etc/bash_completion.d/kind > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/kind
     source ~/.bashrc
 }
 
@@ -135,15 +135,18 @@ function install_kubectl() {
 
 function setup_kubectl_bash_completion () {
     echo -e "\n>>> Install Kubectl bash completion...\n"
+    sudo apt-get install -y bash-completion
+    mkdir -p /etc/bash_completion.d
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
+    source ~/.bashrc
 }
 
 # Test actions --------------------------------------------------------------------------------
 
 function setup_test_cluster(){
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
-    # kind create cluster -n "$TEST_K8S" --wait=30s --config=test_cluster_multi.yaml
+    # kind create cluster -n "$TEST_K8S" --wait=30s --config=manifests/kind_test_cluster_multi.yaml
     cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -166,7 +169,7 @@ EOF
     kubectl version
     echo
     kubectl -n kube-system get all
-    echo
+    echo -e "\n>>> K8s nodes:\n"
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
