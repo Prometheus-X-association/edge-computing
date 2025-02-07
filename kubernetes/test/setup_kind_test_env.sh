@@ -29,8 +29,12 @@ CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
-TEST_IMG='busybox:latest'
-TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
+# busybox ~4.2MB
+#TEST_IMG='busybox:latest'
+#TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
+# pause ~240kB
+TEST_IMG='k8s.gcr.io/pause'
+TEST_CMD=''
 TEST_OK='Running'
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
@@ -276,6 +280,7 @@ fi
 
 if [ $ROOTLESS = false ] && [ $NO_CHECK = false ]; then
     cat <<EOF
+
 #########################################################################################################
 ##  Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!  ##
 #########################################################################################################

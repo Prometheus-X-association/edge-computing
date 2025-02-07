@@ -102,7 +102,8 @@ $ # TBD
 However, for development and testing purposes, full-fledged but lightweight clusters of
 different Kubernetes distributions can be set up on the fly even in a single virtual machine.
 
-For example, the [kind](https://kind.sigs.k8s.io/) and [k3d](https://k3d.io/stable/) tools
+For example, the [kind](https://kind.sigs.k8s.io/), [k3d](https://k3d.io/stable/), and
+[minikube](https://minikube.sigs.k8s.io/docs/) tools
 are purposefully designed for creating and spinning up local, *multi-node* K8s
 clusters/sandboxes using `docker` with little hassle and resource usage.
 These are meant for developers to test Kubernetes distributions on their (isolated)
