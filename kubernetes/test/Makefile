@@ -41,25 +41,33 @@ run:
 								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
 	$(eval NODE_PORT := `kubectl get -n ${TEST} service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
 	@echo
-	@echo "${API} is available on http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
+	@echo ">>> ${API} is available on http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
 	@echo
-	@echo "${API} is also exposed on http://localhost:${PORT}/ptx-edge/v1/ui/"
+	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://localhost:${PORT}/ptx-edge/v1/ui/"
 
 test: | setup create run
 
 run-lb:
 	kubectl create namespace ${TEST}
 	kubectl label node ${CLUSTER}-control-plane node.kubernetes.io/exclude-from-external-load-balancers-
-	docker run -q --rm -d --name ${CCM_NAME} --network kind -v /var/run/docker.sock:/var/run/docker.sock \
-											registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER}
+	docker run -q --rm -d --name ${CCM_NAME} --network kind \
+				-v /var/run/docker.sock:/var/run/docker.sock \
+				registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER} -enable-lb-port-mapping
 	kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
 	kubectl -n ${TEST} wait --for=condition=Ready --timeout=20s pod/${API}
 	kubectl -n ${TEST} expose pod/${API} --type LoadBalancer --target-port ${PORT} --port ${LB_PORT}
 	kubectl -n ${TEST} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=20s service/${API}
 	kubectl -n ${TEST} get nodes,all,endpoints -o wide
-	$(eval LB_IP := `kubectl get -n ${TEST} service/${API} -o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
+	$(eval LB_IP = `kubectl get -n ${TEST} service/${API} -o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
+	$(eval LB_IP_PORT = `docker ps -q -f "name=kindccm-*" | xargs -I {} -r docker port {} 8080 | head -1`)
 	@echo
-	@echo "${API} is exposed on http://${LB_IP}:${PORT}/ptx-edge/v1/ui/"
+	@echo ">>> ${API} is available on http://${LB_IP}:${PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://${LB_IP}:${PORT}/ptx-edge/v1/ui/"
+	@echo
+	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://${LB_IP_PORT}/ptx-edge/v1/ui/"
 
 test-lb: | setup create run-lb
 

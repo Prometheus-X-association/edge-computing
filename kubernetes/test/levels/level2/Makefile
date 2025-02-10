@@ -38,9 +38,11 @@ run:
 								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
 	$(eval NODE_PORT := `kubectl get -n ${TEST} service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
 	@echo
-	@echo "${API} is available on http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
+	@echo ">>> ${API} is available on http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://${NODE_IP}:${NODE_PORT}/ptx-edge/v1/ui/"
 	@echo
-	@echo "${API} is also exposed on http://localhost:${PORT}/ptx-edge/v1/ui/"
+	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/ptx-edge/v1/ui/"
+	@curl -I "http://localhost:${PORT}/ptx-edge/v1/ui/"
 
 test: | setup create run
 
