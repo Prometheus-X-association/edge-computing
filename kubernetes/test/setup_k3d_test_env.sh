@@ -143,7 +143,7 @@ function perform_test_deployment () {
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
             --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
             -- /bin/sh -c "$TEST_CMD"
-    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=10s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
@@ -161,7 +161,8 @@ function cleanup_test_cluster () {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	k3d cluster delete ${TEST_K8S}
-	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" | xargs docker rmi -f "$TEST_IMG"
+	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
+	                            -f "reference=$TEST_IMG" | xargs docker rmi -f "$TEST_IMG"
 }
 
 # Main --------------------------------------------------------------------------------

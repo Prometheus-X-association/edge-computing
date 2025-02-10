@@ -20,10 +20,12 @@ set -eou pipefail
 KIND_VER=v0.26.0
 #KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 KUBECTL_VER=v1.32.0	# used by Kind v0.26.0
+KIND_CCM_VER=0.5.0
 
 ROOTLESS=false
 NO_CHECK=false
 SLIM_SETUP=false
+KIND_CCM=false
 
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
@@ -36,13 +38,14 @@ TEST_ID='test42'
 TEST_IMG='k8s.gcr.io/pause'
 TEST_CMD=''
 TEST_OK='Running'
+KIND_CCM_NAME="kind-ccm"
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts rxs flag; do
+while getopts rxsc flag; do
 	case "${flag}" in
 		r)
 			ROOTLESS=true
@@ -63,6 +66,9 @@ EOF
         s)
             echo "[x] Slim install is configured."
             SLIM_SETUP=true;;
+        c)
+            echo "[x] Cloud provider kind install is configured."
+            KIND_CCM=true;;
         *)
             echo "Invalid parameter: $flag !"
             exit 1;;
@@ -71,13 +77,13 @@ done
 
 # Install actions --------------------------------------------------------------------------------
 
-function install_docker () {
+function install_docker() {
 	echo -e "\n>>> Install Docker[latest]...\n"
 	sudo apt-get update && sudo apt-get install -y ca-certificates curl
 	curl -fsSL https://get.docker.com/ | sh
 }
 
-function setup_rootless_docker () {
+function setup_rootless_docker() {
 	echo -e "\n>>> Setup rootless Docker...\n"
     sudo apt-get update && sudo apt-get install -y uidmap
     dockerd-rootless-setuptool.sh install
@@ -105,13 +111,22 @@ EOF
 
 function install_kind() {
 	echo -e "\n>>> Install Kind binary[$KIND_VER]...\n"
-	sudo apt-get update && sudo apt-get install -y curl make
+	sudo apt-get update && sudo apt-get install -y curl make git
 	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/$KIND_VER/kind-linux-amd64"
 	chmod +x ./kind
 	sudo mv -v ./kind /usr/local/bin/kind
 }
 
-function setup_kind_bash_completion () {
+function install_cloud_provider_kind() {
+	echo -e "\n>>> Install Cloud Provider Kind[v$KIND_CCM_VER]...\n"
+    # docker pull registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v${KIND_CCM_VER}
+    pushd "$(mktemp -d)"
+    wget -qO- "https://github.com/kubernetes-sigs/cloud-provider-kind/releases/download/v$KIND_CCM_VER/cloud-provider-kind_${KIND_CCM_VER}_linux_amd64.tar.gz" | tar xvz
+    sudo mv cloud-provider-kind /usr/local/bin/cloud-provider-kind
+    popd
+}
+
+function setup_kind_bash_completion() {
     echo -e "\n>>> Install Kind bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
@@ -137,7 +152,7 @@ function install_kubectl() {
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 }
 
-function setup_kubectl_bash_completion () {
+function setup_kubectl_bash_completion() {
     echo -e "\n>>> Install Kubectl bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
@@ -148,7 +163,7 @@ function setup_kubectl_bash_completion () {
 
 # Test actions --------------------------------------------------------------------------------
 
-function setup_test_cluster(){
+function setup_test_cluster() {
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
     # kind create cluster -n "$TEST_K8S" --wait=30s --config=manifests/kind_test_cluster_multi.yaml
     cat <<EOF | kind create cluster -n "$TEST_K8S" --wait=30s --config=-
@@ -173,11 +188,18 @@ EOF
     kubectl version
     echo
     kubectl -n kube-system get all
-    echo -e "\n>>> K3s nodes:\n"
+    echo -e "\n>>> K8s nodes:\n"
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
-function perform_test_deployment () {
+function setup_kind_ccm() {
+    echo -e "\n>>> Initiate Kind's Cloud Controller Manager(CCM)[v$KIND_CCM_VER]...\n"
+    docker run -q --rm -d --name ${KIND_CCM_NAME} --network kind -v /var/run/docker.sock:/var/run/docker.sock \
+										"registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v$KIND_CCM_VER"
+	docker ps
+}
+
+function perform_test_deployment() {
     echo -e "\n>>> Perform a test deployment using $TEST_IMG...\n"
     # Validate K8s control plane
     set -x
@@ -185,15 +207,15 @@ function perform_test_deployment () {
     kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
-            --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
+            --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"$PZ_LAB'/zone-A":"true"}}}' \
             -- /bin/sh -c "$TEST_CMD"
-    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=10s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
     kubectl -n ${TEST_NS} get pods ${TEST_ID} -o wide
     echo
-    if [[ "$(kubectl -n ${TEST_NS} get pods ${TEST_ID} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
+    if [[ "$(kubectl -n ${TEST_NS} get pods/${TEST_ID} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
     	echo -e "\n>>> Validation result: OK!\n"
     else
     	echo -e "\n>>> Validation result: FAILED!\n"
@@ -202,11 +224,28 @@ function perform_test_deployment () {
     fi
 }
 
-function cleanup_test_cluster () {
+function perform_lb_deployment() {
+    echo -e "\n>>> Perform a LoadBalancer test deployment for $TEST_ID...\n"
+    kubectl -n ${TEST_NS} expose pod/${TEST_ID} --name=${TEST_ID} --type=LoadBalancer --target-port=8888 --port=8888
+    kubectl -n ${TEST_NS} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=20s service/${TEST_ID}
+    kubectl -n ${TEST_NS} get services,endpoints -o wide
+    if [[ "$(kubectl -n ${TEST_NS} get services/${TEST_ID} -o jsonpath=\{.status.loadBalancer.ingress[].ip\})" ]]; then
+        echo -e "\n>>> Validation result: OK!\n"
+    else
+        echo -e "\n>>> Validation result: FAILED!\n"
+        kind export logs "./$TEST_ID-failed" -n ${TEST_NS} --verbosity=2
+        RET_VAL=1
+    fi
+}
+
+function cleanup_test_cluster() {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	kind delete cluster -n ${TEST_K8S}
-	docker rmi -f "$TEST_IMG" "$(docker image ls -q kindest/node)"
+	docker ps -q -f "name=$KIND_CCM_NAME" -f "name=$TEST_K8S*" -f "name=kindccm-*" | xargs -r docker kill
+    #docker container prune -f
+    docker images -q -f "reference=registry.k8s.io/cloud-provider-kind/*" -f "reference=envoyproxy/*" \
+                    -f "reference=$TEST_IMG" -f "reference=kindest/*" | xargs -r docker rmi -f
     #docker image prune -f
 }
 
@@ -253,6 +292,11 @@ if ! command -v kind >/dev/null; then
 	(set -x; kind version)
 fi
 
+### Cloud provider Kind
+if [ $KIND_CCM = true ] && ! command -v cloud-provider-kind >/dev/null; then
+    install_cloud_provider_kind
+fi
+
 ### Kubectl
 if ! command -v kubectl >/dev/null; then
 	# Binary
@@ -274,6 +318,12 @@ if [ $NO_CHECK = false ]; then
     setup_test_cluster
     # Validation
     perform_test_deployment
+    if [ $KIND_CCM = true ]; then
+        # Setup LoadBalancer
+        setup_kind_ccm
+        # Validation
+        perform_lb_deployment
+    fi
     # Cleanup
     cleanup_test_cluster
 fi

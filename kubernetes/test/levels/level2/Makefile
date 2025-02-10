@@ -30,11 +30,11 @@ create: setup
 run:
 	kubectl create namespace ${TEST}
 	kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Ready --timeout=10s pod/${API}
+	kubectl -n ${TEST} wait --for=condition=Ready --timeout=20s pod/${API}
 	kubectl -n ${TEST} expose pod/${API} --type NodePort --target-port ${PORT} --name ${API} \
 							--overrides='{"apiVersion":"v1","spec":{"ports":[{"nodePort":${NPORT},"port":${PORT}}]}}'
 	kubectl -n ${TEST} get nodes,all,endpoints -o wide
-	$(eval NODE_IP := `kubectl get node ptx-edge-test-control-plane \
+	$(eval NODE_IP := `kubectl get nodes/${CLUSTER}-control-plane \
 								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
 	$(eval NODE_PORT := `kubectl get -n ${TEST} service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
 	@echo
@@ -52,7 +52,7 @@ cleanup:
 	kind delete cluster -n ${CLUSTER}
 
 purge: cleanup
-	docker rmi -f ${IMG} $$(docker image ls -q kindest/node)
+	docker images -q -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
 .PHONY: setup create run test stop cleanup purge
 .DEFAULT_GOAL := test
