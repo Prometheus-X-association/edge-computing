@@ -72,7 +72,7 @@ http://localhost:8080/ptx-edge/v1/openapi.json
 ```
 
 ## Testing the endpoints
-To prepare the integration tests, install tox:
+To prepare the unit test of REST-API endpoints, install tox:
 ```bash
 $ python3.8 -m pip install tox
 ```
@@ -115,7 +115,6 @@ OK
 _____________________________________________________________________________________________________ summary _____________________________________________________________________________________________________
   py38: commands succeeded
   congratulations :)
-
 ```
 
 For manually executing the test cases defined in
@@ -143,9 +142,26 @@ $ nosetests -v --debug=TestCustomerAPIController
 To run the server on a Docker container, please execute the following from the mockup root directory:
 
 ```bash
-# building the image
+# Building the image
 $ docker build -t ptx-edge-api:0.1 .
 
-# starting up a container
+# Starting up a container
 $ docker run --rm --name ptx-edge-api -p 8080:8080 -it ptx-edge-api:0.1
+INFO:__main__:The API documentation is available on http://localhost:8080/ptx-edge/v1/ui/
+ * Serving Flask app "__main__" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+INFO:werkzeug: * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
+INFO:werkzeug:172.17.0.1 - - [10/Feb/2025 16:22:17] "HEAD /ptx-edge/v1/ui/ HTTP/1.1" 200 -
+
+
+# Testing the API
+$ curl -I http://127.0.0.1:8080/ptx-edge/v1/ui/
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 1493
+Server: Werkzeug/1.0.1 Python/3.8.20
+Date: Mon, 10 Feb 2025 16:22:17 GMT
 ```

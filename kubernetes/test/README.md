@@ -52,7 +52,7 @@ $ make setup
 
 To star the container,
 ```bash
-$make run
+$ make run
 ```
 
 To remove the image, use
