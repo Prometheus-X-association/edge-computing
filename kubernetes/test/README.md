@@ -60,7 +60,7 @@ To remove the image, use
 $ make cleanup
 ```
 
-### Level 2-3 testing (Emulated K8s cluster)
+### Level 2 testing (Emulated K8s cluster)
 
 The test environment can be easily configured with the enclosed
 [kubernetes/test/Makefile](Makefile).
@@ -99,6 +99,7 @@ and also to delete all intermediate resources, use
 ```bash
 $ make purge
 ```
+### Level 3 testing
 
 To initiate a LoadBalancer for easy access to the exposed API port, use the following command variants:
 ```bash
@@ -106,9 +107,9 @@ $ make test-lb
 $ make run-lb
 ```
 
-The detailed description of the used K8s test environment(s) is described below.
-
 ## Test Environment
+
+The detailed description of the used K8s test environment(s) is described below.
 
 ### kind
 
