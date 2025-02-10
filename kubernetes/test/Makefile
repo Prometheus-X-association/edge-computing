@@ -71,9 +71,12 @@ stop:
 cleanup:
 	kind delete cluster -n ${CLUSTER}
 
+
+tear-down: | stop cleanup
+
 purge: cleanup
 	docker images -q -f "reference=registry.k8s.io/cloud-provider-kind/*" -f "reference=envoyproxy/*" \
                     -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
-.PHONY: setup create run test run-lb test-lb stop cleanup purge
+.PHONY: setup create run test run-lb test-lb stop cleanup tear-down purge
 .DEFAULT_GOAL := test

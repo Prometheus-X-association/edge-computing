@@ -124,7 +124,7 @@ Nevertheless, the `ptx-edge` extension's *customer-facing API* can be separately
 in a single container as a mockup for integration test cases.
 See further about Docker-based testing 
 - in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
-with the related [kubernetes/test/README.md](kubernetes/test/README.md#rest-api-mockup)
+with the related [README.md](kubernetes/test/README.md#level-1-testing-single-docker-image)
 - or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
 in `kubernetes/test/mock-api`.
 

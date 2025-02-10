@@ -40,6 +40,28 @@ Prior test level configs can be found in [levels](levels) folder.
 
 ## Preparation and Setup
 
+### Level 1 testing (Single Docker image)
+
+To create a single docker container with the mockup REST-API,
+use [levels/level1/Makefile](levels/level1/Makefile).
+
+To create the image, use
+```bash
+$ make setup
+```
+
+To star the container,
+```bash
+$make run
+```
+
+To remove the image, use
+```bash
+$ make cleanup
+```
+
+### Level 2-3 testing (Emulated K8s cluster)
+
 The test environment can be easily configured with the enclosed
 [kubernetes/test/Makefile](Makefile).
 
@@ -76,6 +98,12 @@ $ make cleanup
 and also to delete all intermediate resources, use
 ```bash
 $ make purge
+```
+
+To initiate a LoadBalancer for easy access to the exposed API port, use the following command variants:
+```bash
+$ make test-lb
+$ make run-lb
 ```
 
 The detailed description of the used K8s test environment(s) is described below.

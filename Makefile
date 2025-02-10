@@ -19,7 +19,7 @@ run: setup
 	cd kubernetes/test && make run
 
 cleanup:
-	cd kubernetes/test && make purge
+	cd kubernetes/test && make tear-down
 
 .PHONY: setup run cleanup
 .DEFAULT_GOAL := run
