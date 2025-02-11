@@ -106,6 +106,11 @@ To initiate a LoadBalancer for easy access to the exposed API port, use the foll
 $ make run3
 $ make test3
 ```
+To initiate a Nginx-based ingress controller and set up a default ingress rule, use the following variants:
+```bash
+$ make run3-ingress
+$ make test3-ingress
+```
 
 ## Test Environment
 
@@ -145,13 +150,17 @@ and [here](https://kind.sigs.k8s.io/docs/user/rootless/).
 
 Other configuration parameters are
 
-- disabling the test deployment of a basic container at the end of the setup script
+- disabling the test deployment of a basic container at the end of the setup script,
 ```bash
 $ ./setup_kind_test_env.sh -x
 ```
-- and performing a minimal installation for production environments (e.g. no bash completions)
+- performing a minimal installation for production environments (e.g. no bash completions),
 ```bash
 $ ./setup_kind_test_env.sh -s
+```
+- installing Cloud Provider KIND for emulating a load balancer service of a cloud provider.
+```bash
+$ ./setup_kind_test_env.sh -c
 ```
 
 ### Alternative: k3d
@@ -162,7 +171,10 @@ $ ./setup_kind_test_env.sh -s
 > k3d uses a Docker image built from the K3s repository to spin up multiple K3s nodes
 > in Docker containers on any machine with Docker installed. 
 
-TBD
+To set up a k3d test environment, use the following script in `kubernetes/test`.
+```bash
+$ ./setup_k3d_test_env.sh
+```
 
 ## Extension Installation
 

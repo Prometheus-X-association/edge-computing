@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ptx-edge-api-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - pathType: Prefix
+            path: /ptx-edge/v1
+            backend:
+              service:
+                name: rest-api
+                port:
+                  number: 8080
