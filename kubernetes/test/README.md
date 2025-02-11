@@ -77,13 +77,11 @@ $ make create
 
 To launch the REST-API service in the test cluster, use
 ```bash
-$ make run
+$ make run2
 ```
 or the above steps combined:
 ```bash
-$ make test
-#or just
-$ make
+$ make test2
 ```
 
 To stop the service, use
@@ -94,6 +92,8 @@ $ make stop
 To tear down the test environment, use
 ```bash
 $ make cleanup
+#or
+$ make tear-down
 ```
 and also to delete all intermediate resources, use
 ```bash
@@ -103,8 +103,8 @@ $ make purge
 
 To initiate a LoadBalancer for easy access to the exposed API port, use the following command variants:
 ```bash
-$ make test-lb
-$ make run-lb
+$ make run3
+$ make test3
 ```
 
 ## Test Environment

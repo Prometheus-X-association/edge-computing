@@ -16,7 +16,7 @@ setup:
 	cd kubernetes/test && make create
 
 run: setup
-	cd kubernetes/test && make run
+	cd kubernetes/test && make run3
 
 cleanup:
 	cd kubernetes/test && make tear-down

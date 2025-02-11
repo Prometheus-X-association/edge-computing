@@ -30,7 +30,7 @@ create: setup
 	kind create cluster -n ${CLUSTER} --wait=30s --config=manifests/kind_test_cluster_single.yaml
 	kind load docker-image -n ${CLUSTER} ${IMG}
 
-run:
+run2:
 	kubectl create namespace ${TEST}
 	kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
 	kubectl -n ${TEST} wait --for=condition=Ready --timeout=20s pod/${API}
@@ -47,9 +47,9 @@ run:
 	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/ptx-edge/v1/ui/"
 	@curl -I "http://localhost:${PORT}/ptx-edge/v1/ui/"
 
-test: | setup create run
+test2: | setup create run2
 
-run-lb:
+run3:
 	kubectl create namespace ${TEST}
 	kubectl label node ${CLUSTER}-control-plane node.kubernetes.io/exclude-from-external-load-balancers-
 	docker run -q --rm -d --name ${CCM_NAME} --network kind \
@@ -69,7 +69,7 @@ run-lb:
 	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/ptx-edge/v1/ui/"
 	@curl -I "http://${LB_IP_PORT}/ptx-edge/v1/ui/"
 
-test-lb: | setup create run-lb
+test3: | setup create run3
 
 stop:
 	kubectl -n ${TEST} delete all --all --now
@@ -79,12 +79,11 @@ stop:
 cleanup:
 	kind delete cluster -n ${CLUSTER}
 
-
 tear-down: | stop cleanup
 
 purge: cleanup
 	docker images -q -f "reference=registry.k8s.io/cloud-provider-kind/*" -f "reference=envoyproxy/*" \
                     -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
-.PHONY: setup create run test run-lb test-lb stop cleanup tear-down purge
-.DEFAULT_GOAL := test
+.PHONY: setup create run2 test2 run3 test3 stop cleanup tear-down purge
+.DEFAULT_GOAL := test3
