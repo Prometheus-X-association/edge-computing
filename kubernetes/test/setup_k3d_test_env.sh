@@ -17,8 +17,8 @@ set -eou pipefail
 
 # Config --------------------------------------------------------------------------------
 
-K3D_VER=v5.8.1
-KUBECTL_VER=v1.31.4	# used by k3d v5.8.1
+K3D_VER=v5.8.2
+KUBECTL_VER=v1.31.5	# used by k3d v5.8.2 / k3s v1.31.5
 
 NO_CHECK=false
 SLIM_SETUP=false
