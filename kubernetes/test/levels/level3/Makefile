@@ -25,11 +25,11 @@ LB_PORT := 8080
 INGRESS := ingress-nginx
 
 setup:
-	bash setup_kind_test_env.sh -xsc
+	bash ../../setup_kind_test_env.sh -xsc
 	docker build -t ${IMG} ../../mock-api/
 
 create: setup
-	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/kind_test_cluster_single.yaml
+	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/kind-test_cluster_single.yaml
 	kubectl get nodes -o wide
 	kind load docker-image -n ${CLUSTER} ${IMG}
 
@@ -90,7 +90,7 @@ run3-ingress:
 	kubectl -n ${TEST} expose deployment/${API} --target-port ${PORT} --port ${PORT} --name ${API}
 	kubectl -n ${TEST} get all,endpoints -o wide
 	### Setup ingress
-	kubectl apply -f ../../manifests/deploy-${INGRESS}.yaml
+	kubectl apply -f ../../manifests/kind-deploy_${INGRESS}.yaml
 	kubectl -n ${INGRESS} wait --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
 	kubectl -n ${INGRESS} get all
 	@#kubectl -n ${TEST} apply -f manifests/ptx-edge-api-ingress.yaml

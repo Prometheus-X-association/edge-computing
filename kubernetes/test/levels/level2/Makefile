@@ -24,7 +24,7 @@ setup:
 	docker build -t ${IMG} ../../mock-api/
 
 create: setup
-	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/test_cluster_single.yaml
+	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/kind-test_cluster_single.yaml
 	kubectl get nodes -o wide
 	kind load docker-image -n ${CLUSTER} ${IMG}
 
