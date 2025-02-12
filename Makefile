@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+TEST_LEVEL := "level3"
+
 setup:
-	cd kubernetes/test && make create
+	cd kubernetes/test/levels/${TEST_LEVEL} && make create
 
 run: setup
-	cd kubernetes/test && make run3
+	cd kubernetes/test/levels/${TEST_LEVEL} && make run3-ingress
 
 cleanup:
-	cd kubernetes/test && make tear-down
+	cd kubernetes/test/levels/${TEST_LEVEL} && make tear-down
 
 .PHONY: setup run cleanup
 .DEFAULT_GOAL := run

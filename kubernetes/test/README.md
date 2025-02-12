@@ -63,7 +63,7 @@ $ make cleanup
 ### Level 2 testing (Emulated K8s cluster)
 
 The test environment can be easily configured with the enclosed
-[kubernetes/test/Makefile](Makefile).
+[kubernetes/test/Makefile](levels/level3/Makefile).
 
 To only install the test dependencies on an *Ubuntu 22.04/24.04* VM,
 execute the following command in `kubernetes/test`:
@@ -106,7 +106,7 @@ To initiate a LoadBalancer for easy access to the exposed API port, use the foll
 $ make run3
 $ make test3
 ```
-To initiate a Nginx-based ingress controller and set up a default ingress rule, use the following variants:
+To initiate a Nginx-based ingress controller and set up a default ingress rule(`/ptx-edge/v1/`), use the following variants:
 ```bash
 $ make run3-ingress
 $ make test3-ingress
@@ -174,6 +174,17 @@ $ ./setup_kind_test_env.sh -c
 To set up a k3d test environment, use the following script in `kubernetes/test`.
 ```bash
 $ ./setup_k3d_test_env.sh
+```
+
+Other configuration parameters (as before) are
+
+- disabling the test deployment of a basic container at the end of the setup script,
+```bash
+$ ./setup_kind_test_env.sh -x
+```
+- performing a minimal installation for production environments (e.g. no bash completions),
+```bash
+$ ./setup_kind_test_env.sh -s
 ```
 
 ## Extension Installation
