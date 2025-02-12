@@ -204,11 +204,11 @@ function perform_test_deployment() {
     # Validate K8s control plane
     set -x
     docker pull ${TEST_IMG}
-    kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
+    # kind load docker-image -n ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
-    kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
-            --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"$PZ_LAB'/zone-A":"true"}}}' \
-            -- /bin/sh -c "$TEST_CMD"
+    kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
+                --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"$PZ_LAB'/zone-A":"true"}}}' \
+                -- /bin/sh -c "$TEST_CMD"
     kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
     set +x
     # Pod failure test
@@ -267,13 +267,14 @@ if ! command -v docker >/dev/null; then
             exec sg docker "$0" "$@"
         fi
 	fi
+	# Validation
+    if [ $NO_CHECK = false ]; then
+        echo -e "\n>>> Check Docker install...\n"
+        # Docker check with simple container
+        docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
+    fi
 fi
-# Validation
-if [ $NO_CHECK = false ]; then
-    echo -e "\n>>> Check Docker install...\n"
-    # Docker check with simple container
-    docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
-fi
+
 
 ### Kind
 if ! command -v kind >/dev/null; then

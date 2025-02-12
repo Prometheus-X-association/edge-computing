@@ -40,7 +40,7 @@ RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts rxs flag; do
+while getopts xs flag; do
 	case "${flag}" in
         x)
             echo "[x] No setup validation is configured."
@@ -138,11 +138,11 @@ function perform_test_deployment () {
     # Validate K8s control plane
     set -x
     docker pull ${TEST_IMG}
-    k3d image import -c ${TEST_K8S} ${TEST_IMG}
+    # k3d image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
-    kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --image-pull-policy='Never' \
-            --restart='Never' --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
-            -- /bin/sh -c "$TEST_CMD"
+    kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
+                --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
+                -- /bin/sh -c "$TEST_CMD"
     kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
     set +x
     # Pod failure test
@@ -178,13 +178,14 @@ if ! command -v docker >/dev/null; then
         # New shell with docker group privilege
         exec sg docker "$0" "$@"
     fi
+    # Validation
+    if [ $NO_CHECK = false ]; then
+        echo -e "\n>>> Check Docker install...\n"
+        # Docker check with simple container
+        docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
+    fi
 fi
-# Validation
-if [ $NO_CHECK = false ]; then
-    echo -e "\n>>> Check Docker install...\n"
-    # Docker check with simple container
-    docker run --rm "$CHECK_IMG" && docker rmi -f "$CHECK_IMG"
-fi
+
 
 ### K3d
 if ! command -v k3d >/dev/null; then

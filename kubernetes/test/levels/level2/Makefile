@@ -24,7 +24,8 @@ setup:
 	docker build -t ${IMG} ../../mock-api/
 
 create: setup
-	kind create cluster -n ${CLUSTER} --wait=30s --config=test_cluster_single.yaml
+	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/test_cluster_single.yaml
+	kubectl get nodes -o wide
 	kind load docker-image -n ${CLUSTER} ${IMG}
 
 run:
@@ -33,8 +34,8 @@ run:
 	kubectl -n ${TEST} wait --for=condition=Ready --timeout=20s pod/${API}
 	kubectl -n ${TEST} expose pod/${API} --type NodePort --target-port ${PORT} --name ${API} \
 							--overrides='{"apiVersion":"v1","spec":{"ports":[{"nodePort":${NPORT},"port":${PORT}}]}}'
-	kubectl -n ${TEST} get nodes,all,endpoints -o wide
-	$(eval NODE_IP := `kubectl get nodes/${CLUSTER}-control-plane \
+	kubectl -n ${TEST} get all,endpoints -o wide
+	$(eval NODE_IP := `kubectl get node/${CLUSTER}-control-plane \
 								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
 	$(eval NODE_PORT := `kubectl get -n ${TEST} service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
 	@echo
