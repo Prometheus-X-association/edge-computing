@@ -14,6 +14,6 @@
 from pydantic import BaseModel
 
 
-class VersionResponse(BaseModel):
+class VersionsResponse(BaseModel):
     api: str
     framework: str

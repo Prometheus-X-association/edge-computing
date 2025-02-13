@@ -12,16 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+NAME := rest-api
+VERSION := 1.0
+IMG := ptx-edge/rest-api:${VERSION}
+
 # Docker commands
 build:
-	docker build -t rest-api .
-	docker images --no-trunc rest-api
+	docker build -t ${IMG} .
+	docker images --no-trunc ${IMG}
 
 run:
-	docker run --rm --name rest-api -ti -p 8080:8080 rest-api
+	docker run --rm --name ${NAME} -ti -p 8080:8080 ${IMG}
 
 dev:
-	docker run --rm --name rest-api -ti -p 8080:8080 -v ./app:/usr/src/api/app rest-api \
+	docker run --rm --name ${NAME} -ti -p 8080:8080 -v ./app:/usr/src/api/app ${IMG} \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
 
 
@@ -49,7 +53,7 @@ openapi:
 
 # Cleanup
 clean:
-	docker image prune -f
+	docker rmi -f ${IMG}
 	py3clean -v .
 	rm -rf .venv
 

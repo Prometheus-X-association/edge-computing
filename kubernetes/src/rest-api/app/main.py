@@ -15,8 +15,8 @@ import pathlib
 
 import fastapi
 
-from app import VERSION
-from app.model.version import VersionResponse
+from app import VERSION, ROUTE_PREFIX
+from app.model.versions import VersionsResponse
 
 app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
@@ -25,7 +25,8 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       license_info=dict(name="Apache 2.0",
                                         url="https://www.apache.org/licenses/LICENSE-2.0.html"),
                       version=VERSION,
-                      servers=[dict(url="/ptx-edge/v1",
+                      root_path=ROUTE_PREFIX,
+                      servers=[dict(url=ROUTE_PREFIX,
                                     description="PTX Edge Computing")],
                       openapi_tags=[dict(name="customerAPI",
                                          description="Customer-facing API (EdgeAPI)",
@@ -33,13 +34,14 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                              description="Prometheus-X",
                                              url="https://github.com/Prometheus-X-association/edge-computing"),
                                          )],
+                      docs_url="/ui/",
                       redoc_url=None)
 
 
-@app.get("/version")
-async def get_version() -> VersionResponse:
+@app.get("/versions")
+async def get_versions() -> VersionsResponse:
     """Versions of the REST-API component"""
-    return VersionResponse(api=VERSION, framework=fastapi.__version__)
+    return VersionsResponse(api=VERSION, framework=fastapi.__version__)
 
 
 if __name__ == '__main__':

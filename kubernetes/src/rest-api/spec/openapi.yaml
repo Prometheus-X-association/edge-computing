@@ -9,26 +9,26 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2024-11-13T17:50:42'
+  x-creation-date: '2025-02-13T11:32:24'
 servers:
 - url: /ptx-edge/v1
   description: PTX Edge Computing
 paths:
-  /version:
+  /versions:
     get:
-      summary: Get Version
+      summary: Get Versions
       description: Versions of the REST-API component
-      operationId: get_version_version_get
+      operationId: get_versions_versions_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionResponse'
+                $ref: '#/components/schemas/VersionsResponse'
 components:
   schemas:
-    VersionResponse:
+    VersionsResponse:
       properties:
         api:
           type: string
@@ -40,7 +40,7 @@ components:
       required:
       - api
       - framework
-      title: VersionResponse
+      title: VersionsResponse
 tags:
 - name: customerAPI
   description: Customer-facing API (EdgeAPI)
