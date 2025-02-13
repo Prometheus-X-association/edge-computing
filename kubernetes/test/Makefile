@@ -12,117 +12,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CLUSTER := ptx-edge-test
-IMG := "ptx-edge-api:0.1"
-PORT := 8080
-TEST := ptx-edge
-API := rest-api
+CLUSTER := test-cluster
+API_IMG := "ptx-edge/rest-api:1.0"
+REST_API := rest-api
+API_PORT := 8080
+PTX := ptx-edge
 PREFIX := "ptx-edge/v1"
-NPORT := 30080
-CCM_NAME := kind-ccm
-CCM_VER := v0.5.0
-LB_PORT := 8080
-INGRESS := ingress-nginx
 
 setup:
-	bash setup_kind_test_env.sh -xsc
-	docker build -t ${IMG} mock-api/
+	bash setup_k3d_test_env.sh -xs
+	cd ../src/rest-api/ && make build
 
 create: setup
-	kind create cluster -n ${CLUSTER} --wait=30s --config=manifests/kind_test_cluster_single.yaml
+	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
+	k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
-	kind load docker-image -n ${CLUSTER} ${IMG}
+	k3d image import -c ${CLUSTER} ${API_IMG}
 
-run2:
+run-api:
 	### Setup rest-api
-	kubectl create namespace ${TEST}
-	@#kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
-	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
-	kubectl -n ${TEST} expose deployment/${API} --type NodePort --target-port ${PORT} --name ${API} \
-							--overrides='{"apiVersion":"v1","spec":{"ports":[{"nodePort":${NPORT},"port":${PORT}}]}}'
-	kubectl -n ${TEST} get nodes,all,endpoints -o wide
-	$(eval NODE_IP := `kubectl get node/${CLUSTER}-control-plane \
-								-o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'`)
-	$(eval NODE_PORT := `kubectl -n ${TEST} get service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
-	sleep 3s
-	@echo
-	@echo ">>> ${API} is available on http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui/"
-	@curl -I "http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui/"
-	@echo
-	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/${PREFIX}/ui/"
-	@curl -I "http://localhost:${PORT}/${PREFIX}/ui/"
-
-test2: | setup create run2
-
-run3:
-	### Setup rest-api
-	kubectl create namespace ${TEST}
-	kubectl label node ${CLUSTER}-control-plane node.kubernetes.io/exclude-from-external-load-balancers-
-	docker run -q --rm -d --name ${CCM_NAME} --network kind \
-				-v /var/run/docker.sock:/var/run/docker.sock \
-				registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER} -enable-lb-port-mapping
-	@#kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
-	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
-	kubectl -n ${TEST} expose deployment/${API} --type LoadBalancer --target-port ${PORT} --port ${LB_PORT}
-	kubectl -n ${TEST} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=20s service/${API}
-	kubectl -n ${TEST} get nodes,all,endpoints -o wide
-	$(eval LB_IP = `kubectl -n ${TEST} get service/${API} -o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
-	$(eval LB_IP_PORT = `docker ps -q -f "name=kindccm-*" | xargs -I {} -r docker port {} 8080 | head -1`)
-	@echo
-	@echo ">>> ${API} is available on http://${LB_IP}:${PORT}/${PREFIX}/ui/"
-	@curl -I "http://${LB_IP}:${PORT}/${PREFIX}/ui/"
-	@echo
-	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/${PREFIX}/ui/"
-	@curl -I "http://${LB_IP_PORT}/${PREFIX}/ui/"
-
-test3: | setup create run3
-
-run3-ingress:
-	### Setup rest-api
-	kubectl create namespace ${TEST}
-	kubectl label node ${CLUSTER}-control-plane node.kubernetes.io/exclude-from-external-load-balancers-
-	docker run -q --rm -d --name ${CCM_NAME} --network kind -v /var/run/docker.sock:/var/run/docker.sock \
-				registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER} -enable-lb-port-mapping
-	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
-	kubectl -n ${TEST} expose deployment/${API} --target-port ${PORT} --port ${PORT} --name ${API}
-	kubectl -n ${TEST} get all,endpoints -o wide
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} create deployment ${REST_API} --image ${API_IMG} --replicas=1 --port=${API_PORT}
+	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${REST_API}
+	kubectl -n ${PTX} expose deployment/${REST_API} --target-port ${API_PORT} --port ${API_PORT} --name ${REST_API}
 	### Setup ingress
-	kubectl apply -f manifests/deploy-${INGRESS}.yaml
-	kubectl -n ${INGRESS} wait --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
-	kubectl -n ${INGRESS} get all
-	@#kubectl -n ${TEST} apply -f manifests/ptx-edge-api-ingress.yaml
-	kubectl -n ${TEST} create ingress ${TEST}-${INGRESS} --rule="/${PREFIX}/*=${API}:${PORT},tls"
-	kubectl -n ${TEST} get ingress -o wide
-	kubectl -n ${TEST} wait --for=jsonpath='{.status.loadBalancer.ingress[?(@.hostname)].hostname}' \
-								--timeout=60s ingress/${TEST}-${INGRESS}
-	$(eval INGRESS_IP = `kubectl -n ${INGRESS} get service/ingress-nginx-controller \
-					-o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
+	kubectl -n ${PTX} create ingress ${REST_API} --rule="/${PREFIX}/*=${REST_API}:${API_PORT},tls" \
+	 	--default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
+	kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}' \
+		--timeout=30s ingress/${REST_API}
+	kubectl -n ${PTX} get nodes,all,endpoints,ingress -o wide
+	@ echo "Waiting for ingress to set up..." && sleep 3
+	$(eval INGRESS_IP = `kubectl -n ${PTX} get ingress/${REST_API} -o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
 	@echo
-	@echo ">>> ${API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
+	@echo ">>> ${REST_API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
 	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui/"
 	@echo
-	@echo ">>> ${API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
-	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui/"
+	@echo ">>> ${REST_API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
+	@curl -I -k "http://${INGRESS_IP}:80/${PREFIX}/ui/"
+	@echo
+	@echo ">>> ${REST_API} is also exposed on http://localhost:8080/${PREFIX}/ui/"
+	@curl -I "http://localhost:8080/${PREFIX}/ui/"
+	curl -LSs "http://localhost:8080/${PREFIX}/versions" | python3 -m json.tool
 
-test3-ingress: | setup create run3-ingress
+
+test-api: | setup create run-api
 
 stop:
-	@#kubectl -n ${TEST} delete all --all --now
-	kubectl delete namespace ${TEST} --ignore-not-found --now
-	kubectl delete namespace ${INGRESS} --ignore-not-found --now
-	docker ps -q -f "name=${CCM_NAME}" -f "name=kindccm-*" | xargs -r docker kill
+	@#kubectl -n ${PTX} delete all --all --now
+	kubectl delete namespace ${PTX} --ignore-not-found --now
 
 cleanup:
-	kind delete cluster -n ${CLUSTER}
+	k3d cluster delete ${CLUSTER}
 
 tear-down: | stop cleanup
 
 purge: cleanup
-	docker images -q -f "reference=registry.k8s.io/cloud-provider-kind/*" -f "reference=envoyproxy/*" \
-                    -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
+	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
+		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create run2 test2 run3 test3 run3-ingress test3-ingress stop cleanup tear-down purge
+.PHONY: setup create run test stop cleanup tear-down purge
 .DEFAULT_GOAL := test3

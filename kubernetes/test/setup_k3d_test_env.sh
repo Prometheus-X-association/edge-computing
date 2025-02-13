@@ -162,7 +162,7 @@ function cleanup_test_cluster () {
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	k3d cluster delete ${TEST_K8S}
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
-	                            -f "reference=$TEST_IMG" | xargs docker rmi -f "$TEST_IMG"
+	                            -f "reference=$TEST_IMG" | xargs -r docker rmi -f "$TEST_IMG"
 }
 
 # Main --------------------------------------------------------------------------------
