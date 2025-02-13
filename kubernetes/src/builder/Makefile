@@ -1,5 +1,4 @@
-#!/usr/bin/env python3.12
-# Copyright 2024 Janos Czentye
+# Copyright 2025 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import requests
 
-def main():
-    pass
+NAME := builder
+VERSION := 1.0
+IMG := ptx-edge/${NAME}:${VERSION}
 
+# Docker commands
+build:
+	docker build -t ${IMG} .
+	docker images --no-trunc ${IMG}
 
-if __name__ == '__main__':
-    main()
+run:
+	docker run --rm --name ${NAME} -ti  ${IMG}
+
+dev:
+	docker run --rm --name ${NAME} -ti -v ./app:/usr/src/builder/app ${IMG} \
+				python3 app/builder.py
+
+# Cleanup
+clean:
+	docker rmi -f ${IMG}
+	py3clean -v .
+	rm -rf .venv
+
+.PHONY: build run dev venv dev-local openapi clean
+.DEFAULT_GOAL := dev
+#.ONESHELL: dev-local openapi

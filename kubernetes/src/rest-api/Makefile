@@ -14,7 +14,7 @@
 
 NAME := rest-api
 VERSION := 1.0
-IMG := ptx-edge/rest-api:${VERSION}
+IMG := ptx-edge/${NAME}:${VERSION}
 
 # Docker commands
 build:
