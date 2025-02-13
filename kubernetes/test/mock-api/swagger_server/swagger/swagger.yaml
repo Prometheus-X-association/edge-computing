@@ -17,11 +17,11 @@ tags:
   - name: connectorAPI
     description: Connector-facing API (PrivacyPreservingPDC)
 paths:
-  /version:
+  /versions:
     get:
       summary: Get Version
       description: Versions of the REST-API component
-      operationId: get_version_version_get
+      operationId: get_versions_versions_get
       responses:
         "200":
           description: Successful Response

@@ -15,7 +15,7 @@
 import json
 import logging
 
-from swagger_server.models.version_response import VersionResponse
+from swagger_server.models.versions_response import VersionsResponse
 from swagger_server.test import BaseTestCase
 
 
@@ -33,13 +33,13 @@ class TestDefaultController(BaseTestCase):
         app.config['LIVESERVER_TIMEOUT'] = 3
         return app
 
-    def test_get_version_version_get(self):
-        """Test case for valid   get_version response: HTTP 200
+    def test_get_versions_versions_get(self):
+        """Test case for valid   get_versions response: HTTP 200
 
         Get Version
         """
-        response = self.client.open('ptx-edge/v1/version', method='GET')
-        resp_body = VersionResponse.from_dict(json.loads(response.data.decode('utf-8')))
+        response = self.client.open('ptx-edge/v1/versions', method='GET')
+        resp_body = VersionsResponse.from_dict(json.loads(response.data.decode('utf-8')))
         self.logger.debug(f"\nResponse body:\n{resp_body.to_str()}\n")
         self.assert200(response)
 
