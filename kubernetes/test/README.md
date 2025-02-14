@@ -211,6 +211,8 @@ TBD
 
 Test cases are composed of different unit test at different levels.
 
+### K8s features
+
 To test the feasibility of K8s features and manifest templates, use the following commands.
 
 To install test dependencies:
@@ -218,11 +220,61 @@ To install test dependencies:
 $ cd suite && bash install-dep.sh
 ```
 
-To execute the test cases, run the test scripts with the prefix `test-` in the `suite` folder, e.g.,
-```bash
-./test-policy-zone-scheduling.sh
-```
+To execute the test cases, run the test scripts with the prefix `test-` in the `suite` folder.
 
+An example execution is the following:
+```bash
+$ ./test-policy-zone-scheduling.sh
+Setup cluster...
+INFO[0000] Using config file ../manifests/k3d-test_cluster_multi.yaml (k3d.io/v1alpha5#simple) 
+INFO[0000] Prep: Network                                
+INFO[0000] Re-using existing network 'k3d-test-cluster' (2a68b2bb6d3eed255a1900483a61869ac2a160ae635d3d8c5fd2011bc4360774) 
+INFO[0000] Created image volume k3d-test-cluster-images 
+INFO[0000] Starting new tools node...                   
+INFO[0000] Starting node 'k3d-test-cluster-tools'       
+INFO[0001] Creating node 'k3d-test-cluster-server-0'    
+INFO[0001] Creating node 'k3d-test-cluster-agent-0'     
+INFO[0001] Creating node 'k3d-test-cluster-agent-1'     
+INFO[0001] Creating LoadBalancer 'k3d-test-cluster-serverlb' 
+INFO[0001] Using the k3d-tools node to gather environment information 
+INFO[0001] HostIP: using network gateway 172.19.0.1 address 
+INFO[0001] Starting cluster 'test-cluster'              
+INFO[0001] Starting servers...                          
+INFO[0001] Starting node 'k3d-test-cluster-server-0'    
+INFO[0008] Starting agents...                           
+INFO[0008] Starting node 'k3d-test-cluster-agent-1'     
+INFO[0008] Starting node 'k3d-test-cluster-agent-0'     
+INFO[0014] Starting helpers...                          
+INFO[0014] Starting node 'k3d-test-cluster-serverlb'    
+INFO[0021] Injecting records for hostAliases (incl. host.k3d.internal) and for 4 network members into CoreDNS configmap... 
+INFO[0023] Cluster 'test-cluster' created successfully! 
+INFO[0023] You can now use it like this:                
+kubectl cluster-info
+Create namespace...
+namespace/ptx-edge created
+testPolicyZoneSchedulingFeature
+pod/pz-restricted-pod created
+pod/pz-restricted-pod condition met
+NAME                        STATUS   ROLES                  AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION     CONTAINER-RUNTIME          ZONE-A   ZONE-B   ZONE-C
+k3d-test-cluster-agent-0    Ready    <none>                 18s   v1.31.5+k3s1   172.19.0.4    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2   true     true     
+k3d-test-cluster-agent-1    Ready    <none>                 19s   v1.31.5+k3s1   172.19.0.3    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2            true     
+k3d-test-cluster-server-0   Ready    control-plane,master   25s   v1.31.5+k3s1   172.19.0.2    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2                     true
+NAME                READY   STATUS    RESTARTS   AGE   IP          NODE                       NOMINATED NODE   READINESS GATES
+pz-restricted-pod   1/1     Running   0          9s    10.42.0.4   k3d-test-cluster-agent-0   <none>           <none>
+Delete namespace...
+namespace "ptx-edge" deleted
+Delete cluster...
+INFO[0000] Deleting cluster 'test-cluster'              
+INFO[0002] Deleting 1 attached volumes...               
+INFO[0002] Removing cluster details from default kubeconfig... 
+INFO[0002] Removing standalone kubeconfig file (if there is one)... 
+INFO[0002] Successfully deleted cluster test-cluster!   
+
+Ran 1 test.
+
+OK
+```
+TBD
 
 ## REST-API Mockup
 
