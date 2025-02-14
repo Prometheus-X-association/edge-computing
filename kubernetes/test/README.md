@@ -209,7 +209,20 @@ TBD
 
 ## Unit Tests
 
-TBD
+Test cases are composed of different unit test at different levels.
+
+To test the feasibility of K8s features and manifest templates, use the following commands.
+
+To install test dependencies:
+```bash
+$ cd suite && bash install-dep.sh
+```
+
+To execute the test cases, run the test scripts with the prefix `test-` in the `suite` folder, e.g.,
+```bash
+./test-policy-zone-scheduling.sh
+```
+
 
 ## REST-API Mockup
 

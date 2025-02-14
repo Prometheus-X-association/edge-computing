@@ -56,7 +56,7 @@ done
 
 # Install actions --------------------------------------------------------------------------------
 
-function install_docker () {
+function install_docker() {
 	echo -e "\n>>> Install Docker[latest]...\n"
 	sudo apt-get update && sudo apt-get install -y ca-certificates curl make
 	curl -fsSL https://get.docker.com/ | sh
@@ -68,7 +68,7 @@ function install_k3d() {
 	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
 }
 
-function setup_k3d_bash_completion () {
+function setup_k3d_bash_completion() {
     echo -e "\n>>> Install k3d bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
@@ -83,7 +83,7 @@ function install_kubectl() {
 	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 }
 
-function setup_kubectl_bash_completion () {
+function setup_kubectl_bash_completion() {
     echo -e "\n>>> Install Kubectl bash completion...\n"
     sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
@@ -94,7 +94,7 @@ function setup_kubectl_bash_completion () {
 
 # Test actions --------------------------------------------------------------------------------
 
-function setup_test_cluster(){
+function setup_test_cluster() {
     echo -e "\n>>> Prepare test cluster with id: $TEST_K8S...\n"
 #    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=2 \
 #        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
@@ -133,7 +133,7 @@ EOF
     kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
-function perform_test_deployment () {
+function perform_test_deployment() {
     echo -e "\n>>> Perform a test deployment using $TEST_IMG...\n"
     # Validate K8s control plane
     set -x
@@ -143,13 +143,13 @@ function perform_test_deployment () {
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
                 --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
                 -- /bin/sh -c "$TEST_CMD"
-    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout=20s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
-    kubectl -n ${TEST_NS} get pods ${TEST_ID} -o wide
+    kubectl -n ${TEST_NS} get pod/${TEST_ID} -o wide
     echo
-    if [[ "$(kubectl -n ${TEST_NS} get pods ${TEST_ID} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
+    if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" == "$TEST_OK" ]]; then
     	echo -e "\n>>> Validation result: OK!\n"
     else
     	echo -e "\n>>> Validation result: FAILED!\n"
@@ -157,7 +157,7 @@ function perform_test_deployment () {
     fi
 }
 
-function cleanup_test_cluster () {
+function cleanup_test_cluster() {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	k3d cluster delete ${TEST_K8S}
