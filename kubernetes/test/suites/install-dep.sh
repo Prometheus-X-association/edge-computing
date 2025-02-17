@@ -33,3 +33,5 @@ if [[ "$UPDATE" == "true" ]]; then
     sudo install -v ./shunit2/shunit2 ./shunit2/shunit2_test_helpers /usr/share/shunit2/
     popd || return
 fi
+
+echo "Done."
