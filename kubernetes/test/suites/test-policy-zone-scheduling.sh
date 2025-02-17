@@ -13,51 +13,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CLUSTER=test-cluster
+# shunit2 does not support set -eu
+set -o pipefail
+
+CLUSTER=test-suite-cluster
+CLUSTER_CFG=../manifests/k3d-test_cluster_multi.yaml
 PTX=ptx-edge
+
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
+    echo "Build images..."
+    pushd ../../src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
     echo "Setup cluster..."
-    k3d cluster create ${CLUSTER} --wait --timeout=30s --config=../manifests/k3d-test_cluster_multi.yaml
+    k3d cluster create "${CLUSTER}" --wait --timeout=30s --config="${CLUSTER_CFG}"
+    k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
-    export clusterIsSetUP="true"
+    export clusterIsCreated="true"
 }
 
 setUp() {
     echo "Create namespace..."
-    kubectl create namespace ${PTX}
+    kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
 }
 
 tearDown() {
     # shellcheck disable=SC2154
     [[ "${_shunit_name_}" == 'EXIT' ]] && return 0
-    echo "Delete namespace..."
-    kubectl delete namespace ${PTX} --ignore-not-found --now
+    echo "Delete resources..."
+    kubectl -n "${PTX}" delete all --all --now
+    kubectl delete namespace "${PTX}" --ignore-not-found --now
 }
 
 oneTimeTearDown() {
-    if [[ "${clusterIsSetUP}" == "true" ]]; then
+    if [[ "${clusterIsCreated:-true}" == "true" ]]; then
         echo "Delete cluster..."
-        k3d cluster delete ${CLUSTER}
+        k3d cluster delete "${CLUSTER}"
         # Avoid double teardown
-        unset -v clusterIsSetUP
+        export clusterIsCreated="false"
     fi
 }
 
 #----------------------------------------------------------------------------------------------------------------------
 
 testPolicyZoneSchedulingFeature() {
-    kubectl -n ${PTX} apply -f ../manifests/privacy_zone_restricted_test_pod.yaml
-    kubectl -n ${PTX} wait --for="condition=Ready" --timeout=20s pod/pz-restricted-pod
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-pz_restricted_pod.yaml
+    kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=20s pod/pz-restricted-pod
+    assertTrue "$?"
     #
-    kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
-    kubectl -n ${PTX} get pod/pz-restricted-pod -o wide
+    kubectl get nodes -o wide -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
+    kubectl -n "${PTX}" get pod/pz-restricted-pod -o wide
     #
-    _node=$(kubectl -n ${PTX} get pod/pz-restricted-pod -o jsonpath="{.spec.nodeName}")
-    #
+    _node=$(kubectl -n "${PTX}" get pod/pz-restricted-pod -o jsonpath="{.spec.nodeName}")
     assertSame "k3d-${CLUSTER}-agent-0" "${_node}"
 }
 
