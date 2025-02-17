@@ -20,7 +20,9 @@ CLUSTER=test-suite-cluster
 CLUSTER_CFG=../manifests/k3d-test_cluster_multi.yaml
 PTX=ptx-edge
 
-PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
+IMG="ptx-edge/rest-api:1.0"
+API=rest-api
+PREFIX="ptx-edge/v1"
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -32,6 +34,8 @@ oneTimeSetUp() {
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
     export clusterIsCreated="true"
+    echo "Load images..."
+    k3d image import -c "${CLUSTER}" "${IMG}" || return "${SHUNIT_ERROR}"
 }
 
 setUp() {
@@ -58,17 +62,32 @@ oneTimeTearDown() {
 
 #----------------------------------------------------------------------------------------------------------------------
 
-testPolicyZoneSchedulingFeature() {
-    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-pz_restricted_pod.yaml
-    kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=20s pod/pz-restricted-pod
+testPTXEdgeRESTAPI() {
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_deployment.yaml
+    kubectl -n "${PTX}" wait --for="condition=Available" --timeout=20s "deployment/${API}"
     assertTrue "$?"
     #
-    kubectl get nodes -o wide -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
-    kubectl -n "${PTX}" get pod/pz-restricted-pod -o wide
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_service.yaml
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_ingress.yaml
+    kubectl -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s "ingress/${API}"
+    assertTrue "$?"
     #
-    NODE=$(kubectl -n "${PTX}" get pod/pz-restricted-pod -o jsonpath="{.spec.nodeName}")
-    echo "Selected node: ${NODE}"
-    assertSame "k3d-${CLUSTER}-agent-0" "${NODE}"
+    kubectl -n "${PTX}" get nodes,all,endpoints,ingress -o wide
+    #
+    echo "Waiting for ingress to set up..." && sleep 15
+    INGRESS_IP=$(kubectl -n "${PTX}" get "ingress/${API}" -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+    #
+    echo "Check ==> http://${INGRESS_IP}:80/${PREFIX}/ui/"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://${INGRESS_IP}:80/${PREFIX}/ui/")
+    assertSame "HTTP port expose failed" "200" "${HTTP_RESP}"
+    #
+    echo "Check ==> https://${INGRESS_IP}:443/${PREFIX}/ui/"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" -k "https://${INGRESS_IP}:443/${PREFIX}/ui/")
+    assertSame "HTTPS port expose failed" "200" "${HTTP_RESP}"
+    #
+    echo "Check ==> http://localhost:8080/${PREFIX}/ui/"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://localhost:8080/${PREFIX}/ui/")
+    assertSame "Local port expose failed" "200" "${HTTP_RESP}"
 }
 
 #----------------------------------------------------------------------------------------------------------------------

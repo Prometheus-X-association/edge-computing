@@ -11,6 +11,7 @@ spec:
       name: rest-api
       port:
         number: 8080
+  ingressClassName: traefik
   rules:
     - http:
         paths:

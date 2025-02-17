@@ -38,7 +38,7 @@ run2:
 	kubectl create namespace ${TEST}
 	@#kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
 	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
+	kubectl -n ${TEST} wait --for="condition=Available" --timeout=20s deployment/${API}
 	kubectl -n ${TEST} expose deployment/${API} --type NodePort --target-port ${PORT} --name ${API} \
 							--overrides='{"apiVersion":"v1","spec":{"ports":[{"nodePort":${NPORT},"port":${PORT}}]}}'
 	kubectl -n ${TEST} get nodes,all,endpoints -o wide
@@ -64,7 +64,7 @@ run3:
 				registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER} -enable-lb-port-mapping
 	@#kubectl -n ${TEST} run ${API} --image ${IMG} --image-pull-policy='Never' --port=${PORT}
 	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
+	kubectl -n ${TEST} wait --for="condition=Available" --timeout=20s deployment/${API}
 	kubectl -n ${TEST} expose deployment/${API} --type LoadBalancer --target-port ${PORT} --port ${LB_PORT}
 	kubectl -n ${TEST} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=20s service/${API}
 	kubectl -n ${TEST} get nodes,all,endpoints -o wide
@@ -86,12 +86,12 @@ run3-ingress:
 	docker run -q --rm -d --name ${CCM_NAME} --network kind -v /var/run/docker.sock:/var/run/docker.sock \
 				registry.k8s.io/cloud-provider-kind/cloud-controller-manager:${CCM_VER} -enable-lb-port-mapping
 	kubectl -n ${TEST} create deployment ${API} --image ${IMG} --replicas=1 --port=${PORT}
-	kubectl -n ${TEST} wait --for=condition=Available --timeout=20s deployment/${API}
+	kubectl -n ${TEST} wait --for="condition=Available" --timeout=20s deployment/${API}
 	kubectl -n ${TEST} expose deployment/${API} --target-port ${PORT} --port ${PORT} --name ${API}
 	kubectl -n ${TEST} get all,endpoints -o wide
 	### Setup ingress
 	kubectl apply -f ../../manifests/kind-deploy_${INGRESS}.yaml
-	kubectl -n ${INGRESS} wait --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+	kubectl -n ${INGRESS} wait --for="condition=Ready" pod --selector=app.kubernetes.io/component=controller --timeout=90s
 	kubectl -n ${INGRESS} get all
 	@#kubectl -n ${TEST} apply -f manifests/ptx-edge-api-ingress.yaml
 	kubectl -n ${TEST} create ingress ${TEST}-${INGRESS} --rule="/${PREFIX}/*=${API}:${PORT},tls"
@@ -99,7 +99,7 @@ run3-ingress:
 	kubectl -n ${TEST} wait --for=jsonpath='{.status.loadBalancer.ingress[?(@.hostname)].hostname}' \
 								--timeout=60s ingress/${TEST}-${INGRESS}
 	$(eval INGRESS_IP = `kubectl -n ${INGRESS} get service/ingress-nginx-controller \
-					-o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
+					-o jsonpath='{.status.loadBalancer.ingress[].ip}'`)
 	@echo
 	@echo ">>> ${API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
 	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui/"
