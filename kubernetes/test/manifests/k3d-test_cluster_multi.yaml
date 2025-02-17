@@ -4,6 +4,10 @@ metadata:
   name: test-cluster
 servers: 1
 agents: 2
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
 options:
   k3d:
     wait: true
