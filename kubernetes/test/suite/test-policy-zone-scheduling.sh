@@ -22,7 +22,7 @@ PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 oneTimeSetUp() {
     echo "Setup cluster..."
     k3d cluster create ${CLUSTER} --wait --timeout=30s --config=../manifests/k3d-test_cluster_multi.yaml
-    #
+    # Avoid double teardown
     export clusterIsSetUP="true"
 }
 
@@ -42,7 +42,7 @@ oneTimeTearDown() {
     if [[ "${clusterIsSetUP}" == "true" ]]; then
         echo "Delete cluster..."
         k3d cluster delete ${CLUSTER}
-        #
+        # Avoid double teardown
         unset -v clusterIsSetUP
     fi
 }

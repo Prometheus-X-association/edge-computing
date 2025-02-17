@@ -40,7 +40,7 @@ RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts xs flag; do
+while getopts ":xs" flag; do
 	case "${flag}" in
         x)
             echo "[x] No setup validation is configured."
@@ -48,8 +48,8 @@ while getopts xs flag; do
         s)
             echo "[x] Slim install is configured."
             SLIM_SETUP=true;;
-        *)
-            echo "Invalid parameter: $flag !"
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
             exit 1;;
     esac
 done

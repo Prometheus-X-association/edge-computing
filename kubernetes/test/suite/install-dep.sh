@@ -13,4 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-sudo apt update && sudo apt install shunit2
+while getopts ":u" flag; do
+	case "${flag}" in
+        u)
+            echo "[x] Install updated versions."
+            UPDATE=true
+            ;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1;;
+    esac
+done
+
+sudo apt update && sudo apt install -y shunit2
+
+if [[ "$UPDATE" == "true" ]]; then
+    pushd "$(mktemp -d)" || exit 1
+    git clone https://github.com/kward/shunit2
+    sudo install -v ./shunit2/shunit2 ./shunit2/shunit2_test_helpers /usr/share/shunit2/
+    popd || return
+fi

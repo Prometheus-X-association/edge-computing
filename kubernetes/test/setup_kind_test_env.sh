@@ -45,7 +45,7 @@ RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts rxsc flag; do
+while getopts ":rxsc" flag; do
 	case "${flag}" in
 		r)
 			ROOTLESS=true
@@ -69,8 +69,8 @@ EOF
         c)
             echo "[x] Cloud provider kind install is configured."
             KIND_CCM=true;;
-        *)
-            echo "Invalid parameter: $flag !"
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
             exit 1;;
     esac
 done
