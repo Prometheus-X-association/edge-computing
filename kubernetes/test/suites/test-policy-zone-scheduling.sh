@@ -58,8 +58,8 @@ oneTimeTearDown() {
 
 #----------------------------------------------------------------------------------------------------------------------
 
-testPolicyZoneSchedulingFeature() {
-    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-pz_restricted_pod.yaml
+testPolicyZoneSchedulingWithNodeSelector() {
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-pz_selected_test_pod.yaml
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=20s pod/pz-restricted-pod
     assertTrue "$?"
     #
@@ -67,7 +67,20 @@ testPolicyZoneSchedulingFeature() {
     kubectl -n "${PTX}" get pod/pz-restricted-pod -o wide
     #
     NODE=$(kubectl -n "${PTX}" get pod/pz-restricted-pod -o jsonpath="{.spec.nodeName}")
-    echo "Selected node: ${NODE}"
+    echo -e "\nSelected node: ${NODE}\n"
+    assertSame "k3d-${CLUSTER}-agent-0" "${NODE}"
+}
+
+testPolicyZoneSchedulingWithNodeAffinity() {
+    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-pz_affined_test_pod.yaml
+    kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=20s pod/pz-restricted-pod
+    assertTrue "$?"
+    #
+    kubectl get nodes -o wide -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
+    kubectl -n "${PTX}" get pod/pz-restricted-pod -o wide
+    #
+    NODE=$(kubectl -n "${PTX}" get pod/pz-restricted-pod -o jsonpath="{.spec.nodeName}")
+    echo -e "\nSelected node: ${NODE}\n"
     assertSame "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 

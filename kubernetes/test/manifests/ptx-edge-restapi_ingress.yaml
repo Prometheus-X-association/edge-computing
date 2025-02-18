@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: rest-api
   namespace: ptx-edge
+  labels:
+    app: rest-api
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
 spec:
