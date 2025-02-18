@@ -22,4 +22,11 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /ptx-edge/v1/health
+            initialDelaySeconds: 5
+            periodSeconds: 5
       restartPolicy: Always
+
