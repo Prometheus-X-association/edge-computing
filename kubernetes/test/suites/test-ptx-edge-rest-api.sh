@@ -16,44 +16,49 @@
 # shunit2 does not support set -eu
 set -o pipefail
 
+ROOT_DIR=$(readlink -f "$(dirname "$0")/../..")
 CLUSTER=test-suite-cluster
-CLUSTER_CFG=../manifests/k3d-test_cluster_multi.yaml
+CLUSTER_CFG="${ROOT_DIR}"/test/manifests/k3d-test_cluster_multi.yaml
 PTX=ptx-edge
 
 IMG="ptx-edge/rest-api:1.0"
 API=rest-api
 PREFIX="ptx-edge/v1"
 
+source "${ROOT_DIR}"/test/suites/helper.sh
+
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
-    echo "Build images..."
-    pushd ../../src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
-    echo "Setup cluster..."
-    k3d cluster create "${CLUSTER}" --wait --timeout=30s --config="${CLUSTER_CFG}"
+    log "Build images..."
+    pushd "${ROOT_DIR}"/src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
+    #
+    log "Setup cluster..."
+    k3d cluster create "${CLUSTER}" --wait --timeout=60s --config="${CLUSTER_CFG}"
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
     export clusterIsCreated="true"
-    echo "Load images..."
-    k3d image import -c "${CLUSTER}" "${IMG}" || return "${SHUNIT_ERROR}"
+    #
+    log "Load images..."
+    k3d image import -c "${CLUSTER}" -m 'direct' "${IMG}" || return "${SHUNIT_ERROR}"
 }
 
 setUp() {
-    echo "Create namespace..."
+    log "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
 }
 
 tearDown() {
     # shellcheck disable=SC2154
     [[ "${_shunit_name_}" == 'EXIT' ]] && return 0
-    echo "Delete resources..."
+    log "Delete resources..."
     kubectl -n "${PTX}" delete all --all --now
     kubectl delete namespace "${PTX}" --ignore-not-found --now
 }
 
 oneTimeTearDown() {
     if [[ "${clusterIsCreated:-true}" == "true" ]]; then
-        echo "Delete cluster..."
+        log "Delete cluster..."
         k3d cluster delete "${CLUSTER}"
         # Avoid double teardown
         export clusterIsCreated="false"
@@ -63,31 +68,34 @@ oneTimeTearDown() {
 #----------------------------------------------------------------------------------------------------------------------
 
 testPTXEdgeRESTAPI() {
-    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_deployment.yaml
-    kubectl -n "${PTX}" wait --for="condition=Available" --timeout=20s "deployment/${API}"
-    assertTrue "$?"
+    log "Create API deployment..."
+    kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_deployment.yaml
+    kubectl -n "${PTX}" wait --for="condition=Available" --timeout=60s deployment/"${API}"
+    assertTrue "deployment creation failed!" "$?"
     #
-    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_service.yaml
-    kubectl -n "${PTX}" apply -f ../manifests/ptx-edge-restapi_ingress.yaml
-    kubectl -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s "ingress/${API}"
-    assertTrue "$?"
+    log "Expose API..."
+    kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_service.yaml
+    kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_ingress.yaml
+    kubectl -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=60s ingress/"${API}"
+    assertTrue "External IP configuration failed!" "$?"
     #
     kubectl -n "${PTX}" get nodes,all,endpoints,ingress -o wide
     #
-    echo "Waiting for ingress to set up..." && sleep 15
+    log "Waiting for ingress to set up..." && sleep 15
     INGRESS_IP=$(kubectl -n "${PTX}" get "ingress/${API}" -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+    assertNotNull "ingress IP not found!" "${INGRESS_IP}"
     #
     echo "Check ==> http://${INGRESS_IP}:80/${PREFIX}/ui/"
     HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://${INGRESS_IP}:80/${PREFIX}/ui/")
-    assertSame "HTTP port expose failed" "200" "${HTTP_RESP}"
+    assertSame "HTTP port exposure failed!" "200" "${HTTP_RESP}"
     #
     echo "Check ==> https://${INGRESS_IP}:443/${PREFIX}/ui/"
     HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" -k "https://${INGRESS_IP}:443/${PREFIX}/ui/")
-    assertSame "HTTPS port expose failed" "200" "${HTTP_RESP}"
+    assertSame "HTTPS port exposure failed!" "200" "${HTTP_RESP}"
     #
     echo "Check ==> http://localhost:8080/${PREFIX}/ui/"
     HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://localhost:8080/${PREFIX}/ui/")
-    assertSame "Local port expose failed" "200" "${HTTP_RESP}"
+    assertSame "Local port exposure failed!" "200" "${HTTP_RESP}"
 }
 
 #----------------------------------------------------------------------------------------------------------------------
