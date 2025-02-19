@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: worker-pv
+  namespace: ptx-edge
+  labels:
+    job-name: builder
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Mi
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /tmp/cache
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: privacy-zone.dataspace.prometheus-x.org/zone-A
+              operator: In
+              values:
+                - "true"

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pz-restricted-pod
+  namespace: ptx-edge
+spec:
+  containers:
+    - name: pz-restricted-pod
+      image: busybox:latest
+      command: [ "/bin/sh" ]
+      args: [ "-c", "sleep infinity" ]
+      volumeMounts:
+        - name: volume-pvc
+          mountPath: /var/cache
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: privacy-zone.dataspace.prometheus-x.org/zone-A
+                operator: In
+                values:
+                  - "true"
+  restartPolicy: Never
+  volumes:
+    - name: volume-pvc
+      persistentVolumeClaim:
+        claimName: worker-pvc

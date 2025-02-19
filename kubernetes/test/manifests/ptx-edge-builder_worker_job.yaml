@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: builder
+  namespace: ptx-edge
+  labels:
+    job-name: builder
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 2
+  selector:
+    matchLabels:
+      job-name: builder
+  template:
+    metadata:
+      labels:
+        job-name: builder
+    spec:
+      initContainers:
+        - name: builder
+          image: ptx-edge/builder:1.0
+          imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - echo "builder started";
+              echo "App created" | tee /usr/src/app/app.py;
+              echo "Data created" | tee /var/cache/data/data.csv;
+              sleep 3s;
+              echo "builder ended";
+          volumeMounts:
+            - mountPath: /usr/src/app
+              name: cache-volume-worker
+              readOnly: false
+            - mountPath: /var/cache/data
+              name: cache-volume-data
+              readOnly: false
+      containers:
+        - name: worker
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - echo "worker started";
+              ls /usr/src/app/ /var/cache/data/;
+              echo "Result created" | tee /var/cache/result/result.csv;
+              sleep 5s;
+              echo "worker ended";
+          volumeMounts:
+            - mountPath: /usr/src/app
+              name: cache-volume-worker
+              readOnly: true
+            - mountPath: /var/cache/data
+              name: cache-volume-data
+              readOnly: true
+            - mountPath: /var/cache/result
+              name: cache-volume-result
+              readOnly: false
+      restartPolicy: OnFailure
+      volumes:
+        - name: cache-volume-data
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: cache-volume-worker
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: cache-volume-result
+          persistentVolumeClaim:
+            claimName: worker-pvc

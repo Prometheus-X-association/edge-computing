@@ -17,7 +17,7 @@ import time
 
 def main():
     print("Builder started")
-    time.sleep(5)
+    time.sleep(3)
     print("Builder ended.")
 
 
