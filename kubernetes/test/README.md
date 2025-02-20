@@ -226,10 +226,24 @@ For example:
 $ ./test-policy-zone-scheduling.sh
 ```
 
+> [!NOTE]
+> 
+> For optional parameters, refer to the `shunit2` [GitHub documentation](https://github.com/kward/shunit2/blob/master/README.md). 
+
 To run all test script in the `suite` folder, use the following script:
 ```bash
 $ ./runall.sh
 ```
+
+#### Report Generation
+
+The `runall` script can also generate JUnit-style reports about the test runs, in case the 
+report folder is defined using the flag `-o` (both absolute and relative path are allowed), e.g.,
+```bash
+$ ./runall.sh -o ./results
+```
+
+#### Examples
 
 An example execution of one test case is the following:
 ```bash
@@ -358,4 +372,6 @@ Testing the endpoints can be performed using the following two approaches:
 - Manual endpoint testing directly from the Swagger UI available on
  http://localhost:8080/ptx-edge/v1/ui/
 
-Further descriptions can be found in the mockup's [README.md](mock-api/README.md).
+> [!INFO]
+>
+> Descriptions of mockup unit tests can be found in the related [README.md](mock-api/README.md).
