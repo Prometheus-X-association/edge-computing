@@ -29,9 +29,10 @@ source "${ROOT_DIR}"/test/suites/helper.sh
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
-    log "Build images..."
+    LOG "Build images..."
     pushd "${ROOT_DIR}"/src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
-    log "Setup cluster..."
+    #
+    LOG "Setup cluster..."
     k3d cluster create "${CLUSTER}" --wait --timeout=30s --config="${CLUSTER_CFG}"
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
@@ -39,21 +40,21 @@ oneTimeSetUp() {
 }
 
 setUp() {
-    log "Create namespace..."
+    LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
 }
 
 tearDown() {
     # shellcheck disable=SC2154
     [[ "${_shunit_name_}" == 'EXIT' ]] && return 0
-    log "Delete resources..."
+    LOG "Delete resources..."
     kubectl -n "${PTX}" delete all --all --now
     kubectl delete namespace "${PTX}" --ignore-not-found --now
 }
 
 oneTimeTearDown() {
     if [[ "${clusterIsCreated:-true}" == "true" ]]; then
-        log "Delete cluster..."
+        LOG "Delete cluster..."
         k3d cluster delete "${CLUSTER}"
         # Avoid double teardown
         export clusterIsCreated="false"
@@ -63,7 +64,7 @@ oneTimeTearDown() {
 #----------------------------------------------------------------------------------------------------------------------
 
 testPolicyZoneSchedulingWithNodeSelector() {
-    log "Create Privacy Zone restricted pod..."
+    LOG "Create Privacy Zone restricted pod..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_selected_test_pod.yaml
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
     assertTrue "pod creation failed!" "$?"
@@ -73,12 +74,12 @@ testPolicyZoneSchedulingWithNodeSelector() {
     #
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
-    echo -e "\nSelected node: ${NODE}\n"
+    log "Selected node: ${NODE}"
     assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 
 testPolicyZoneSchedulingWithNodeAffinity() {
-    log "Create Privacy Zone restricted pod..."
+    LOG "Create Privacy Zone restricted pod..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_affined_test_pod.yaml
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
     assertTrue "pod creation failed!" "$?"
@@ -88,7 +89,7 @@ testPolicyZoneSchedulingWithNodeAffinity() {
     #
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
-    echo -e "\nSelected node: ${NODE}\n"
+    log "Selected node: ${NODE}"
     assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 

@@ -30,35 +30,35 @@ source "${ROOT_DIR}"/test/suites/helper.sh
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
-    log "Build images..."
+    LOG "Build images..."
     pushd "${ROOT_DIR}"/src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
     #
-    log "Setup cluster..."
+    LOG "Setup cluster..."
     k3d cluster create "${CLUSTER}" --wait --timeout=60s --config="${CLUSTER_CFG}"
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
     export clusterIsCreated="true"
     #
-    log "Load images..."
+    LOG "Load images..."
     k3d image import -c "${CLUSTER}" -m 'direct' "${IMG}" || return "${SHUNIT_ERROR}"
 }
 
 setUp() {
-    log "Create namespace..."
+    LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
 }
 
 tearDown() {
     # shellcheck disable=SC2154
     [[ "${_shunit_name_}" == 'EXIT' ]] && return 0
-    log "Delete resources..."
+    LOG "Delete resources..."
     kubectl -n "${PTX}" delete all --all --now
     kubectl delete namespace "${PTX}" --ignore-not-found --now
 }
 
 oneTimeTearDown() {
     if [[ "${clusterIsCreated:-true}" == "true" ]]; then
-        log "Delete cluster..."
+        LOG "Delete cluster..."
         k3d cluster delete "${CLUSTER}"
         # Avoid double teardown
         export clusterIsCreated="false"
@@ -68,12 +68,12 @@ oneTimeTearDown() {
 #----------------------------------------------------------------------------------------------------------------------
 
 testPTXEdgeRESTAPI() {
-    log "Create API deployment..."
+    LOG "Create API deployment..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_deployment.yaml
     kubectl -n "${PTX}" wait --for="condition=Available" --timeout=60s deployment/"${API}"
     assertTrue "deployment creation failed!" "$?"
     #
-    log "Expose API..."
+    LOG "Expose API..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_service.yaml
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-restapi_ingress.yaml
     kubectl -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=60s ingress/"${API}"

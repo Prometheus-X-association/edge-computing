@@ -31,35 +31,35 @@ source "${ROOT_DIR}"/test/suites/helper.sh
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
-    log "Build images..."
+    LOG "Build images..."
     pushd "${ROOT_DIR}"/src/builder && make build && popd || return "${SHUNIT_ERROR}"
     #
-    log "Setup cluster..."
+    LOG "Setup cluster..."
     k3d cluster create "${CLUSTER}" --wait --timeout=60s --config="${CLUSTER_CFG}"
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
     # Avoid double teardown
     export clusterIsCreated="true"
     #
-    log "Load images..."
+    LOG "Load images..."
     k3d image import -c "${CLUSTER}" -m 'direct' "${IMG}" || return "${SHUNIT_ERROR}"
 }
 
 setUp() {
-    log "Create namespace..."
+    LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
 }
 
 tearDown() {
     # shellcheck disable=SC2154
     [[ "${_shunit_name_}" == 'EXIT' ]] && return 0
-    log "Delete resources..."
+    LOG "Delete resources..."
     kubectl -n "${PTX}" delete all --all --now
     kubectl delete namespace "${PTX}" --ignore-not-found --now
 }
 
 oneTimeTearDown() {
     if [[ "${clusterIsCreated:-true}" == "true" ]]; then
-        log "Delete cluster..."
+        LOG "Delete cluster..."
         k3d cluster delete "${CLUSTER}"
         # Avoid double teardown
         export clusterIsCreated="false"
@@ -69,33 +69,37 @@ oneTimeTearDown() {
 #----------------------------------------------------------------------------------------------------------------------
 
 testPTXEdgeStaticVolumeClaim() {
-    log "Create static volume..."
+    LOG "Create static volume..."
 	kubectl apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_storage.yaml
 	kubectl apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_pv.yaml
 	kubectl get storageclass,pv-o wide
 	#
-	log "Create consuming pod..."
+	LOG "Create consuming pod..."
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_pvc.yaml
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_pod_with_pvc.yaml
 	kubectl get pvc,all -o wide
 	#
 	startSkipping
+	    log "Waiting for PVC binding..."
         kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=60s pvc/"${WORKER}"-pvc
         assertTrue "PVC binding failed!" "$?"
+        log "Waiting for PV acquisition..."
         kubectl -n ${PTX} wait --for="condition=Ready" --timeout=60s pod/"${POD}"
         assertTrue "PV acquisition failed!" "$?"
 	endSkipping
 }
 
 testPTXEdgeDynamicVolumeClaim() {
-    log "Create dynamic volume with consuming pod..."
+    LOG "Create dynamic volume with consuming pod..."
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-builder_worker_pvc.yaml
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_pod_with_pvc.yaml
+	log "Waiting for PVC binding..."
 	kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=60s pvc/"${WORKER}"-pvc
     assertTrue "PVC binding failed!" "$?"
     #
 	kubectl -n ${PTX} get pv,pvc -o wide
+	log "Waiting for PV acquisition..."
 	kubectl -n ${PTX} wait --for="condition=Ready" --timeout=60s pod/"${POD}"
 	assertTrue "PV acquisition failed!" "$?"
 	#
@@ -103,13 +107,15 @@ testPTXEdgeDynamicVolumeClaim() {
 }
 
 testPTXEdgeBuilder() {
-    log "Create dynamic volume with builder pod..."
+    LOG "Create dynamic volume with builder pod..."
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-builder_worker_pvc.yaml
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-builder_worker_job.yaml
+	log "Waiting for PVC binding..."
 	kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=60s pvc/"${WORKER}"-pvc
 	assertTrue "PVC binding failed!" "$?"
 	#
 	kubectl -n ${PTX} get all,pv,pvc -o wide
+	log "Waiting for Job result..."
 	kubectl -n ${PTX} wait --for="condition=Complete" --timeout=60s job/${BUILDER}
 	assertTrue "Job completion failed!" "$?"
 	#

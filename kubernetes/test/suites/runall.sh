@@ -15,8 +15,8 @@
 
 ROOT_DIR=$(readlink -f "$(dirname "$0")")
 
-for testfile in ${ROOT_DIR}/test-*.sh; do
+for testfile in "${ROOT_DIR}"/test-*.sh; do
     [ -e "${testfile}" ] || continue
     echo -e "\nExecuting ${testfile}...\n"
-    bash ${testfile}
+    bash "${testfile}"
 done
