@@ -15,11 +15,38 @@
 
 set -eou pipefail
 
-ROOT_DIR=$(readlink -f "$(dirname "$0")")
+SUITES_DIR=$(readlink -f "$(dirname "$0")")
+FILE_PREFIX="junit-report"
 
-for testfile in "${ROOT_DIR}"/test-*.sh; do
+while getopts ":o:" flag; do
+	case "${flag}" in
+        o)
+            if [[ "${OPTARG}" = /* ]]; then
+                REPORT_PATH="${OPTARG}"
+            else
+                REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
+            fi
+            echo -e "\n[x] JUnit reports are configured with ${REPORT_PATH}"
+            mkdir -pv "${REPORT_PATH}"
+            ;;
+        :)
+            echo "Missing value for parameter: -${OPTARG} !"
+            exit 1;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1;;
+    esac
+done
+
+for testfile in "${SUITES_DIR}"/test-*.sh; do
     [ -e "${testfile}" ] || continue
     echo -e "\nExecuting ${testfile}...\n"
-    # shellcheck disable=SC2086
-    bash ${testfile}
+    if [ -v REPORT_PATH ]; then
+        REPORT_FILE=$(basename -- "${testfile}" ".sh")
+        # shellcheck disable=SC2086
+        bash ${testfile} -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml"
+    else
+        # shellcheck disable=SC2086
+        bash ${testfile}
+    fi
 done

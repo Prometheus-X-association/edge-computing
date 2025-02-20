@@ -16,7 +16,7 @@
 while getopts ":u" flag; do
 	case "${flag}" in
         u)
-            echo "[x] Install updated versions."
+            echo "[x] Update to the latest versions."
             UPDATE=true
             ;;
         ?)
@@ -25,13 +25,15 @@ while getopts ":u" flag; do
     esac
 done
 
+echo "Install test dependencies..."
+
 sudo apt update && sudo apt install -y shunit2
 
-if [[ "$UPDATE" == "true" ]]; then
+if [[ -v UPDATE ]]; then
     pushd "$(mktemp -d)" || exit 1
     git clone https://github.com/kward/shunit2
     sudo install -v ./shunit2/shunit2 ./shunit2/shunit2_test_helpers /usr/share/shunit2/
-    popd || return
+    popd || exit 1
 fi
 
 echo "Done."
