@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -eou pipefail
+
 ROOT_DIR=$(readlink -f "$(dirname "$0")")
 
 for testfile in "${ROOT_DIR}"/test-*.sh; do
     [ -e "${testfile}" ] || continue
     echo -e "\nExecuting ${testfile}...\n"
-    bash "${testfile}"
+    # shellcheck disable=SC2086
+    bash ${testfile}
 done

@@ -42,6 +42,7 @@ oneTimeSetUp() {
 setUp() {
     LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
+    echo
 }
 
 tearDown() {
@@ -69,12 +70,13 @@ testPolicyZoneSchedulingWithNodeSelector() {
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
     assertTrue "pod creation failed!" "$?"
     #
-    kubectl get nodes -o wide -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
+    kubectl get nodes -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
     kubectl -n "${PTX}" get pod/"${POD}" -o wide
     #
+    log "Check node scheduling..."
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
-    log "Selected node: ${NODE}"
+    echo "Selected node: ${NODE}"
     assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 
@@ -84,12 +86,13 @@ testPolicyZoneSchedulingWithNodeAffinity() {
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
     assertTrue "pod creation failed!" "$?"
     #
-    kubectl get nodes -o wide -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
+    kubectl get nodes -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
     kubectl -n "${PTX}" get pod/"${POD}" -o wide
     #
+    log "Check node scheduling..."
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
-    log "Selected node: ${NODE}"
+    echo "Selected node: ${NODE}"
     assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 

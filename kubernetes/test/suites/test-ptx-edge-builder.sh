@@ -47,6 +47,7 @@ oneTimeSetUp() {
 setUp() {
     LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
+    echo
 }
 
 tearDown() {
@@ -72,20 +73,19 @@ testPTXEdgeStaticVolumeClaim() {
     LOG "Create static volume..."
 	kubectl apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_storage.yaml
 	kubectl apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_pv.yaml
-	kubectl get storageclass,pv-o wide
+	kubectl get storageclass,pv -o wide
 	#
 	LOG "Create consuming pod..."
-	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_restricted_pvc.yaml
 	kubectl -n ${PTX} apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_pod_with_pvc.yaml
 	kubectl get pvc,all -o wide
 	#
 	startSkipping
 	    log "Waiting for PVC binding..."
-        kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=60s pvc/"${WORKER}"-pvc
+        kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/"${WORKER}"-pvc
         assertTrue "PVC binding failed!" "$?"
         log "Waiting for PV acquisition..."
-        kubectl -n ${PTX} wait --for="condition=Ready" --timeout=60s pod/"${POD}"
+        kubectl -n ${PTX} wait --for="condition=Ready" --timeout=10s pod/"${POD}"
         assertTrue "PV acquisition failed!" "$?"
 	endSkipping
 }

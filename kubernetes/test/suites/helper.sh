@@ -19,7 +19,7 @@ function LOG() {
     printf -v sep '%*s' 80 ""; echo "${sep// /#}"
 }
 
-function log {
+function log() {
     echo -e "\n$1"
-    printf -v sep '%*s' 80 ""; echo "${sep// /-}"
+    printf -v sep '%*s' 80 ""; echo -e "${sep// /-}\n"
 }

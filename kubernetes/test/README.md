@@ -196,84 +196,147 @@ Other configuration parameters (as before) are
 
 - disabling the test deployment of a basic container at the end of the setup script,
 ```bash
-$ ./setup_kind_test_env.sh -x
+$ ./setup_k3d_test_env.sh -x
 ```
 - performing a minimal installation for production environments (e.g. no bash completions),
 ```bash
-$ ./setup_kind_test_env.sh -s
+$ ./setup_k3d_test_env.sh -s
 ```
 
 ## Extension Installation
 
 TBD
 
-## Unit Tests
+## Tests
 
 Test cases are composed of different unit test at different levels.
 
-### K8s features
+### K8s components/features
 
 To test the feasibility of K8s features and manifest templates, use the following commands.
 
 To install test dependencies:
 ```bash
-$ cd suite && bash install-dep.sh
+$ cd suites && bash install-dep.sh
 ```
 
 To execute the test cases, run the test scripts with the prefix `test-` in the `suite` folder.
-
-An example execution is the following:
+For example:
 ```bash
 $ ./test-policy-zone-scheduling.sh
-Setup cluster...
-INFO[0000] Using config file ../manifests/k3d-test_cluster_multi.yaml (k3d.io/v1alpha5#simple) 
+```
+
+To run all test script in the `suite` folder, use the following script:
+```bash
+$ ./runall.sh
+```
+
+An example execution of one test case is the following:
+```bash
+$ ./test-policy-zone-scheduling.sh -- testPolicyZoneSchedulingWithNodeAffinity
+
+################################################################################
+###   Build images...
+################################################################################
+~/PTX-edge-computing/kubernetes/src/rest-api ~/PTX-edge-computing/kubernetes/test/suites
+docker build -t ptx-edge/rest-api:1.0 .
+[+] Building 1.4s (10/10) FINISHED                                                                                                  docker:default
+ => [internal] load build definition from Dockerfile                                                                                          0.0s
+ => => transferring dockerfile: 559B                                                                                                          0.0s
+ => [internal] load metadata for docker.io/library/python:3.13-alpine                                                                         1.0s
+ => [internal] load .dockerignore                                                                                                             0.0s
+ => => transferring context: 121B                                                                                                             0.0s
+ => [1/5] FROM docker.io/library/python:3.13-alpine@sha256:323a717dc4a010fee21e3f1aac738ee10bb485de4e7593ce242b36ee48d6b352                   0.0s
+ => [internal] load build context                                                                                                             0.0s
+ => => transferring context: 238B                                                                                                             0.0s
+ => CACHED [2/5] WORKDIR /usr/src/api                                                                                                         0.0s
+ => CACHED [3/5] COPY requirements.txt .                                                                                                      0.0s
+ => CACHED [4/5] RUN python3 -m pip install --no-cache-dir -U -r requirements.txt                                                             0.0s
+ => CACHED [5/5] COPY ./app ./app                                                                                                             0.0s
+ => exporting to image                                                                                                                        0.0s
+ => => exporting layers                                                                                                                       0.0s
+ => => writing image sha256:9484d4ed4d4a3295a84067806dd8d0bfcde62545d5bbcb3255190f4e99bf01cb                                                  0.0s
+ => => naming to docker.io/ptx-edge/rest-api:1.0                                                                                              0.0s
+docker images --no-trunc ptx-edge/rest-api:1.0
+REPOSITORY          TAG       IMAGE ID                                                                  CREATED        SIZE
+ptx-edge/rest-api   1.0       sha256:9484d4ed4d4a3295a84067806dd8d0bfcde62545d5bbcb3255190f4e99bf01cb   45 hours ago   68MB
+~/PTX-edge-computing/kubernetes/test/suites
+
+################################################################################
+###   Setup cluster...
+################################################################################
+INFO[0000] Using config file /home/czentye/PTX-edge-computing/kubernetes/test/manifests/k3d-test_cluster_multi.yaml (k3d.io/v1alpha5#simple) 
+INFO[0000] portmapping '8080:80' targets the loadbalancer: defaulting to [servers:*:proxy agents:*:proxy] 
 INFO[0000] Prep: Network                                
-INFO[0000] Re-using existing network 'k3d-test-cluster' (2a68b2bb6d3eed255a1900483a61869ac2a160ae635d3d8c5fd2011bc4360774) 
-INFO[0000] Created image volume k3d-test-cluster-images 
+INFO[0000] Re-using existing network 'k3d-test-suite-cluster' (c3e409aada94529106f694668f107477b770aaf96050f7587a8592fe5065212a) 
+INFO[0000] Created image volume k3d-test-suite-cluster-images 
 INFO[0000] Starting new tools node...                   
-INFO[0000] Starting node 'k3d-test-cluster-tools'       
-INFO[0001] Creating node 'k3d-test-cluster-server-0'    
-INFO[0001] Creating node 'k3d-test-cluster-agent-0'     
-INFO[0001] Creating node 'k3d-test-cluster-agent-1'     
-INFO[0001] Creating LoadBalancer 'k3d-test-cluster-serverlb' 
+INFO[0000] Starting node 'k3d-test-suite-cluster-tools' 
+INFO[0001] Creating node 'k3d-test-suite-cluster-server-0' 
+INFO[0001] Creating node 'k3d-test-suite-cluster-agent-0' 
+INFO[0001] Creating node 'k3d-test-suite-cluster-agent-1' 
+INFO[0001] Creating LoadBalancer 'k3d-test-suite-cluster-serverlb' 
 INFO[0001] Using the k3d-tools node to gather environment information 
-INFO[0001] HostIP: using network gateway 172.19.0.1 address 
-INFO[0001] Starting cluster 'test-cluster'              
+INFO[0001] HostIP: using network gateway 172.20.0.1 address 
+INFO[0001] Starting cluster 'test-suite-cluster'        
 INFO[0001] Starting servers...                          
-INFO[0001] Starting node 'k3d-test-cluster-server-0'    
-INFO[0008] Starting agents...                           
-INFO[0008] Starting node 'k3d-test-cluster-agent-1'     
-INFO[0008] Starting node 'k3d-test-cluster-agent-0'     
-INFO[0014] Starting helpers...                          
-INFO[0014] Starting node 'k3d-test-cluster-serverlb'    
-INFO[0021] Injecting records for hostAliases (incl. host.k3d.internal) and for 4 network members into CoreDNS configmap... 
-INFO[0023] Cluster 'test-cluster' created successfully! 
-INFO[0023] You can now use it like this:                
+INFO[0001] Starting node 'k3d-test-suite-cluster-server-0' 
+INFO[0007] Starting agents...                           
+INFO[0007] Starting node 'k3d-test-suite-cluster-agent-0' 
+INFO[0007] Starting node 'k3d-test-suite-cluster-agent-1' 
+INFO[0013] Starting helpers...                          
+INFO[0013] Starting node 'k3d-test-suite-cluster-serverlb' 
+INFO[0020] Injecting records for hostAliases (incl. host.k3d.internal) and for 4 network members into CoreDNS configmap... 
+INFO[0022] Cluster 'test-suite-cluster' created successfully! 
+INFO[0022] You can now use it like this:                
 kubectl cluster-info
-Create namespace...
+
+################################################################################
+###   Create namespace...
+################################################################################
 namespace/ptx-edge created
-testPolicyZoneSchedulingFeature
+
+testPolicyZoneSchedulingWithNodeAffinity
+
+################################################################################
+###   Create Privacy Zone restricted pod...
+################################################################################
 pod/pz-restricted-pod created
 pod/pz-restricted-pod condition met
-NAME                        STATUS   ROLES                  AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION     CONTAINER-RUNTIME          ZONE-A   ZONE-B   ZONE-C
-k3d-test-cluster-agent-0    Ready    <none>                 18s   v1.31.5+k3s1   172.19.0.4    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2   true     true     
-k3d-test-cluster-agent-1    Ready    <none>                 19s   v1.31.5+k3s1   172.19.0.3    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2            true     
-k3d-test-cluster-server-0   Ready    control-plane,master   25s   v1.31.5+k3s1   172.19.0.2    <none>        K3s v1.31.5+k3s1   6.8.0-53-generic   containerd://1.7.23-k3s2                     true
-NAME                READY   STATUS    RESTARTS   AGE   IP          NODE                       NOMINATED NODE   READINESS GATES
-pz-restricted-pod   1/1     Running   0          9s    10.42.0.4   k3d-test-cluster-agent-0   <none>           <none>
-Delete namespace...
+NAME                              STATUS   ROLES                  AGE   VERSION        ZONE-A   ZONE-B   ZONE-C
+k3d-test-suite-cluster-agent-0    Ready    <none>                 25s   v1.31.5+k3s1   true     true     
+k3d-test-suite-cluster-agent-1    Ready    <none>                 24s   v1.31.5+k3s1            true     
+k3d-test-suite-cluster-server-0   Ready    control-plane,master   29s   v1.31.5+k3s1                     true
+NAME                READY   STATUS    RESTARTS   AGE   IP          NODE                             NOMINATED NODE   READINESS GATES
+pz-restricted-pod   1/1     Running   0          16s   10.42.0.4   k3d-test-suite-cluster-agent-0   <none>           <none>
+
+Check node scheduling...
+--------------------------------------------------------------------------------
+
+Selected node: k3d-test-suite-cluster-agent-0
+
+################################################################################
+###   Delete resources...
+################################################################################
+pod "pz-restricted-pod" deleted
 namespace "ptx-edge" deleted
-Delete cluster...
-INFO[0000] Deleting cluster 'test-cluster'              
-INFO[0002] Deleting 1 attached volumes...               
-INFO[0002] Removing cluster details from default kubeconfig... 
-INFO[0002] Removing standalone kubeconfig file (if there is one)... 
-INFO[0002] Successfully deleted cluster test-cluster!   
+
+################################################################################
+###   Delete cluster...
+################################################################################
+INFO[0000] Deleting cluster 'test-suite-cluster'        
+INFO[0003] Deleting 1 attached volumes...               
+INFO[0003] Removing cluster details from default kubeconfig... 
+INFO[0003] Removing standalone kubeconfig file (if there is one)... 
+INFO[0003] Successfully deleted cluster test-suite-cluster! 
 
 Ran 1 test.
 
 OK
 ```
+
+### Other components
+
 TBD
 
 ## REST-API Mockup
@@ -291,7 +354,7 @@ of the defined REST-API endpoints in [mock-api/swagger_server/test](mock-api/swa
 
 Testing the endpoints can be performed using the following two approaches:
 
-- Executing the automated test cases with ``tox`` or ``nosetests`` tools.
+- Executing the automated unit test cases with ``tox`` or ``nosetests`` tools.
 - Manual endpoint testing directly from the Swagger UI available on
  http://localhost:8080/ptx-edge/v1/ui/
 

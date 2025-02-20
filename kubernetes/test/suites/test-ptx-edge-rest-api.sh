@@ -46,6 +46,7 @@ oneTimeSetUp() {
 setUp() {
     LOG "Create namespace..."
     kubectl create namespace "${PTX}" || return "${SHUNIT_ERROR}"
+    echo
 }
 
 tearDown() {
