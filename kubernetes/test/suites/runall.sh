@@ -19,6 +19,13 @@ SUITES_DIR=$(readlink -f "$(dirname "$0")")
 FILE_PREFIX="report"
 RET_VALS=0
 
+function sig_handler(){
+    echo -e "Signal caught. Exiting from tests..."
+    exit 1
+}
+
+trap sig_handler INT TERM
+
 while getopts ":o:" flag; do
 	case "${flag}" in
         o)
@@ -46,14 +53,11 @@ for testfile in "${SUITES_DIR}"/test-*.sh; do
     echo -e "\nExecuting ${testfile}...\n"
     if [ -v REPORT_PATH ]; then
         REPORT_FILE=$(basename -- "${testfile}" ".sh")
-        # shellcheck disable=SC2086
-        bash ${testfile} -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml"
-        RET_VALS=$(( "${RET_VALS}" + $? ))
-        echo ${RET_VALS}
+        ( exec bash "${testfile}" -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml" 2>&1; )
+        RET_VALS=$(( "${RET_VALS}" + "$?" ))
     else
-        # shellcheck disable=SC2086
-        bash ${testfile}
-        RET_VALS=$(( "${RET_VALS}" + $? ))
+        ( exec bash "${testfile}" 2>&1; )
+        RET_VALS=$(( "${RET_VALS}" + "$?" ))
     fi
 done
 
