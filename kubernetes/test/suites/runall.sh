@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -eou pipefail
+set -ou pipefail
 
 SUITES_DIR=$(readlink -f "$(dirname "$0")")
-FILE_PREFIX="junit-report"
+FILE_PREFIX="report"
+RET_VALS=0
 
 while getopts ":o:" flag; do
 	case "${flag}" in
@@ -26,7 +27,9 @@ while getopts ":o:" flag; do
             else
                 REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
             fi
-            echo -e "\n[x] JUnit reports are configured with ${REPORT_PATH}"
+            echo -e "\n[x] JUnit-style reports are configured with path: ${REPORT_PATH}\n"
+            echo -e "Preparing report folder..."
+            [[ -d "${REPORT_PATH}" ]] && rm -rfv "${REPORT_PATH}"
             mkdir -pv "${REPORT_PATH}"
             ;;
         :)
@@ -45,8 +48,13 @@ for testfile in "${SUITES_DIR}"/test-*.sh; do
         REPORT_FILE=$(basename -- "${testfile}" ".sh")
         # shellcheck disable=SC2086
         bash ${testfile} -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml"
+        RET_VALS=$(( "${RET_VALS}" + $? ))
+        echo ${RET_VALS}
     else
         # shellcheck disable=SC2086
         bash ${testfile}
+        RET_VALS=$(( "${RET_VALS}" + $? ))
     fi
 done
+
+[[ ${RET_VALS} -eq 0 ]] && exit 0 || exit 1
