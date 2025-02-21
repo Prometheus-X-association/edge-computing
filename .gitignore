@@ -1,6 +1,8 @@
 **/.idea
 **/.venv
+**/.tox
 **/__pycache__
 **/*.zip
 **/*.bkp
 **/*.dtmp
+kubernetes/test/**/*.xml

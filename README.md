@@ -7,13 +7,13 @@ by Cloud Providers).
 Two main high-level objectives are targeted by these services:
 
 - **Privacy-preserving**, where data is kept close to the user, more exactly within a pre-defined
-privacy zone.
+  privacy zone.
 - **Efficient near-data processing**, with optimized performance and resource utilization.
 
 In general, the main goal is to move (AI) processing functions close to the data source
 and execute them on-site. If the execution capability is available on-site, that is, in the
 virtual/physical node storing the data, the data-consuming software function (as a FaaS
-based operation) or container (as a CaaS based operation) is launched there (e.g., by a 
+based operation) or container (as a CaaS based operation) is launched there (e.g., by a
 Kubernetes-based orchestration framework). Thus, we can avoid the transmission of a large
 amount of data and address privacy challenges designated by geographical or provider-related
 rules and demands.
@@ -28,8 +28,8 @@ rules and where processing functions can and should be deployed on demand.
 See the comprehensive design document [here](docs/design-document.md).
 
 Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes** (K8s)
-container orchestration platform (realistically spanning multiple providers' domains/clouds), 
-its value-added services are implemented as standalone software containers, operated in a 
+container orchestration platform (realistically spanning multiple providers' domains/clouds),
+its value-added services are implemented as standalone software containers, operated in a
 dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
 
 The main components of the BB-02's functionality cover the followings:
@@ -49,12 +49,11 @@ design document in
 
 *Binding of BB-02 components to K8s features.*
 
-
 ## Building instructions
 
 ### Production
 
-Since BB-02 is basically a set of extensions to the Kubernetes framework, instead of 
+Since BB-02 is basically a set of extensions to the Kubernetes framework, instead of
 standalone containerized software modules, its installation and setup require different
 steps, and most of all, an operating **vanilla Kubernetes cluster** as a prerequisite.
 
@@ -65,28 +64,31 @@ a local machine, see for example the Kubernetes'
 or managed cloud services available online.
 
 The installation and configuration steps are grouped together into separate helper scripts
-with a dedicated [Makefile](Makefile), which is intended to use Kubernetes packages 
+with a dedicated [Makefile](Makefile), which is intended to use Kubernetes packages
 called [Helm charts](https://helm.sh/) internally.
 
-To install the dependencies and the **ptx-edge extension** assuming a default `kubectl` 
+To install the dependencies and the **ptx-edge extension** assuming a default `kubectl`
 profile for a running Kubernetes cluster, use the following instruction:
+
 ```bash
 $ make setup
 ```
 
 > [!IMPORTANT]
-> 
-> Since BB-02 is still under development, Makefile targets point 
+>
+> Since BB-02 is still under development, Makefile targets point
 > directly to the targets in the test Makefile in `kubernetes/test`!
 
 
 or execute the helper scripts directly:
+
 ```bash
 $ # TBD
 ```
 
 or install necessary resources/dependencies and the ptx-edge Helm charts
 manually:
+
 ```bash
 $ # TBD
 ```
@@ -94,9 +96,9 @@ $ # TBD
 ### Development & Testing
 
 > [!NOTE]
-> 
-> The BB-02 module is unique in that sense that it cannot be seamlessly run by a 
-> container framework, such as Docker or Podman, as it is inherently based on container 
+>
+> The BB-02 module is unique in that sense that it cannot be seamlessly run by a
+> container framework, such as Docker or Podman, as it is inherently based on container
 > orchestration features of a higher architecture level.
 
 However, for development and testing purposes, full-fledged but lightweight clusters of
@@ -110,39 +112,42 @@ These are meant for developers to test Kubernetes distributions on their (isolat
 development machine, but are also suitable for local development, CI, and testing.
 
 The K8s control plane and worker nodes are created as **separate docker containers** based
-on special-built docker images, which 
+on special-built docker images, which
 
 - are capable of running arbitrary software modules as preloaded docker images using
   **docker-in-docker**,
 - run standard K8s distribution components, e.g., `kubelet`,
 - that can be configured via the standard `kubectl` tool from the host machine.
 
-See detailed description of these tools, their installation, and configuration for `ptx-edge` 
+See detailed description of these tools, their installation, and configuration for `ptx-edge`
 in [kubernetes/test](kubernetes/test/README.md).
 
 Nevertheless, the `ptx-edge` extension's *customer-facing API* can be separately run
 in a single container as a mockup for integration test cases.
-See further about Docker-based testing 
-- in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
-with the related [README.md](kubernetes/test/README.md#level-1-testing-single-docker-image)
-- or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
-in `kubernetes/test/mock-api`.
+See further about Docker-based testing
 
+- in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
+  with the related [README.md](kubernetes/test/README.md#level-1-testing-single-docker-image)
+- or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
+  in `kubernetes/test/mock-api`.
 
 ## Running instructions
 
 To start `ptx-edge` components, run
+
 ```bash
 make run
 ```
+
 while for tearing down the components, execute
+
 ```bash
 make cleanup
 ```
 
 > [!IMPORTANT]
-> 
-> Since BB-02 is still under development, Makefile targets point 
+>
+> Since BB-02 is still under development, Makefile targets point
 > directly to the targets in the test Makefile in `kubernetes/test`!
 
 The installed Helm chart launches the included `ptx-edge` services automatically,
@@ -150,12 +155,14 @@ but it does not wait until all the resources are running before it exits!
 
 To check the current status of the installed chart's components, use the following
 command:
+
 ```bash
 $ # TBD
 ```
 
 To keep track of a release's state, or to re-read configuration information, you can
 use
+
 ```bash
 $ # TBD
 ```
@@ -163,7 +170,7 @@ $ # TBD
 ## Example usage
 
 The `ptx-edge` K8s extension provides a separate REST-API in
-[kubernetes/src/rest-api](kubernetes/src/rest-api) 
+[kubernetes/src/rest-api](kubernetes/src/rest-api)
 to integrate its features with the PTX core components.
 
 The API uses the [FastAPI](https://fastapi.tiangolo.com/) Python package to implement
@@ -190,7 +197,8 @@ in the related [Readme](kubernetes/test/mock-api/README.md).
 The REST-API endpoints can be easily tested in the following two approaches:
 
 - Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.
-For example,
+  For example,
+
 ```bash
 $ curl -sX 'GET' \
        -H 'accept: application/json' \
@@ -203,7 +211,7 @@ $ curl -sX 'GET' \
 ```
 
 - Manually testing endpoints with in-line test data on its
-[Swagger UI](kubernetes/test/README.md#rest-api-mockup). 
+  [Swagger UI](kubernetes/test/README.md#rest-api-mockup).
 
 #### Examples:
 
@@ -223,11 +231,73 @@ To validate the endpoints, send the following requests to the main REST-API usin
 | /requestPrivacyEdgeProc |   POST    | <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"}</pre> |
 
 ## Unit testing
+
 ### Setup test environment
+
 ### Run tests
+
 ### Expected results
 
 ## Component-level testing
+
+Testing of `ptx-edge` component is based on the basic functionality and applicability of the
+K8s components defined in the [Design document](#design-document).
+The related test cases can be found in [kubernetes/test/suites](kubernetes/test/suites).
+
+> [!NOTE]
+>
+> For the detailed description of component-level tests, refer to the
+> related [README.md](kubernetes/test/README.md#tests).
+
 ### Setup test environment
+
+To install test dependencies with the latest versions:
+
+```bash
+$ cd kubernetes/test/suites && ./install-dep.sh -u
+```
+
+> [!IMPORTANT]
+>
+> For test report generation, the flag `-u` is mandatory!
+
 ### Run tests
+
+To execute all component-level tests with **JUnit-style** test report generation (into the folder
+`kubernetes/test/suites/results`), use the following helper script:
+
+```bash
+$ ./runall.sh -o ./results
+
+# <logs truncated>
+
+$ ls -al results/
+total 20
+drwxrwx--- 1 root vboxsf 4096 Feb 20 16:56 .
+drwxrwx--- 1 root vboxsf 4096 Feb 20 12:31 ..
+-rwxrwx--- 1 root vboxsf  445 Feb 20 16:56 report-test-policy-zone-scheduling.xml
+-rwxrwx--- 1 root vboxsf  524 Feb 20 16:59 report-test-ptx-edge-builder.xml
+-rwxrwx--- 1 root vboxsf  265 Feb 20 17:00 report-test-ptx-edge-rest-api.xml
+
+```
+
 ### Expected results
+
+Each component test script starting with the prefix `test` in the folder `kubernetes/test/suites`
+is executed successfully.
+
+An example result log of one successful test execution is the following:
+
+```bash
+$ ./test-policy-zone-scheduling.sh -- testPolicyZoneSchedulingWithNodeSelector
+
+# <logs truncated>
+
+Ran 1 test.
+
+OK
+```
+
+Programmatically, each test script returns `0` in case all defined test
+cases were successful, and a non-zero value otherwise.
+The helper script `runall.sh` follows this "UNIX" behaviour.

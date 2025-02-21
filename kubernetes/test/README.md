@@ -215,7 +215,7 @@ Test cases are composed of different unit test at different levels.
 
 To test the feasibility of K8s features and manifest templates, use the following commands.
 
-To install test dependencies:
+To install test dependencies with the latest versions:
 ```bash
 $ cd suites && bash install-dep.sh
 ```
@@ -226,7 +226,7 @@ For example:
 $ ./test-policy-zone-scheduling.sh
 ```
 
-> [!NOTE]
+> [!TIP]
 > 
 > For optional parameters, refer to the `shunit2` [GitHub documentation](https://github.com/kward/shunit2/blob/master/README.md). 
 
@@ -372,6 +372,6 @@ Testing the endpoints can be performed using the following two approaches:
 - Manual endpoint testing directly from the Swagger UI available on
  http://localhost:8080/ptx-edge/v1/ui/
 
-> [!INFO]
+> [!NOTE]
 >
 > Descriptions of mockup unit tests can be found in the related [README.md](mock-api/README.md).
