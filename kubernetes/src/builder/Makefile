@@ -42,9 +42,12 @@ clean:
 	rm -rf .venv
 
 # Tests
-unit-tests: venv
+tests: venv
 	( . .venv/bin/activate && pytest -v --suppress-no-test-exit-code )
 
-.PHONY: build run dev venv dev-local openapi clean unit-tests
+unit-tests: venv
+	( . .venv/bin/activate && tox )
+
+.PHONY: build run dev venv dev-local openapi clean tests unit-tests
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi
