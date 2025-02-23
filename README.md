@@ -232,11 +232,91 @@ To validate the endpoints, send the following requests to the main REST-API usin
 
 ## Unit testing
 
+Unit tests are based on separate module tests defined for each `ptx-edge` component.
+
 ### Setup test environment
+
+To install test dependencies of a given component, refer the related README files.
+
+Each subproject defines a Makefile to unify the development/test environment creation.
+Accordingly, test environment configuration (and execution) is implicitly managed by
+external tools and third-party libraries, such as
+[virtualenv](https://virtualenv.pypa.io/en/latest/),
+[pytest](https://docs.pytest.org/en/stable/), and
+[tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
+
+Therefore, in general, there is no need for explicit environment setup.
+
+However, to explicitly set up the test/dev environment for a sub-`project` in `kubernetes/src`,
+the following command can be used:
+
+```bash
+$ cd kubernetes/src/<project> && make venv
+```
 
 ### Run tests
 
+To execute all unit tests defined for `ptx-edge`,
+use the following helper script in `kubernetes/test/units`:
+
+```bash
+$ cd kubernetes/test/units && ./runall.sh
+```
+
+To execute the unit tests of a single `project`,
+execute the dedicated Makefile target within the project folder, e.g.,
+
+```bash
+$ cd kubernetes/src/<project> && make unit-tests
+```
+
+> [!NOTE]
+> 
+> Subprojects may define different dependencies and test parameters
+> wrapped by Makefiles.
+
 ### Expected results
+
+Each component test (script) starting with the prefix `test` is executed successfully.
+
+An example result log of one successful test execution is the following:
+
+```bash
+$ cd kubernetes/test/mock-api
+$ make unit-tests 
+
+# <logs truncated>
+
+py38: commands[0]> nosetests -v -w swagger_server/test
+Test case for checking available live API: HTTP 200 ... ok
+Test case for valid   request_edge_proc request: HTTP 200 ... ok
+Test case for invalid request_edge_proc request: HTTP 400 ... ok
+Test case for invalid request_edge_proc request: HTTP 403 ... ok
+Test case for invalid request_edge_proc request: HTTP 404 ... ok
+Test case for invalid request_edge_proc request: HTTP 408 ... ok
+Test case for invalid request_edge_proc request: HTTP 412 ... ok
+Test case for invalid request_edge_proc request: HTTP 503 ... ok
+Test case for valid   request_privacy_edge_proc request: HTTP 200 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 400 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 401 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 403 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 404 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 408 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 412 ... ok
+Test case for invalid request_privacy_edge_proc request: HTTP 503 ... ok
+Test case for valid   get_versions response: HTTP 200 ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 2.055s
+
+OK
+  py38: OK (4.81=setup[2.26]+cmd[2.55] seconds)
+  congratulations :) (5.18 seconds)
+```
+
+Programmatically, each Makefile returns `0` in case all executed tests defined in the target
+`unit-tests` were successful, and a non-zero value otherwise. 
+The helper script `runall.sh` follows this "UNIX" behaviour.
 
 ## Component-level testing
 

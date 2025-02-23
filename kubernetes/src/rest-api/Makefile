@@ -62,7 +62,7 @@ tests: venv
 	( . .venv/bin/activate && pytest -v --suppress-no-test-exit-code )
 
 unit-tests: venv
-	( . .venv/bin/activate && tox)
+	( . .venv/bin/activate && tox )
 
 .PHONY: build run dev venv dev-local openapi clean test unit-tests
 .DEFAULT_GOAL := dev
