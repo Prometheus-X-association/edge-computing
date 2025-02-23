@@ -28,12 +28,23 @@ dev:
 	docker run --rm --name ${NAME} -ti -v ./app:/usr/src/builder/app ${IMG} \
 				python3 app/builder.py
 
+venv:
+	test -d .venv || (\
+		python3.13 -m venv --upgrade-deps .venv && \
+		. .venv/bin/activate && \
+		python3.13 -m pip install -U -r requirements.txt -r requirements-dev.txt \
+		)
+
 # Cleanup
 clean:
 	docker rmi -f ${IMG}
 	py3clean -v .
 	rm -rf .venv
 
-.PHONY: build run dev venv dev-local openapi clean
+# Tests
+unit-tests: venv
+	( . .venv/bin/activate && pytest -v --suppress-no-test-exit-code )
+
+.PHONY: build run dev venv dev-local openapi clean unit-tests
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi

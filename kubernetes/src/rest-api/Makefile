@@ -57,6 +57,10 @@ clean:
 	py3clean -v .
 	rm -rf .venv
 
-.PHONY: build run dev venv dev-local openapi clean
+# Tests
+unit-tests: venv
+	( . .venv/bin/activate && pytest -v --suppress-no-test-exit-code )
+
+.PHONY: build run dev venv dev-local openapi clean unit-tests
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi
