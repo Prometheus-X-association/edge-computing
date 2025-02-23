@@ -24,7 +24,7 @@ PTX=ptx-edge
 POD=pz-restricted-pod
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 
-source "${ROOT_DIR}"/test/suites/helper.sh
+source "${ROOT_DIR}"/test/scripts/helper.sh
 
 #----------------------------------------------------------------------------------------------------------------------
 

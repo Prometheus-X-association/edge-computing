@@ -26,7 +26,7 @@ BUILDER=builder
 WORKER=worker
 POD=pz-restricted-pod
 
-source "${ROOT_DIR}"/test/suites/helper.sh
+source "${ROOT_DIR}"/test/scripts/helper.sh
 
 #----------------------------------------------------------------------------------------------------------------------
 

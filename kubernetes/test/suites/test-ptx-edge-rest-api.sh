@@ -25,7 +25,7 @@ IMG="ptx-edge/rest-api:1.0"
 API=rest-api
 PREFIX="ptx-edge/v1"
 
-source "${ROOT_DIR}"/test/suites/helper.sh
+source "${ROOT_DIR}"/test/scripts/helper.sh
 
 #----------------------------------------------------------------------------------------------------------------------
 

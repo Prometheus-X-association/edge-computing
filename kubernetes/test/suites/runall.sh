@@ -19,8 +19,10 @@ SUITES_DIR=$(readlink -f "$(dirname "$0")")
 FILE_PREFIX="report"
 RET_VALS=0
 
+source "${ROOT_DIR}"/test/scripts/helper.sh
+
 function sig_handler(){
-    echo -e "Signal caught. Exiting from tests..."
+    echo "Signal caught. Exiting from tests..."
     exit 1
 }
 
@@ -50,7 +52,7 @@ done
 
 for testfile in "${SUITES_DIR}"/test-*.sh; do
     [ -e "${testfile}" ] || continue
-    echo -e "\nExecuting ${testfile}...\n"
+    log "Executing ${testfile}..."
     if [ -v REPORT_PATH ]; then
         REPORT_FILE=$(basename -- "${testfile}" ".sh")
         ( exec bash "${testfile}" -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml" 2>&1; )
