@@ -15,6 +15,7 @@
 NAME := rest-api
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
+TEST_IMG := ptx-edge/${NAME}-test:${VERSION}
 
 # Docker commands
 build:
@@ -44,7 +45,6 @@ dev-local: venv
 		)
 
 # Specification generation
-
 openapi:
 	(\
 	. .venv/bin/activate && \
@@ -71,6 +71,13 @@ tests: venv
 unit-tests: venv
 	( . .venv/bin/activate && tox )
 
-.PHONY: build run dev venv dev-local openapi clean test unit-tests
+docker-test-setup:
+	docker build -t ${TEST_IMG} -f test.Dockerfile .
+	docker images --no-trunc ${TEST_IMG}
+
+docker-unit-tests: docker-test-setup
+	docker run --rm -ti ${TEST_IMG}
+
+.PHONY: build run dev venv dev-local openapi clean test unit-tests docker-test-setup docker-unit-tests
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi

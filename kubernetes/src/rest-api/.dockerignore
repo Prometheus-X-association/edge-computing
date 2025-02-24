@@ -3,6 +3,6 @@
 scripts
 spec
 Dockerfile
+test.Dockerfile
 Makefile
 README.md
-requirements-dev.txt

@@ -3,7 +3,7 @@
 README.md
 tox.ini
 git_push.sh
-test-requirements.txt
+#test-requirements.txt
 setup.py
 
 # Byte-compiled / optimized / DLL files
@@ -74,4 +74,5 @@ target/
 .idea
 .*
 Dockerfile
+test.Dockerfile
 **/__pycache__
