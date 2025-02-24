@@ -71,7 +71,7 @@ tests: venv
 unit-tests: venv
 	( . .venv/bin/activate && tox )
 
-docker-test-setup:
+docker-test-setup: build
 	docker build -t ${TEST_IMG} -f test.Dockerfile .
 	docker images --no-trunc ${TEST_IMG}
 

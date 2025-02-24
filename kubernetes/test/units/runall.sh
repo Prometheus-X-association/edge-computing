@@ -17,6 +17,7 @@ set -eou pipefail
 
 ROOT_DIR=$(readlink -f "$(dirname "$0")/../..")
 RET_VALS=0
+DOCKER="false"
 
 source "${ROOT_DIR}"/test/scripts/helper.sh
 
@@ -27,6 +28,18 @@ function sig_handler(){
 
 trap sig_handler INT TERM
 
+while getopts ":d" flag; do
+	case "${flag}" in
+        d)
+            echo -e "\n[x] Docker-based unit test execution is configured.\n"
+            DOCKER="true"
+            ;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1;;
+    esac
+done
+
 echo "Collecting projects..."
 mapfile -t PROJECTS < <( ls -d "${ROOT_DIR}"/src/* )
 PROJECTS+=("${ROOT_DIR}/test/mock-api")
@@ -35,7 +48,11 @@ printf "  - %s\n" "${PROJECTS[@]}"
 for project in "${PROJECTS[@]}"; do
     log "Entering ${project}"
     pushd "$(realpath "${project}")" >/dev/null
-    make unit-tests
+    if [[ "${DOCKER}" == "true" ]]; then
+        make docker-unit-tests
+    else
+        make unit-tests
+    fi
     RET_VALS=$(( "${RET_VALS}" + "$?" ))
     popd >/dev/null
 done

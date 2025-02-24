@@ -217,10 +217,10 @@ $ curl -sX 'GET' \
   [Swagger UI](kubernetes/test/README.md#rest-api-mockup).
 
 > [!IMPORTANT]
-> 
+>
 > The different `ptx-edge` setups along with the included REST-API service
 > may be exposed on different port(s) (e.g., **80**, **8080**, **443**) according
-> to the applied (test/dev/prod) K8s setup, used (cloud) load balancer, 
+> to the applied (test/dev/prod) K8s setup, used (cloud) load balancer,
 > or test VM configuration!
 > Refer to the exposed port number in the related documentation!
 
@@ -247,7 +247,7 @@ Unit tests are based on separate module tests defined for each `ptx-edge` compon
 
 ### Setup test environment
 
-To install test dependencies of a given component, refer the related README files.
+To install test dependencies of a given component, refer to the related README files.
 
 Each subproject defines a Makefile to unify the development/test environment creation.
 Accordingly, test environment configuration (and execution) is implicitly managed by
@@ -257,35 +257,52 @@ external tools and third-party libraries, such as
 [tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
 
 Therefore, in general, there is no need for explicit environment setup as it is
-automatically configured and managed.
+automatically configured and managed by wrapper scripts.
 
-However, to explicitly set up the test/dev environment for a sub-`project`
-locally (without Docker), the following command can be used:
+However, to explicitly set up the test/dev environment for a `project` locally
+(without Docker), the following command can be used:
 
 ```bash
 $ cd kubernetes/src/<project> && make setup
 ```
 
+Furthermore, the configuration of docker-based test environments can be also performed
+explicitly by executing the dedicated Makefile target as follows:
+
+```bash
+$ cd kubernetes/src/<project> && make docker-test-setup # Preferred way
+```
+
 ### Run tests
 
-To execute all unit tests defined for `ptx-edge`,
+To locally execute all unit tests defined for `ptx-edge`,
 use the following helper script in `kubernetes/test/units`:
 
 ```bash
 $ cd kubernetes/test/units && ./runall.sh
 ```
 
-To execute the unit tests of a single `project`,
+To locally execute the unit tests of a single `project`,
 execute the dedicated Makefile target within the project folder, e.g.,
 
 ```bash
 $ cd kubernetes/src/<project> && make unit-tests
 ```
 
-> [!NOTE]
+> [!TIP]
 >
 > Subprojects may define different dependencies and test parameters
-> wrapped by Makefiles.
+> wrapped by Makefiles. The preferred way for testing is the preconfigured
+> Docker-based test environments.
+
+For docker-based test execution, use the dedicated `-d` flag of `runall.sh`
+or call the dedicated Makefile target of any subproject:
+
+```bash
+$ cd kubernetes/test/units && ./runall.sh -d
+# or
+$ cd kubernetes/src/<project> && make docker-unit-tests
+```
 
 ### Expected results
 
