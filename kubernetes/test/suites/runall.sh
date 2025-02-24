@@ -16,6 +16,7 @@
 set -ou pipefail
 
 SUITES_DIR=$(readlink -f "$(dirname "$0")")
+ROOT_DIR=$(readlink -f "${SUITES_DIR}/../..")
 FILE_PREFIX="report"
 RET_VALS=0
 
@@ -36,8 +37,8 @@ while getopts ":o:" flag; do
             else
                 REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
             fi
-            echo -e "\n[x] JUnit-style reports are configured with path: ${REPORT_PATH}\n"
-            echo -e "Preparing report folder..."
+            echo "[x] JUnit-style reports are configured with path: ${REPORT_PATH}"
+            echo -e "\nPreparing report folder..."
             [[ -d "${REPORT_PATH}" ]] && rm -rfv "${REPORT_PATH}"
             mkdir -pv "${REPORT_PATH}"
             ;;

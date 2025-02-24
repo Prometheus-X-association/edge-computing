@@ -15,7 +15,8 @@
 
 set -eou pipefail
 
-ROOT_DIR=$(readlink -f "$(dirname "$0")/../..")
+SUITES_DIR=$(readlink -f "$(dirname "$0")")
+ROOT_DIR=$(readlink -f "${SUITES_DIR}/../..")
 RET_VALS=0
 DOCKER="false"
 
@@ -28,10 +29,22 @@ function sig_handler(){
 
 trap sig_handler INT TERM
 
-while getopts ":d" flag; do
+while getopts ":o:d" flag; do
 	case "${flag}" in
+        o)
+            if [[ "${OPTARG}" = /* ]]; then
+                # Exported envvars auto-converted to Makefile variables
+                export REPORT_PATH="${OPTARG}"
+            else
+                export REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
+            fi
+            echo "[x] JUnit-style reports are configured with path: ${REPORT_PATH}"
+            echo -e "\nPreparing report folder..."
+            [[ -d "${REPORT_PATH}" ]] && rm -rfv "${REPORT_PATH}"
+            mkdir -pv "${REPORT_PATH}"
+            ;;
         d)
-            echo -e "\n[x] Docker-based unit test execution is configured.\n"
+            echo "[x] Docker-based unit test execution is configured."
             DOCKER="true"
             ;;
         ?)
@@ -40,7 +53,7 @@ while getopts ":d" flag; do
     esac
 done
 
-echo "Collecting projects..."
+echo -e "\nCollecting projects..."
 mapfile -t PROJECTS < <( ls -d "${ROOT_DIR}"/src/* )
 PROJECTS+=("${ROOT_DIR}/test/mock-api")
 printf "  - %s\n" "${PROJECTS[@]}"

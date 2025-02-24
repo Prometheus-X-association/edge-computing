@@ -304,6 +304,14 @@ $ cd kubernetes/test/units && ./runall.sh -d
 $ cd kubernetes/src/<project> && make docker-unit-tests
 ```
 
+JUnit-style test reports are automatically generated and stored in the test containers.
+To export these reports from the test environment to the local host/VM, use the `-o` flag
+with the `runall.sh` script:
+
+```bash
+$ ./runall.sh -d -o results/
+```
+
 ### Expected results
 
 Each component test (script) starting with the prefix `test` is executed successfully.
@@ -312,7 +320,7 @@ An example result log of one successful test execution is the following:
 
 ```bash
 $ cd kubernetes/test/mock-api
-$ make unit-tests 
+$ make docker-unit-tests 
 
 # <logs truncated>
 
@@ -345,7 +353,7 @@ OK
 
 Programmatically, each Makefile returns `0` in case all executed tests defined in the target
 `unit-tests` were successful, and a non-zero value otherwise.
-The helper script `runall.sh` follows this "UNIX" behaviour.
+The helper script `runall.sh` follows this "UNIX" behaviour as well.
 
 ## Component-level testing
 

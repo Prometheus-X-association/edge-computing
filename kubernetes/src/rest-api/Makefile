@@ -76,7 +76,11 @@ docker-test-setup: build
 	docker images --no-trunc ${TEST_IMG}
 
 docker-unit-tests: docker-test-setup
+ifdef REPORT_PATH
+	docker run --rm --mount="type=bind,src=${REPORT_PATH},dst=/usr/src/api/report/" -ti ${TEST_IMG}
+else
 	docker run --rm -ti ${TEST_IMG}
+endif
 
 .PHONY: build run dev venv dev-local openapi clean test unit-tests docker-test-setup docker-unit-tests
 .DEFAULT_GOAL := dev
