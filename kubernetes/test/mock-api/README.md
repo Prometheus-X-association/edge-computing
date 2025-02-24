@@ -44,11 +44,12 @@ markupsafe==2.0.1
 Create a virtual environment using the following commands:
 
 ```bash
-$ python3.8 -m pip install venv
+#$ python3.8 -m pip install virtualenv
+sudo apt install -y python3.8-venv
 $ python3.8 -m venv .venv
 $ source .venv/bin/activate
 
-(.venv) $ python3.8 -m pip install -U -r requirements.txt -r test-requirements.txt
+(.venv) $ python3 -m pip install -U -r requirements.txt -r test-requirements.txt
 ```
 
 ## Usage
@@ -185,4 +186,24 @@ Content-Type: text/html; charset=utf-8
 Content-Length: 1493
 Server: Werkzeug/1.0.1 Python/3.8.20
 Date: Mon, 10 Feb 2025 16:22:17 GMT
+```
+
+## Running unit tests with Docker
+
+Test cases can be executed in a prebuilt docker environment as well.
+
+To create the docker image and run the tests, 
+use the dedicated targets in the attached [Makefile](Makefile):
+
+```bash
+$ make docker-test-setup
+$ make docker-unit-tests
+```
+
+or build and run the image(s) manually:
+ 
+```bash
+$ docker build -t ptx-edge/rest-api:0.1 .
+$ docker build -t ptx-edge/rest-api-test:0.1 -f test.Dockerfile .
+$ docker run --rm -ti ptx-edge/rest-api-test:0.1
 ```
