@@ -76,9 +76,9 @@ $ make setup
 
 > [!IMPORTANT]
 >
-> Since BB-02 is still under development, Makefile targets point
-> directly to the targets in the test Makefile in `kubernetes/test`!
-
+> Since BB-02 is still under development, Makefile targets
+> (**setup** / **run** / **cleanup**) point directly to the targets of the latest
+> test level's Makefile in `kubernetes/test/levels`!
 
 or execute the helper scripts directly:
 
@@ -99,7 +99,7 @@ $ # TBD
 >
 > The BB-02 module is unique in that sense that it cannot be seamlessly run by a
 > container framework, such as Docker or Podman, as it is inherently based on container
-> orchestration features of a higher architecture level.
+> orchestration features of a higher architecture level, namely the **Kubernetes** framework.
 
 However, for development and testing purposes, full-fledged but lightweight clusters of
 different Kubernetes distributions can be set up on the fly even in a single virtual machine.
@@ -119,15 +119,16 @@ on special-built docker images, which
 - run standard K8s distribution components, e.g., `kubelet`,
 - that can be configured via the standard `kubectl` tool from the host machine.
 
-See detailed description of these tools, their installation, and configuration for `ptx-edge`
-in [kubernetes/test](kubernetes/test/README.md).
+See detailed description of these tools, their installation and configuration on an
+Ubuntu 22.04/24.04 VM in [kubernetes/test](kubernetes/test/README.md).
 
-Nevertheless, the `ptx-edge` extension's *customer-facing API* can be separately run
+Nevertheless, the `ptx-edge` extension's *customer-facing API* can also be separately run
 in a single container as a mockup for integration test cases.
+
 See further about Docker-based testing
 
 - in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
-  with the related [README.md](kubernetes/test/README.md#level-1-testing-single-docker-image)
+  with the related [README.md](kubernetes/test/README.md#level-1-testing-mock-api-in-single-docker-image)
 - or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
   in `kubernetes/test/mock-api`.
 
@@ -147,8 +148,9 @@ make cleanup
 
 > [!IMPORTANT]
 >
-> Since BB-02 is still under development, Makefile targets point
-> directly to the targets in the test Makefile in `kubernetes/test`!
+> Since BB-02 is still under development, Makefile targets
+> (**setup** / **run** / **cleanup**) point directly to the targets of the latest
+> test level's Makefile in `kubernetes/test/levels`!
 
 The installed Helm chart launches the included `ptx-edge` services automatically,
 but it does not wait until all the resources are running before it exits!
@@ -197,7 +199,8 @@ in the related [Readme](kubernetes/test/mock-api/README.md).
 The REST-API endpoints can be easily tested in the following two approaches:
 
 - Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.
-  For example,
+  For example, the standalone [mock REST-API](kubernetes/test/mock-api/README.md)
+  can be tested with the following command:
 
 ```bash
 $ curl -sX 'GET' \
@@ -212,6 +215,14 @@ $ curl -sX 'GET' \
 
 - Manually testing endpoints with in-line test data on its
   [Swagger UI](kubernetes/test/README.md#rest-api-mockup).
+
+> [!IMPORTANT]
+> 
+> The different `ptx-edge` setups along with the included REST-API service
+> may be exposed on different port(s) (e.g., **80**, **8080**, **443**) according
+> to the applied (test/dev/prod) K8s setup, used (cloud) load balancer, 
+> or test VM configuration!
+> Refer to the exposed port number in the related documentation!
 
 #### Examples:
 
@@ -245,13 +256,14 @@ external tools and third-party libraries, such as
 [pytest](https://docs.pytest.org/en/stable/), and
 [tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
 
-Therefore, in general, there is no need for explicit environment setup.
+Therefore, in general, there is no need for explicit environment setup as it is
+automatically configured and managed.
 
-However, to explicitly set up the test/dev environment for a sub-`project` in `kubernetes/src`,
-the following command can be used:
+However, to explicitly set up the test/dev environment for a sub-`project`
+locally (without Docker), the following command can be used:
 
 ```bash
-$ cd kubernetes/src/<project> && make venv
+$ cd kubernetes/src/<project> && make setup
 ```
 
 ### Run tests
@@ -271,7 +283,7 @@ $ cd kubernetes/src/<project> && make unit-tests
 ```
 
 > [!NOTE]
-> 
+>
 > Subprojects may define different dependencies and test parameters
 > wrapped by Makefiles.
 
@@ -315,7 +327,7 @@ OK
 ```
 
 Programmatically, each Makefile returns `0` in case all executed tests defined in the target
-`unit-tests` were successful, and a non-zero value otherwise. 
+`unit-tests` were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this "UNIX" behaviour.
 
 ## Component-level testing
