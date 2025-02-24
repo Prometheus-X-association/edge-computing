@@ -30,10 +30,18 @@ dev:
 
 venv:
 	test -d .venv || (\
+		python3.13 -m pip install -U virtualenv && \
 		python3.13 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
 		python3.13 -m pip install -U -r requirements.txt -r requirements-dev.txt \
 		)
+
+setup:
+ifeq ($(shell [ `which python3.13` -a `which python3.12` ] || echo 1), 1)
+	$(error "Missing required environment: Python3.13 + pip")
+else
+	$(MAKE) venv
+endif
 
 # Cleanup
 clean:
@@ -42,6 +50,7 @@ clean:
 	rm -rf .venv
 
 # Tests
+
 tests: venv
 	( . .venv/bin/activate && pytest -v --suppress-no-test-exit-code )
 

@@ -1,4 +1,5 @@
 # Development
+virtualenv~=20.29.2
 fastapi[standard]~=0.115.8     # For the fastapi shell command
 click~=8.1.8
 PyYAML~=6.0.2
