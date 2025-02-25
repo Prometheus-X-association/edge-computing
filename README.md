@@ -1,10 +1,10 @@
-# Edge computing - AI processing BB
+# Edge computing — AI processing BB
 
 The *Edge Computing (Decentralized AI processing) BB* (BB-02) provides value-added services
-exploiting an underlying distributed edge computing infrastructure (e.g., owned and operated
+exploiting an underlying distributed edge-computing infrastructure (e.g., owned and operated
 by Cloud Providers).
 
-Two main high-level objectives are targeted by these services:
+These services target two main high-level goals:
 
 - **Privacy-preserving**, where data is kept close to the user, more exactly within a pre-defined
   privacy zone.
@@ -12,10 +12,10 @@ Two main high-level objectives are targeted by these services:
 
 In general, the main goal is to move (AI) processing functions close to the data source
 and execute them on-site. If the execution capability is available on-site, that is, in the
-virtual/physical node storing the data, the data-consuming software function (as a FaaS
-based operation) or container (as a CaaS based operation) is launched there (e.g., by a
+virtual/physical node storing the data, the data-consuming software function (as a FaaS-based
+operation) or container (as a CaaS based operation) is launched there (e.g., by a
 Kubernetes-based orchestration framework). Thus, we can avoid the transmission of a large
-amount of data and address privacy challenges designated by geographical or provider-related
+number of data and address privacy challenges designated by geographical or provider-related
 rules and demands.
 
 As a more realistic scenario, the data can also be moved for processing but only within a
@@ -32,13 +32,13 @@ container orchestration platform (realistically spanning multiple providers' dom
 its value-added services are implemented as standalone software containers, operated in a
 dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
 
-The main components of the BB-02's functionality cover the followings:
+The main elements of the BB-02's functionality cover the following:
 
 - Provide a generic runtime environment for data-processing functions.
 - Provide the ability to deploy pre-built containers with privacy-preserving options.
 - Provide the capability of managing and orchestrating by privacy-zone labels.
 - Use the PTX Connector to interact with PTX core elements.
-- Implement and control the process of obtaining data for data consumer functions/software.
+- Implement and control the process of getting data for data consumer functions/software.
 - Implement a separate REST-API interface for the integration with PTX dataspace.
 
 See the detailed Kubernetes-based architecture and their component binding to the main
@@ -58,7 +58,7 @@ standalone containerized software modules, its installation and setup require di
 steps, and most of all, an operating **vanilla Kubernetes cluster** as a prerequisite.
 
 There are many methods and tools for setting up a production-grade Kubernetes cluster on
-a local machine, see for example the Kubernetes'
+a local machine, see, for example, the Kubernetes'
 [official documentation](https://kubernetes.io/docs/setup/), or pick any of the numerous
 [certified platforms](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/)
 or managed cloud services available online.
@@ -112,14 +112,14 @@ These are meant for developers to test Kubernetes distributions on their (isolat
 development machine, but are also suitable for local development, CI, and testing.
 
 The K8s control plane and worker nodes are created as **separate docker containers** based
-on special-built docker images, which
+on specially built docker images, which
 
 - are capable of running arbitrary software modules as preloaded docker images using
   **docker-in-docker**,
 - run standard K8s distribution components, e.g., `kubelet`,
 - that can be configured via the standard `kubectl` tool from the host machine.
 
-See detailed description of these tools, their installation and configuration on an
+See a detailed description of these tools, their installation and configuration on an
 Ubuntu 22.04/24.04 VM in [kubernetes/test](kubernetes/test/README.md).
 
 Nevertheless, the `ptx-edge` extension's *customer-facing API* can also be separately run
@@ -129,7 +129,7 @@ See further about Docker-based testing
 
 - in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
   with the related [README.md](kubernetes/test/README.md#level-1-testing-mock-api-in-single-docker-image)
-- or in the mockup REST-API's [README.md](kubernetes/test/mock-api/README.md)
+- or in the mockup REST-API [README.md](kubernetes/test/mock-api/README.md)
   in `kubernetes/test/mock-api`.
 
 ## Running instructions
@@ -140,7 +140,7 @@ To start `ptx-edge` components, run
 make run
 ```
 
-while for tearing down the components, execute
+while tearing down the components, execute
 
 ```bash
 make cleanup
@@ -282,6 +282,18 @@ use the following helper script in `kubernetes/test/units`:
 $ cd kubernetes/test/units && ./runall.sh
 ```
 
+For the available configuration parameters, refer to the help menu:
+
+```bash
+$ ./runall.sh -h
+Usage: ./runall.sh [options]
+
+Options:
+    -d          Execute tests in Docker containers instead of in local venvs.
+    -o <dir>    Collect Junit-style reports into <dir>.
+    -h          Display help.
+```
+
 To locally execute the unit tests of a single `project`,
 execute the dedicated Makefile target within the project folder, e.g.,
 
@@ -323,7 +335,6 @@ drwxrwx--- 1 root vboxsf 4096 Feb 24 20:01 ../
 -rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-builder.xml*
 -rwxrwx--- 1 root vboxsf 2878 Feb 24 20:09 report-test-mock-api.xml*
 -rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml*
-
 ```
 
 ### Expected results
@@ -367,7 +378,7 @@ OK
 
 Programmatically, each Makefile returns `0` in case all executed tests defined in the target
 `unit-tests` were successful, and a non-zero value otherwise.
-The helper script `runall.sh` follows this "UNIX" behaviour as well.
+The helper script `runall.sh` follows this "UNIX" behavior as well.
 
 ## Component-level testing
 
@@ -409,7 +420,17 @@ drwxrwx--- 1 root vboxsf 4096 Feb 20 12:31 ..
 -rwxrwx--- 1 root vboxsf  445 Feb 20 16:56 report-test-policy-zone-scheduling.xml
 -rwxrwx--- 1 root vboxsf  524 Feb 20 16:59 report-test-ptx-edge-builder.xml
 -rwxrwx--- 1 root vboxsf  265 Feb 20 17:00 report-test-ptx-edge-rest-api.xml
+```
 
+For the available configuration parameters, refer to the help menu:
+
+```bash
+$ ./runall.sh -h
+Usage: ./runall.sh [options]
+
+Options:
+    -o <dir>    Generate Junit-style reports into <dir>.
+    -h          Display help.
 ```
 
 ### Expected results
@@ -431,4 +452,4 @@ OK
 
 Programmatically, each test script returns `0` in case all defined test
 cases were successful, and a non-zero value otherwise.
-The helper script `runall.sh` follows this "UNIX" behaviour.
+The helper script `runall.sh` follows this "UNIX" behavior.
