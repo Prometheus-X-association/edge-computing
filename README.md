@@ -299,7 +299,7 @@ For docker-based test execution, use the dedicated `-d` flag of `runall.sh`
 or call the dedicated Makefile target of any subproject:
 
 ```bash
-$ cd kubernetes/test/units && ./runall.sh -d
+$ cd kubernetes/test/units && ./runall.sh -d    # Preferred way
 # or
 $ cd kubernetes/src/<project> && make docker-unit-tests
 ```
@@ -310,6 +310,20 @@ with the `runall.sh` script:
 
 ```bash
 $ ./runall.sh -d -o results/
+[x] Docker-based unit test execution is configured.
+[x] JUnit-style reports are configured with path: /home/czentye/PTX-edge-computing/kubernetes/test/units/results
+Preparing report folder...
+
+# <logs truncated>
+
+$ ls -al results/
+total 20
+drwxrwx--- 1 root vboxsf 4096 Feb 24 20:08 ./
+drwxrwx--- 1 root vboxsf 4096 Feb 24 20:01 ../
+-rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-builder.xml*
+-rwxrwx--- 1 root vboxsf 2878 Feb 24 20:09 report-test-mock-api.xml*
+-rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml*
+
 ```
 
 ### Expected results
