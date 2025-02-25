@@ -13,11 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-while getopts ":u" flag; do
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -u  Update/overwrite dependencies.
+    -h  Display help.
+EOF
+}
+
+while getopts ":uh" flag; do
 	case "${flag}" in
         u)
             echo "[x] Update to the latest versions."
             UPDATE=true
+            ;;
+        h)
+            display_help
+            exit
             ;;
         ?)
             echo "Invalid parameter: -${OPTARG} !"

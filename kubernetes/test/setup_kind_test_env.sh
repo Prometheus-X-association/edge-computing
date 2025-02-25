@@ -46,7 +46,21 @@ RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts ":rxscu" flag; do
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -c  Install Kind's cloud provider manager.
+    -r  Install Docker and Kind in rootless mode.
+    -s  Only install minimum required binaries.
+    -u  Update/overwrite dependencies.
+    -x  Skip deployment validation.
+    -h  Display help.
+EOF
+}
+
+while getopts ":rxscuh" flag; do
 	case "${flag}" in
 		r)
 			ROOTLESS=true
@@ -73,6 +87,10 @@ EOF
         u)
             echo "[x] Update dependencies."
             UPDATE=true;;
+        h)
+            display_help
+            exit
+            ;;
         ?)
             echo "Invalid parameter: -${OPTARG} !"
             exit 1;;

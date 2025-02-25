@@ -29,7 +29,17 @@ function sig_handler(){
 
 trap sig_handler INT TERM
 
-while getopts ":o:" flag; do
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -o <dir>    Generate Junit-style reports into <dir>.
+    -h          Display help.
+EOF
+}
+
+while getopts ":o:h" flag; do
 	case "${flag}" in
         o)
             if [[ "${OPTARG}" = /* ]]; then
@@ -41,6 +51,10 @@ while getopts ":o:" flag; do
             echo -e "\nPreparing report folder..."
             [[ -d "${REPORT_PATH}" ]] && rm -rfv "${REPORT_PATH}"
             mkdir -pv "${REPORT_PATH}"
+            ;;
+        h)
+            display_help
+            exit
             ;;
         :)
             echo "Missing value for parameter: -${OPTARG} !"

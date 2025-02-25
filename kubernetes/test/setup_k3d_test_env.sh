@@ -41,7 +41,19 @@ RET_VAL=0
 
 # Parameters --------------------------------------------------------------------------------
 
-while getopts ":xsu" flag; do
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -s  Only install minimum required binaries.
+    -u  Update/overwrite dependencies.
+    -x  Skip deployment validation.
+    -h  Display help.
+EOF
+}
+
+while getopts ":xsuh" flag; do
 	case "${flag}" in
         x)
             echo "[x] No setup validation is configured."
@@ -52,6 +64,10 @@ while getopts ":xsu" flag; do
         u)
             echo "[x] Update dependencies."
             UPDATE=true;;
+        h)
+            display_help
+            exit
+            ;;
         ?)
             echo "Invalid parameter: -${OPTARG} !"
             exit 1;;

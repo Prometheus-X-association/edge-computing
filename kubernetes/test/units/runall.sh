@@ -29,7 +29,18 @@ function sig_handler(){
 
 trap sig_handler INT TERM
 
-while getopts ":o:d" flag; do
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -d          Execute tests in Docker containers instead of in local venvs.
+    -o <dir>    Collect Junit-style reports into <dir>.
+    -h          Display help.
+EOF
+}
+
+while getopts ":o:dh" flag; do
 	case "${flag}" in
         o)
             if [[ "${OPTARG}" = /* ]]; then
@@ -47,6 +58,13 @@ while getopts ":o:d" flag; do
             echo "[x] Docker-based unit test execution is configured."
             DOCKER="true"
             ;;
+        h)
+            display_help
+            exit
+            ;;
+        :)
+            echo "Missing value for parameter: -${OPTARG} !"
+            exit 1;;
         ?)
             echo "Invalid parameter: -${OPTARG} !"
             exit 1;;
