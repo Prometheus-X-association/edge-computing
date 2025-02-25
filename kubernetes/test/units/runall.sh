@@ -34,7 +34,7 @@ function display_help() {
 Usage: $0 [options]
 
 Options:
-    -d          Execute tests in Docker containers instead of in local venvs.
+    -d          Execute tests in Docker containers instead of local venvs.
     -o <dir>    Collect Junit-style reports into <dir>.
     -h          Display help.
 EOF

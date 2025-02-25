@@ -241,6 +241,10 @@ To validate the endpoints, send the following requests to the main REST-API usin
 | /requestEdgeProc        |   POST    | <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                                |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
 | /requestPrivacyEdgeProc |   POST    | <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"}</pre> |
 
+> [!IMPORTANT]
+> 
+> Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/test/cases/README.md).
+
 ## Unit testing
 
 Unit tests are based on separate module tests defined for each `ptx-edge` component.
@@ -289,7 +293,7 @@ $ ./runall.sh -h
 Usage: ./runall.sh [options]
 
 Options:
-    -d          Execute tests in Docker containers instead of in local venvs.
+    -d          Execute tests in Docker containers instead of local venvs.
     -o <dir>    Collect Junit-style reports into <dir>.
     -h          Display help.
 ```
@@ -332,9 +336,9 @@ $ ls -al results/
 total 20
 drwxrwx--- 1 root vboxsf 4096 Feb 24 20:08 ./
 drwxrwx--- 1 root vboxsf 4096 Feb 24 20:01 ../
--rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-builder.xml*
--rwxrwx--- 1 root vboxsf 2878 Feb 24 20:09 report-test-mock-api.xml*
--rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml*
+-rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-builder.xml
+-rwxrwx--- 1 root vboxsf 2878 Feb 24 20:09 report-test-mock-api.xml
+-rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml
 ```
 
 ### Expected results
@@ -345,7 +349,7 @@ An example result log of one successful test execution is the following:
 
 ```bash
 $ cd kubernetes/test/mock-api
-$ make docker-unit-tests 
+$ make unit-tests 
 
 # <logs truncated>
 
@@ -452,4 +456,4 @@ OK
 
 Programmatically, each test script returns `0` in case all defined test
 cases were successful, and a non-zero value otherwise.
-The helper script `runall.sh` follows this "UNIX" behavior.
+The helper script `runall.sh` follows this UNIX behavior as well.
