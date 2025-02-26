@@ -22,6 +22,9 @@ build:
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}
 
+run:
+	docker run --rm --name ${NAME} -ti -p 8080:8080 ${IMG}
+
 # Local development in venv
 venv:
 	test -d .venv || (\

@@ -66,7 +66,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
 
     # ---------------------------------------------------------------------------------------------------------------
     def test_request_edge_proc_a_ok(self):
-        """Test case for valid   request_edge_proc request: HTTP 200
+        """Test case for valid   request_edge_proc request: HTTP 202
 
         Execute function on data
         """
@@ -93,7 +93,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
         """
         with open(pathlib.Path(__file__).parent / "data/edge_proc_req_def.json") as req:
             body = ExecutionRequestBody.from_dict(json.load(req))
-        body.func_contract += "-restricted"
+        body.func_contract += "-bogus"
         response = self._call_api('ptx-edge/v1/requestEdgeProc', body)
         self.assertStatus(response, 403)
 
@@ -144,7 +144,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
     # ---------------------------------------------------------------------------------------------------------------
 
     def test_request_privacy_edge_proc_a_ok(self):
-        """Test case for valid   request_privacy_edge_proc request: HTTP 200
+        """Test case for valid   request_privacy_edge_proc request: HTTP 202
 
         Execute function on private data
         """
@@ -182,7 +182,7 @@ class TestCustomerAPIController(BaseTestCase, LiveServerTestCase):
         """
         with open(pathlib.Path(__file__).parent / "data/priv_edge_proc_req_def.json") as req:
             body = PrivateExecutionRequestBody.from_dict(json.load(req))
-        body.consent += "-restricted"
+        body.consent += "-bogus"
         response = self._call_api('ptx-edge/v1/requestPrivacyEdgeProc', body)
         self.assertStatus(response, 403)
 

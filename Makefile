@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TEST_LEVEL := "level3"
+TEST_LEVEL := level3
 
 setup:
-	cd kubernetes/test/levels/${TEST_LEVEL} && make create
+	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} create
 
-run: setup
-	cd kubernetes/test/levels/${TEST_LEVEL} && make run3-ingress
+run:
+	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} run3-ingress
 
 cleanup:
-	cd kubernetes/test/levels/${TEST_LEVEL} && make tear-down
+	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} tear-down
 
 .PHONY: setup run cleanup
 .DEFAULT_GOAL := run

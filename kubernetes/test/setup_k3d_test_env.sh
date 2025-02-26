@@ -208,7 +208,7 @@ fi
 
 
 ### K3d
-if ! command -v k3d >/dev/null || [ -v UPDATE ]; then
+if ! command -v k3d >/dev/null || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_k3d
     if [ ${SLIM_SETUP} = false ]; then
@@ -221,7 +221,7 @@ if ! command -v k3d >/dev/null || [ -v UPDATE ]; then
 fi
 
 ### Kubectl
-if ! command -v kubectl >/dev/null || [ -v UPDATE ]; then
+if ! command -v kubectl >/dev/null || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_kubectl
     if [ ${SLIM_SETUP} = false ]; then

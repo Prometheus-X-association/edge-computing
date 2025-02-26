@@ -36,9 +36,9 @@ create: setup
 status:
 	k3d cluster list && return 0
 	@echo
-	kubectl get namespace ${PTX} --ignore-not-found -o wide
+	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
 	@echo
-	kubectl -n ${PTX} get all --ignore-not-found -o wide
+	kubectl -n ${PTX} get all,ingress,pv,pvc --ignore-not-found -o wide  || exit 0
 
 run-api:
 	### Setup rest-api

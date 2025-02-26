@@ -40,7 +40,7 @@ def request_edge_proc(body):  # noqa: E501
     else:
         return abort(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported request format")
 
-    if "restricted" in req.data_contract or "restricted" in req.func_contract:
+    if "bogus" in req.data_contract or "bogus" in req.func_contract:
         return abort(http.HTTPStatus.FORBIDDEN,
                      "Request prohibited by contract/consent")
     elif req.data in (None, "") or req.function in (None, ""):
@@ -81,7 +81,7 @@ def request_privacy_edge_proc(body):  # noqa: E501
     if req.consent in (None, "") or req.token in (None, ""):
         return abort(http.HTTPStatus.UNAUTHORIZED,
                      "Unauthorized request due to invalid token")
-    elif "restricted" in req.data_contract or "restricted" in req.func_contract or "restricted" in req.consent:
+    elif "bogus" in req.data_contract or "bogus" in req.func_contract or "bogus" in req.consent:
         return abort(http.HTTPStatus.FORBIDDEN,
                      "Request prohibited by contract/consent")
     elif req.private_data in (None, "") or req.function in (None, ""):
