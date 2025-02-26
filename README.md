@@ -241,9 +241,9 @@ To validate the endpoints, send the following requests to the main REST-API usin
 | /requestEdgeProc        |   POST    | <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                                |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
 | /requestPrivacyEdgeProc |   POST    | <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"}</pre> |
 
-> [!IMPORTANT]
-> 
-> Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/test/cases/README.md).
+## Test definitions
+
+Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/test/cases/README.md).
 
 ## Unit testing
 
@@ -257,7 +257,8 @@ Each subproject defines a Makefile to unify the development/test environment cre
 Accordingly, test environment configuration (and execution) is implicitly managed by
 external tools and third-party libraries, such as
 [virtualenv](https://virtualenv.pypa.io/en/latest/),
-[pytest](https://docs.pytest.org/en/stable/), and
+[pytest](https://docs.pytest.org/en/stable/),
+[nosetests](https://nose.readthedocs.io/en/latest/index.html), and
 [tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
 
 Therefore, in general, there is no need for explicit environment setup as it is
