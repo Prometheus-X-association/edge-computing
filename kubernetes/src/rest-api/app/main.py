@@ -16,7 +16,7 @@ import pathlib
 import fastapi
 from starlette import responses, status
 
-from app import VERSION, ROUTE_PREFIX
+from app import __version__, ROUTE_PREFIX
 from app.model.versions import VersionsResponse
 
 app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
@@ -25,7 +25,7 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       contact=dict(email="czentye.janos@vik.bme.hu"),
                       license_info=dict(name="Apache 2.0",
                                         url="https://www.apache.org/licenses/LICENSE-2.0.html"),
-                      version=VERSION,
+                      version=__version__,
                       root_path=ROUTE_PREFIX,
                       servers=[dict(url=ROUTE_PREFIX,
                                     description="PTX Edge Computing")],
@@ -42,7 +42,7 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
 @app.get("/versions", status_code=status.HTTP_200_OK)
 async def get_versions() -> VersionsResponse:
     """Versions of the REST-API component"""
-    return VersionsResponse(api=VERSION, framework=fastapi.__version__)
+    return VersionsResponse(api=__version__, framework=fastapi.__version__)
 
 
 @app.get("/health")

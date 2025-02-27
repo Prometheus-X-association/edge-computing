@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptx-edge-rest-api"
+dynamic = ["version", "readme"]
+description = "PTX-Edge REST-API"
+authors = [{ name = "Janos Czentye", email = "czentye@tmit.bme.hu" }]
+license = { text = "Apache 2.0" }
+requires-python = ">=3.13"
+keywords = ["PTX", "dataspace"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    'fastapi~=0.115.8',
+    'pydantic~=2.11.0a1',
+    'uvicorn~=0.34.0',
+    'starlette~=0.41.2'
+]
+
+[project.urls]
+Repository = "https://github.com/Prometheus-X-association/edge-computing"
+Homepage = "https://github.com/Prometheus-X-association/edge-computing"
+Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "app.__version__" }
+readme = { file = ["README.md"], content-type = 'text/markdown' }
