@@ -23,6 +23,31 @@ pre-defined **privacy zone**. This privacy zone primarily encompasses a set of w
 (using the Kubernetes terminology), that are suitable in the sense of pre-defined privacy
 rules and where processing functions can and should be deployed on demand.
 
+## Table of Contents
+
+<!-- TOC -->
+* [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
+  * [Table of Contents](#table-of-contents)
+  * [Design Document](#design-document)
+  * [Building Instructions](#building-instructions)
+    * [Production](#production)
+    * [Development & Testing](#development--testing)
+  * [Running Instructions](#running-instructions)
+  * [Example Usage](#example-usage)
+      * [REST-API](#rest-api)
+      * [Testing](#testing)
+      * [Examples](#examples)
+  * [Test Definitions](#test-definitions)
+  * [Unit Testing](#unit-testing)
+    * [Setup Test Environment](#setup-test-environment)
+    * [Run Tests](#run-tests)
+    * [Expected Tesults](#expected-tesults)
+  * [Component-Level Testing](#component-level-testing)
+    * [Setup Test Environment](#setup-test-environment-1)
+    * [Run Tests](#run-tests-1)
+    * [Expected Results](#expected-results)
+<!-- TOC -->
+
 ## Design Document
 
 See the comprehensive design document [here](docs/design-document.md).
@@ -49,7 +74,7 @@ design document in
 
 *Binding of BB-02 components to K8s features.*
 
-## Building instructions
+## Building Instructions
 
 ### Production
 
@@ -132,7 +157,7 @@ See further about Docker-based testing
 - or in the mockup REST-API [README.md](kubernetes/test/mock-api/README.md)
   in `kubernetes/test/mock-api`.
 
-## Running instructions
+## Running Instructions
 
 To start `ptx-edge` components, run
 
@@ -169,7 +194,7 @@ use
 $ # TBD
 ```
 
-## Example usage
+## Example Usage
 
 The `ptx-edge` K8s extension provides a separate REST-API in
 [kubernetes/src/rest-api](kubernetes/src/rest-api)
@@ -224,7 +249,7 @@ $ curl -sX 'GET' \
 > or test VM configuration!
 > Refer to the exposed port number in the related documentation!
 
-#### Examples:
+#### Examples
 
 The following table contains example API calls with successful results.
 
@@ -241,15 +266,15 @@ To validate the endpoints, send the following requests to the main REST-API usin
 | /requestEdgeProc        |   POST    | <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre>                                                                |      202      | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre>          |
 | /requestPrivacyEdgeProc |   POST    | <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42},<br/> "private_data": "Data42",<br/> "token": "Token42"}</pre> |      202      | <pre>{"function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 10,<br/>      "ret": 0},<br/> "private_data": "Data42",<br/> "uuid": "a62e865c-a13d-475e-acc1-bce4ff3be66c"}</pre> |
 
-## Test definitions
+## Test Definitions
 
 Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/test/cases/README.md).
 
-## Unit testing
+## Unit Testing
 
 Unit tests are based on separate module tests defined for each `ptx-edge` component.
 
-### Setup test environment
+### Setup Test Environment
 
 To install test dependencies of a given component, refer to the related README files.
 
@@ -278,7 +303,7 @@ explicitly by executing the dedicated Makefile target as follows:
 $ cd kubernetes/src/<project> && make docker-test-setup # Preferred way
 ```
 
-### Run tests
+### Run Tests
 
 To locally execute all unit tests defined for `ptx-edge`,
 use the following helper script in `kubernetes/test/units`:
@@ -342,7 +367,7 @@ drwxrwx--- 1 root vboxsf 4096 Feb 24 20:01 ../
 -rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml
 ```
 
-### Expected results
+### Expected Tesults
 
 Each component test (script) starting with the prefix `test` is executed successfully.
 
@@ -385,7 +410,7 @@ Programmatically, each Makefile returns `0` in case all executed tests defined i
 `unit-tests` were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this "UNIX" behavior as well.
 
-## Component-level testing
+## Component-Level Testing
 
 Testing of `ptx-edge` component is based on the basic functionality and applicability of the
 K8s components defined in the [Design document](#design-document).
@@ -396,7 +421,7 @@ The related test cases can be found in [kubernetes/test/suites](kubernetes/test/
 > For the detailed description of component-level tests, refer to the
 > related [README.md](kubernetes/test/README.md#tests).
 
-### Setup test environment
+### Setup Test Environment
 
 To install test dependencies with the latest versions:
 
@@ -408,7 +433,7 @@ $ cd kubernetes/test/suites && ./install-dep.sh -u
 >
 > For test report generation, the flag `-u` is mandatory!
 
-### Run tests
+### Run Tests
 
 To execute all component-level tests with **JUnit-style** test report generation (into the folder
 `kubernetes/test/suites/results`), use the following helper script:
@@ -438,7 +463,7 @@ Options:
     -h          Display help.
 ```
 
-### Expected results
+### Expected Results
 
 Each component test script starting with the prefix `test` in the folder `kubernetes/test/suites`
 is executed successfully.
