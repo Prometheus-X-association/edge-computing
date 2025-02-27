@@ -19,7 +19,6 @@ The high-level test specification of `ptx-edge` is provided in the
 > Since the _Edge computing - AI processing BB_ (`ptx-edge`) is still
 > **under development**, the defined test cases only cover the implemented
 > parts of `ptx-edge`'s planned capabilities.
->
 > Further test cases are expected to be added continuously.
 
 ## Test case definitions
@@ -77,6 +76,7 @@ curl -X 'POST' 'http://<service_ip>:<port>/ptx-edge/v1/<endpoint>' \
   -H 'Content-Type: application/json' \
   -d '{
     "data": <data_id>,
+    "private_data": <private_data_id>,
     "data_contract": <data_contract_id>,
     "func_contract": <func_contract_id>,
     "function": <function_id>,
@@ -85,6 +85,8 @@ curl -X 'POST' 'http://<service_ip>:<port>/ptx-edge/v1/<endpoint>' \
         "privacy-zone": <pz_id>,
         "timeout": <timeout>
     }
+    "consent": <consent>,
+    "token": <token>
 }'
 ```
 
@@ -98,10 +100,13 @@ The input template defines the following parameters:
     - **endpoint**: REST-API endpoint subject to the current test case.
 - _PTX-related parameters_:
     - **data_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
+    - **private_data_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
     - **data_contract_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
     - **function_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
     - **func_contract_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
     - **function_id**: see in the [design document](../../../docs/design-document.md#input--output-data)
+    - **consent**: see in the [design document](../../../docs/design-document.md#input--output-data)
+    - **token**: see in the [design document](../../../docs/design-document.md#input--output-data)
 - _Deployment (K8s)-related parameters_:
     - **cpu**: resource requirement of the function implementation
     - **pz_id**: Privacy zone restriction, see in
@@ -113,18 +118,45 @@ JSON output of deployment metadata with HTTP code **2xx**.
 
 In other unsuccessful cases, the API responds with an HTTP code **4xx** or **5xx**.
 
-| Example Input                                                                                                                                                                                                                                      | Example Output                                                                                                                                                                          |
-|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata":<br/>     {"CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}</pre> | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre> |
+#### Example data
 
-#### Test cases with endpoints requestEdgeProc / requestPrivacyEdgeProc
+These data structures can be used for testing and comparing with the expected outputs.
 
-| Test case | Test description                                                         | Prerequisites                                             | Inputs                                                                                 | Expected Outcome                                                       |
-|-----------|--------------------------------------------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| _#1_      | A TriggeringBB makes an invocation with a **valid** input JSON.          | The TriggeringBB obtained contract / function references. | Valid input JSON, e.g., example input                                                  | Deploy request **accepted**.                                           |  <!-- 202 -->
-| _#2_      | A TriggeringBB makes an invocation with an **invalid** input JSON.       | The TriggeringBB obtained contract / function references. | Mandatory field(s) is missing, e.g., `<data_contract>`                                 | Deploy request **denied** due to _malformed request format_.           |  <!-- 400 -->  
-| _#3_      | A TriggeringBB makes an invocation with an **unaccredited** input JSON.  | The TriggeringBB obtained contract / function references. | Forged / invalid contract_id / consent_id, e.g., `<func_contract>:=contract123-bogus`, | Deploy request **denied** due to _prohibited contract / consent_.      |  <!-- 403 -->
-| _#4_      | A TriggeringBB makes an invocation with an **incomplete** input JSON.    | The TriggeringBB obtained contract / function references. | Forged / invalid data_id / func_id, e.g., `<func_id>:=null`,                           | Deploy request **denied** due to _missing execution parameter_.        |  <!-- 404 -->
-| _#5_      | A TriggeringBB makes an invocation with an **unfulfillable** input JSON. | The TriggeringBB obtained contract / function references. | Impractical execution condition(s), e.g., `<timeout>:=0`,                              | Deployment process **failed** due to _deployment timeout_.             |  <!-- 408 -->
-| _#6_      | A TriggeringBB makes an invocation with a **restrictive** input JSON.    | The TriggeringBB obtained contract / function references. | Unfeasible privacy restriction(s), e.g., `<pz_id>:="zone-B"`,                          | Deployment process **failed** due to _privacy zone restriction_.       |  <!-- 412 -->
-| _#7_      | A TriggeringBB makes an invocation with an **excessive** input JSON.     | The TriggeringBB obtained contract / function references. | Unfulfillable compute demand(s), e.g., `<cpu>:=100`,                                   | Deployment process **failed** due to _insufficient compute resources_. |  <!-- 503 -->
+- <a id="request-edge-proc-data"></a> Endpoint(s): <ins>**requestEdgeProc**</ins>
+
+| Example Input 1                                                                                                                                                                                                                                              | Example Output 1                                                                                                                                                                        |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <pre>{"data": "Data42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata": {<br/>      "CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42}<br/>  }</pre> | <pre>{"data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre> |
+
+- <a id="request-edge-privacy-proc-data"></a> Endpoint(s): <ins>**requestPrivacyEdgeProc**</ins>
+
+| Example Input 2                                                                                                                                                                                                                                                                                                                  | Example Output 2                                                                                                                                                                                |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <pre>{"consent": "Consent42",<br/> "data_contract": "Contract42",<br/> "func_contract": "Contract42",<br/> "function": "FunctionData42",<br/> "metadata": {<br/>      "CPU-demand": 42,<br/>      "privacy-zone": "zone-A",<br/>      "timeout": 42<br/>  },<br/> "private_data": "Data42",<br/> "token": "Token42",<br/> </pre> | <pre>{"private_data": "Data42",<br/> "function": "FunctionData42",<br/> "metrics":<br/>     {"elapsed_time": 2,<br/>      "ret": 0},<br/> "uuid": "e09270d1-2760-4fba-b15a-255a9983ddd6"}</pre> |
+
+#### Test cases
+
+- Endpoint(s): <ins>**requestEdgeProc**</ins>
+
+| Test case | Test description                                                      | Prerequisites                                             | Inputs                                                                    | Expected Outcome                                                       |
+|-----------|-----------------------------------------------------------------------|-----------------------------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------------|
+| _T1.1_    | A TriggeringBB makes an invocation with a **valid** input JSON.       | The TriggeringBB obtained contract / function references. | Valid input JSON, e.g., [example input 1](#request-edge-proc-data)        | Deploy request **accepted**.                                           |  <!-- 202 -->
+| _T1.2_    | A TriggeringBB makes an invocation with an **invalid** input JSON.    | The TriggeringBB obtained contract / function references. | Mandatory field(s) is missing, e.g., `<data_contract>`.                   | Deploy request **denied** due to _malformed request format_.           |  <!-- 400 -->  
+| _T1.3_    | A TriggeringBB makes an invocation with an **unaccredited** request.  | The TriggeringBB obtained contract / function references. | Forged / invalid contract_id, e.g., `<func_contract>:=contract123-bogus`. | Deploy request **denied** due to _prohibited contract / consent_.      |  <!-- 403 -->
+| _T1.4_    | A TriggeringBB makes an invocation with an **incomplete** request.    | The TriggeringBB obtained contract / function references. | Forged / invalid data_id / func_id, e.g., `<func_id>:=null`.              | Deploy request **denied** due to _missing execution parameter_.        |  <!-- 404 -->
+| _T1.5_    | A TriggeringBB makes an invocation with an **unfulfillable** request. | The TriggeringBB obtained contract / function references. | Impractical execution condition(s), e.g., `<timeout>:=0`.                 | Deployment process **failed** due to _deployment timeout_.             |  <!-- 408 -->
+| _T1.6_    | A TriggeringBB makes an invocation with a **restrictive** request.    | The TriggeringBB obtained contract / function references. | Unfeasible privacy restriction(s), e.g., `<pz_id>:="zone-B"`.             | Deployment process **failed** due to _privacy zone restriction_.       |  <!-- 412 -->
+| _T1.7_    | A TriggeringBB makes an invocation with an **oversize** request.      | The TriggeringBB obtained contract / function references. | Unfulfillable compute demand(s), e.g., `<cpu>:=100`.                      | Deployment process **failed** due to _insufficient compute resources_. |  <!-- 503 -->
+
+- Endpoint(s): <ins>**requestPrivacyEdgeProc**</ins>
+
+| Test case | Test description                                                      | Prerequisites                                             | Inputs                                                                                 | Expected Outcome                                                       |
+|-----------|-----------------------------------------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| _T2.1_    | A TriggeringBB makes an invocation with a **valid** input JSON.       | The TriggeringBB obtained contract / function references. | Valid input JSON, e.g., [example input 2](#request-edge-privacy-proc-data)             | Deploy request **accepted**.                                           |  <!-- 202 -->
+| _T2.2_    | A TriggeringBB makes an invocation with an **invalid** input JSON.    | The TriggeringBB obtained contract / function references. | Mandatory field(s) is missing, e.g., `<concent>`.                                      | Deploy request **denied** due to _malformed request format_.           |  <!-- 400 -->  
+| _T2.3_    | A TriggeringBB makes an invocation with an **unaccredited** request.  | The TriggeringBB obtained contract / function references. | Forged / invalid contract_id / consent_id, e.g., `<func_contract>:=contract123-bogus`. | Deploy request **denied** due to _prohibited contract / consent_.      |  <!-- 403 -->
+| _T2.4_    | A TriggeringBB makes an invocation with an **unauthorized** request.  | The TriggeringBB obtained contract / function references. | Forged / invalid token, e.g., `<token>:=null`,                                         | Deploy request **denied** due to _invalid token_.                      |  <!-- 401 -->
+| _T2.5_    | A TriggeringBB makes an invocation with an **incomplete** request.    | The TriggeringBB obtained contract / function references. | Forged / invalid data_id / func_id, e.g., `<func_id>:=null`.                           | Deploy request **denied** due to _missing execution parameter_.        |  <!-- 404 -->
+| _T2.6_    | A TriggeringBB makes an invocation with an **unfulfillable** request. | The TriggeringBB obtained contract / function references. | Impractical execution condition(s), e.g., `<timeout>:=0`.                              | Deployment process **failed** due to _deployment timeout_.             |  <!-- 408 -->
+| _T2.7_    | A TriggeringBB makes an invocation with a **restrictive** request.    | The TriggeringBB obtained contract / function references. | Unfeasible privacy restriction(s), e.g., `<pz_id>:="zone-B"`.                          | Deployment process **failed** due to _privacy zone restriction_.       |  <!-- 412 -->
+| _T2.8_    | A TriggeringBB makes an invocation with an **oversize** request.      | The TriggeringBB obtained contract / function references. | Unfulfillable compute demand(s), e.g., `<cpu>:=100`.                                   | Deployment process **failed** due to _insufficient compute resources_. |  <!-- 503 -->
