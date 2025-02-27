@@ -20,8 +20,7 @@ set -eou pipefail
 KIND_VER=v0.26.0
 #KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 KUBECTL_VER=v1.32.2	# used by Kind v0.27.0
-#KIND_CCM_VER=0.6.0
-KIND_CCM_VER=0.5.0  # Set back due to issue
+KIND_CCM_VER=0.6.0
 
 ROOTLESS=false
 NO_CHECK=false
