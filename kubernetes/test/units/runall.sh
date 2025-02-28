@@ -58,12 +58,13 @@ while getopts ":o:dch" flag; do
             mkdir -pv "${REPORT_PATH}"
             ;;
         d)
-            echo "[x] Cleanup is configured."
-            CLEANUP="true"
-            ;;
-        c)
             echo "[x] Docker-based unit test execution is configured."
             DOCKER="true"
+
+            ;;
+        c)
+            echo "[x] Cleanup is configured."
+            CLEANUP="true"
             ;;
         h)
             display_help
