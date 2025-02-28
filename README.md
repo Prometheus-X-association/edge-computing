@@ -26,28 +26,26 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
-
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-    * [Table of Contents](#table-of-contents)
-    * [Design Document](#design-document)
-    * [Building Instructions](#building-instructions)
-        * [Production](#production)
-        * [Development & Testing](#development--testing)
-    * [Running Instructions](#running-instructions)
-    * [Example Usage](#example-usage)
-        * [REST-API](#rest-api)
-        * [Testing](#testing)
-        * [Examples](#examples)
-    * [Test Definitions](#test-definitions)
-    * [Unit Testing](#unit-testing)
-        * [Setup Test Environment](#setup-test-environment)
-        * [Run Tests](#run-tests)
-        * [Expected Tesults](#expected-tesults)
-    * [Component-Level Testing](#component-level-testing)
-        * [Setup Test Environment](#setup-test-environment-1)
-        * [Run Tests](#run-tests-1)
-        * [Expected Results](#expected-results)
-
+  * [Table of Contents](#table-of-contents)
+  * [Design Document](#design-document)
+  * [Building Instructions](#building-instructions)
+    * [Production](#production)
+    * [Development & Testing](#development--testing)
+  * [Running Instructions](#running-instructions)
+  * [Example Usage](#example-usage)
+      * [REST-API](#rest-api)
+      * [Testing](#testing)
+      * [Examples](#examples)
+  * [Test Definitions](#test-definitions)
+  * [Unit Testing](#unit-testing)
+    * [Setup Test Environment](#setup-test-environment)
+    * [Run Tests](#run-tests)
+    * [Expected Results](#expected-results)
+  * [Component-Level Testing](#component-level-testing)
+    * [Setup Test Environment](#setup-test-environment-1)
+    * [Run Tests](#run-tests-1)
+    * [Expected Results](#expected-results-1)
 <!-- TOC -->
 
 ## Design Document
@@ -425,6 +423,11 @@ Programmatically, each Makefile returns the value `0` in case all executed tests
 `unit-tests` were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this "UNIX" behavior as well.
 
+> [!NOTE]
+>
+> Detailed test execution summary can be found in
+> [kubernetes/test/suites/README.md](kubernetes/test/suites/README.md#test-execution-summary).
+
 ## Component-Level Testing
 
 Testing of `ptx-edge` components is based on the basic functionality and applicability of
@@ -452,7 +455,7 @@ To install test dependencies with the latest versions:
 $ cd kubernetes/test/suites && ./install-dep.sh -u
 ```
 
-> [!IMPORTANT]
+> [!WARNING]
 >
 > For test report generation, the flag `-u` is mandatory!
 
@@ -510,3 +513,8 @@ OK
 Programmatically, each test script returns `0` in case all defined test
 cases were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this UNIX behavior as well.
+
+> [!NOTE]
+>
+> Detailed test execution summary can be found in
+> [kubernetes/test/units/README.md](kubernetes/test/units/README.md#test-execution-summary).

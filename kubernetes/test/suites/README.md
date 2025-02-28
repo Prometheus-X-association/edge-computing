@@ -38,11 +38,18 @@ The helper script `runall.sh` follows this UNIX behavior as well.
 
 ### Test Execution Summary
 
-| Test Suite             |                Test Case ID                | Description                 | Expected Outcome                                                                         | Actual Outcome     | Status  | Notes                                                |
-|------------------------|:------------------------------------------:|-----------------------------|------------------------------------------------------------------------------------------|--------------------|:-------:|------------------------------------------------------|
-| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeSelector_ | Check K8s node selector     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
-| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeAffinity_ | Check K8s node affinity     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
-| ptx-edge-builder       |       _testPTXEdgeStaticVolumeClaim_       | Check K8s local volume      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: | SKIPPED | Static volumes not supported in **K3s** `local-path` |
-| ptx-edge-builder       |      _testPTXEdgeDynamicVolumeClaim_       | Check K3s local-path volume | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
-| ptx-edge-builder       |            _testPTXEdgeBuilder_            | Check `builder` config      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
-| ptx-edge-rest-api      |            _testPTXEdgeRESTAPI_            | Check `rest-api` config     | [test-report-ptx-edge-rest-api.xml](results/test-report-ptx-edge-rest-api.xml)           | :heavy_check_mark: |   OK    |                                                      |
+> [!IMPORTANT]
+>
+> Since the _Edge computing - AI processing BB_ (`ptx-edge`) is still
+> **under development**, the defined test cases only cover the implemented
+> parts of `ptx-edge`'s planned capabilities.
+> Further test cases are expected to be added continuously.
+
+| Test Suite             |                Test Case ID                | Description                | Expected Outcome                                                                         |   Actual Outcome   | Status  | Notes                                                |
+|------------------------|:------------------------------------------:|----------------------------|------------------------------------------------------------------------------------------|:------------------:|:-------:|------------------------------------------------------|
+| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeSelector_ | Test K8s node selector     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
+| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeAffinity_ | Test K8s node affinity     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-builder       |       _testPTXEdgeStaticVolumeClaim_       | Test K8s local volume      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: | SKIPPED | Static volumes not supported in **K3s** `local-path` |
+| ptx-edge-builder       |      _testPTXEdgeDynamicVolumeClaim_       | Test K3s local-path volume | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-builder       |            _testPTXEdgeBuilder_            | Test `builder` config      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-rest-api      |            _testPTXEdgeRESTAPI_            | Test `rest-api` config     | [test-report-ptx-edge-rest-api.xml](results/test-report-ptx-edge-rest-api.xml)           | :heavy_check_mark: |   OK    |                                                      |

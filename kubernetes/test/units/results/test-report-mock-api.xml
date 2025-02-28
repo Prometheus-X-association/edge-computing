@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ptx-edge-mock-api" tests="17" errors="0" failures="0" skip="0">
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_live_server_is_up_and_running" time="0.270"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_a_ok" time="0.222"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail400" time="0.168"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail403" time="0.193"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail404" time="0.227"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail408" time="0.158"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail412" time="0.161"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_edge_proc_fail503" time="0.159"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_a_ok" time="0.153"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail400" time="0.194"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail401" time="0.212"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail403" time="0.225"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail404" time="0.180"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail408" time="0.158"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail412" time="0.188"></testcase>
+    <testcase classname="swagger_server.test.test_customer_api_controller.TestCustomerAPIController"
+              name="test_request_privacy_edge_proc_fail503" time="0.205"></testcase>
+    <testcase classname="swagger_server.test.test_default_controller.TestDefaultController"
+              name="test_get_versions_versions_get" time="0.092"></testcase>
+</testsuite>
