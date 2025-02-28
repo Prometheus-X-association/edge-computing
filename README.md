@@ -26,26 +26,28 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
+
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-  * [Table of Contents](#table-of-contents)
-  * [Design Document](#design-document)
-  * [Building Instructions](#building-instructions)
-    * [Production](#production)
-    * [Development & Testing](#development--testing)
-  * [Running Instructions](#running-instructions)
-  * [Example Usage](#example-usage)
-      * [REST-API](#rest-api)
-      * [Testing](#testing)
-      * [Examples](#examples)
-  * [Test Definitions](#test-definitions)
-  * [Unit Testing](#unit-testing)
-    * [Setup Test Environment](#setup-test-environment)
-    * [Run Tests](#run-tests)
-    * [Expected Tesults](#expected-tesults)
-  * [Component-Level Testing](#component-level-testing)
-    * [Setup Test Environment](#setup-test-environment-1)
-    * [Run Tests](#run-tests-1)
-    * [Expected Results](#expected-results)
+    * [Table of Contents](#table-of-contents)
+    * [Design Document](#design-document)
+    * [Building Instructions](#building-instructions)
+        * [Production](#production)
+        * [Development & Testing](#development--testing)
+    * [Running Instructions](#running-instructions)
+    * [Example Usage](#example-usage)
+        * [REST-API](#rest-api)
+        * [Testing](#testing)
+        * [Examples](#examples)
+    * [Test Definitions](#test-definitions)
+    * [Unit Testing](#unit-testing)
+        * [Setup Test Environment](#setup-test-environment)
+        * [Run Tests](#run-tests)
+        * [Expected Tesults](#expected-tesults)
+    * [Component-Level Testing](#component-level-testing)
+        * [Setup Test Environment](#setup-test-environment-1)
+        * [Run Tests](#run-tests-1)
+        * [Expected Results](#expected-results)
+
 <!-- TOC -->
 
 ## Design Document
@@ -57,14 +59,14 @@ container orchestration platform (realistically spanning multiple providers' dom
 its value-added services are implemented as standalone software containers, operated in a
 dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
 
-The main elements of the BB-02's functionality cover the following:
+The elements of the BB-02's main functionality cover the following:
 
-- Provide a generic runtime environment for data-processing functions.
-- Provide the ability to deploy pre-built containers with privacy-preserving options.
-- Provide the capability of managing and orchestrating by privacy-zone labels.
-- Use the PTX Connector to interact with PTX core elements.
-- Implement and control the process of getting data for data consumer functions/software.
-- Implement a separate REST-API interface for the integration with PTX dataspace.
+- Provide a _generic runtime environment_ for data-processing functions.
+- Provide the ability to deploy _pre-built containers with privacy-preserving_ options.
+- Provide the capability of managing and orchestrating by _privacy-zone_ labels.
+- Use the _PTX Connector_ to interact with PTX core elements.
+- Implement and control the process of getting data for _data consumer functions/software_.
+- Implement a separate _REST-API interface_ for the integration with PTX dataspace.
 
 See the detailed Kubernetes-based architecture and their component binding to the main
 design document in
@@ -101,18 +103,23 @@ $ make setup
 
 > [!IMPORTANT]
 >
-> Since BB-02 is still under development, Makefile targets
-> (**setup** / **run** / **cleanup**) point directly to the targets of the latest
+> Since BB-02 is still <ins>**under development**</ins>, Makefile targets
+> (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest
 > test level's Makefile in `kubernetes/test/levels`!
 
-or execute the helper scripts directly:
+> [!NOTE]
+>
+> The configured level based on the `ptx-edge`-internal
+> [definitions](kubernetes/test/README.md#overview) is **Level 3**.
+
+Helper scripts can be executed directly:
 
 ```bash
 $ # TBD
 ```
 
-or install necessary resources/dependencies and the ptx-edge Helm charts
-manually:
+while necessary resources/dependencies and `ptx-edge` Helm charts can be
+installed manually as well:
 
 ```bash
 $ # TBD
@@ -173,11 +180,11 @@ make cleanup
 
 > [!IMPORTANT]
 >
-> Since BB-02 is still under development, Makefile targets
-> (**setup** / **run** / **cleanup**) point directly to the targets of the latest
+> Since BB-02 is still <ins>**under development**</ins>, Makefile targets
+> (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest
 > test level's Makefile in `kubernetes/test/levels`!
 
-The installed Helm chart launches the included `ptx-edge` services automatically,
+The installed _Helm chart_ launches the included `ptx-edge` services automatically,
 but it does not wait until all the resources are running before it exits!
 
 To check the current status of the installed chart's components, use the following
@@ -196,7 +203,7 @@ $ # TBD
 
 ## Example Usage
 
-The `ptx-edge` K8s extension provides a separate REST-API in
+The `ptx-edge` K8s extension provides a separate _REST-API_ in
 [kubernetes/src/rest-api](kubernetes/src/rest-api)
 to integrate its features with the PTX core components.
 
@@ -207,7 +214,7 @@ Python software code.
 #### REST-API
 
 - The REST-API uses the following base URL: ``http://<service_name>:8080/ptx-edge/v1/``.
-- The interactive API interface (Swagger UI) lives here: ``http://<service_name>:8080/ptx-edge/v1/ui/``
+- The interactive API interface (**Swagger UI**) lives here: ``http://<service_name>:8080/ptx-edge/v1/ui/``
 - The OpenAPI specification is available at ``http://<service_name>:8080/ptx-edge/v1/openapi.json``
 
 Additionally, the latest OpenAPI specification is auto-generated and updated at every commit
@@ -223,7 +230,7 @@ in the related [Readme](kubernetes/test/mock-api/README.md).
 
 The REST-API endpoints can be easily tested in the following two approaches:
 
-- Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.
+- Calling directly on the specific endpoint using e.g., ``curl`` and Python's ``json`` module.\
   For example, the standalone [mock REST-API](kubernetes/test/mock-api/README.md)
   can be tested with the following command:
 
@@ -235,11 +242,12 @@ $ curl -sX 'GET' \
     "api": "0.1",
     "framework": "1.1.4"
 }
-
 ```
 
 - Manually testing endpoints with in-line test data on its
   [Swagger UI](kubernetes/test/README.md#rest-api-mockup).
+
+![](docs/swagger_ui_testing.png)
 
 > [!IMPORTANT]
 >
@@ -272,13 +280,14 @@ Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/tes
 
 ## Unit Testing
 
-Unit tests are based on separate module tests defined for each `ptx-edge` component.
+Unit tests are based on (Python) module tests separately defined under `kubernetes/src/<module>/tests`
+for each `ptx-edge` subcomponent `<module>`.
 
 ### Setup Test Environment
 
-To install test dependencies of a given component, refer to the related README files.
+For installing test dependencies of a given submodule in `kubernetes/src`, refer to the related README file.
 
-Each subproject defines a Makefile to unify the development/test environment creation.
+Each subproject defines a **Makefile** to unify the development/test environment creation.
 Accordingly, test environment configuration (and execution) is implicitly managed by
 external tools and third-party libraries, such as
 [virtualenv](https://virtualenv.pypa.io/en/latest/),
@@ -287,20 +296,20 @@ external tools and third-party libraries, such as
 [tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
 
 Therefore, in general, there is no need for explicit environment setup as it is
-automatically configured and managed by wrapper scripts.
+automatically configured and managed by wrapper tools/scripts.
 
-However, to explicitly set up the test/dev environment for a `project` locally
+However, to explicitly set up the test/dev environment for a `<module>` locally
 (without Docker), the following command can be used:
 
 ```bash
-$ cd kubernetes/src/<project> && make setup
+$ cd kubernetes/src/<module> && make setup
 ```
 
 Furthermore, the configuration of docker-based test environments can be also performed
-explicitly by executing the dedicated Makefile target as follows:
+explicitly by executing the dedicated _Makefile_ target as follows:
 
 ```bash
-$ cd kubernetes/src/<project> && make docker-test-setup # Preferred way
+$ cd kubernetes/src/<module> && make docker-test-setup # Preferred way
 ```
 
 ### Run Tests
@@ -324,26 +333,26 @@ Options:
     -h          Display help.
 ```
 
-To locally execute the unit tests of a single `project`,
-execute the dedicated Makefile target within the project folder, e.g.,
+To locally execute the unit tests of a single `<module>`,
+execute the dedicated _Makefile target_ within the `<module>` folder, e.g.,
 
 ```bash
-$ cd kubernetes/src/<project> && make unit-tests
+$ cd kubernetes/src/<module> && make unit-tests
 ```
 
 > [!TIP]
 >
 > Subprojects may define different dependencies and test parameters
 > wrapped by Makefiles. The preferred way for testing is the preconfigured
-> Docker-based test environments.
+> <ins>Docker-based test environments</ins>.
 
 For docker-based test execution, use the dedicated `-d` flag of `runall.sh`
-or call the dedicated Makefile target of any subproject:
+or call the dedicated _Makefile target_ of any `<module>`:
 
 ```bash
 $ cd kubernetes/test/units && ./runall.sh -d    # Preferred way
 # or
-$ cd kubernetes/src/<project> && make docker-unit-tests
+$ cd kubernetes/src/<module> && make docker-unit-tests
 ```
 
 JUnit-style test reports are automatically generated and stored in the test containers.
@@ -353,7 +362,7 @@ with the `runall.sh` script:
 ```bash
 $ ./runall.sh -d -o results/
 [x] Docker-based unit test execution is configured.
-[x] JUnit-style reports are configured with path: /home/czentye/PTX-edge-computing/kubernetes/test/units/results
+[x] JUnit-style reports are configured with path: kubernetes/test/units/results
 Preparing report folder...
 
 # <logs truncated>
@@ -367,28 +376,31 @@ drwxrwx--- 1 root vboxsf 4096 Feb 24 20:01 ../
 -rwxrwx--- 1 root vboxsf  218 Feb 24 20:08 report-test-rest-api.xml
 ```
 
-### Expected Tesults
+### Expected Results
 
-Each component test (script) starting with the prefix `test` is executed successfully.
+Each component test (script) starting with the prefix `test` is executed successfully
+(without `error`/`failure` notification),
+while the helper script `runall.sh` returns with value `0`.
 
 An example result log of one successful test execution is the following:
 
 ```bash
 $ cd kubernetes/test/mock-api
-$ make unit-tests 
+$ make docker-unit-tests
 
 # <logs truncated>
 
-py38: commands[0]> nosetests -v -w swagger_server/test
+py38 run-test: commands[0] | nosetests -v --with-xunit --xunit-file=report/report-test-mock-api.xml
+[66] /usr/src/app$ /usr/src/app/.tox/py38/bin/nosetests -v --with-xunit --xunit-file=report/report-test-mock-api.xml
 Test case for checking available live API: HTTP 200 ... ok
-Test case for valid   request_edge_proc request: HTTP 200 ... ok
+Test case for valid   request_edge_proc request: HTTP 202 ... ok
 Test case for invalid request_edge_proc request: HTTP 400 ... ok
 Test case for invalid request_edge_proc request: HTTP 403 ... ok
 Test case for invalid request_edge_proc request: HTTP 404 ... ok
 Test case for invalid request_edge_proc request: HTTP 408 ... ok
 Test case for invalid request_edge_proc request: HTTP 412 ... ok
 Test case for invalid request_edge_proc request: HTTP 503 ... ok
-Test case for valid   request_privacy_edge_proc request: HTTP 200 ... ok
+Test case for valid   request_privacy_edge_proc request: HTTP 202 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 400 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 401 ... ok
 Test case for invalid request_privacy_edge_proc request: HTTP 403 ... ok
@@ -399,20 +411,23 @@ Test case for invalid request_privacy_edge_proc request: HTTP 503 ... ok
 Test case for valid   get_versions response: HTTP 200 ... ok
 
 ----------------------------------------------------------------------
-Ran 17 tests in 2.055s
+XML: /usr/src/app/report/report-test-mock-api.xml
+----------------------------------------------------------------------
+Ran 17 tests in 3.709s
 
 OK
-  py38: OK (4.81=setup[2.26]+cmd[2.55] seconds)
-  congratulations :) (5.18 seconds)
+_____________________________________________________________________________________________________ summary _____________________________________________________________________________________________________
+  py38: commands succeeded
+  congratulations :)
 ```
 
-Programmatically, each Makefile returns `0` in case all executed tests defined in the target
+Programmatically, each Makefile returns the value `0` in case all executed tests defined in the target
 `unit-tests` were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this "UNIX" behavior as well.
 
 ## Component-Level Testing
 
-Testing of `ptx-edge` component is based on the basic functionality and applicability of the
+Testing of `ptx-edge` components is based on the basic functionality and applicability of the
 K8s components defined in the [Design document](#design-document).
 The related test cases can be found in [kubernetes/test/suites](kubernetes/test/suites).
 
@@ -420,6 +435,14 @@ The related test cases can be found in [kubernetes/test/suites](kubernetes/test/
 >
 > For the detailed description of component-level tests, refer to the
 > related [README.md](kubernetes/test/README.md#tests).
+
+Typically, these test scripts perform the following steps:
+
+- set up and configure a K3s test environment according to the test case,
+- deploy test manifest file(s),
+- wait for component(s) to set up and reach a stable state or escalate designed issues,
+- check the test status and validate the outcome, and
+- tear down the test environment.
 
 ### Setup Test Environment
 
@@ -439,7 +462,10 @@ To execute all component-level tests with **JUnit-style** test report generation
 `kubernetes/test/suites/results`), use the following helper script:
 
 ```bash
-$ ./runall.sh -o ./results
+$ cd kubernetes/test/suites && ./runall.sh -o ./results
+[x] JUnit-style reports are configured with path: kubernetes/test/suites/results
+
+Preparing report folder...
 
 # <logs truncated>
 
@@ -466,7 +492,8 @@ Options:
 ### Expected Results
 
 Each component test script starting with the prefix `test` in the folder `kubernetes/test/suites`
-is executed successfully.
+is executed successfully (without `error`/`failure` notification),
+while the helper script `runall.sh` returns with value `0`.
 
 An example result log of one successful test execution is the following:
 
