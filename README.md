@@ -427,8 +427,8 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 
 ## Component-Level Testing
 
-Testing of `ptx-edge` components is based on the basic functionality and applicability of the
-K8s components defined in the [Design document](#design-document).
+Testing of `ptx-edge` components is based on the basic functionality and applicability of
+`ptx-edge` K8s components defined in the [Design document](#design-document).\
 The related test cases can be found in [kubernetes/test/suites](kubernetes/test/suites).
 
 > [!NOTE]

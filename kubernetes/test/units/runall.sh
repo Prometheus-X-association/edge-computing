@@ -47,7 +47,8 @@ while getopts ":o:dh" flag; do
                 # Exported envvars auto-converted to Makefile variables
                 export REPORT_PATH="${OPTARG}"
             else
-                export REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
+                REPORT_PATH=$(realpath "${SUITES_DIR}/${OPTARG}")
+                export REPORT_PATH
             fi
             echo "[x] JUnit-style reports are configured with path: ${REPORT_PATH}"
             echo -e "\nPreparing report folder..."

@@ -17,7 +17,7 @@ set -ou pipefail
 
 SUITES_DIR=$(readlink -f "$(dirname "$0")")
 ROOT_DIR=$(readlink -f "${SUITES_DIR}/../..")
-FILE_PREFIX="report"
+FILE_PREFIX="test-report"
 RET_VALS=0
 
 source "${ROOT_DIR}"/test/scripts/helper.sh
@@ -69,8 +69,9 @@ for testfile in "${SUITES_DIR}"/test-*.sh; do
     [ -e "${testfile}" ] || continue
     log "Executing ${testfile}..."
     if [ -v REPORT_PATH ]; then
-        REPORT_FILE=$(basename -- "${testfile}" ".sh")
-        ( exec bash "${testfile}" -- --output-junit-xml="${REPORT_PATH}/${FILE_PREFIX}-${REPORT_FILE}.xml" 2>&1; )
+        TEST_CASE=$(basename -- "${testfile}" ".sh" | sed -e "s/^test-//")
+        REPORT_XML="${REPORT_PATH}/${FILE_PREFIX}-${TEST_CASE}.xml"
+        ( exec bash "${testfile}" -- --output-junit-xml="${REPORT_XML}" --suite-name="${TEST_CASE}" 2>&1; )
         RET_VALS=$(( "${RET_VALS}" + "$?" ))
     else
         ( exec bash "${testfile}" 2>&1; )
