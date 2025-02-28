@@ -19,6 +19,7 @@ SUITES_DIR=$(readlink -f "$(dirname "$0")")
 ROOT_DIR=$(readlink -f "${SUITES_DIR}/../..")
 RET_VALS=0
 DOCKER="false"
+CLEANUP="false"
 
 source "${ROOT_DIR}"/test/scripts/helper.sh
 
@@ -35,12 +36,13 @@ Usage: $0 [options]
 
 Options:
     -d          Execute tests in Docker containers instead of local venvs.
+    -c          Cleanup projects before build.
     -o <dir>    Collect Junit-style reports into <dir>.
     -h          Display help.
 EOF
 }
 
-while getopts ":o:dh" flag; do
+while getopts ":o:dch" flag; do
 	case "${flag}" in
         o)
             if [[ "${OPTARG}" = /* ]]; then
@@ -56,6 +58,10 @@ while getopts ":o:dh" flag; do
             mkdir -pv "${REPORT_PATH}"
             ;;
         d)
+            echo "[x] Cleanup is configured."
+            CLEANUP="true"
+            ;;
+        c)
             echo "[x] Docker-based unit test execution is configured."
             DOCKER="true"
             ;;
@@ -80,6 +86,9 @@ printf "  - %s\n" "${PROJECTS[@]}"
 for project in "${PROJECTS[@]}"; do
     log "Entering ${project}"
     pushd "$(realpath "${project}")" >/dev/null
+    if [[ "${CLEANUP}" == "true" ]]; then
+        make clean
+    fi
     if [[ "${DOCKER}" == "true" ]]; then
         make docker-unit-tests
     else

@@ -33,6 +33,12 @@ venv:
 		python3 -m pip install -U -r requirements.txt -r test-requirements.txt \
 		)
 
+# Cleanup
+clean:
+	docker rmi -f ${IMG}
+	py3clean -v .
+	rm -rf .venv
+
 # Tests
 unit-tests: venv
 	( . .venv/bin/activate && tox )
