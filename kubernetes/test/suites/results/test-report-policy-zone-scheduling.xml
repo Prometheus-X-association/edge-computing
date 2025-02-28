@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite
+        failures="0"
+        name="policy-zone-scheduling"
+        tests="2"
+        assertions="6">
+    <testcase
+            classname="policy-zone-scheduling"
+            name="testPolicyZoneSchedulingWithNodeSelector"
+            assertions="3">
+    </testcase>
+    <testcase
+            classname="policy-zone-scheduling"
+            name="testPolicyZoneSchedulingWithNodeAffinity"
+            assertions="3">
+    </testcase>
+</testsuite>

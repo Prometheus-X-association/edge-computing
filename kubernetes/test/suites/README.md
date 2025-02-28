@@ -1,0 +1,48 @@
+## Component-Level Testing
+
+Testing of `ptx-edge` components is based on the basic functionality
+and applicability of `ptx-edge` K8s components.
+
+### Setup Test Environment
+
+```bash
+$ ./install-dep.sh -u
+```
+
+### Run Tests
+
+```bash
+$ ./runall.sh -o ./results
+```
+
+For the available configuration parameters, refer to the help menu:
+
+```bash
+$ ./runall.sh -h
+Usage: ./runall.sh [options]
+
+Options:
+    -o <dir>    Generate Junit-style reports into <dir>.
+    -h          Display help.
+```
+
+### Expected Results
+
+Each component test script starting with the prefix `test` in the folder
+`kubernetes/test/suites` is executed successfully (without `error`/`failure` notification),
+while the helper script `runall.sh` returns with value `0`.
+
+Programmatically, each test script returns `0` in case all defined test
+cases were successful, and a non-zero value otherwise.\
+The helper script `runall.sh` follows this UNIX behavior as well.
+
+### Test Execution Summary
+
+| Test Suite             |                Test Case ID                | Description                 | Expected Outcome                                                                         | Actual Outcome     | Status  | Notes                                                |
+|------------------------|:------------------------------------------:|-----------------------------|------------------------------------------------------------------------------------------|--------------------|:-------:|------------------------------------------------------|
+| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeSelector_ | Check K8s node selector     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
+| policy-zone-scheduling | _testPolicyZoneSchedulingWithNodeAffinity_ | Check K8s node affinity     | [test-report-policy-zone-scheduling.xml](results/test-report-policy-zone-scheduling.xml) | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-builder       |       _testPTXEdgeStaticVolumeClaim_       | Check K8s local volume      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: | SKIPPED | Static volumes not supported in **K3s** `local-path` |
+| ptx-edge-builder       |      _testPTXEdgeDynamicVolumeClaim_       | Check K3s local-path volume | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-builder       |            _testPTXEdgeBuilder_            | Check `builder` config      | [test-report-ptx-edge-builder.xml](results/test-report-ptx-edge-builder.xml)             | :heavy_check_mark: |   OK    |                                                      |
+| ptx-edge-rest-api      |            _testPTXEdgeRESTAPI_            | Check `rest-api` config     | [test-report-ptx-edge-rest-api.xml](results/test-report-ptx-edge-rest-api.xml)           | :heavy_check_mark: |   OK    |                                                      |
