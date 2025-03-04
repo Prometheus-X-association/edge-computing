@@ -188,7 +188,7 @@ function cleanup_test_cluster() {
 # Main --------------------------------------------------------------------------------
 
 ### Docker
-if ! command -v docker >/dev/null; then
+if ! command -v docker >/dev/null 2>&1; then
     # Binaries
 	install_docker
     # Privileged Docker
@@ -208,7 +208,7 @@ fi
 
 
 ### K3d
-if ! command -v k3d >/dev/null || [ "${UPDATE}" = true ]; then
+if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_k3d
     if [ ${SLIM_SETUP} = false ]; then
@@ -221,7 +221,7 @@ if ! command -v k3d >/dev/null || [ "${UPDATE}" = true ]; then
 fi
 
 ### Kubectl
-if ! command -v kubectl >/dev/null || [ "${UPDATE}" = true ]; then
+if ! command -v kubectl >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_kubectl
     if [ ${SLIM_SETUP} = false ]; then

@@ -52,7 +52,7 @@ openapi:
 	)
 
 setup:
-ifeq ($(shell [ `which python3.13` -a `which pip3.13` ] || echo 1), 1)
+ifeq ($(shell [ `command -v python3.13 >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)
 	$(error "Missing required environment: Python3.13 + pip")
 else
 	$(MAKE) venv

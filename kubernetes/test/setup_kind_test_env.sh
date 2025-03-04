@@ -273,7 +273,7 @@ function cleanup_test_cluster() {
 # Main --------------------------------------------------------------------------------
 
 ### Docker
-if ! command -v docker >/dev/null; then
+if ! command -v docker >/dev/null 2>&1; then
     # Binaries
 	install_docker
 	if [ ${ROOTLESS} = true ]; then
@@ -298,7 +298,7 @@ fi
 
 
 ### Kind
-if ! command -v kind >/dev/null || [ "${UPDATE}" = true ]; then
+if ! command -v kind >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_kind
     if [ ${SLIM_SETUP} = false ]; then
@@ -315,12 +315,12 @@ if ! command -v kind >/dev/null || [ "${UPDATE}" = true ]; then
 fi
 
 ### Cloud provider Kind
-if [ ${KIND_CCM} = true ] && { ! command -v cloud-provider-kind >/dev/null || [ "${UPDATE}" = true ]; }; then
+if [ ${KIND_CCM} = true ] && { ! command -v cloud-provider-kind >/dev/null 2>&1 || [ "${UPDATE}" = true ]; }; then
     install_cloud_provider_kind
 fi
 
 ### Kubectl
-if ! command -v kubectl >/dev/null || [ "${UPDATE}" = true ]; then
+if ! command -v kubectl >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	# Binary
 	install_kubectl
     if [ ${SLIM_SETUP} = false ]; then

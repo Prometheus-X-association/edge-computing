@@ -72,12 +72,12 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 > parts of `ptx-edge`'s planned capabilities.
 > Further test cases are expected to be added continuously.
 
-| Test Suite           | Test Case ID               | Description               | Expected Outcome                                             | Actual Outcome     | Status | Notes            |
-|----------------------|----------------------------|---------------------------|--------------------------------------------------------------|--------------------|--------|------------------|
-| ptx-edge-builder     | _test_builder_cfg_         | Test config loading       | [test-report-builder.xml](results/test-report-builder.xml)   | :heavy_check_mark: | OK     |                  |
-| ptx-edge-builder-api | _test_builder_missing_cfg_ | Test external config      | [test-report-builder.xml](results/test-report-builder.xml)   | :x:                | OK     | Assert exception |
-| ptx-edge-rest-api    | _test_health_              | Test healthcheck endpoint | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
-| ptx-edge-rest-api    | _test_versions_            | Test API availability     | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
+| Test Suite        | Test Case ID               | Description               | Expected Outcome                                             | Actual Outcome     | Status | Notes            |
+|-------------------|----------------------------|---------------------------|--------------------------------------------------------------|--------------------|--------|------------------|
+| ptx-edge-builder  | _test_builder_cfg_         | Test config loading       | [test-report-builder.xml](results/test-report-builder.xml)   | :heavy_check_mark: | OK     |                  |
+| ptx-edge-builder  | _test_builder_missing_cfg_ | Test external config      | [test-report-builder.xml](results/test-report-builder.xml)   | :x:                | OK     | Assert exception |
+| ptx-edge-rest-api | _test_health_              | Test healthcheck endpoint | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
+| ptx-edge-rest-api | _test_versions_            | Test API availability     | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
 
 | Test Suite        |               Test Case ID               | Description                | Expected Outcome                                             |   Actual Outcome   | Status | Notes          |
 |-------------------|:----------------------------------------:|----------------------------|--------------------------------------------------------------|:------------------:|:------:|----------------|

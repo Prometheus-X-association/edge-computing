@@ -323,6 +323,10 @@ explicitly by executing the dedicated _Makefile_ target as follows:
 $ cd kubernetes/src/<module> && make docker-test-setup # Preferred way
 ```
 
+> [!NOTE]
+> 
+> Unit test dependencies are the same as for its main submodules.
+
 ### Run Tests
 
 To locally execute all unit tests defined for `ptx-edge`,
@@ -340,6 +344,7 @@ Usage: ./runall.sh [options]
 
 Options:
     -d          Execute tests in Docker containers instead of local venvs.
+    -c          Cleanup projects before build.
     -o <dir>    Collect Junit-style reports into <dir>.
     -h          Display help.
 ```
