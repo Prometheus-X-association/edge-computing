@@ -26,26 +26,28 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
+
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-  * [Table of Contents](#table-of-contents)
-  * [Design Document](#design-document)
-  * [Building Instructions](#building-instructions)
-    * [Production](#production)
-    * [Development & Testing](#development--testing)
-  * [Running Instructions](#running-instructions)
-  * [Example Usage](#example-usage)
-      * [REST-API](#rest-api)
-      * [Testing](#testing)
-      * [Examples](#examples)
-  * [Test Definitions](#test-definitions)
-  * [Unit Testing](#unit-testing)
-    * [Setup Test Environment](#setup-test-environment)
-    * [Run Tests](#run-tests)
-    * [Expected Results](#expected-results)
-  * [Component-Level Testing](#component-level-testing)
-    * [Setup Test Environment](#setup-test-environment-1)
-    * [Run Tests](#run-tests-1)
-    * [Expected Results](#expected-results-1)
+    * [Table of Contents](#table-of-contents)
+    * [Design Document](#design-document)
+    * [Building Instructions](#building-instructions)
+        * [Production](#production)
+        * [Development & Testing](#development--testing)
+    * [Running Instructions](#running-instructions)
+    * [Example Usage](#example-usage)
+        * [REST-API](#rest-api)
+        * [Testing](#testing)
+        * [Examples](#examples)
+    * [Test Definitions](#test-definitions)
+    * [Unit Testing](#unit-testing)
+        * [Setup Test Environment](#setup-test-environment)
+        * [Run Tests](#run-tests)
+        * [Expected Results](#expected-results)
+    * [Component-Level Testing](#component-level-testing)
+        * [Setup Test Environment](#setup-test-environment-1)
+        * [Run Tests](#run-tests-1)
+        * [Expected Results](#expected-results-1)
+
 <!-- TOC -->
 
 ## Design Document
@@ -255,6 +257,15 @@ $ curl -sX 'GET' \
 > or test VM configuration!
 > Refer to the exposed port number in the related documentation!
 
+To execute all module and component tests prepared in the
+`kubernetes/test` folder, including all unit tests defined for
+each submodule in `kubernetes/src` and explicit component-level
+tests, use the helper target in the main [Makefile](Makefile):
+
+```bash
+$ make tests
+```
+
 #### Examples
 
 The following table contains example API calls with successful results.
@@ -275,6 +286,10 @@ To validate the endpoints, send the following requests to the main REST-API usin
 ## Test Definitions
 
 Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/test/cases/README.md).
+
+> [!TIP]
+>
+> All tests can be executed with the `make tests` [target](#testing).
 
 ## Unit Testing
 

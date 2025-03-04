@@ -48,6 +48,7 @@ Usage: ./runall.sh [options]
 
 Options:
     -d          Execute tests in Docker containers instead of local venvs.
+    -c          Cleanup projects before build.
     -o <dir>    Collect Junit-style reports into <dir>.
     -h          Display help.
 ```

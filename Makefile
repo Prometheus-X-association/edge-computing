@@ -23,5 +23,9 @@ run:
 cleanup:
 	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} tear-down
 
-.PHONY: setup run cleanup
+tests:
+	cd kubernetes/test/units && ./runall.sh -d -o results
+	cd kubernetes/test/suites && ./runall.sh -o ./results
+
+.PHONY: setup run cleanup tests
 .DEFAULT_GOAL := run
