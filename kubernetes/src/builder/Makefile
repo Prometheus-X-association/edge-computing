@@ -22,12 +22,12 @@ build:
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}
 
-run:
+run: build
 	docker run --rm --name ${NAME} -ti ${IMG}
 
 dev:
 	docker run --rm --name ${NAME} -ti -v ./app:/usr/src/builder/app ${IMG} \
-				python3 app/builder.py
+				python3.13 -m app.builder
 
 venv:
 	test -d .venv || (\
