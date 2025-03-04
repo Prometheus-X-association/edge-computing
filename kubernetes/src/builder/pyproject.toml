@@ -27,9 +27,25 @@ Repository = "https://github.com/Prometheus-X-association/edge-computing"
 Homepage = "https://github.com/Prometheus-X-association/edge-computing"
 Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
 
+[project.optional-dependencies]
+test = [
+    "virtualenv~=20.29.2",
+    "pytest~=8.3.4",
+    "pytest-custom_exit_code~=0.3.0",
+    "tox~=4.24.1"
+]
+
 [tool.setuptools.dynamic]
 version = { attr = "app.__version__" }
 readme = { file = ["README.md"], content-type = 'text/markdown' }
 
 [tool.setuptools.packages.find]
 exclude = []
+
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = [
+    "-v",
+    "--suppress-no-test-exit-code",
+    "--import-mode=importlib"
+]

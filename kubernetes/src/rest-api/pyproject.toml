@@ -19,16 +19,26 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    'fastapi~=0.115.8',
-    'pydantic~=2.11.0a1',
-    'uvicorn~=0.34.0',
-    'starlette~=0.41.2'
+    "fastapi~=0.115.10",
+    "pydantic~=2.10.6",
+    "uvicorn~=0.34.0",
+    "starlette~=0.46.0"
 ]
 
 [project.urls]
 Repository = "https://github.com/Prometheus-X-association/edge-computing"
 Homepage = "https://github.com/Prometheus-X-association/edge-computing"
 Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
+
+[project.optional-dependencies]
+test = [
+    "virtualenv~=20.29.2",
+    "fastapi[standard]~=0.115.10", # For the fastapi shell command
+    "pytest~=8.3.4",
+    "pytest-custom_exit_code~=0.3.0",
+    "tox~=4.24.1",
+    "httpx~=0.28.1"
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "app.__version__" }
@@ -38,4 +48,12 @@ readme = { file = ["README.md"], content-type = 'text/markdown' }
 exclude = [
     "scripts",
     "spec"
+]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = [
+    "-v",
+    "--suppress-no-test-exit-code",
+    "--import-mode=importlib"
 ]

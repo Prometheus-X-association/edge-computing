@@ -54,5 +54,5 @@ else
 	docker run --rm -ti ${TEST_IMG}
 endif
 
-.PHONY: build venv unit-tests docker-test-setup docker-unit-tests
+.PHONY: build run venv clean unit-tests docker-test-setup docker-unit-tests
 .DEFAULT_GOAL := unit-tests
