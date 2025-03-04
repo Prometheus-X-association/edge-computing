@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
-    <testsuite name="ptx-edge-rest-api" errors="0" failures="0" skipped="0" tests="0" time="0.058"
-               timestamp="2025-02-28T16:24:32.742567+00:00" hostname="b6e021f10109"/>
+    <testsuite name="ptx-edge-rest-api" errors="0" failures="0" skipped="0" tests="2" time="1.057"
+               timestamp="2025-03-04T17:05:14.298541+00:00" hostname="211653f325e8">
+        <testcase classname="test_ptx_edge_health" name="test_health" time="0.090"/>
+        <testcase classname="test_ptx_edge_versions" name="test_versions" time="0.004"/>
+    </testsuite>
 </testsuites>

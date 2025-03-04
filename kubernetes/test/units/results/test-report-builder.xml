@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
-    <testsuite name="ptx-edge-builder" errors="0" failures="0" skipped="0" tests="0" time="0.035"
-               timestamp="2025-02-28T16:23:43.484031+00:00" hostname="95aa9207c394"/>
+    <testsuite name="ptx-edge-builder" errors="0" failures="0" skipped="0" tests="2" time="0.076"
+               timestamp="2025-03-04T17:04:26.753936+00:00" hostname="6b71aacfcf0e">
+        <testcase classname="test_builder_cfg" name="test_builder_cfg" time="0.002"/>
+        <testcase classname="test_builder_cfg" name="test_builder_missing_cfg" time="0.001"/>
+    </testsuite>
 </testsuites>
