@@ -59,7 +59,7 @@ unit-tests: venv
 	( . .venv/bin/activate && tox -v )
 
 docker-test-setup: build
-	docker build -t ${TEST_IMG} -f test.Dockerfile .
+	docker build -t ${TEST_IMG} -f test.Dockerfile --build-arg USER=$$(id -u) .
 	docker images --no-trunc ${TEST_IMG}
 
 docker-unit-tests: docker-test-setup
