@@ -1,0 +1,3 @@
+[submodule "ptx/dataspace-connector"]
+	path = ptx/dataspace-connector
+	url = git@github.com:Prometheus-X-association/dataspace-connector.git
