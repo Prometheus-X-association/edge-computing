@@ -1,0 +1,49 @@
+name: pdc
+services:
+  connector:
+    container_name: pdc-connector
+    image: ptx/connector:1.8.2
+    #    restart: unless-stopped
+    restart: no
+    depends_on:
+      - mongodb
+      - catalog
+    volumes:
+      - './config.production.json:/usr/src/app/src/config.production.json'
+      - './.env.production:/usr/src/app/.env.production'
+    ports:
+      - "3333:3000"
+    environment:
+      MONGO_URI: mongodb://pdc-mongodb:27017/dataspace-connector
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - pdc-nw
+  mongodb:
+    container_name: pdc-mongodb
+    image: ptx/mongodb:1.8.2
+    ports:
+      - "27018:27017"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - pdc-nw
+      - core-nw
+  catalog:
+    container_name: ptx-catalog
+    image: ptx-core/catalog:1.8.2
+    ports:
+      - "3002:8082"
+    networks:
+      - core-nw
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      # test: ["CMD-SHELL", "curl -sSf http://localhost:8082/__admin/health || exit 1"]
+      test: [ "NONE" ]
+networks:
+  pdc-nw:
+    external: false
+  core-nw:
+    external: false
+    name: sandbox
