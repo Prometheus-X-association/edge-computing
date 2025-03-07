@@ -23,8 +23,10 @@ BUILDER := builder
 
 setup:
 	bash setup_k3d_test_env.sh -xs
-	cd ../src/rest-api/ && make build
-	cd ../src/builder/ && make build
+	@#cd ../src/rest-api/ && make build
+	@#cd ../src/builder/ && make build
+	${MAKE} -C ../src/rest-api/ build
+	${MAKE} -C ../src/builder/ build
 
 create: setup
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml

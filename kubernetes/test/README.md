@@ -197,7 +197,7 @@ $ ./setup_kind_test_env.sh -s
 - installing Cloud Provider KIND for emulating a load balancer service of a cloud provider.
 
 ```bash
-$ ./setup_kind_test_env.sh -c
+$ ./setup_kind_test_env.sh -m
 ```
 
 For the available configuration parameters, refer to the help menu:
@@ -207,7 +207,8 @@ $ ./setup_kind_test_env.sh -h
 Usage: ./setup_kind_test_env.sh [options]
 
 Options:
-    -c  Install Kinds cloud provider manager.
+    -c  Perform initial cleanup.
+    -m  Install Kind's cloud provider manager.
     -r  Install Docker and Kind in rootless mode.
     -s  Only install minimum required binaries.
     -u  Update/overwrite dependencies.
@@ -253,10 +254,10 @@ $ ./setup_k3d_test_env.sh -s
 For the available configuration parameters, refer to the help menu:
 
 ```bash
-$ ./setup_k3d_test_env.sh -h
 Usage: ./setup_k3d_test_env.sh [options]
 
 Options:
+    -c  Perform initial cleanup.
     -s  Only install minimum required binaries.
     -u  Update/overwrite dependencies.
     -x  Skip deployment validation.

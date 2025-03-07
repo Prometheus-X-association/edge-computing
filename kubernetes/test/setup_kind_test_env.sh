@@ -27,6 +27,7 @@ NO_CHECK=false
 SLIM_SETUP=false
 KIND_CCM=false
 UPDATE=false
+INIT_CLEANUP=false
 
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
@@ -43,58 +44,6 @@ KIND_CCM_NAME="kind-ccm"
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 RET_VAL=0
-
-# Parameters --------------------------------------------------------------------------------
-
-function display_help() {
-    cat <<EOF
-Usage: $0 [options]
-
-Options:
-    -c  Install Kind's cloud provider manager.
-    -r  Install Docker and Kind in rootless mode.
-    -s  Only install minimum required binaries.
-    -u  Update/overwrite dependencies.
-    -x  Skip deployment validation.
-    -h  Display help.
-EOF
-}
-
-while getopts ":rxscuh" flag; do
-	case "${flag}" in
-		r)
-			ROOTLESS=true
-			cat <<EOF
-
-[x] Rootless setup is configured.
-
-It may cause performance degradation of misbehavior due to different restrictions!
-See more:
-	- https://docs.docker.com/engine/security/rootless/#known-limitations
-	- https://kind.sigs.k8s.io/docs/user/rootless/#restrictions
-
-EOF
-            sleep 3s;;
-        x)
-            echo "[x] No setup validation is configured."
-            NO_CHECK=true;;
-        s)
-            echo "[x] Slim install is configured."
-            SLIM_SETUP=true;;
-        c)
-            echo "[x] Cloud provider kind install is configured."
-            KIND_CCM=true;;
-        u)
-            echo "[x] Update dependencies."
-            UPDATE=true;;
-        h)
-            display_help
-            exit;;
-        ?)
-            echo "Invalid parameter: -${OPTARG} !"
-            exit 1;;
-    esac
-done
 
 # Install actions --------------------------------------------------------------------------------
 
@@ -170,7 +119,7 @@ function setup_rootless_kind() {
 function install_kubectl() {
 	echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
 	curl -LO "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
-	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
 }
 
 function setup_kubectl_bash_completion() {
@@ -270,6 +219,63 @@ function cleanup_test_cluster() {
     #docker image prune -f
 }
 
+
+# Parameters --------------------------------------------------------------------------------
+
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -c  Perform initial cleanup.
+    -m  Install Kind's cloud provider manager.
+    -r  Install Docker and Kind in rootless mode.
+    -s  Only install minimum required binaries.
+    -u  Update/overwrite dependencies.
+    -x  Skip deployment validation.
+    -h  Display help.
+EOF
+}
+
+while getopts ":rxcsmuh" flag; do
+	case "${flag}" in
+		r)
+			ROOTLESS=true
+			cat <<EOF
+
+[x] Rootless setup is configured.
+
+It may cause performance degradation of misbehavior due to different restrictions!
+See more:
+	- https://docs.docker.com/engine/security/rootless/#known-limitations
+	- https://kind.sigs.k8s.io/docs/user/rootless/#restrictions
+
+EOF
+            sleep 3s;;
+        c)
+            echo "[x] Initial cleanup configured."
+            INIT_CLEANUP=true;;
+        x)
+            echo "[x] No setup validation is configured."
+            NO_CHECK=true;;
+        s)
+            echo "[x] Slim install is configured."
+            SLIM_SETUP=true;;
+        m)
+            echo "[x] Cloud provider kind install is configured."
+            KIND_CCM=true;;
+        u)
+            echo "[x] Update dependencies."
+            UPDATE=true;;
+        h)
+            display_help
+            exit;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1;;
+    esac
+done
+
 # Main --------------------------------------------------------------------------------
 
 ### Docker
@@ -337,6 +343,9 @@ trap cleanup_test_cluster ERR INT #EXIT
 
 # Test deployment
 if [ ${NO_CHECK} = false ]; then
+    if [ "${INIT_CLEANUP}" = true ]; then
+        cleanup_test_cluster
+    fi
     # Setup cluster
     setup_test_cluster
     # Validation

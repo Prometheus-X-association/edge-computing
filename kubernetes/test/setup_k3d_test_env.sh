@@ -23,6 +23,7 @@ KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
 NO_CHECK=false
 SLIM_SETUP=false
 UPDATE=false
+INIT_CLEANUP=false
 
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
@@ -38,41 +39,6 @@ TEST_OK='Running'
 
 PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 RET_VAL=0
-
-# Parameters --------------------------------------------------------------------------------
-
-function display_help() {
-    cat <<EOF
-Usage: $0 [options]
-
-Options:
-    -s  Only install minimum required binaries.
-    -u  Update/overwrite dependencies.
-    -x  Skip deployment validation.
-    -h  Display help.
-EOF
-}
-
-while getopts ":xsuh" flag; do
-	case "${flag}" in
-        x)
-            echo "[x] No setup validation is configured."
-            NO_CHECK=true;;
-        s)
-            echo "[x] Slim install is configured."
-            SLIM_SETUP=true;;
-        u)
-            echo "[x] Update dependencies."
-            UPDATE=true;;
-        h)
-            display_help
-            exit
-            ;;
-        ?)
-            echo "Invalid parameter: -${OPTARG} !"
-            exit 1;;
-    esac
-done
 
 # Install actions --------------------------------------------------------------------------------
 
@@ -100,7 +66,7 @@ function setup_k3d_bash_completion() {
 function install_kubectl() {
 	echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
 	curl -LO "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
-	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
 }
 
 function setup_kubectl_bash_completion() {
@@ -185,6 +151,45 @@ function cleanup_test_cluster() {
 	                            -f "reference=${TEST_IMG}" | xargs -r docker rmi -f "${TEST_IMG}"
 }
 
+# Parameters --------------------------------------------------------------------------------
+
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -c  Perform initial cleanup.
+    -s  Only install minimum required binaries.
+    -u  Update/overwrite dependencies.
+    -x  Skip deployment validation.
+    -h  Display help.
+EOF
+}
+
+while getopts ":xsuch" flag; do
+	case "${flag}" in
+        c)
+            echo "[x] Initial cleanup configured."
+            INIT_CLEANUP=true;;
+        x)
+            echo "[x] No setup validation is configured."
+            NO_CHECK=true;;
+        s)
+            echo "[x] Slim install is configured."
+            SLIM_SETUP=true;;
+        u)
+            echo "[x] Update dependencies."
+            UPDATE=true;;
+        h)
+            display_help
+            exit
+            ;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1;;
+    esac
+done
+
 # Main --------------------------------------------------------------------------------
 
 ### Docker
@@ -238,6 +243,9 @@ trap cleanup_test_cluster ERR INT TERM #EXIT
 
 # Test deployment
 if [ ${NO_CHECK} = false ]; then
+    if [ "${INIT_CLEANUP}" = true ]; then
+        cleanup_test_cluster
+    fi
     # Setup cluster
     setup_test_cluster
     # Validation

@@ -25,7 +25,7 @@ LB_PORT := 8080
 INGRESS := ingress-nginx
 
 setup:
-	bash ../../setup_kind_test_env.sh -xsc
+	bash ../../setup_kind_test_env.sh -xsm
 	docker build -t ${IMG} ../../mock-api/
 
 create: setup
