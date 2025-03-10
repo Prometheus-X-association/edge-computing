@@ -58,4 +58,4 @@ purge: cleanup
 	docker images -q -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
 .PHONY: setup create run test stop cleanup purge
-.DEFAULT_GOAL := test
+.DEFAULT_GOAL := create

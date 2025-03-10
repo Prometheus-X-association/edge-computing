@@ -22,6 +22,7 @@ $ docker compose up
 
 ```bash
 $ git clone https://github.com/Prometheus-X-association/dataspace-connector.git
+$ cp .env.sample .env
 $ cd dataspace-connector/sandbox/infrastructure
 $ COMPOSE_BAKE=true docker compose build
 $ docker compose up

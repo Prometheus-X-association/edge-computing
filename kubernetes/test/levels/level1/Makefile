@@ -26,4 +26,4 @@ cleanup:
 	docker rmi -f ${IMG}
 
 .PHONY: setup run cleanup
-.DEFAULT_GOAL := run
+.DEFAULT_GOAL := setup

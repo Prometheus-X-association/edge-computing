@@ -16,24 +16,44 @@ SHELL := '/bin/bash'
 
 PTX_PREFIX := ptx
 PTX_CORE_PREFIX := ptx-core
-PDC_REPO := git@github.com:Prometheus-X-association/dataspace-connector.git
+PDC_REPO := https://github.com/czeni/dataspace-connector.git
 PDC_VER := 1.8.2
 PDC_ENV := production
+MONGO_VER := 8.0.5
 
 setup:
 	(\
-	TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
-	git clone ${PDC_REPO}; \
-	cd dataspace-connector; \
-	git switch --detach v${PDC_VER}; \
-	# docker compose build; \
-	docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
-	docker build -f ./docker/mongodb/Dockerfile -t ${PTX_PREFIX}/mongodb:${PDC_VER} .; \
-	cd sandbox/infrastructure; \
-	for bb in catalog contract consent;do \
-	    docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
-	done; \
-	rm -rf $${TMP_DIR}; \
+		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
+		git clone ${PDC_REPO}; \
+		cd dataspace-connector; \
+		git switch --detach v${PDC_VER}; \
+		# docker compose build; \
+		docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
+		# docker build -f ./docker/mongodb/Dockerfile -t ${PTX_PREFIX}/mongodb:${PDC_VER} .; \
+		cd sandbox/infrastructure; \
+		for bb in catalog contract consent;do \
+			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
+		done; \
+		rm -rf $${TMP_DIR}; \
+	)
+	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
+
+setup-edge:
+	(\
+		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
+		git clone ${PDC_REPO}; \
+		cd dataspace-connector; \
+		git checkout v${PDC_VER}-edge; \
+		# docker compose build; \
+		docker build -f ./docker/app/alpine/Dockerfile --build-arg ENV=${PDC_ENV} \
+						-t ${PTX_PREFIX}/connector:${PDC_VER}-alpine .; \
+		docker build -f ./docker/mongodb/slim/Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
+						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim .; \
+		cd sandbox/infrastructure; \
+		for bb in catalog contract consent;do \
+			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
+		done; \
+		rm -rf $${TMP_DIR}; \
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
@@ -45,11 +65,17 @@ run-catalog:
 run-pdc:
 	cd pdc && docker compose up
 
+run-pdc-edge:
+	cd pdc && docker compose -f docker-compose-edge.yaml up
+
 stop-pdc:
 	cd pdc && docker compose down -v
+
+stop-pdc-edge:
+	cd pdc && docker compose -f docker-compose-edge.yaml down -v
 
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/* | xargs -r docker rmi -f
 
-.PHONY: setup purge
-.DEFAULT_GOAL := setup
+.PHONY: setup setup-edge run-catalog run-pdc run-pdc-edge stop-pdc stop-pdc-edge purge
+.DEFAULT_GOAL := setup-edge

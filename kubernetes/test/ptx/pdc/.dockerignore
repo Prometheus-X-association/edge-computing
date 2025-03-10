@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/build
+**/logs/*
+data/
+docker/
+!docker/scripts/start.sh
+docs/
+sandbox/
+src/secrets/*
+src/keys/*
+src/public/
+**/*.md
+.*
+!.env.*
+.env.sample
+docker-compose.yml

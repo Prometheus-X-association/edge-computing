@@ -125,4 +125,4 @@ purge: cleanup
                     -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
 .PHONY: setup create run2 test2 run3 test3 run3-ingress test3-ingress stop cleanup tear-down purge
-.DEFAULT_GOAL := test3
+.DEFAULT_GOAL := create
