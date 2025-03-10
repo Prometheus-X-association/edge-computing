@@ -26,26 +26,28 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
+
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-  * [Table of Contents](#table-of-contents)
-  * [Design Document](#design-document)
-  * [Building Instructions](#building-instructions)
-    * [Production](#production)
-    * [Development & Testing](#development--testing)
-  * [Running Instructions](#running-instructions)
-  * [Example Usage](#example-usage)
-      * [REST-API](#rest-api)
-      * [Testing](#testing)
-      * [Examples](#examples)
-  * [Test Definitions](#test-definitions)
-  * [Unit Testing](#unit-testing)
-    * [Setup Test Environment](#setup-test-environment)
-    * [Run Tests](#run-tests)
-    * [Expected Results](#expected-results)
-  * [Component-Level Testing](#component-level-testing)
-    * [Setup Test Environment](#setup-test-environment-1)
-    * [Run Tests](#run-tests-1)
-    * [Expected Results](#expected-results-1)
+    * [Table of Contents](#table-of-contents)
+    * [Design Document](#design-document)
+    * [Building Instructions](#building-instructions)
+        * [Production](#production)
+        * [Development & Testing](#development--testing)
+    * [Running Instructions](#running-instructions)
+    * [Example Usage](#example-usage)
+        * [REST-API](#rest-api)
+        * [Testing](#testing)
+        * [Examples](#examples)
+    * [Test Definitions](#test-definitions)
+    * [Unit Testing](#unit-testing)
+        * [Setup Test Environment](#setup-test-environment)
+        * [Run Tests](#run-tests)
+        * [Expected Results](#expected-results)
+    * [Component-Level Testing](#component-level-testing)
+        * [Setup Test Environment](#setup-test-environment-1)
+        * [Run Tests](#run-tests-1)
+        * [Expected Results](#expected-results-1)
+
 <!-- TOC -->
 
 ## Design Document
@@ -291,8 +293,14 @@ Detailed test definitions can be found in [kubernetes/test/cases](kubernetes/tes
 
 ## Unit Testing
 
-Unit tests are based on (Python) module tests separately defined under `kubernetes/src/<module>/tests`
+Unit tests are based on (Python) module-specific tests defined separately under `kubernetes/src/<module>/tests`
 for each `ptx-edge` subcomponent `<module>`.
+
+Since multiple modules use and expose APIs, defined unit tests also contain API endpoint validations.
+These test cases usually use specific test methods/dependencies/tools recommended to module's main
+framework.
+
+Language and framework-independent [Karate](https://www.karatelabs.io/)-based tests are added later.
 
 ### Setup Test Environment
 
@@ -324,7 +332,7 @@ $ cd kubernetes/src/<module> && make docker-test-setup # Preferred way
 ```
 
 > [!NOTE]
-> 
+>
 > Unit test dependencies are the same as for its main submodules.
 
 ### Run Tests
@@ -449,7 +457,12 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 ## Component-Level Testing
 
 Testing of `ptx-edge` components is based on the basic functionality and applicability of
-`ptx-edge` K8s components defined in the [Design document](#design-document).\
+`ptx-edge` _K8s components_ defined in the [Design document](#design-document).
+This means that the designed component-level tests aim to test
+- [K8s manifest files](kubernetes/test/manifests/) designed to be used as templates by `ptx-edge` modules,
+- Implicitly validate K8s capabilities and K8s API server endpoints on which `ptx-edge` modules rely,
+- Interactions between `ptx-edge` modules as well as with K8s entities (services, persistent volumes, load balancer, etc.).
+
 The related test cases can be found in [kubernetes/test/suites](kubernetes/test/suites).
 
 > [!NOTE]
@@ -459,9 +472,9 @@ The related test cases can be found in [kubernetes/test/suites](kubernetes/test/
 
 Typically, these test scripts perform the following steps:
 
-- set up and configure a K3s test environment according to the test case,
-- deploy test manifest file(s),
-- wait for component(s) to set up and reach a stable state or escalate designed issues,
+- set up and configure a **K3s test environment** according to the test case,
+- deploy <ins>test manifest file(s)</ins> or make direct configuration by using <ins>K8s API</ins> using `kubectl`,
+- wait for component(s) to set up and reach a **stable state** or **escalate designed issues**,
 - check the test status and validate the outcome, and
 - tear down the test environment.
 
