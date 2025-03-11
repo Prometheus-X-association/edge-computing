@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pdc
+  name: pdc
+  namespace: ptx-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pdc
+  template:
+    metadata:
+      labels:
+        app: pdc
+    spec:
+      containers:
+        - name: ptx-connector
+          image: ptx/connector:1.8.2-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - name: pdc-env
+              mountPath: "/usr/src/app/.env.production"
+              subPath: ".env.production"
+              readOnly: true
+            - name: pdc-config
+              mountPath: "/usr/src/app/src/config.production.json"
+              subPath: "config.production.json"
+        - name: pdc-mongodb
+          image: ptx/mongodb:8.0.5-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+      hostAliases:
+        - hostnames:
+            - host.docker.internal
+          ip: 172.17.0.1
+      volumes:
+        - name: pdc-env
+          configMap:
+            name: pdc-configmap
+            items:
+              - key: env
+                path: ".env.production"
+        - name: pdc-config
+          configMap:
+            name: pdc-configmap
+            items:
+              - key: config
+                path: "config.production.json"

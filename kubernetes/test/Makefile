@@ -26,8 +26,6 @@ PDC := pdc
 
 setup:
 	bash setup_k3d_test_env.sh -xs
-	@#cd ../src/rest-api/ && make build
-	@#cd ../src/builder/ && make build
 	${MAKE} -C ../src/rest-api/ build
 	${MAKE} -C ../src/builder/ build
 	${MAKE} -C ./ptx/ setup-edge
@@ -38,13 +36,14 @@ create: setup
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
 	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG}
+	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
 
 status:
 	k3d cluster list && return 0
 	@echo
-	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
+	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit
 	@echo
-	kubectl -n ${PTX} get all,ingress,pv,pvc --ignore-not-found -o wide  || exit 0
+	kubectl -n ${PTX} get all,configmaps,ingress,pv,pvc --ignore-not-found -o wide  || exit 0
 
 run-api:
 	### Setup rest-api
@@ -85,13 +84,17 @@ run-builder:
 
 test-builder: | setup create run-builder
 
+run-ptx-core:
+	echo
+
 run-pdc:
 	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-configmap.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
-	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s daemonset/${PDC}
-	kubectl -n ${PTX} get all -o wide
+	#kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
+	kubectl -n ${PTX} get all,configmaps -o wide
 
-test-pdc: | setup create run-pdc
+test-pdc: | setup create run-ptx-core run-pdc
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
@@ -107,5 +110,5 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create status run-api test-api run-builder test-builder run-pdc test-pdc stop cleanup tear-down purge
+.PHONY: setup create status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc stop cleanup tear-down purge
 .DEFAULT_GOAL := create

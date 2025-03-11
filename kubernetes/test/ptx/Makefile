@@ -16,6 +16,7 @@ SHELL := '/bin/bash'
 
 PTX_PREFIX := ptx
 PTX_CORE_PREFIX := ptx-core
+PTX_CORE := catalog contract consent
 PDC_REPO := https://github.com/czeni/dataspace-connector.git
 PDC_VER := 1.8.2
 PDC_ENV := production
@@ -31,7 +32,7 @@ setup:
 		docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
 		# docker build -f ./docker/mongodb/Dockerfile -t ${PTX_PREFIX}/mongodb:${PDC_VER} .; \
 		cd sandbox/infrastructure; \
-		for bb in catalog contract consent;do \
+		for bb in ${PTX_CORE}; do \
 			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
 		done; \
 		rm -rf $${TMP_DIR}; \
@@ -50,7 +51,7 @@ setup-edge:
 		docker build -f ./docker/mongodb/slim/Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
 						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim .; \
 		cd sandbox/infrastructure; \
-		for bb in catalog contract consent;do \
+		for bb in ${PTX_CORE}; do \
 			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
 		done; \
 		rm -rf $${TMP_DIR}; \
