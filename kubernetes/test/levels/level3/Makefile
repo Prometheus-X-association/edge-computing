@@ -13,11 +13,11 @@
 # limitations under the License.
 
 CLUSTER := ptx-edge-test
-IMG := "ptx-edge-api:0.1"
+IMG := ptx-edge-api:0.1
 PORT := 8080
 TEST := ptx-edge
 API := rest-api
-PREFIX := "ptx-edge/v1"
+PREFIX := ptx-edge/v1
 NPORT := 30080
 CCM_NAME := kind-ccm
 CCM_VER := v0.5.0
@@ -111,12 +111,12 @@ test3-ingress: | setup create run3-ingress
 
 stop:
 	@#kubectl -n ${TEST} delete all --all --now
-	kubectl delete namespace ${TEST} --ignore-not-found --now
-	kubectl delete namespace ${INGRESS} --ignore-not-found --now
-	docker ps -q -f "name=${CCM_NAME}" -f "name=kindccm-*" | xargs -r docker kill
+	kubectl delete namespace ${TEST} --ignore-not-found --now  || exit 0
+	kubectl delete namespace ${INGRESS} --ignore-not-found --now || exit 0
+	docker ps -q -f "name=${CCM_NAME}" -f "name=kindccm-*" | xargs -r docker kill || exit 0
 
 cleanup:
-	kind delete cluster -n ${CLUSTER}
+	kind delete cluster -n ${CLUSTER} || exit 0
 
 tear-down: | stop cleanup
 

@@ -26,28 +26,26 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
-
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-    * [Table of Contents](#table-of-contents)
-    * [Design Document](#design-document)
-    * [Building Instructions](#building-instructions)
-        * [Production](#production)
-        * [Development & Testing](#development--testing)
-    * [Running Instructions](#running-instructions)
-    * [Example Usage](#example-usage)
-        * [REST-API](#rest-api)
-        * [Testing](#testing)
-        * [Examples](#examples)
-    * [Test Definitions](#test-definitions)
-    * [Unit Testing](#unit-testing)
-        * [Setup Test Environment](#setup-test-environment)
-        * [Run Tests](#run-tests)
-        * [Expected Results](#expected-results)
-    * [Component-Level Testing](#component-level-testing)
-        * [Setup Test Environment](#setup-test-environment-1)
-        * [Run Tests](#run-tests-1)
-        * [Expected Results](#expected-results-1)
-
+  * [Table of Contents](#table-of-contents)
+  * [Design Document](#design-document)
+  * [Building Instructions](#building-instructions)
+    * [Production](#production)
+    * [Development & Testing](#development--testing)
+  * [Running Instructions](#running-instructions)
+  * [Example Usage](#example-usage)
+      * [REST-API](#rest-api)
+      * [Testing](#testing)
+      * [Examples](#examples)
+  * [Test Definitions](#test-definitions)
+  * [Unit Testing](#unit-testing)
+    * [Setup Test Environment](#setup-test-environment)
+    * [Run Tests](#run-tests)
+    * [Expected Results](#expected-results)
+  * [Component-Level Testing](#component-level-testing)
+    * [Setup Test Environment](#setup-test-environment-1)
+    * [Run Tests](#run-tests-1)
+    * [Expected Results](#expected-results-1)
 <!-- TOC -->
 
 ## Design Document
@@ -459,9 +457,11 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 Testing of `ptx-edge` components is based on the basic functionality and applicability of
 `ptx-edge` _K8s components_ defined in the [Design document](#design-document).
 This means that the designed component-level tests aim to test
+
 - [K8s manifest files](kubernetes/test/manifests/) designed to be used as templates by `ptx-edge` modules,
 - Implicitly validate K8s capabilities and K8s API server endpoints on which `ptx-edge` modules rely,
-- Interactions between `ptx-edge` modules as well as with K8s entities (services, persistent volumes, load balancer, etc.).
+- Interactions between `ptx-edge` modules as well as with K8s entities (services, persistent volumes, load balancer,
+  etc.).
 
 The related test cases can be found in [kubernetes/test/suites](kubernetes/test/suites).
 

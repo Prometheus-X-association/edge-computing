@@ -13,7 +13,7 @@
 # limitations under the License.
 
 CLUSTER := ptx-edge-test
-IMG := "ptx-edge-api:0.1"
+IMG := ptx-edge-api:0.1
 PORT := 8080
 TEST := ptx-edge
 API := rest-api
@@ -48,11 +48,11 @@ run:
 test: | setup create run
 
 stop:
-	kubectl -n ${TEST} delete all --all --now
-	kubectl delete namespace ${TEST} --now
+	kubectl -n ${TEST} delete all --all --now || exit 0
+	kubectl delete namespace ${TEST} --now || exit 0
 
 cleanup:
-	kind delete cluster -n ${CLUSTER}
+	kind delete cluster -n ${CLUSTER} || exit 0
 
 purge: cleanup
 	docker images -q -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
