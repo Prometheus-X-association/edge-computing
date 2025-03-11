@@ -37,7 +37,7 @@ on different levels described as follows.
 
 > [!IMPORTANT]
 >
-> The current setup creates a test environment based on the predefined **Level 4**,
+> The current setup creates a test environment based on the predefined **Level 5**,
 > while the main [Makefile](../../Makefile) points to the *Level 3* setup!
 
 Prior test level configs can be found in [levels](levels) folder.
@@ -49,6 +49,25 @@ Prior test level configs can be found in [levels](levels) folder.
 > cluster relies on the **k3d** tool!
 
 ## Preparation and Setup
+
+All test/install scripts are tested on a virtual machine based on _Ubuntu 24.04 LTS cloud_ version.
+
+> [!NOTE]
+>
+> For the tests with multinode kind/k3d clusters,
+> use a VM with disk size at least **<ins>30GB</ins>**!
+
+> [!WARNING]
+>
+> Ubuntu 24.04 LTS with default LVM configuration only uses a fraction of
+> the configured virtual disk.
+> This can easily lead to `no space left` type of issues, especially during
+> image import in cluster creation!
+
+To extend the logical volume on the VM, the following helper script can be used.
+```bash
+$ cd kubernetes/test/scripts && ./ubuntu-resize-lvm.sh
+```
 
 ### Level 1 testing (Mock API in single docker image)
 

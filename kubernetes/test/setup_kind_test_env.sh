@@ -62,7 +62,7 @@ function setup_rootless_docker() {
     source ~/.bashrc
     # Add support for Ubuntu 24.04
     source /etc/lsb-release
-    if [ "$DISTRIB_RELEASE" = 24.04 ]; then
+    if [ "${DISTRIB_RELEASE}" = 24.04 ]; then
         filename=$(echo "${HOME}"/bin/rootlesskit | sed -e s@^/@@ -e s@/@.@g)
         cat <<EOF > ~/"$filename"
 abi <abi/4.0>,

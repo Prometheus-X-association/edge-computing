@@ -14,12 +14,15 @@
 
 CLUSTER := test-cluster
 PTX := ptx-edge
-API_IMG := "ptx-edge/rest-api:1.0"
+API_IMG := ptx-edge/rest-api:1.0
 REST_API := rest-api
 API_PORT := 8080
 PREFIX := ptx-edge/v1
-BUILDER_IMG := "ptx-edge/builder:1.0"
+BUILDER_IMG := ptx-edge/builder:1.0
 BUILDER := builder
+PDC_IMG := ptx/connector:1.8.2-alpine
+MONGODB_IMG := ptx/mongodb:8.0.5-slim
+PDC := pdc
 
 setup:
 	bash setup_k3d_test_env.sh -xs
@@ -27,13 +30,14 @@ setup:
 	@#cd ../src/builder/ && make build
 	${MAKE} -C ../src/rest-api/ build
 	${MAKE} -C ../src/builder/ build
+	${MAKE} -C ./ptx/ setup-edge
 
 create: setup
-	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
-	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
+	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
+	#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
-	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG}
+	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG}
 
 status:
 	k3d cluster list && return 0
@@ -81,13 +85,21 @@ run-builder:
 
 test-builder: | setup create run-builder
 
+run-pdc:
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
+	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s daemonset/${PDC}
+	kubectl -n ${PTX} get all -o wide
+
+test-pdc: | setup create run-pdc
+
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
-	kubectl delete namespace ${PTX} --ignore-not-found --now
-	kubectl delete pv,pvc,ingress --all --ignore-not-found --force
+	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
+	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
 
 cleanup:
-	k3d cluster delete ${CLUSTER}
+	k3d cluster delete ${CLUSTER} || exit 0
 
 tear-down: | stop cleanup
 
@@ -95,5 +107,5 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create status run-api test-api run-builder test-builder stop cleanup tear-down purge
-.DEFAULT_GOAL := test3
+.PHONY: setup create status run-api test-api run-builder test-builder run-pdc test-pdc stop cleanup tear-down purge
+.DEFAULT_GOAL := create
