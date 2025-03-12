@@ -17,12 +17,12 @@ SHELL := '/bin/bash'
 PTX_PREFIX := ptx
 PTX_CORE_PREFIX := ptx-core
 PTX_CORE := catalog contract consent
-PDC_REPO := https://github.com/czeni/dataspace-connector.git
+PDC_REPO := https://github.com/Prometheus-X-association/dataspace-connector.git
 PDC_VER := 1.8.2
 PDC_ENV := production
 MONGO_VER := 8.0.5
 
-setup:
+setup-orig:
 	(\
 		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
 		git clone ${PDC_REPO}; \
@@ -39,20 +39,24 @@ setup:
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
-setup-edge:
+setup:
 	(\
-		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
-		git clone ${PDC_REPO}; \
-		cd dataspace-connector; \
-		git checkout v${PDC_VER}-edge; \
-		# docker compose build; \
-		docker build -f ./docker/app/alpine/Dockerfile --build-arg ENV=${PDC_ENV} \
-						-t ${PTX_PREFIX}/connector:${PDC_VER}-alpine .; \
-		docker build -f ./docker/mongodb/slim/Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
-						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim .; \
-		cd sandbox/infrastructure; \
+		TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
+			git clone ${PDC_REPO}; \
+			cd dataspace-connector; \
+			git switch --detach v${PDC_VER}; \
+		popd; \
+		cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
+		docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
+						-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
+		docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
+						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim $${TMP_DIR}/dataspace-connector; \
+		# cd sandbox/infrastructure; \
+		docker build -f ./core/mongoseed.Dockerfile -t ${PTX_PREFIX}/mongo-seed:${PDC_VER}-slim \
+						$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/utils/connector/mongo-seed/; \
 		for bb in ${PTX_CORE}; do \
-			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
+			docker build -f ./core/$${bb}.Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER}-slim \
+								$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
 		done; \
 		rm -rf $${TMP_DIR}; \
 	)
@@ -66,17 +70,17 @@ run-catalog:
 run-pdc:
 	cd pdc && docker compose up
 
-run-pdc-edge:
-	cd pdc && docker compose -f docker-compose-edge.yaml up
-
 stop-pdc:
 	cd pdc && docker compose down -v
 
-stop-pdc-edge:
-	cd pdc && docker compose -f docker-compose-edge.yaml down -v
+run-core:
+	cd core && docker compose up
+
+stop-core:
+	cd core && docker compose down -v
 
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/* | xargs -r docker rmi -f
 
-.PHONY: setup setup-edge run-catalog run-pdc run-pdc-edge stop-pdc stop-pdc-edge purge
-.DEFAULT_GOAL := setup-edge
+.PHONY: setup-orig setup run-catalog run-pdc stop-pdc run-core stop-core purge
+.DEFAULT_GOAL := setup

@@ -2,7 +2,7 @@ name: pdc
 services:
   connector:
     container_name: pdc-connector
-    image: ptx/connector:1.8.2-alpine
+    image: ptx/connector:1.8.2
     #    restart: unless-stopped
     restart: no
     depends_on:
@@ -18,33 +18,32 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - pdc
+      - pdc-nw
   mongodb:
     container_name: pdc-mongodb
-#    image: ptx/mongodb:4.0.5-alpine
-    image: ptx/mongodb:8.0.5-slim
+    image: mongo:8.0.5
     ports:
       - "27018:27017"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - pdc
-      - core
+      - pdc-nw
+      - core-nw
   catalog:
     container_name: ptx-catalog
     image: ptx-core/catalog:1.8.2
     ports:
       - "3002:8082"
     networks:
-      - core
+      - core-nw
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
       # test: ["CMD-SHELL", "curl -sSf http://localhost:8082/__admin/health || exit 1"]
       test: [ "NONE" ]
 networks:
-  pdc:
+  pdc-nw:
     external: false
-  core:
+  core-nw:
     external: false
     name: sandbox

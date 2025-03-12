@@ -1,0 +1,50 @@
+name: ptx
+services:
+  mongodb-sandbox:
+    container_name: "mongodb-sandbox"
+    image: ptx/mongodb:8.0.5-slim
+    ports:
+      - "27020:27017"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - core
+  mongo-seed:
+    container_name: "mongodb-seed"
+    image: ptx/mongo-seed:1.8.2-slim
+    depends_on:
+      - mongodb-sandbox
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - core
+  contract:
+    container_name: "contract"
+    image: ptx-core/contract:1.8.2-slim
+    ports:
+      - "3001:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - core
+  catalog:
+    container_name: "catalog"
+    image: ptx-core/catalog:1.8.2-slim
+    ports:
+      - "3002:8082"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - core
+  consent:
+    container_name: "consent"
+    image: ptx-core/consent:1.8.2-slim
+    ports:
+      - "3003:8083"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - core
+networks:
+  core:
+    external: false
