@@ -84,10 +84,8 @@ run-builder:
 
 test-builder: | setup create run-builder
 
-run-ptx-core:
-	echo
-
 run-pdc:
+	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-configmap.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
@@ -100,6 +98,7 @@ stop:
 	@#kubectl -n ${PTX} delete all --all --now
 	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
 	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
+	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
 
 cleanup:
 	k3d cluster delete ${CLUSTER} || exit 0

@@ -24,4 +24,4 @@ data:
       "consentUri": "http://host.docker.internal:3003/v1/",
       "expressLimitSize": "25mb"
     }
-    
+immutable: true

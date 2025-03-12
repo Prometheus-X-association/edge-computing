@@ -62,11 +62,6 @@ setup:
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
-run-catalog:
-	@# docker run --rm --name ptx-catalog -p 3002:8082 --no-healthcheck --add-host host.docker.internal:host-gateway
-	@# 				-ti ptx-core/catalog:1.8.2
-	cd pdc && docker compose up catalog
-
 run-pdc:
 	cd pdc && docker compose up
 
@@ -78,6 +73,13 @@ run-core:
 
 stop-core:
 	cd core && docker compose down -v
+
+run-catalog:
+	@# cd pdc && docker compose up catalog
+	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
+	docker run -d --name ptx-catalog -p 3002:8082 --no-healthcheck \
+					--add-host host.docker.internal:host-gateway -ti ptx-core/catalog:1.8.2-slim
+	docker ps -f name=ptx-catalog
 
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/* | xargs -r docker rmi -f
