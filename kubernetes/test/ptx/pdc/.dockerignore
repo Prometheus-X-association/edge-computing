@@ -10,6 +10,7 @@ sandbox/
 src/secrets/*
 src/keys/*
 src/public/
+src/config.sample.json
 **/*.md
 .*
 !.env.*

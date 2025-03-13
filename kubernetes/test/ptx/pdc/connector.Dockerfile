@@ -11,4 +11,4 @@ COPY . .
 RUN mkdir -p /src/keys && CI=true pnpm install
 # Expose the port on which the app will run
 EXPOSE 3000
-CMD ["/bin/sh", "./docker/scripts/start.sh", "$ENV"]
+CMD ["/bin/sh", "docker/scripts/start.sh"]

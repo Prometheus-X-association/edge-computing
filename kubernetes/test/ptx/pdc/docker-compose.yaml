@@ -3,7 +3,7 @@ services:
   connector:
     container_name: pdc-connector
     image: ptx/connector:1.8.2-slim
-    #    restart: unless-stopped
+    # restart: unless-stopped
     restart: no
     depends_on:
       - mongodb
@@ -21,7 +21,7 @@ services:
       - internal
   mongodb:
     container_name: pdc-mongodb
-#    image: ptx/mongodb:4.0.5-alpine
+    # image: ptx/mongodb:4.0.5-alpine
     image: ptx/mongodb:8.0.5-slim
     ports:
       - "27018:27017"

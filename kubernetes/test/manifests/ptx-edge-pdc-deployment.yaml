@@ -52,5 +52,5 @@ spec:
           configMap:
             name: pdc-configmap
             items:
-              - key: config
+              - key: default-config
                 path: "config.production.json"
