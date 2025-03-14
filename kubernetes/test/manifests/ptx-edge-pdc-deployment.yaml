@@ -15,6 +15,14 @@ spec:
       labels:
         app: pdc
     spec:
+      initContainers:
+        - name: pdc-mongodb
+          image: ptx/mongodb:8.0.5-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          restartPolicy: Always
       containers:
         - name: ptx-connector
           image: ptx/connector:1.8.2-slim
@@ -50,12 +58,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-        - name: pdc-mongodb
-          image: ptx/mongodb:8.0.5-slim
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 27017
-              protocol: TCP
       hostAliases:
         - hostnames:
             - host.docker.internal
