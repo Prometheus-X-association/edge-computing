@@ -11,6 +11,15 @@ spec:
       labels:
         app.kubernetes.io/name: pdc
     spec:
+      initContainers:
+        - name: pdc-mongodb
+          image: ptx/mongodb:8.0.5-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          # Native sidecar container
+          restartPolicy: Always
       containers:
         - name: ptx-connector
           image: ptx/connector:1.8.2-slim
@@ -19,6 +28,7 @@ spec:
             - containerPort: 3000
               protocol: TCP
               hostPort: 30003
+              name: pdc-port
           volumeMounts:
             - name: pdc-env
               mountPath: /usr/src/app/.env.production
@@ -47,12 +57,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-        - name: pdc-mongodb
-          image: ptx/mongodb:8.0.5-slim
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 27017
-              protocol: TCP
+          # Daemonset best practice for node restarting
+          restartPolicy: Always
       hostAliases:
         - hostnames:
             - host.docker.internal
