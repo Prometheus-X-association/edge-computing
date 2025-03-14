@@ -4,7 +4,7 @@ ARG ENV
 ENV ENV=$ENV
 # Install pnpm globally & Create app directory
 WORKDIR /usr/src/app
-RUN npm install -g pnpm && apk add --no-cache git && git init
+RUN npm install -g pnpm && apk add --no-cache gettext-envsubst git && git init
 # Bundle app source
 COPY . .
 # Install app dependencies
