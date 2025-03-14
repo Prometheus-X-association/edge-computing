@@ -17,20 +17,39 @@ spec:
     spec:
       containers:
         - name: ptx-connector
-          image: ptx/connector:1.8.2-alpine
+          image: ptx/connector:1.8.2-slim
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               protocol: TCP
           volumeMounts:
             - name: pdc-env
-              mountPath: "/usr/src/app/.env.production"
-              subPath: ".env.production"
+              mountPath: /usr/src/app/.env.production
+              subPath: .env.production
               readOnly: true
             - name: pdc-config
-              mountPath: "/usr/src/app/src/config.production.json"
-              subPath: "config.production.json"
+              mountPath: /usr/src/app/src/config.production.json.template
+              subPath: config.production.json.template
               readOnly: true
+            - name: pdc-start
+              mountPath: /usr/src/app/docker/scripts/start.sh
+              subPath: start.sh
+              readOnly: true
+          command:
+            - /bin/sh
+            - ./docker/scripts/start.sh
+          args:
+            - ./src/config.production.json
+          envFrom:
+            - configMapRef:
+                name: pdc-config-env
+            - secretRef:
+                name: pdc-secrets-env
+          env:
+            - name: PDC_NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim
           imagePullPolicy: IfNotPresent
@@ -44,13 +63,19 @@ spec:
       volumes:
         - name: pdc-env
           configMap:
-            name: pdc-configmap
+            name: pdc-config-files
             items:
               - key: env
-                path: ".env.production"
+                path: .env.production
         - name: pdc-config
           configMap:
-            name: pdc-configmap
+            name: pdc-config-files
             items:
-              - key: default-config
-                path: "config.production.json"
+              - key: config-template
+                path: config.production.json.template
+        - name: pdc-start
+          configMap:
+            name: pdc-config-files
+            items:
+              - key: start.sh
+                path: start.sh

@@ -20,19 +20,20 @@ API_PORT := 8080
 PREFIX := ptx-edge/v1
 BUILDER_IMG := ptx-edge/builder:1.0
 BUILDER := builder
-PDC_IMG := ptx/connector:1.8.2-alpine
+PDC_IMG := ptx/connector:1.8.2-slim
 MONGODB_IMG := ptx/mongodb:8.0.5-slim
 PDC := pdc
+PDC_PORT := 3000
 
 setup:
 	bash setup_k3d_test_env.sh -xs
 	${MAKE} -C ../src/rest-api/ build
 	${MAKE} -C ../src/builder/ build
-	${MAKE} -C ./ptx/ setup-edge
+	${MAKE} -C ./ptx/ setup
 
 create: setup
-	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
-	#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
+	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
+	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
 	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG}
@@ -56,7 +57,7 @@ run-api:
 	 	--default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
 	kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${REST_API}
 	kubectl -n ${PTX} get nodes,all,endpoints,ingress,pv,pvc -o wide
-	@ echo "Waiting for ingress to set up..." && sleep 10
+	@echo "Waiting for ingress to set up..." && sleep 10
 	$(eval INGRESS_IP = `kubectl -n ${PTX} get ingress/${REST_API} -o jsonpath='{.status.loadBalancer.ingress[].ip}'`)
 	@echo
 	@echo ">>> ${REST_API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
@@ -87,18 +88,24 @@ test-builder: | setup create run-builder
 run-pdc:
 	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-configmap.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
-	#kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
-	kubectl -n ${PTX} get all,configmaps -o wide
+	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
+	#kubectl -n ${PTX} expose deployment/${PDC} --target-port ${PDC_PORT} --port ${PDC_PORT} --name ${PDC}
+	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=30003
+	#	kubectl -n ${PTX} create ingress ${PDC} --rule="/${PREFIX}/*=${PDC}:${PDC_PORT},tls" --class=traefik \
+	#	 	--annotation="ingress.kubernetes.io/ssl-redirect=false"
+	#	@echo "Waiting for ingress to set up..." && sleep 10
+	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 
-test-pdc: | setup create run-ptx-core run-pdc
+test-pdc: | setup create run-pdc
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
 	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
 	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
+	docker container prune -f
 
 cleanup:
 	k3d cluster delete ${CLUSTER} || exit 0

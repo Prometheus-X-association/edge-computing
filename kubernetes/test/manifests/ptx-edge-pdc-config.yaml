@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-files
+  namespace: ptx-edge
+data:
+  env: |
+    NODE_ENV=production
+    PORT=3000
+    SESSION_SECRET=abc
+    SESSION_COOKIE_EXPIRATION=24000
+    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
+    CURATOR=https://visionspol.eu
+    MAINTAINER=https://visionspol.eu
+    WINSTON_LOGS_MAX_FILES=14d
+    WINSTON_LOGS_MAX_SIZE=20m
+  config-template: |
+    {
+      "endpoint": "http://${PDC_NODE_IP}:30003",
+      "serviceKey": "${PDC_SERVICE_KEY}",
+      "secretKey": "${PDC_SECRET_KEY}",
+      "catalogUri": "${PDC_CATALOG_URI}",
+      "contractUri": "${PDC_CONTRACT_URI}",
+      "consentUri": "${PDC_CONSENT_URI}",
+      "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
+    }
+  start.sh: |
+    #!/usr/bin/env sh
+    CFG_FILE="${1:-/usr/src/app/src/config.production.json}"
+    envsubst <"${CFG_FILE}.template" >"${CFG_FILE}"
+    npm run build && npm run start
+immutable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-env
+  namespace: ptx-edge
+data:
+  # Separate config entries for env
+  PDC_ENDPOINT: "http://pdc.ptx-edge.localhost:80/"
+  PDC_CATALOG_URI: "http://host.docker.internal:3002/v1/"
+  PDC_CONTRACT_URI: "http://host.docker.internal:3001/"
+  PDC_CONSENT_URI: "http://host.docker.internal:3003/v1/"
+  PDC_EXPRESS_LIMIT: "100mb"
+immutable: true
+---
+# kubectl -n ptx-edge create secret generic pdc-secrets-env --type=Opaque \
+# --from-literal=PDC_SERVICE_KEY=dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV \
+# --from-literal=PDC_SECRET_KEY=Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x \
+# -o yaml --dry-run=client
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: pdc-secrets-env
+  namespace: ptx-edge
+data:
+  PDC_SERVICE_KEY: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
+  PDC_SECRET_KEY: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==
+immutable: true

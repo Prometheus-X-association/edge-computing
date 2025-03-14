@@ -25,8 +25,7 @@ MONGO_VER := 8.0.5
 setup-orig:
 	(\
 		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
-		git clone ${PDC_REPO}; \
-		cd dataspace-connector; \
+		git clone ${PDC_REPO} && cd dataspace-connector; \
 		git switch --detach v${PDC_VER}; \
 		# docker compose build; \
 		docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
@@ -42,8 +41,7 @@ setup-orig:
 setup:
 	(\
 		TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
-			git clone ${PDC_REPO}; \
-			cd dataspace-connector; \
+			git clone ${PDC_REPO} && cd dataspace-connector; \
 			git switch --detach v${PDC_VER}; \
 		popd; \
 		cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
