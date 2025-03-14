@@ -44,7 +44,9 @@ status:
 	@echo
 	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit
 	@echo
-	kubectl -n ${PTX} get all,configmaps,ingress,pv,pvc --ignore-not-found -o wide  || exit 0
+	kubectl get nodes -o wide || exit
+	@echo
+	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpoints,pv,pvc --ignore-not-found -o wide  || exit 0
 
 run-api:
 	### Setup rest-api
@@ -91,7 +93,6 @@ run-pdc:
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
-	#kubectl -n ${PTX} expose deployment/${PDC} --target-port ${PDC_PORT} --port ${PDC_PORT} --name ${PDC}
 	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=30003
 	#	kubectl -n ${PTX} create ingress ${PDC} --rule="/${PREFIX}/*=${PDC}:${PDC_PORT},tls" --class=traefik \
 	#	 	--annotation="ingress.kubernetes.io/ssl-redirect=false"
@@ -99,6 +100,13 @@ run-pdc:
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 
 test-pdc: | setup create run-pdc
+
+run-pdc-daemon:
+	${MAKE} -C ./ptx/ run-catalog
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-daemonset.yaml
+	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pdc
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pdc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pdc
+    spec:
+      containers:
+        - name: ptx-connector
+          image: ptx/connector:1.8.2-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+              hostPort: 30003
+          volumeMounts:
+            - name: pdc-env
+              mountPath: /usr/src/app/.env.production
+              subPath: .env.production
+              readOnly: true
+            - name: pdc-config
+              mountPath: /usr/src/app/src/config.production.json.template
+              subPath: config.production.json.template
+              readOnly: true
+            - name: pdc-start
+              mountPath: /usr/src/app/docker/scripts/start.sh
+              subPath: start.sh
+              readOnly: true
+          command:
+            - /bin/sh
+            - ./docker/scripts/start.sh
+          args:
+            - ./src/config.production.json
+          envFrom:
+            - configMapRef:
+                name: pdc-config-env
+            - secretRef:
+                name: pdc-secrets-env
+          env:
+            - name: PDC_NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+        - name: pdc-mongodb
+          image: ptx/mongodb:8.0.5-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+      hostAliases:
+        - hostnames:
+            - host.docker.internal
+          ip: 172.17.0.1
+      volumes:
+        - name: pdc-env
+          configMap:
+            name: pdc-config-files
+            items:
+              - key: env
+                path: .env.production
+        - name: pdc-config
+          configMap:
+            name: pdc-config-files
+            items:
+              - key: config-template
+                path: config.production.json.template
+        - name: pdc-start
+          configMap:
+            name: pdc-config-files
+            items:
+              - key: start.sh
+                path: start.sh
