@@ -11,6 +11,8 @@ spec:
       labels:
         app.kubernetes.io/name: pdc
     spec:
+      nodeSelector:
+        privacy-zone.dataspace.prometheus-x.org/pdc: "true"
       initContainers:
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim

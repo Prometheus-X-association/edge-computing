@@ -94,9 +94,6 @@ run-pdc:
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=30003
-	#	kubectl -n ${PTX} create ingress ${PDC} --rule="/${PREFIX}/*=${PDC}:${PDC_PORT},tls" --class=traefik \
-	#	 	--annotation="ingress.kubernetes.io/ssl-redirect=false"
-	#	@echo "Waiting for ingress to set up..." && sleep 10
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 
 test-pdc: | setup create run-pdc
