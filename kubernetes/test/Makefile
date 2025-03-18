@@ -46,7 +46,7 @@ status:
 	@echo
 	kubectl get nodes -o wide || exit
 	@echo
-	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpoints,pv,pvc --ignore-not-found -o wide  || exit 0
+	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpointslices,pv,pvc --ignore-not-found -o wide  || exit 0
 
 run-api:
 	### Setup rest-api
@@ -58,7 +58,7 @@ run-api:
 	kubectl -n ${PTX} create ingress ${REST_API} --rule="/${PREFIX}/*=${REST_API}:${API_PORT},tls" --class=traefik \
 	 	--default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
 	kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${REST_API}
-	kubectl -n ${PTX} get nodes,all,endpoints,ingress,pv,pvc -o wide
+	kubectl -n ${PTX} get nodes,all,endpointslices,ingress,pv,pvc -o wide
 	@echo "Waiting for ingress to set up..." && sleep 10
 	$(eval INGRESS_IP = `kubectl -n ${PTX} get ingress/${REST_API} -o jsonpath='{.status.loadBalancer.ingress[].ip}'`)
 	@echo

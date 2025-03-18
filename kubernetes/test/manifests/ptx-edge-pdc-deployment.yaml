@@ -20,9 +20,15 @@ spec:
           image: ptx/mongodb:8.0.5-slim
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 27017
+            - name: mongo-port
+              containerPort: 27017
               protocol: TCP
           restartPolicy: Always
+          livenessProbe:
+            httpGet:
+              port: mongo-port
+            initialDelaySeconds: 3
+            periodSeconds: 5
       containers:
         - name: ptx-connector
           image: ptx/connector:1.8.2-slim

@@ -20,6 +20,11 @@ spec:
               protocol: TCP
           # Native sidecar container
           restartPolicy: Always
+          livenessProbe:
+            httpGet:
+              port: 27017
+            initialDelaySeconds: 3
+            periodSeconds: 5
       containers:
         - name: ptx-connector
           image: ptx/connector:1.8.2-slim
@@ -57,8 +62,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-          # Daemonset best practice for node restarting
-          restartPolicy: Always
       hostAliases:
         - hostnames:
             - host.docker.internal

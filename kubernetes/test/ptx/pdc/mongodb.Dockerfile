@@ -10,4 +10,5 @@ RUN apt-get update && apt-get install -y gnupg curl && \
 VOLUME /data/db
 WORKDIR /data
 EXPOSE 27017
+HEALTHCHECK CMD curl -sSf http://localhost:27017 || exit 1
 CMD ["mongod", "--bind_ip", "0.0.0.0"]
