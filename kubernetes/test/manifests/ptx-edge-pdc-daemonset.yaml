@@ -2,17 +2,19 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: pdc
+  labels:
+    app.kubernetes.io/name: pdc
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: pdc
+      app: pdc
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: pdc
+        app: pdc
     spec:
       nodeSelector:
-        privacy-zone.dataspace.prometheus-x.org/pdc: "true"
+        connector.dataspace.prometheus-x.org/enabled: "true"
       initContainers:
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim

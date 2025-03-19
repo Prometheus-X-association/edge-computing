@@ -4,7 +4,7 @@ metadata:
   name: rest-api
   namespace: ptx-edge
   labels:
-    app: rest-api
+    app.kubernetes.io/name: rest-api
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
 spec:

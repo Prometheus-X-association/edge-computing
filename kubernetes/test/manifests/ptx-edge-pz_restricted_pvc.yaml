@@ -4,7 +4,7 @@ metadata:
   name: worker-pvc
   namespace: ptx-edge
   labels:
-    job-name: builder
+    app.kubernetes.io/job-name: builder
 spec:
   accessModes:
     - ReadWriteOnce

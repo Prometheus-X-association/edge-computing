@@ -40,13 +40,13 @@ create: setup
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
 
 status:
-	k3d cluster list && return 0
+	k3d cluster list || exit 0
 	@echo
-	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit
+	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
 	@echo
-	kubectl get nodes -o wide || exit
+	kubectl get nodes -o wide || exit 0
 	@echo
-	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpointslices,pv,pvc --ignore-not-found -o wide  || exit 0
+	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpointslices,pv,pvc --ignore-not-found -o wide || exit 0
 
 run-api:
 	### Setup rest-api
@@ -110,7 +110,7 @@ stop:
 	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
 	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
-	docker container prune -f
+	docker container prune -f || exit 0
 
 cleanup:
 	k3d cluster delete ${CLUSTER} || exit 0

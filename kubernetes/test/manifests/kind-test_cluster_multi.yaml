@@ -9,8 +9,8 @@ nodes:
     labels:
       privacy-zone.dataspace.prometheus-x.org/zone-A: true
       privacy-zone.dataspace.prometheus-x.org/zone-B: true
-      privacy-zone.dataspace.prometheus-x.org/pdc: true
+      connector.dataspace.prometheus-x.org/enabled: true
   - role: worker
     labels:
       privacy-zone.dataspace.prometheus-x.org/zone-B: true
-      privacy-zone.dataspace.prometheus-x.org/pdc: true
+      connector.dataspace.prometheus-x.org/enabled: true

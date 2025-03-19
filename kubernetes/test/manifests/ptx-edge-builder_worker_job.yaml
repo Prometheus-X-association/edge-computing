@@ -4,18 +4,18 @@ metadata:
   name: builder
   namespace: ptx-edge
   labels:
-    job-name: builder
+    app.kubernetes.io/name: builder
 spec:
   completions: 1
   parallelism: 1
   backoffLimit: 2
   selector:
     matchLabels:
-      job-name: builder
+      app.kubernetes.io/name: builder
   template:
     metadata:
       labels:
-        job-name: builder
+        app.kubernetes.io/name: builder
     spec:
       initContainers:
         - name: builder

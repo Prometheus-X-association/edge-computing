@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: pdc-config-files
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
 data:
   env: |
     NODE_ENV=production
@@ -36,6 +38,8 @@ kind: ConfigMap
 metadata:
   name: pdc-config-env
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
 data:
   # Separate config entries for env
   PDC_ENDPOINT: "http://pdc.ptx-edge.localhost:80/"
@@ -55,6 +59,8 @@ type: Opaque
 metadata:
   name: pdc-secrets-env
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
 data:
   PDC_SERVICE_KEY: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
   PDC_SECRET_KEY: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==

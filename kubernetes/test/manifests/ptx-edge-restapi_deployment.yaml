@@ -2,18 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: rest-api
+    app.kubernetes.io/name: rest-api
   name: rest-api
   namespace: ptx-edge
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rest-api
+      app.kubernetes.io/name: rest-api
   template:
     metadata:
       labels:
-        app: rest-api
+        app.kubernetes.io/name: rest-api
     spec:
       containers:
         - image: ptx-edge/rest-api:1.0

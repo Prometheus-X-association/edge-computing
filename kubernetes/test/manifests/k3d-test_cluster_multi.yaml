@@ -23,7 +23,7 @@ options:
       - label: privacy-zone.dataspace.prometheus-x.org/zone-B=true
         nodeFilters:
           - agent:*
-      - label: privacy-zone.dataspace.prometheus-x.org/pdc=true
+      - label: connector.dataspace.prometheus-x.org/enabled=true
         nodeFilters:
           - agent:0
           - agent:1
