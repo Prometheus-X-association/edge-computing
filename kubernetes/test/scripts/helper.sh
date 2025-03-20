@@ -23,3 +23,15 @@ function log() {
     echo -e "\n$1"
     printf -v sep '%*s' 80 ""; echo -e "${sep// /-}\n"
 }
+
+function _timeout() {
+    # Example: _timeout 5 longrunning_command args
+    # Example: { _timeout 5 producer || echo KABOOM $?; } | consumer
+    # Example: producer | { _timeout 5 consumer1; consumer2; }
+    # Example: { while date; do sleep .3; done; } | _timeout 5 cat | less
+    # - Needs Bash 4.3 for wait -n
+    # - Gives 137 if the command was killed, else the return value of the command.
+    # - Works for pipes. (You do not need to go foreground here!)
+    # - Works with internal shell commands or functions, too.
+    ( set +b; sleep "$1" & "${@:2}" & wait -n; r=$?; kill -9 "$(jobs -p)"; exit $r; )
+}
