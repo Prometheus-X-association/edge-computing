@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+  name: pdc
+  namespace: ptx-edge
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: pdc
+                port:
+                  number: 3000
+            path: /ptx-edge/pdc
+            pathType: Prefix
