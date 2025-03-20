@@ -11,19 +11,29 @@ data:
     PORT=3000
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
-    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
+    MONGO_URI=mongodb://pdc.ptx-edge.localhost:27017/dataspace-connector
     CURATOR=https://visionspol.eu
     MAINTAINER=https://visionspol.eu
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
   config-template: |
     {
-      "endpoint": "http://${PDC_NODE_IP}:30003",
-      "serviceKey": "${PDC_SERVICE_KEY}",
-      "secretKey": "${PDC_SECRET_KEY}",
-      "catalogUri": "${PDC_CATALOG_URI}",
-      "contractUri": "${PDC_CONTRACT_URI}",
-      "consentUri": "${PDC_CONSENT_URI}",
+      "endpoint":         "${PDC_ENDPOINT}",
+      "serviceKey":       "${PDC_SERVICE_KEY}",
+      "secretKey":        "${PDC_SECRET_KEY}",
+      "catalogUri":       "${PDC_CATALOG_URI}",
+      "contractUri":      "${PDC_CONTRACT_URI}",
+      "consentUri":       "${PDC_CONSENT_URI}",
+      "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
+    }
+  config-template-nodeport: |
+    {
+      "endpoint":         "http://${PDC_NODE_IP}:30003",
+      "serviceKey":       "${PDC_SERVICE_KEY}",
+      "secretKey":        "${PDC_SECRET_KEY}",
+      "catalogUri":       "${PDC_CATALOG_URI}",
+      "contractUri":      "${PDC_CONTRACT_URI}",
+      "consentUri":       "${PDC_CONSENT_URI}",
       "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
     }
   start.sh: |
@@ -42,7 +52,7 @@ metadata:
     app.kubernetes.io/name: pdc
 data:
   # Separate config entries for env
-  PDC_ENDPOINT: "http://pdc.ptx-edge.localhost:80/"
+  PDC_ENDPOINT: "http://host.docker.internal:8080/ptx-edge/pdc"
   PDC_CATALOG_URI: "http://host.docker.internal:3002/v1/"
   PDC_CONTRACT_URI: "http://host.docker.internal:3001/"
   PDC_CONSENT_URI: "http://host.docker.internal:3003/v1/"

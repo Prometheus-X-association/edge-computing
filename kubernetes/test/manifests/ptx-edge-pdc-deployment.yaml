@@ -16,7 +16,7 @@ spec:
         app: pdc
     spec:
       nodeSelector:
-        connector.dataspace.prometheus-x.org/available: "true"
+        connector.dataspace.prometheus-x.org/enabled: "true"
       initContainers:
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim
@@ -25,6 +25,7 @@ spec:
             - name: mongo-port
               containerPort: 27017
               protocol: TCP
+          # Native sidecar container
           restartPolicy: Always
           livenessProbe:
             httpGet:
@@ -67,10 +68,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-      hostAliases:
-        - hostnames:
-            - host.docker.internal
-          ip: 172.17.0.1
       volumes:
         - name: pdc-env
           configMap:
@@ -82,7 +79,7 @@ spec:
           configMap:
             name: pdc-config-files
             items:
-              - key: config-template
+              - key: config-template-nodeport
                 path: config.production.json.template
         - name: pdc-start
           configMap:
