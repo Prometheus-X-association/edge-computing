@@ -24,6 +24,8 @@ PDC_IMG := ptx/connector:1.8.2-slim
 MONGODB_IMG := ptx/mongodb:8.0.5-slim
 PDC := pdc
 PDC_PORT := 3000
+PDC_NODE_PORT := 30003
+PDC_PREFIX := ptx-edge/pdc
 
 setup:
 	bash setup_k3d_test_env.sh -xs
@@ -46,7 +48,9 @@ status:
 	@echo
 	kubectl get nodes -o wide || exit 0
 	@echo
-	kubectl -n ${PTX} get all,configmaps,secrets,ingress,endpointslices,pv,pvc --ignore-not-found -o wide || exit 0
+	kubectl -n ${PTX} get \
+		all,endpointslices,pv,pvc,configmaps,secrets,ingress,ingressroute.traefik.io,middleware.traefik.io \
+		--ignore-not-found -o wide || exit 0
 
 run-api:
 	### Setup rest-api
@@ -93,17 +97,59 @@ run-pdc:
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
-	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=30003
-	kubectl -n ${PTX} get all,configmaps,secrets -o wide
+	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
+	@#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-nodeport.yaml
+	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
+	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
+	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
+	@echo "Waiting for PDC to set up..."
+	@#timeout 3 grep -m1 "Server running on" <(kubectl -n ${PTX} logs deployments/${PDC} -fc ptx-connector)	# needs bash
+	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	@echo
+	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
+	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
+	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
 
 test-pdc: | setup create run-pdc
+
+run-pdc-ingress:
+	${MAKE} -C ./ptx/ run-catalog
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment-ingress.yaml
+	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
+	### Setup ingress
+	@#kubectl -n ${PTX} expose deployment/${PDC} --target-port ${PDC_PORT} --port ${PDC_PORT} --name ${PDC}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-service.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-ingressroute.yaml
+	#kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${PDC}
+	kubectl -n ${PTX} get nodes,all,endpointslices,ingressroute.traefik.io,middleware.traefik.io -o wide
+	echo "Waiting for PDC to set up..."
+	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	@echo
+	@echo ">>> ${PDC} is exposed on http://localhost:8080/ptx-edge/pdc"
+	@curl -I "http://localhost:8080/ptx-edge/pdc"
+	curl -Ssf "http://localhost:8080/ptx-edge/pdc" | grep "href"
 
 run-pdc-daemon:
 	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-daemonset.yaml
+	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
+	echo "Waiting for PDC instances to set up..."
+	( \
+		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
+			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
+		done; \
+	)
+	( \
+		for node in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].status.hostIP}'); do \
+			echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
+			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
+		done; \
+	)
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
@@ -121,5 +167,6 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc stop cleanup tear-down purge
+.PHONY: setup create status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc \
+			run-pdc-ingress run-pdc-daemon stop cleanup tear-down purge
 .DEFAULT_GOAL := create

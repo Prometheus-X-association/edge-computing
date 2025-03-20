@@ -66,6 +66,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+      hostAliases:
+        - hostnames:
+            - host.docker.internal
+          ip: 172.17.0.1
       volumes:
         - name: pdc-env
           configMap:
