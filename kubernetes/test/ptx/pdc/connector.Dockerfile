@@ -9,6 +9,9 @@ RUN npm install -g pnpm && apk add --no-cache gettext-envsubst git && git init
 COPY . .
 # Install app dependencies
 RUN mkdir -p /src/keys && CI=true pnpm install
+# Build resources with placeholder config files
+RUN touch .env.production && touch src/config.production.json && npm run build
 # Expose the port on which the app will run
 EXPOSE 3000
-CMD ["/bin/sh", "docker/scripts/start.sh"]
+#CMD ["/bin/sh", "docker/scripts/start.sh"]
+CMD ["npm", "run", "start"]
