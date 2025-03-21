@@ -1,4 +1,4 @@
-name: ptx
+name: ptx-core
 services:
   mongodb-sandbox:
     container_name: "mongodb-sandbox"
@@ -9,11 +9,16 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - core
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sSf http://localhost:27017 || exit 1" ]
+      start_period: 30s
+      start_interval: 3s
   mongo-seed:
     container_name: "mongodb-seed"
     image: ptx/mongo-seed:1.8.2-slim
     depends_on:
-      - mongodb-sandbox
+      mongodb-sandbox:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -27,6 +32,9 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - core
+    depends_on:
+      mongo-seed:
+        condition: service_completed_successfully
   catalog:
     container_name: "catalog"
     image: ptx-core/catalog:1.8.2-slim
@@ -36,6 +44,9 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - core
+    depends_on:
+      mongo-seed:
+        condition: service_completed_successfully
   consent:
     container_name: "consent"
     image: ptx-core/consent:1.8.2-slim
@@ -45,6 +56,9 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - core
+    depends_on:
+      mongo-seed:
+        condition: service_completed_successfully
 networks:
   core:
     external: false
