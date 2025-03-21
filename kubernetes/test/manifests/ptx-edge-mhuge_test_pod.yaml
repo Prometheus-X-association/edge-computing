@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mem-huge-pod
+  namespace: ptx-edge
+spec:
+  containers:
+    - name: test-container
+      image: busybox:latest
+      command: [ "/bin/sh" ]
+      args: [ "-c", "sleep infinity" ]
+      resources:
+        requests:
+          memory: "5000Mi"
+  restartPolicy: Never

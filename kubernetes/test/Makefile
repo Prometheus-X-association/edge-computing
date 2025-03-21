@@ -42,15 +42,19 @@ create: setup
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
 
 status:
-	k3d cluster list || exit 0
+	@k3d cluster list || exit 0
 	@echo
-	kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
+	@kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
 	@echo
-	kubectl get nodes -o wide || exit 0
+	@kubectl get nodes -o wide || exit 0
 	@echo
-	kubectl -n ${PTX} get \
+	@kubectl -n ${PTX} get \
 		all,endpointslices,pv,pvc,configmaps,secrets,ingress,ingressroute.traefik.io,middleware.traefik.io \
 		--ignore-not-found -o wide || exit 0
+	@echo
+	@kubectl -n ${PTX} top pod --containers
+	@echo
+	@kubectl -n ${PTX} top node
 
 run-api:
 	### Setup rest-api
@@ -94,11 +98,11 @@ test-builder: | setup create run-builder
 run-pdc:
 	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
-	@#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-nodeport.yaml
+	@#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_nodeport.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
 	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
@@ -115,13 +119,13 @@ test-pdc: | setup create run-pdc
 run-pdc-ingress:
 	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-deployment-ingress.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment_ingress.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	### Setup ingress
 	@#kubectl -n ${PTX} expose deployment/${PDC} --target-port ${PDC_PORT} --port ${PDC_PORT} --name ${PDC}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-service.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-ingressroute.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_service.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_ingressroute.yaml
 	#kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${PDC}
 	kubectl -n ${PTX} get nodes,all,endpointslices,ingressroute.traefik.io,middleware.traefik.io -o wide
 	echo "Waiting for PDC to set up..."
@@ -134,8 +138,8 @@ run-pdc-ingress:
 run-pdc-daemon:
 	${MAKE} -C ./ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-config.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc-daemonset.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 	echo "Waiting for PDC instances to set up..."
@@ -150,6 +154,17 @@ run-pdc-daemon:
 			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
 		done; \
 	)
+
+run-huge-pods:
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-chuge_test_pod.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-mhuge_test_pod.yaml
+	@echo "\n>>> Waiting for potential escalation...\n" && sleep 3s
+	@#kubectl -n ${PTX} events --for=pod/cpu-huge-pod
+	@#kubectl -n ${PTX} events --for=pod/mem-huge-pod
+	kubectl -n ${PTX} events --types=Warning
+	kubectl -n ${PTX} top node
+
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
@@ -168,5 +183,5 @@ purge: cleanup
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
 .PHONY: setup create status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc \
-			run-pdc-ingress run-pdc-daemon stop cleanup tear-down purge
+			run-pdc-ingress run-pdc-daemon run-huge-pods stop cleanup tear-down purge
 .DEFAULT_GOAL := create
