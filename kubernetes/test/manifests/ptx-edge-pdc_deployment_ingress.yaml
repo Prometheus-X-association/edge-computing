@@ -25,6 +25,10 @@ spec:
             - name: mongo-port
               containerPort: 27017
               protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 150Mi
           restartPolicy: Always
           livenessProbe:
             httpGet:
@@ -39,6 +43,10 @@ spec:
             - containerPort: 3000
               protocol: TCP
               name: pdc-port
+          resources:
+            requests:
+              cpu: 500m
+              memory: 250Mi
           volumeMounts:
             - name: pdc-env
               mountPath: /usr/src/app/.env.production

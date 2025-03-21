@@ -52,7 +52,7 @@ status:
 		all,endpointslices,pv,pvc,configmaps,secrets,ingress,ingressroute.traefik.io,middleware.traefik.io \
 		--ignore-not-found -o wide || exit 0
 	@echo
-	@kubectl -n ${PTX} top pod --containers
+	@kubectl -n ${PTX} top pod && kubectl -n ${PTX} top pod --containers
 	@echo
 	@kubectl -n ${PTX} top node
 

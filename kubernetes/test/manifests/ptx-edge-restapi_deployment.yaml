@@ -22,6 +22,10 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
+          resources:
+            requests:
+              cpu: 300m
+              memory: 150Mi
           livenessProbe:
             httpGet:
               port: 8080
