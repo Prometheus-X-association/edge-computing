@@ -54,8 +54,11 @@ All test/install scripts are tested on a virtual machine based on _Ubuntu 24.04 
 
 > [!NOTE]
 >
-> For the tests with multinode kind/k3d clusters,
-> use a VM with disk size at least **<ins>30GB</ins>**!
+> For testing with <ins>multinode</ins> kind/k3d clusters,
+> consider the recommended settings of the test VM:
+> - at least **2 vCPU**
+> - at least **2024 MB memory**
+> - at least **<ins>40 GB of disk size</ins>**
 
 > [!WARNING]
 >

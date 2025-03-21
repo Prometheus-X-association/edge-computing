@@ -5,4 +5,5 @@
 **/*.zip
 **/*.bkp
 **/*.dtmp
+**/*.log
 kubernetes/test/**/*.xml
