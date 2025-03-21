@@ -50,11 +50,11 @@ spec:
               memory: 250Mi
           volumeMounts:
             - name: pdc-env
-              mountPath: /usr/src/app/.env.production
+              mountPath: /usr/src/app/dist/.env.production
               subPath: .env.production
               readOnly: true
             - name: pdc-config
-              mountPath: /usr/src/app/src/config.production.json.template
+              mountPath: /usr/src/app/src/dist/config.production.json.template
               subPath: config.production.json.template
               readOnly: true
             - name: pdc-start

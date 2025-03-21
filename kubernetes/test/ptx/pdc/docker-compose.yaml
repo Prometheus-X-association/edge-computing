@@ -5,12 +5,9 @@ services:
     image: ptx/connector:1.8.2-slim
     # restart: unless-stopped
     restart: no
-    depends_on:
-      - mongodb
-      - catalog
     volumes:
-      - './config.production.json:/usr/src/app/src/config.production.json'
-      - './.env.production:/usr/src/app/.env.production'
+      - './config.production.json:/usr/src/app/dist/src/config.production.json'
+      - './.env.production:/usr/src/app/dist/.env.production'
     ports:
       - "3333:3000"
     environment:
@@ -19,6 +16,11 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - internal
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      catalog:
+        condition: service_healthy
   mongodb:
     container_name: pdc-mongodb
     # image: ptx/mongodb:4.0.5-alpine
@@ -30,6 +32,10 @@ services:
     networks:
       - internal
       - ptx-core
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sSf http://localhost:27017 || exit 1" ]
+      start_period: 30s
+      start_interval: 3s
   catalog:
     container_name: ptx-catalog
     image: ptx-core/catalog:1.8.2-slim
@@ -40,8 +46,10 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      # test: ["CMD-SHELL", "curl -sSf http://localhost:8082/__admin/health || exit 1"]
-      test: [ "NONE" ]
+      test: [ "CMD-SHELL", "wget --spider -O /dev/null http://localhost:8082/__admin/health || exit 1" ]
+      #test: [ "NONE" ]
+      start_period: 30s
+      start_interval: 3s
 networks:
   internal:
     external: false
