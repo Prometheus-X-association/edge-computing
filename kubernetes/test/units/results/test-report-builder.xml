@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<testsuites>
-    <testsuite name="ptx-edge-builder" errors="0" failures="0" skipped="0" tests="2" time="0.083"
-               timestamp="2025-03-05T15:19:05.143101+00:00" hostname="acdbe66b86d3">
-        <testcase classname="test_builder_cfg" name="test_builder_cfg" time="0.002"/>
-        <testcase classname="test_builder_cfg" name="test_builder_missing_cfg" time="0.001"/>
-    </testsuite>
-</testsuites>

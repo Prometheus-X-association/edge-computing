@@ -21,13 +21,13 @@ PREFIX := ptx-edge/v1
 BUILDER_IMG := ptx-edge/builder:1.0
 BUILDER := builder
 
-setup:
+build:
 	bash ../../setup_k3d_test_env.sh -xs
 	${MAKE} -C ../../../src/rest-api/ build
 	${MAKE} -C ../../../src/builder/ build
 
-create: setup
-	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
+setup: build
+	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=../../manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
 	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG}
@@ -63,20 +63,22 @@ run-api:
 	@curl -I "http://localhost:8080/${PREFIX}/ui/"
 	curl -LSs "http://localhost:8080/${PREFIX}/versions" | python3 -m json.tool
 
-test-api: | setup create run-api
+test-api: | build setup run-api
+
+run: run-api
 
 run-builder:
 	kubectl create namespace ${PTX}
 	@#kubectl -n ${PTX} create job ${BUILDER} --image ${BUILDER_IMG}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-builder_worker_pvc.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-builder_worker_job.yaml
+	kubectl -n ${PTX} apply -f ../../manifests/ptx-edge-builder_worker_pvc.yaml
+	kubectl -n ${PTX} apply -f ../../manifests/ptx-edge-builder_worker_job.yaml
 	kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	kubectl -n ${PTX} get all,pv,pvc -o wide
 	kubectl -n ${PTX} wait --for="condition=Complete" --timeout=20s job/${BUILDER}
 	kubectl -n ${PTX} get all -o wide
 	kubectl -n ${PTX} logs job/${BUILDER} --all-containers
 
-test-builder: | setup create run-builder
+test-builder: | build setup run-builder
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
@@ -92,5 +94,5 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create status run-api test-api run-builder test-builder stop cleanup tear-down purge
+.PHONY: build setup status run run-api test-api run-builder test-builder stop cleanup tear-down purge
 .DEFAULT_GOAL := create

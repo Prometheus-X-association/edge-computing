@@ -24,11 +24,11 @@ CCM_VER := v0.5.0
 LB_PORT := 8080
 INGRESS := ingress-nginx
 
-setup:
+build:
 	bash ../../setup_kind_test_env.sh -xsm
 	docker build -t ${IMG} ../../mock-api/
 
-create: setup
+setup: build
 	kind create cluster -n ${CLUSTER} --wait=30s --config=../../manifests/kind-test_cluster_single.yaml
 	kubectl get nodes -o wide
 	kind load docker-image -n ${CLUSTER} ${IMG}
@@ -53,7 +53,7 @@ run2:
 	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/${PREFIX}/ui/"
 	@curl -I "http://localhost:${PORT}/${PREFIX}/ui/"
 
-test2: | setup create run2
+test2: | build setup run2
 
 run3:
 	### Setup rest-api
@@ -77,7 +77,7 @@ run3:
 	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/${PREFIX}/ui/"
 	@curl -I "http://${LB_IP_PORT}/${PREFIX}/ui/"
 
-test3: | setup create run3
+test3: | build setup run3
 
 run3-ingress:
 	### Setup rest-api
@@ -107,7 +107,9 @@ run3-ingress:
 	@echo ">>> ${API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
 	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui/"
 
-test3-ingress: | setup create run3-ingress
+test3-ingress: | build setup run3-ingress
+
+run: run3-ingress
 
 stop:
 	@#kubectl -n ${TEST} delete all --all --now
@@ -124,5 +126,5 @@ purge: cleanup
 	docker images -q -f "reference=registry.k8s.io/cloud-provider-kind/*" -f "reference=envoyproxy/*" \
                     -f "reference=${TEST_IMG}" -f "reference=kindest/*" | xargs -r docker rmi -f
 
-.PHONY: setup create run2 test2 run3 test3 run3-ingress test3-ingress stop cleanup tear-down purge
+.PHONY: build setup run run2 test2 run3 test3 run3-ingress test3-ingress stop cleanup tear-down purge
 .DEFAULT_GOAL := create
