@@ -27,13 +27,13 @@ PDC_PORT := 3000
 PDC_NODE_PORT := 30003
 PDC_PREFIX := ptx-edge/pdc
 
-setup:
+build:
 	bash setup_k3d_test_env.sh -xs
 	${MAKE} -C ../src/rest-api/ build
 	${MAKE} -C ../src/builder/ build
-	${MAKE} -C ./ptx/ setup
+	${MAKE} -C ./ptx/ build
 
-create: setup
+setup: build
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
 	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
@@ -80,7 +80,7 @@ run-api:
 	@curl -I "http://localhost:8080/${PREFIX}/ui/"
 	curl -LSs "http://localhost:8080/${PREFIX}/versions" | python3 -m json.tool
 
-test-api: | setup create run-api
+test-api: | build setup run-api
 
 run-builder:
 	kubectl create namespace ${PTX}
@@ -93,7 +93,7 @@ run-builder:
 	kubectl -n ${PTX} get all -o wide
 	kubectl -n ${PTX} logs job/${BUILDER} --all-containers
 
-test-builder: | setup create run-builder
+test-builder: | build setup run-builder
 
 run-pdc:
 	${MAKE} -C ./ptx/ run-catalog
@@ -114,7 +114,7 @@ run-pdc:
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
 	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
 
-test-pdc: | setup create run-pdc
+test-pdc: | build setup run-pdc
 
 run-pdc-ingress:
 	${MAKE} -C ./ptx/ run-catalog
@@ -182,6 +182,6 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: setup create status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc \
+.PHONY: build setup status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc \
 			run-pdc-ingress run-pdc-daemon run-huge-pods stop cleanup tear-down purge
-.DEFAULT_GOAL := create
+.DEFAULT_GOAL := setup

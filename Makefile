@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TEST_LEVEL := level3
+TEST_LEVEL := level4
 
 setup:
-	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} create
+	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} setup
 
 run:
-	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} run3-ingress
+	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} run
 
 cleanup:
 	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} tear-down

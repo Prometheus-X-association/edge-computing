@@ -22,7 +22,7 @@ PDC_VER := 1.8.2
 PDC_ENV := production
 MONGO_VER := 8.0.5
 
-setup-orig:
+build-orig:
 	(\
 		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
 		git clone ${PDC_REPO} && cd dataspace-connector; \
@@ -38,7 +38,7 @@ setup-orig:
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
-setup:
+build:
 	(\
 		TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
 			git clone ${PDC_REPO} && cd dataspace-connector; \
@@ -82,5 +82,5 @@ run-catalog:
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/* | xargs -r docker rmi -f
 
-.PHONY: setup-orig setup run-catalog run-pdc stop-pdc run-core stop-core purge
-.DEFAULT_GOAL := setup
+.PHONY: build-orig build run-catalog run-pdc stop-pdc run-core stop-core purge
+.DEFAULT_GOAL := build

@@ -108,7 +108,7 @@ $ make setup
 > [!NOTE]
 >
 > The configured level based on the `ptx-edge`-internal
-> [definitions](kubernetes/test/README.md#overview) is **Level 3**.
+> [definitions](kubernetes/test/README.md#overview) is **Level 4**.
 
 Helper scripts can be executed directly:
 

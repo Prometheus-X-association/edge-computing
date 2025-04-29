@@ -6,5 +6,5 @@ COPY requirements-dev.txt tox.ini tests ./
 RUN python3 -m pip install --no-cache-dir -U -r requirements-dev.txt && mkdir -p report
 RUN chown -R ${USER}:${USER} .
 USER ${USER}:${USER}
-CMD ["tox", "-v", "--", "--junit-xml=report/test-report-rest-api.xml", \
+CMD ["tox", "-v", "--", "--junit-xml=./report/test-report-rest-api.xml", \
                         "-o", "junit_suite_name=ptx-edge-rest-api"]

@@ -38,7 +38,7 @@ on different levels described as follows.
 > [!IMPORTANT]
 >
 > The current setup creates a test environment based on the predefined **Level 5**,
-> while the main [Makefile](../../Makefile) points to the *Level 3* setup!
+> while the main [Makefile](../../Makefile) points to the *Level 4* setup!
 
 Prior test level configs can be found in [levels](levels) folder.
 
@@ -154,12 +154,28 @@ $ make run3
 $ make test3
 ```
 
-To initiate a Nginx-based ingress controller and set up a default ingress rule(`/ptx-edge/v1/`), use the following
+To initiate an Nginx-based ingress controller and set up a default ingress rule(`/ptx-edge/v1/`), use the following
 variants:
 
 ```bash
 $ make run3-ingress
 $ make test3-ingress
+```
+
+### Level 4 testing
+
+To initiate `ptx-edge` main components, use the following targets
+
+```bash
+$ make run-api
+$ make run-builder
+```
+
+while their all-encompassing testing targets are:
+
+```bash
+$ make test-api
+$ make test-builder
 ```
 
 ## Test Environment
