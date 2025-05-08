@@ -6,7 +6,6 @@
 $ git clone https://github.com/Prometheus-X-association/dataspace-connector.git
 $ cd dataspace-connector
 
-$ cp .env.sample .env       # required by docker compose
 # set NODE_ENV=production
 $ cp .env .env.production   # required by connector
 
@@ -14,7 +13,7 @@ $ cp src/config.sample.json src/config.production.json
 # set endpoint serviceKey secretKey catalogUri contractUri consentUri 
 
 # (re)build while avoiding error due to permission denied in ./data 
-$ sudo rm -rf ./data && docker compose build
+$ sudo rm -rfv ./data && docker compose build
 $ docker compose up
 ```
 
@@ -35,5 +34,7 @@ $ docker compose up
 - config.production.json
 
 ```bash
-$ cd kubernetes/test/ptx && make setup
+$ cd kubernetes/test/ptx
+$ make build
+$ make run-pdc
 ```

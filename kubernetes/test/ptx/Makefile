@@ -18,7 +18,7 @@ PTX_PREFIX := ptx
 PTX_CORE_PREFIX := ptx-core
 PTX_CORE := catalog contract consent
 PDC_REPO := https://github.com/Prometheus-X-association/dataspace-connector.git
-PDC_VER := 1.8.2
+PDC_VER := 1.9.2
 PDC_ENV := production
 MONGO_VER := 8.0.5
 
@@ -34,7 +34,7 @@ build-orig:
 		for bb in ${PTX_CORE}; do \
 			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
 		done; \
-		rm -rf $${TMP_DIR}; \
+		rm -rfv $${TMP_DIR}; \
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
@@ -56,7 +56,7 @@ build:
 			docker build -f ./core/$${bb}.Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER}-slim \
 								$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
 		done; \
-		rm -rf $${TMP_DIR}; \
+		rm -rfv $${TMP_DIR}; \
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
@@ -76,7 +76,7 @@ run-catalog:
 	@# cd pdc && docker compose up catalog
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	docker run -d --name ptx-catalog -p 3002:8082 --no-healthcheck \
-					--add-host host.docker.internal:host-gateway -ti ptx-core/catalog:1.8.2-slim
+					--add-host host.docker.internal:host-gateway -ti ptx-core/catalog:${PDC_VER}-slim
 	docker ps -f name=ptx-catalog
 
 purge:

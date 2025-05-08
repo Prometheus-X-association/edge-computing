@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y gnupg curl && \
 	apt-get update && apt-get install -y mongodb-org-server=${MONGO_VER} && \
 	apt-get purge -y gnupg  && \
 	apt-get autoremove -y && \
-	rm -rf /var/lib/apt/lists/*
+	rm -rfv /var/lib/apt/lists/*
 VOLUME /data/db
 WORKDIR /data
 EXPOSE 27017

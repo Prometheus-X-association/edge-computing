@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y gnupg curl && \
 	apt-get update && apt-get install -y mongodb-database-tools && \
 	apt-get purge -y gnupg curl  && \
 	apt-get autoremove -y && \
-	rm -rf /var/lib/apt/lists/*
+	rm -rfv /var/lib/apt/lists/*
 VOLUME /data/db
 WORKDIR /data
 COPY ./*.json ./
