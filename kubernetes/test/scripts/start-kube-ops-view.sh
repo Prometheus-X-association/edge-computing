@@ -14,7 +14,23 @@
 # limitations under the License.
 PORT=8081
 INTERVAL=3
+KUBE_PROXY_PID=""
+SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
+source "${SCRIPT_DIR}/helper.sh"
+
+LOG "Kube-ops-view is available on http://127.0.0.1:8081/"
+echo
+
+function cleanup() {
+    set +x
+    #pkill -f "kubectl proxy"
+    [ -d "/proc/${KUBE_PROXY_PID}" ] && kill ${KUBE_PROXY_PID}
+}
+trap cleanup ERR INT
 
 set -x
 kubectl proxy &
-docker run --rm --net=host -v ~/.kube:/kube -it hjacobs/kube-ops-view --port ${PORT} --query-interval ${INTERVAL} --kubeconfig-path=/kube/config
+KUBE_PROXY_PID=$!
+docker run --rm --net=host -v ~/.kube:/kube -it hjacobs/kube-ops-view \
+        --port ${PORT} --query-interval ${INTERVAL} --kubeconfig-path=/kube/config
+cleanup

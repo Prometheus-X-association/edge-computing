@@ -20,7 +20,7 @@ API_PORT := 8080
 PREFIX := ptx-edge/v1
 BUILDER_IMG := ptx-edge/builder:1.0
 BUILDER := builder
-PDC_IMG := ptx/connector:1.8.2-slim
+PDC_IMG := ptx/connector:1.9.2-slim
 MONGODB_IMG := ptx/mongodb:8.0.5-slim
 PDC := pdc
 PDC_PORT := 3000
@@ -52,10 +52,13 @@ status:
 		all,endpointslices,pv,pvc,configmaps,secrets,ingress,ingressroute.traefik.io,middleware.traefik.io \
 		--ignore-not-found -o wide || exit 0
 	@echo
-	@kubectl -n ${PTX} top pod && kubectl -n ${PTX} top pod --containers
+	@kubectl -n ${PTX} top pod || exit 0
+	@kubectl -n ${PTX} top pod --containers || exit 0
 	@echo
-	@kubectl -n ${PTX} top node
+	@kubectl -n ${PTX} top node || exit 0
 
+view:
+	@bash ./scripts/start-kube-ops-view.sh
 run-api:
 	### Setup rest-api
 	kubectl create namespace ${PTX}

@@ -14,16 +14,21 @@
 # limitations under the License.
 PORT=8081
 K8BIT_REPO=git@github.com:learnk8s/k8bit.git
-
-TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}" || exit 1
+KUBE_PROXY_PID=""
+SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
+source "${SCRIPT_DIR}/helper.sh"
 
 function cleanup() {
+    set +x
     rm -rf "${TMP_DIR}" || exit
 }
 
-trap cleanup ERR INT EXIT
+trap cleanup ERR INT
 
 set -x
+TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}" || exit 1
 git clone ${K8BIT_REPO} && cd k8bit
+LOG "K8bit view in available on http://127.0.0.1:8081/k8bit/"
+echo
 kubectl proxy --address=0.0.0.0 --port=${PORT} --www=. --www-prefix=/k8bit/
-
+cleanup
