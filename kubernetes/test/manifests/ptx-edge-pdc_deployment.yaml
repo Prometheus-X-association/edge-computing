@@ -38,7 +38,7 @@ spec:
             periodSeconds: 5
       containers:
         - name: ptx-connector
-          image: ptx/connector:1.8.2-slim
+          image: ptx/connector:1.9.2-slim
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -50,22 +50,22 @@ spec:
               memory: 250Mi
           volumeMounts:
             - name: pdc-env
-              mountPath: /usr/src/app/dist/.env.production
+              mountPath: "/usr/src/app/.env.production"
               subPath: .env.production
               readOnly: true
             - name: pdc-config
-              mountPath: /usr/src/app/src/dist/config.production.json.template
+              mountPath: "/usr/src/app/dist/src/config.production.json.template"
               subPath: config.production.json.template
               readOnly: true
             - name: pdc-start
-              mountPath: /usr/src/app/docker/scripts/start.sh
+              mountPath: "/usr/src/app/docker/scripts/start.sh"
               subPath: start.sh
               readOnly: true
           command:
             - /bin/sh
             - ./docker/scripts/start.sh
           args:
-            - ./src/config.production.json
+            - ./dist/src/config.production.json
           envFrom:
             - configMapRef:
                 name: pdc-config-env

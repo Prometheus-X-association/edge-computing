@@ -34,9 +34,10 @@ data:
     }
   start.sh: |
     #!/usr/bin/env sh
-    CFG_FILE="${1:-/usr/src/app/src/config.production.json}"
+    CFG_FILE=$(readlink -f "${1:-/usr/src/app/dist/src/config.json}")
+    echo "Used config file: ${CFG_FILE}"
     envsubst <"${CFG_FILE}.template" >"${CFG_FILE}"
-    npm run start
+    npm run start --omit=dev
 immutable: true
 ---
 apiVersion: v1
