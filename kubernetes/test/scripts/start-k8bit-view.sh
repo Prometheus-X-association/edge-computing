@@ -25,7 +25,7 @@ function cleanup() {
 
 trap cleanup ERR INT
 
-set -x
+#set -x
 TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}" || exit 1
 git clone ${K8BIT_REPO} && cd k8bit
 LOG "K8bit view in available on http://127.0.0.1:8081/k8bit/"

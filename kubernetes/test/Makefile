@@ -59,6 +59,7 @@ status:
 
 view:
 	@bash ./scripts/start-kube-ops-view.sh
+
 run-api:
 	### Setup rest-api
 	kubectl create namespace ${PTX}
