@@ -1,56 +1,70 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: builder
-  namespace: ptx-edge
+  name: ${BUILD}-no-pz
+  namespace: ${PTX}
   labels:
-    app.kubernetes.io/name: builder
+    app.kubernetes.io/name: ${BUILD}
 spec:
   completions: 1
   parallelism: 1
   backoffLimit: 2
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${BUILD}
     spec:
       initContainers:
-        - name: builder
-          image: ptx-edge/builder:1.0
+        - name: ${BUILD}
+          image: ${BUILD_IMG}
           imagePullPolicy: IfNotPresent
           command: [ "/bin/sh", "-c" ]
           args:
-            - echo "builder started";
+            - echo ">>> builder started";
+              sleep 5s;
               echo "App created" | tee /usr/src/app/app.py;
+              sleep 5s;
               echo "Data created" | tee /var/cache/data/data.csv;
-              sleep 3s;
-              echo "builder ended";
+              echo ">>> builder ended";
           volumeMounts:
-            - mountPath: /usr/src/app
+            - mountPath: "/usr/src/app"
               name: cache-volume-worker
               readOnly: false
-            - mountPath: /var/cache/data
+            - mountPath: "/var/cache/data"
               name: cache-volume-data
               readOnly: false
       containers:
         - name: worker
-          image: busybox:latest
+          image: ${BUILD_IMG}
           imagePullPolicy: IfNotPresent
           command: [ "/bin/sh", "-c" ]
           args:
-            - echo "worker started";
+            - echo ">>> worker started";
               ls /usr/src/app/ /var/cache/data/;
-              echo "Result created" | tee /var/cache/result/result.csv;
               sleep 5s;
-              echo "worker ended";
+              echo "Result created" | tee /var/cache/result/result.csv;
+              echo ">>> worker ended";
           volumeMounts:
-            - mountPath: /usr/src/app
+            - mountPath: "/usr/src/app"
               name: cache-volume-worker
               readOnly: true
-            - mountPath: /var/cache/data
+            - mountPath: "/var/cache/data"
               name: cache-volume-data
               readOnly: true
-            - mountPath: /var/cache/result
+            - mountPath: "/var/cache/result"
               name: cache-volume-result
               readOnly: false
       restartPolicy: OnFailure
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
       volumes:
         - name: cache-volume-data
           emptyDir:
@@ -60,4 +74,4 @@ spec:
             sizeLimit: 10Mi
         - name: cache-volume-result
           persistentVolumeClaim:
-            claimName: worker-pvc
+            claimName: ${BUILD}-pvc

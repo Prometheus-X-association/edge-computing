@@ -23,24 +23,27 @@ kubectl cluster-info
 
 log "Create Zone A"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_A}" --cluster="${CLUSTER}" --replicas=2 --role=agent
-kubectl label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true"
-kubectl label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" "node-role.kubernetes.io/worker=true"
+kubectl label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" "node-role.kubernetes.io/worker=true" \
+                                                            "disktype=hdd" \
+                                                            "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true"
 kubectl label "node/k3d-${NODE_A}-0" "connector.dataspace.prometheus-x.org/enabled=true"
 
 log "Create Zone B"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_B}" --cluster="${CLUSTER}" --replicas=2 --role=agent
-kubectl label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
-kubectl label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" "node-role.kubernetes.io/worker=true"
+kubectl label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" "node-role.kubernetes.io/worker=true" \
+                                                            "disktype=ssd" \
+                                                            "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
 kubectl label "node/k3d-${NODE_B}-0" "connector.dataspace.prometheus-x.org/enabled=true"
 
 log "Add multi-zone node"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_AB}" --cluster="${CLUSTER}" --replicas=1 --role=agent
-kubectl label "node/k3d-${NODE_AB}-0" "node-role.kubernetes.io/worker=true"
-kubectl label "node/k3d-${NODE_AB}-0" "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
-                                    "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
+kubectl label "node/k3d-${NODE_AB}-0" "node-role.kubernetes.io/worker=true" \
+                                      "disktype=hdd" \
+                                      "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
+                                      "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
 
 log "Load PTX-edge component images"
-k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILDER_IMG}" "${PDC_IMG}" "${MONGODB_IMG}"
+k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILD_IMG}" "${PDC_IMG}" "${MONGODB_IMG}"
 
 log "Created K3s nodes"
 kubectl get nodes -L "privacy-zone.dataspace.prometheus-x.org/${PZ_A}" \

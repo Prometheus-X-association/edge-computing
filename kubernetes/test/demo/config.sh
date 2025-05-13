@@ -28,7 +28,7 @@ PZ_A=zone-A
 PZ_B=zone-B
 # PTX-edge components
 API_IMG=ptx-edge/rest-api:1.0
-BUILDER_IMG=ptx-edge/builder:1.0
+BUILD_IMG=ptx-edge/builder:1.0
 PDC_IMG=ptx/connector:1.9.2-slim
 MONGODB_IMG=ptx/mongodb:8.0.5-slim
 # REST-API

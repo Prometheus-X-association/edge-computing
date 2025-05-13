@@ -18,12 +18,27 @@ source config.sh
 ########################################################################################################################
 
 LOG "Execute Privacy Preserving use case..."
-envsubst <"rsc/builder-pvc.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
-kubectl -n "${PTX}" get pv,pvc
 
 log "Initiate Data Processing Function without PTX-edge provision"
+envsubst <"rsc/builder-pvc.yaml" | kubectl apply -f=-
+echo
+kubectl -n "${PTX}" get pvc
+envsubst <"rsc/builder-worker.yaml" | kubectl apply -f=-
+kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
+kubectl -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-no-pz"
+echo
+kubectl -n "${PTX}" get jobs -o wide
+echo
+read -rp "### Press ENTER to continue..."
 
+log "Initiate Data Processing Function based on Privacy Zone restriction"
+envsubst <"rsc/builder-worker.yaml" | kubectl delete -f=-
+envsubst <"rsc/builder-pvc-pz.yaml" | kubectl apply -f=-
+envsubst <"rsc/builder-worker-pz.yaml" | kubectl apply -f=-
+kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
+kubectl -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-with-pz"
+echo
+kubectl -n "${PTX}" get jobs -o wide
 
 ########################################################################################################################
 

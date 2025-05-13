@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${BUILD}-pvc-pz
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${BUILD}
+  annotations:
+    defaultVolumeType: local
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  resources:
+    requests:
+      storage: 10Mi
+  storageClassName: local-path
+  volumeMode: Filesystem
