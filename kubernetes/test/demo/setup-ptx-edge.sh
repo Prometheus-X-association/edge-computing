@@ -18,9 +18,9 @@ source config.sh
 ########################################################################################################################
 
 LOG "Setting up PTX-edge components..."
-#make -C ../../src/rest-api build
-#make -C ../../src/builder build
-#make -C ../ptx build
+make -C ../../src/rest-api build
+make -C ../../src/builder build
+make -C ../ptx build
 
 log "Deploy REST-API"
 kubectl create namespace "${PTX}"
