@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright 2025 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,24 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set -eou pipefail
+source config.sh
 
-init:
-	@bash step0-start-topo.sh
+########################################################################################################################
 
-setup:
-	@bash step1-setup-ptx-edge.sh
+LOG "Shutting down K3s test environment..."
 
-viewer:
-	@( kubectl proxy 2>/dev/null & ) || exit 0
-	@docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
-        		--port=8081 --query-interval=3 --kubeconfig-path=/kube/config
-	@echo
-	@echo "K8s Ops Viewer is available on http://127.0.0.1:8081/"
-	@echo
+k3d cluster delete "${CLUSTER}"
 
-demo:
-	@bash step2-run-demo.sh
+########################################################################################################################
 
-shutdown:
-	@docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
-	@bash step3-stop-topo.sh
+echo -e "\nDone."
