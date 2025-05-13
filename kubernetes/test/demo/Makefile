@@ -13,7 +13,7 @@
 # limitations under the License.
 
 init:
-	@bash step0-start-topo.sh
+	@bash step1-start-topo.sh
 
 viewer:
 	@( kubectl proxy 2>/dev/null & ) || exit 0
@@ -24,14 +24,14 @@ viewer:
 	@echo
 
 setup:
-	@bash step1-setup-ptx-edge.sh
+	@bash step2-setup-ptx-edge.sh
 
 demo:
-	@bash step2-run-demo.sh
+	@bash step3-run-demo.sh
 
 shutdown:
 	@docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
-	@bash step3-stop-topo.sh
+	@bash step4-stop-topo.sh
 
 all: | init viewer setup demo shutdown
 

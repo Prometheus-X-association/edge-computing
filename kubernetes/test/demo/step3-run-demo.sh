@@ -13,12 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
+source config.sh
 
-CLUSTER=demo
-SCRIPTS_DIR=$(readlink -f "$(dirname "$0")")
-source "${SCRIPTS_DIR}/../scripts/helper.sh"
+########################################################################################################################
 
-LOG "Shutting down test environment..."
-k3d cluster delete "${CLUSTER}"
+LOG "Execute Privacy Preserving use case..."
+envsubst <"rsc/builder-pvc.yaml" | kubectl apply -f=-
+kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" pvc/builder-pvc
+kubectl -n "${PTX}" get pv,pvc
+
+log "Initiate Data Processing Function without PTX-edge provision"
+
+
+########################################################################################################################
 
 echo -e "\nDone."

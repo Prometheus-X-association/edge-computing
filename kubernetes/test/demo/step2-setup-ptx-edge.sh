@@ -52,7 +52,7 @@ docker compose -f ../ptx/core/docker-compose.yaml up -d --force-recreate --wait 
 log "Deploy per-zone PDCs"
 # Replace only the given envvars parameters with the given format ${}
 envsubst <"rsc/pdc-config.yaml" '${PTX} ${PDC} ${PDC_PORT} ${PDC_NODE_PORT} ${PDC_PREFIX}' | kubectl apply -f=-
-envsubst <"rsc/pdc-daemonset.yaml" '${PTX} ${PDC} ${PDC_PORT} ${PDC_NODE_PORT}' | kubectl apply -f=-
+envsubst <"rsc/pdc-daemonset.yaml" | kubectl apply -f=-
 kubectl -n "${PTX}" wait --for=jsonpath='.status.numberReady'=2 "daemonset/${PDC}"
 echo
 kubectl -n "${PTX}" get daemonsets,configmaps,secrets

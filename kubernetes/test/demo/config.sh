@@ -41,3 +41,5 @@ PDC=pdc
 PDC_PORT=3000
 PDC_NODE_PORT=30003
 PDC_PREFIX=ptx-edge/pdc
+# Builder
+BUILD=builder
