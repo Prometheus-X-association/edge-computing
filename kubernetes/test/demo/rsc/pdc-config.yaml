@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-files
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+data:
+  env: |
+    NODE_ENV=production
+    PORT=${PDC_PORT}
+    SESSION_SECRET=abc
+    SESSION_COOKIE_EXPIRATION=24000
+    MONGO_URI=mongodb://${PDC}.${PTX}.localhost:27017/dataspace-connector
+  config-template: |
+    {
+      "endpoint":         "${PDC_ENDPOINT}",
+      "serviceKey":       "${PDC_SERVICE_KEY}",
+      "secretKey":        "${PDC_SECRET_KEY}",
+      "catalogUri":       "${PDC_CATALOG_URI}",
+      "contractUri":      "${PDC_CONTRACT_URI}",
+      "consentUri":       "${PDC_CONSENT_URI}",
+      "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
+    }
+  config-template-nodeport: |
+    {
+      "endpoint":         "http://${PDC_NODE_IP}:${PDC_NODE_PORT}",
+      "serviceKey":       "${PDC_SERVICE_KEY}",
+      "secretKey":        "${PDC_SECRET_KEY}",
+      "catalogUri":       "${PDC_CATALOG_URI}",
+      "contractUri":      "${PDC_CONTRACT_URI}",
+      "consentUri":       "${PDC_CONSENT_URI}",
+      "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
+    }
+  start.sh: |
+    #!/usr/bin/env sh
+    CFG_FILE=$(readlink -f "${1:-/usr/src/app/dist/src/config.json}")
+    echo "Used config file: ${CFG_FILE}"
+    envsubst <"${CFG_FILE}.template" >"${CFG_FILE}"
+    npm run start --omit=dev
+immutable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-env
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+data:
+  PDC_ENDPOINT: "http://host.docker.internal:8080/${PDC_PREFIX}"
+  PDC_CATALOG_URI: "http://host.docker.internal:3002/v1/"
+  PDC_CONTRACT_URI: "http://host.docker.internal:3001/"
+  PDC_CONSENT_URI: "http://host.docker.internal:3003/v1/"
+  PDC_EXPRESS_LIMIT: "100mb"
+immutable: true
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: pdc-secrets-env
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+data:
+  PDC_SERVICE_KEY: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
+  PDC_SECRET_KEY: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==
+immutable: true
