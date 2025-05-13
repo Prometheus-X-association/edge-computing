@@ -19,7 +19,7 @@ source config.sh
 
 LOG "Execute Privacy Preserving use case..."
 envsubst <"rsc/builder-pvc.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" pvc/builder-pvc
+kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
 kubectl -n "${PTX}" get pv,pvc
 
 log "Initiate Data Processing Function without PTX-edge provision"

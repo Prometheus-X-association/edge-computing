@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-init:
-	@bash step1-start-topo.sh
+1-init:
+	@bash start-topo.sh
 
-viewer:
+2-viewer:
 	@( kubectl proxy 2>/dev/null & ) || exit 0
 	@docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
         		--port=8081 --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
@@ -23,15 +23,15 @@ viewer:
 	@echo "K8s Ops Viewer is available on http://127.0.0.1:8081/"
 	@echo
 
-setup:
-	@bash step2-setup-ptx-edge.sh
+3-setup:
+	@bash setup-ptx-edge.sh
 
-demo:
-	@bash step3-run-demo.sh
+4-demo:
+	@bash run-demo.sh
 
-shutdown:
+5-shutdown:
 	@docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
-	@bash step4-stop-topo.sh
+	@bash stop-topo.sh
 
 all: | init viewer setup demo shutdown
 
