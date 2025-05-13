@@ -34,7 +34,7 @@ build-orig:
 		for bb in ${PTX_CORE}; do \
 			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER} .; \
 		done; \
-		rm -rfv $${TMP_DIR}; \
+		rm -rf $${TMP_DIR}; \
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 
@@ -56,7 +56,7 @@ build:
 			docker build -f ./core/$${bb}.Dockerfile -t ${PTX_CORE_PREFIX}/$${bb}:${PDC_VER}-slim \
 								$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
 		done; \
-		rm -rfv $${TMP_DIR}; \
+		rm -rf $${TMP_DIR}; \
 	)
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_CORE_PREFIX}/*
 

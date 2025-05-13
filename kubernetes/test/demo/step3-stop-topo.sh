@@ -17,8 +17,8 @@ source config.sh
 
 ########################################################################################################################
 
-LOG "Shutting down K3s test environment..."
-
+LOG "Shutting down test environment..."
+docker compose -f ../ptx/core/docker-compose.yaml down -v
 k3d cluster delete "${CLUSTER}"
 
 ########################################################################################################################
