@@ -42,6 +42,11 @@ kubectl label "node/k3d-${NODE_AB}-0" "node-role.kubernetes.io/worker=true" \
                                       "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
                                       "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
 
+log "Build PTX-edge components..."
+make -C ../../src/rest-api build
+make -C ../../src/builder build
+make -C ../ptx build
+
 log "Load PTX-edge component images"
 k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILD_IMG}" "${PDC_IMG}" "${MONGODB_IMG}"
 
