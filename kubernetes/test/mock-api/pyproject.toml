@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptx-edge-rest-api"
+dynamic = ["version", "readme"]
+description = "PTX-Edge mock REST-API"
+authors = [{ name = "Janos Czentye", email = "czentye@tmit.bme.hu" }]
+license = { text = "Apache 2.0" }
+requires-python = ">=3.12"
+keywords = ["PTX", "dataspace"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "fastapi~=0.115.12",
+    "pydantic~=2.11.4",
+    "uvicorn~=0.34.2",
+    "starlette~=0.46.2"
+]
+
+[project.urls]
+Repository = "https://github.com/Prometheus-X-association/edge-computing"
+Homepage = "https://github.com/Prometheus-X-association/edge-computing"
+Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
+
+[project.optional-dependencies]
+dev = [
+    "virtualenv~=20.31.2",
+    "fastapi[standard]~=0.115.12", # For the fastapi shell command
+    #"datamodel-code-generator~=0.30.1"
+    "fastapi-code-generator~=0.5.3"
+]
+test = [
+    "pytest~=8.3.5",
+    "pytest-custom_exit_code~=0.3.0",
+    "tox~=4.26.0",
+    "httpx~=0.28.1"
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "app.__version__" }
+readme = { file = ["README.md"], content-type = 'text/markdown' }
+
+[tool.setuptools.packages.find]
+exclude = [
+    "scripts",
+    "spec"
+]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = [
+    "-v",
+    "--suppress-no-test-exit-code",
+    "--import-mode=importlib"
+]

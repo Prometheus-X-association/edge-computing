@@ -16,6 +16,7 @@ NAME := rest-api
 VERSION := 0.1
 IMG := ptx-edge/${NAME}:${VERSION}
 TEST_IMG := ptx-edge/${NAME}-test:${VERSION}
+PY := python3.12
 
 # Docker commands
 build:
@@ -25,13 +26,31 @@ build:
 run: build
 	docker run --rm --name ${NAME} -ti -p 8080:8080 ${IMG}
 
+dev:
+	docker run --rm --name ${NAME} -ti -p 8080:8080 -v ./app:/usr/src/api/app ${IMG} \
+				uvicorn app.main:app --port 8080 --reload --reload-dir app
+
+
 # Local development in venv
 venv:
 	test -d .venv || (\
-		python3 -m venv --upgrade-deps .venv && \
+		${PY} -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		python3 -m pip install -U -r requirements.txt -r test-requirements.txt \
+		${PY} -m pip install -U -r requirements.txt -r requirements-dev.txt \
 		)
+
+dev-local: venv
+		(\
+		. .venv/bin/activate && \
+		fastapi dev --port 8080 --reload app/main.py \
+		)
+
+setup:
+ifeq ($(shell [ `command -v ${PY} >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)
+	$(error "Missing required environment: ${PY} + pip")
+else
+	$(MAKE) venv
+endif
 
 # Cleanup
 clean:
@@ -40,19 +59,23 @@ clean:
 	rm -rf .venv
 
 # Tests
+tests: venv
+	( . .venv/bin/activate && PYTHONPATH=. pytest -v --suppress-no-test-exit-code )
+
 unit-tests: venv
-	( . .venv/bin/activate && tox )
+	( . .venv/bin/activate && tox -v )
 
 docker-test-setup: build
-	docker build -t ${TEST_IMG} -f test.Dockerfile --build-arg USER=$$(id -u) .
+	docker build -t ${TEST_IMG} -f test.Dockerfile --build-arg USER=$$(id -u)  .
 	docker images --no-trunc ${TEST_IMG}
 
 docker-unit-tests: docker-test-setup
 ifdef REPORT_PATH
-	docker run --rm --mount="type=bind,src=${REPORT_PATH},dst=/usr/src/app/report/" -ti ${TEST_IMG}
+	docker run --rm --mount="type=bind,src=${REPORT_PATH},dst=/usr/src/api/report/" -ti ${TEST_IMG}
 else
 	docker run --rm -ti ${TEST_IMG}
 endif
 
-.PHONY: build run venv clean unit-tests docker-test-setup docker-unit-tests
-.DEFAULT_GOAL := unit-tests
+.PHONY: build run dev venv dev-local openapi setup clean tests unit-tests docker-test-setup docker-unit-tests
+.DEFAULT_GOAL := dev
+#.ONESHELL: dev-local openapi

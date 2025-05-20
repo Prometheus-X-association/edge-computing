@@ -1,11 +1,6 @@
-# Downgraded by hand
-flask==1.1.4
-markupsafe==2.0.1
-connexion>=2.6.0,<3.0
-connexion[swagger-ui]>=2.6.0,<3.0
-# Original dependencies
-#connexion >= 2.6.0
-#connexion[swagger-ui] >= 2.6.0
-python_dateutil == 2.6.0
-setuptools >= 21.0.0
-swagger-ui-bundle >= 0.0.2
+fastapi~=0.115.12
+pydantic~=2.11.4
+uvicorn~=0.34.2
+#hypercorn~=0.17.3              # Optional ASGI server
+#granian~=1.6.3                 # Optional ASGI server
+starlette~=0.46.2

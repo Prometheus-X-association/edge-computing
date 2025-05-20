@@ -1,8 +1,12 @@
-FROM python:3.8-alpine
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-COPY requirements.txt /usr/src/app/
-RUN python3.8 -m pip install --no-cache-dir -U -r requirements.txt
-COPY . /usr/src/app
+FROM python:3.12-alpine
+LABEL maintainer="czentye@tmit.bme.hu"
+WORKDIR /usr/src/api
+COPY requirements.txt .
+RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
+COPY pyproject.toml .
+COPY ./app ./app
 EXPOSE 8080
-CMD ["python3.8", "-m", "swagger_server"]
+#CMD ["fastapi", "run", "--port", "8080", "app/main.py"]
+#CMD ["hypercorn", "app.main:app", "-b", "0.0.0.0:8080", "-w", "4"]
+#CMD ["granian", "--interface", "asgi", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--opt"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
