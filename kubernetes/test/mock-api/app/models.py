@@ -17,73 +17,70 @@
 #   timestamp: 2025-05-20T13:46:51+00:00
 from __future__ import annotations
 
-from typing import Dict, Optional, Union
 from uuid import UUID
 
-import fastapi
-from pydantic import BaseModel, Field, RootModel, conint
-
-from . import __version__
+from pydantic import BaseModel, Field, RootModel
 
 
 class VersionResponse(BaseModel):
-    api: str = Field(default_factory=lambda: __version__, title='Api')
-    framework: str = Field(default_factory=lambda: fastapi.__version__, title='Framework')
+    """Versions of the REST-API component"""
+    api: str = Field(..., title='Api')
+    framework: str = Field(..., title='Framework')
 
 
 ########################################################################################################################
 
 class ExecutionMetrics(BaseModel):
-    elapsedTime: Optional[conint(ge=0)] = Field(None, description='Elapsed time of the function', examples=[42])
-    ret: Optional[conint(ge=0, le=255)] = Field(None, description='Return value of the function', examples=[0])
+    """Collected execution metrics"""
+    elapsedTime: int = Field(None, ge=0, description='Elapsed time of the function', examples=[42])
+    ret: int = Field(None, ge=0, le=255, description='Return value of the function', examples=[0])
 
 
 class ExecutionResult(BaseModel):
+    """The result of the function execution on data"""
     data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    function: str = Field(...,
-                          description='Unique reference/ID of the function to be applied to the private data',
+    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
                           examples=['FunctionData42'], )
-    metrics: Optional[ExecutionMetrics] = None
     uuid: UUID = Field(..., description='Unique operation identifier',
                        examples=['11111111-2222-3333-4444-555555555555'])
+    metrics: ExecutionMetrics = None
 
 
 class PrivateExecutionResult(BaseModel):
-    function: str = Field(...,
-                          description='Unique reference/ID of the function to be applied to the private data',
+    """The result of the function execution on data"""
+    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
                           examples=['FunctionData42'])
-    metrics: Optional[ExecutionMetrics] = None
     private_data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    uuid: UUID = Field(...,
-                       description='Unique operation identifier',
+    uuid: UUID = Field(..., description='Unique operation identifier',
                        examples=['11111111-2222-3333-4444-555555555555'])
+    metrics: ExecutionMetrics = None
 
 
 ########################################################################################################################
 
-class Metadata(RootModel[Optional[Dict[str, Union[str, int]]]]):
-    root: Optional[Dict[str, Union[str, int]]] = None
+class Metadata(RootModel[dict[str, str | int]]):
+    """Arbitrary key-value pairs"""
+    root: dict[str, str | int] = None
 
 
 class ExecutionRequestBody(BaseModel):
+    """Function execution parameters"""
     data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
     data_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
     func_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    function: str = Field(...,
-                          description='Unique reference/ID of the function to be applied to the private data',
+    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
                           examples=['FunctionData42'])
-    metadata: Optional[Metadata] = None
+    metadata: Metadata = None
 
 
 class PrivateExecutionRequestBody(BaseModel):
+    """Function execution parameters"""
     consent: str = Field(..., description='Unique consent ID', examples=['Consent42'])
     data_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
     func_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    function: str = Field(...,
-                          description='Unique reference/ID of the function to be applied to the private data',
+    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
                           examples=['FunctionData42'])
-    metadata: Optional[Metadata] = None
     private_data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    token: str = Field(...,
-                       description="Unique token created by the DataProvider related to the user's consent",
+    token: str = Field(..., description="Unique token created by the DataProvider related to the user's consent",
                        examples=['Token42'])
+    metadata: Metadata = None

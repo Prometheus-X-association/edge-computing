@@ -17,43 +17,36 @@
 #   timestamp: 2025-05-20T13:46:51+00:00
 from __future__ import annotations
 
-from typing import Optional
-
-from fastapi import FastAPI
-from starlette import responses, status
+import fastapi
+from starlette import status
 
 from . import ROUTE_PREFIX, __version__
 from .models import (ExecutionRequestBody, ExecutionResult, PrivateExecutionRequestBody, PrivateExecutionResult,
                      VersionResponse)
 
-app = FastAPI(contact={'email': 'czentye.janos@vik.bme.hu'},
-              description='The Edge Computing (Decentralized AI processing) BB-02 provides value-added services '
-                          'exploiting an underlying distributed edge computing infrastructure.',
-              title='PTX Edge Computing REST-API',
-              version=__version__,
-              root_path=ROUTE_PREFIX,
-              servers=[{'url': ROUTE_PREFIX}],
-              docs_url="/ui/",
-              redoc_url=None)
+app = fastapi.FastAPI(contact={'email': 'czentye.janos@vik.bme.hu'},
+                      description='The Edge Computing (Decentralized AI processing) BB-02 provides value-added services'
+                                  ' exploiting an underlying distributed edge computing infrastructure.',
+                      title='PTX Edge Computing REST-API',
+                      version=__version__,
+                      root_path=ROUTE_PREFIX,
+                      servers=[dict(url=ROUTE_PREFIX,
+                                    description="PTX Edge Computing")],
+                      docs_url="/ui/",
+                      redoc_url="/ui/")
 
 
 @app.get('/versions', response_model=VersionResponse, status_code=status.HTTP_200_OK)
-def get_versions_versions_get() -> VersionResponse:
+async def get_versions_versions_get() -> VersionResponse:
     """Versions of the REST-API component"""
-    return VersionResponse()
-
-
-@app.get("/health", status_code=status.HTTP_200_OK)
-async def health():
-    """For health check purposes"""
-    return responses.Response()
+    return VersionResponse(api=__version__, framework=fastapi.__version__)
 
 
 ########################################################################################################################
 
 @app.post('/requestEdgeProc', response_model=None, responses={'202': {'model': ExecutionResult}},
           tags=['customerAPI'])
-def request_edge_proc(body: ExecutionRequestBody) -> Optional[ExecutionResult]:
+def request_edge_proc(body: ExecutionRequestBody) -> ExecutionResult:
     """
     Execute function on data
     """
@@ -62,7 +55,7 @@ def request_edge_proc(body: ExecutionRequestBody) -> Optional[ExecutionResult]:
 
 @app.post('/requestPrivacyEdgeProc', response_model=None, responses={'202': {'model': PrivateExecutionResult}},
           tags=['customerAPI'])
-def request_privacy_edge_proc(body: PrivateExecutionRequestBody) -> Optional[PrivateExecutionResult]:
+def request_privacy_edge_proc(body: PrivateExecutionRequestBody) -> PrivateExecutionResult:
     """
     Execute function on private data
     """
