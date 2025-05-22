@@ -17,6 +17,7 @@
 #   timestamp: 2025-05-20T13:46:51+00:00
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, Field, RootModel
@@ -24,63 +25,72 @@ from pydantic import BaseModel, Field, RootModel
 
 class VersionResponse(BaseModel):
     """Versions of the REST-API component"""
-    api: str = Field(..., title='Api')
-    framework: str = Field(..., title='Framework')
+    api: Annotated[str, Field(title='Api')]
+    framework: Annotated[str, Field(title='Framework')]
 
+    ########################################################################################################################
 
-########################################################################################################################
 
 class ExecutionMetrics(BaseModel):
     """Collected execution metrics"""
-    elapsedTime: int = Field(None, ge=0, description='Elapsed time of the function', examples=[42])
-    ret: int = Field(None, ge=0, le=255, description='Return value of the function', examples=[0])
+    elapsedTime: Annotated[int, Field(ge=0, description='Elapsed time of the function', examples=[42])] = None
+    ret: Annotated[int, Field(ge=0, le=255, description='Return value of the function', examples=[0])] = None
 
 
 class ExecutionResult(BaseModel):
     """The result of the function execution on data"""
-    data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
-                          examples=['FunctionData42'], )
-    uuid: UUID = Field(..., description='Unique operation identifier',
-                       examples=['11111111-2222-3333-4444-555555555555'])
+    data: Annotated[str, Field(description='Unique reference/ID of the data', examples=['Data42'])]
+    function: Annotated[str, Field(description='Unique reference/ID of the function to be applied to the private data',
+                                   examples=['FunctionData42'])]
+    uuid: Annotated[UUID, Field(description='Unique operation identifier',
+                                examples=['11111111-2222-3333-4444-555555555555'])]
     metrics: ExecutionMetrics = None
 
 
 class PrivateExecutionResult(BaseModel):
     """The result of the function execution on data"""
-    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
-                          examples=['FunctionData42'])
-    private_data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    uuid: UUID = Field(..., description='Unique operation identifier',
-                       examples=['11111111-2222-3333-4444-555555555555'])
+    function: Annotated[str, Field(description='Unique reference/ID of the function to be applied to the private data',
+                                   examples=['FunctionData42'])]
+    private_data: Annotated[str, Field(description='Unique reference/ID of the data', examples=['Data42'])]
+    uuid: Annotated[UUID, Field(description='Unique operation identifier',
+                                examples=['11111111-2222-3333-4444-555555555555'])]
     metrics: ExecutionMetrics = None
 
+    ########################################################################################################################
 
-########################################################################################################################
 
 class Metadata(RootModel[dict[str, str | int]]):
     """Arbitrary key-value pairs"""
     root: dict[str, str | int] = None
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "timeout": 42,
+                "privacy-zone": "zone-A",
+                "CPU-demand": 42
+            }]
+        }
+    }
 
 
 class ExecutionRequestBody(BaseModel):
     """Function execution parameters"""
-    data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    data_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    func_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
-                          examples=['FunctionData42'])
+    data: Annotated[str, Field(description='Unique reference/ID of the data', examples=['Data42'])]
+    data_contract: Annotated[str, Field(description='Unique contract ID', examples=['Contract42'])]
+    func_contract: Annotated[str, Field(description='Unique contract ID', examples=['Contract42'])]
+    function: Annotated[str, Field(description='Unique reference/ID of the function to be applied to the private data',
+                                   examples=['FunctionData42'])]
     metadata: Metadata = None
 
 
 class PrivateExecutionRequestBody(BaseModel):
     """Function execution parameters"""
-    consent: str = Field(..., description='Unique consent ID', examples=['Consent42'])
-    data_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    func_contract: str = Field(..., description='Unique contract ID', examples=['Contract42'])
-    function: str = Field(..., description='Unique reference/ID of the function to be applied to the private data',
-                          examples=['FunctionData42'])
-    private_data: str = Field(..., description='Unique reference/ID of the data', examples=['Data42'])
-    token: str = Field(..., description="Unique token created by the DataProvider related to the user's consent",
-                       examples=['Token42'])
+    consent: Annotated[str, Field(description='Unique consent ID', examples=['Consent42'])]
+    data_contract: Annotated[str, Field(description='Unique contract ID', examples=['Contract42'])]
+    func_contract: Annotated[str, Field(description='Unique contract ID', examples=['Contract42'])]
+    function: Annotated[str, Field(description='Unique reference/ID of the function to be applied to the private data',
+                                   examples=['FunctionData42'])]
+    private_data: Annotated[str, Field(description='Unique reference/ID of the data', examples=['Data42'])]
+    token: Annotated[str, Field(description="Unique token created by the DataProvider related to the user's consent",
+                                examples=['Token42'])]
     metadata: Metadata = None
