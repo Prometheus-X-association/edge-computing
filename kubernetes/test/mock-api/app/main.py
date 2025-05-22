@@ -55,20 +55,17 @@ async def validation_error_handler(req: Request, exc: RequestValidationError):
                             content={'detail': "Unsupported request format"})
 
     if str(req.url).endswith("requestEdgeProc"):
-        if any(body.get(p) in (None, "") for p in ('data', 'data_contract', 'func_contract', 'function')):
+        if any(body.get(p) is None for p in ('data', 'data_contract', 'func_contract', 'function')):
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                                 content={'detail': "Execution request parameters not found"})
     elif str(req.url).endswith("requestPrivacyEdgeProc"):
         if any(body.get(p) in (None, "") for p in ('consent', 'token')):
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED,
                                 content={'detail': "Unauthorized request due to invalid token"})
-        elif any(body.get(p) in (None, "") for p in ('private_data', 'function')):
+        elif any(body.get(p) in (None, "") for p in
+                 ('private_data', 'data_contract', 'func_contract', 'function', 'token')):
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                                 content={'detail': "Execution request parameters not found"})
-
-    if any(body.get(p) in (None, "") for p in ('data', 'function')):
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={'detail': "Malformed deployment request"})
     return JSONResponse(str(exc), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
@@ -100,6 +97,11 @@ async def request_edge_proc(body: ExecutionRequestBody) -> ExecutionResult:
     """
     Execute function on data
     """
+    if any(getattr(body, p) in (None, "") for p in ('data', 'function')):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed deployment request")
+    elif any(getattr(body, p) is None for p in ('data', 'data_contract', 'func_contract', 'function')):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Execution request parameters not found")
+
     if "bogus" in body.data_contract or "bogus" in body.func_contract:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Request prohibited by contract/consent")
@@ -113,6 +115,7 @@ async def request_edge_proc(body: ExecutionRequestBody) -> ExecutionResult:
     elif metadata.get("CPU-demand", 42) > 42:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail="Insufficient compute resources or unavailable deployment service")
+
     return ExecutionResult(uuid=uuid.uuid4(), function=body.function, data=body.data,
                            metrics=ExecutionMetrics(ret=0, elapsedTime=random.randint(0, 10)))
 
@@ -132,6 +135,12 @@ def request_privacy_edge_proc(body: PrivateExecutionRequestBody) -> PrivateExecu
     """
     Execute function on private data
     """
+
+    if any(getattr(body, p) in (None, "") for p in ('private_data', 'function')):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed deployment request")
+    elif any(getattr(body, p) is None for p in ('private_data', 'data_contract', 'func_contract', 'function', 'token')):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Execution request parameters not found")
+
     if "bogus" in body.data_contract or "bogus" in body.func_contract or "bogus" in body.consent:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Request prohibited by contract/consent")
@@ -145,5 +154,6 @@ def request_privacy_edge_proc(body: PrivateExecutionRequestBody) -> PrivateExecu
     elif metadata.get("CPU-demand", 42) > 42:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail="Insufficient compute resources or unavailable deployment service")
+
     return PrivateExecutionResult(uuid=uuid.uuid4(), function=body.function, private_data=body.private_data,
                                   metrics=ExecutionMetrics(ret=0, elapsedTime=random.randint(0, 10)))
