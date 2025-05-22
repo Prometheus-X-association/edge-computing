@@ -46,8 +46,6 @@ async def get_versions_versions_get() -> VersionResponse:
     return VersionResponse(api=__version__, framework=fastapi_version)
 
 
-########################################################################################################################
-
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(req: Request, exc: RequestValidationError):
     try:
@@ -55,36 +53,49 @@ async def validation_error_handler(req: Request, exc: RequestValidationError):
     except json.decoder.JSONDecodeError:
         return JSONResponse(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                             content={'detail': "Unsupported request format"})
+
     if str(req.url).endswith("requestEdgeProc"):
         if any(body.get(p) in (None, "") for p in ('data', 'data_contract', 'func_contract', 'function')):
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                                 content={'detail': "Execution request parameters not found"})
-        elif any(body.get(p) in (None, "") for p in ('data', 'function')):
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                                content={'detail': "Malformed deployment request"})
     elif str(req.url).endswith("requestPrivacyEdgeProc"):
-        ...
+        if any(body.get(p) in (None, "") for p in ('consent', 'token')):
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED,
+                                content={'detail': "Unauthorized request due to invalid token"})
+        elif any(body.get(p) in (None, "") for p in ('private_data', 'function')):
+            return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                                content={'detail': "Execution request parameters not found"})
 
+    if any(body.get(p) in (None, "") for p in ('data', 'function')):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={'detail': "Malformed deployment request"})
     return JSONResponse(str(exc), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
+########################################################################################################################
+
+ERROR_RESPONSES = {
+    status.HTTP_415_UNSUPPORTED_MEDIA_TYPE:
+        {"content": None, "description": "Unsupported request format"},
+    status.HTTP_401_UNAUTHORIZED:
+        {"content": None, "description": "Unauthorized request due to invalid token"},
+    status.HTTP_404_NOT_FOUND:
+        {"content": None, "description": "Execution request parameters not found"},
+    status.HTTP_400_BAD_REQUEST:
+        {"content": None, "description": "Malformed deployment request"},
+    status.HTTP_403_FORBIDDEN:
+        {"content": None, "description": "Request prohibited by contract/consent"},
+    status.HTTP_408_REQUEST_TIMEOUT:
+        {"content": None, "description": "Function deployment timeout"},
+    status.HTTP_412_PRECONDITION_FAILED:
+        {"content": None, "description": "Undeployable request due to privacy zone restriction"},
+    status.HTTP_503_SERVICE_UNAVAILABLE:
+        {"content": None, "description": "Insufficient compute resources or unavailable deployment service"}
+}
+
+
 @app.post('/requestEdgeProc', status_code=status.HTTP_202_ACCEPTED, tags=['customerAPI'],
-          responses={status.HTTP_415_UNSUPPORTED_MEDIA_TYPE:
-                         {"content": None, "description": "Unsupported request format"},
-                     status.HTTP_404_NOT_FOUND:
-                         {"content": None, "description": "Execution request parameters not found"},
-                     status.HTTP_400_BAD_REQUEST:
-                         {"content": None, "description": "Malformed deployment request"},
-                     status.HTTP_403_FORBIDDEN:
-                         {"content": None, "description": "Request prohibited by contract/consent"},
-                     status.HTTP_408_REQUEST_TIMEOUT:
-                         {"content": None, "description": "Function deployment timeout"},
-                     status.HTTP_412_PRECONDITION_FAILED:
-                         {"content": None, "description": "Undeployable request due to privacy zone restriction"},
-                     status.HTTP_503_SERVICE_UNAVAILABLE:
-                         {"content": None,
-                          "description": "Insufficient compute resources or unavailable deployment service"}
-                     })
+          responses=ERROR_RESPONSES)
 async def request_edge_proc(body: ExecutionRequestBody) -> ExecutionResult:
     """
     Execute function on data
@@ -106,9 +117,33 @@ async def request_edge_proc(body: ExecutionRequestBody) -> ExecutionResult:
                            metrics=ExecutionMetrics(ret=0, elapsedTime=random.randint(0, 10)))
 
 
-@app.post('/requestPrivacyEdgeProc', status_code=status.HTTP_202_ACCEPTED, tags=['customerAPI'])
+########################################################################################################################
+
+PRIV_ERROR_RESPONSES = {
+    status.HTTP_401_UNAUTHORIZED:
+        {"content": None, "description": "Unauthorized request due to invalid token"},
+    **ERROR_RESPONSES
+}
+
+
+@app.post('/requestPrivacyEdgeProc', status_code=status.HTTP_202_ACCEPTED, tags=['customerAPI'],
+          responses=PRIV_ERROR_RESPONSES)
 def request_privacy_edge_proc(body: PrivateExecutionRequestBody) -> PrivateExecutionResult:
     """
     Execute function on private data
     """
-    pass
+    if "bogus" in body.data_contract or "bogus" in body.func_contract or "bogus" in body.consent:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Request prohibited by contract/consent")
+    metadata = body.metadata.model_dump()
+    if metadata.get("timeout", 100) < 42:
+        raise HTTPException(status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                            detail="Function deployment timeout")
+    elif metadata.get("privacy-zone", "zone-A") not in ("zone-A", "zone-C"):
+        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
+                            detail="Undeployable request due to privacy zone restriction")
+    elif metadata.get("CPU-demand", 42) > 42:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="Insufficient compute resources or unavailable deployment service")
+    return PrivateExecutionResult(uuid=uuid.uuid4(), function=body.function, private_data=body.private_data,
+                                  metrics=ExecutionMetrics(ret=0, elapsedTime=random.randint(0, 10)))
