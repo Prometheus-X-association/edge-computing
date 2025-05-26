@@ -50,7 +50,7 @@ make -C ../ptx build
 log "Load PTX-edge component images"
 k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILD_IMG}" "${PDC_IMG}" "${MONGODB_IMG}"
 echo
-docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
+docker exec -ti "$(k3d node list --no-headers | cut -d ' ' -f1 | grep '.*server-0')" crictl images | grep ptx
 
 log "Created K3s nodes"
 kubectl get nodes -L "privacy-zone.dataspace.prometheus-x.org/${PZ_A}" \
