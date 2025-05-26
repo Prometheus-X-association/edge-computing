@@ -76,6 +76,5 @@ else
 	docker run --rm -ti ${TEST_IMG}
 endif
 
-.PHONY: build run dev venv dev-local openapi setup clean tests unit-tests docker-test-setup docker-unit-tests
+.PHONY: build run dev venv dev-local setup clean tests unit-tests docker-test-setup docker-unit-tests
 .DEFAULT_GOAL := dev
-#.ONESHELL: dev-local openapi
