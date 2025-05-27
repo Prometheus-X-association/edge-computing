@@ -42,7 +42,8 @@ setup: build
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
 
 status:
-	@k3d cluster list || exit 0
+	@k3d cluster list --no-headers | grep -q ^	# check for existing cluster
+	@k3d cluster list
 	@echo
 	@kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
 	@echo
