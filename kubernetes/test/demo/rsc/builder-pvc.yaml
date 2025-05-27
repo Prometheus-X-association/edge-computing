@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ${BUILD}-pvc
+  name: ${BUILD}-pvc-${PVC}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${BUILD}
+    env: demo
   annotations:
     defaultVolumeType: local
 spec:

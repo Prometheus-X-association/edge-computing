@@ -20,21 +20,21 @@ source config.sh
 LOG "Setting up PTX-edge components..."
 
 log "Deploy REST-API"
-kubectl create namespace "${PTX}"
+${KCOLOR} create namespace "${PTX}"
 #kubectl -n "${PTX}" create deployment "${REST_API}" --image "${API_IMG}" --replicas=1 --port="${API_PORT}"
 # shellcheck disable=SC2016
-envsubst <"rsc/restapi-deployment.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"
-kubectl -n "${PTX}" expose "deployment/${REST_API}" --target-port="${API_PORT}" --port="${API_PORT}" --name="${REST_API}"
+envsubst <"rsc/restapi-deployment.yaml" | ${KCOLOR} apply -f=-
+${KCOLOR} -n "${PTX}" wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"
+${KCOLOR} -n "${PTX}" expose "deployment/${REST_API}" --target-port="${API_PORT}" --port="${API_PORT}" --name="${REST_API}"
 echo
-kubectl -n "${PTX}" get pods,endpointslices
+${KCOLOR} -n "${PTX}" get pods,endpointslices
 
 log "Configure ingress"
-kubectl -n "${PTX}" create ingress "${REST_API}" --rule="/${PREFIX}/*=${REST_API}:${API_PORT},tls" --class=traefik \
+${KCOLOR} -n "${PTX}" create ingress "${REST_API}" --rule="/${PREFIX}/*=${REST_API}:${API_PORT},tls" --class=traefik \
                     --default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
-kubectl -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
+${KCOLOR} -n "${PTX}" wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 echo
-kubectl -n "${PTX}" get ingress
+${KCOLOR} -n "${PTX}" get ingress
 
 log "Waiting for ingress to set up..." && sleep 10
 INGRESS_IP="$(kubectl -n "${PTX}" get "ingress/${REST_API}" -o jsonpath='{.status.loadBalancer.ingress[].ip}')"
@@ -48,11 +48,11 @@ docker compose -f ../ptx/core/docker-compose.yaml up -d --force-recreate --wait 
 
 log "Deploy per-zone PDCs"
 # Replace only the given envvars parameters with the given format ${}
-envsubst <"rsc/pdc-config.yaml" '${PTX} ${PDC} ${PDC_PORT} ${PDC_NODE_PORT} ${PDC_PREFIX}' | kubectl apply -f=-
-envsubst <"rsc/pdc-daemonset.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for=jsonpath='.status.numberReady'=2 "daemonset/${PDC}"
+envsubst <"rsc/pdc-config.yaml" '${PTX} ${PDC} ${PDC_PORT} ${PDC_NODE_PORT} ${PDC_PREFIX}' | ${KCOLOR} apply -f=-
+envsubst <"rsc/pdc-daemonset.yaml" | ${KCOLOR} apply -f=-
+${KCOLOR} -n "${PTX}" wait --for=jsonpath='.status.numberReady'=2 "daemonset/${PDC}"
 echo
-kubectl -n "${PTX}" get daemonsets,configmaps,secrets
+${KCOLOR} -n "${PTX}" get daemonsets,configmaps,secrets
 
 log "Waiting for PDC instances to set up..."
 for pod in $(kubectl -n "${PTX}" get pods -l app="${PDC}" -o jsonpath='{.items[*].metadata.name}'); do

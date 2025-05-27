@@ -5,6 +5,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
+    env: demo
 spec:
   selector:
     matchLabels:
@@ -13,6 +14,7 @@ spec:
     metadata:
       labels:
         app: ${PDC}
+        env: demo
     spec:
       nodeSelector:
         connector.dataspace.prometheus-x.org/enabled: "true"

@@ -19,28 +19,33 @@ source config.sh
 
 LOG "Creating K3s test environment..."
 k3d --wait --timeout="${TIMEOUT}s" cluster create "${CLUSTER}" --port 8080:80@loadbalancer --servers=1 --agents=0
-kubectl cluster-info
+${KCOLOR} cluster-info
 
 log "Create Zone A"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_A}" --cluster="${CLUSTER}" --replicas=2 --role=agent
-kubectl label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" "node-role.kubernetes.io/worker=true" \
-                                                            "disktype=hdd" \
-                                                            "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true"
-kubectl label "node/k3d-${NODE_A}-0" "connector.dataspace.prometheus-x.org/enabled=true"
+${KCOLOR} label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" \
+                "disktype=hdd" \
+                "node-role.kubernetes.io/worker=true" \
+                "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true"
+${KCOLOR} label "node/k3d-${NODE_A}-0" \
+                "connector.dataspace.prometheus-x.org/enabled=true"
 
 log "Create Zone B"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_B}" --cluster="${CLUSTER}" --replicas=2 --role=agent
-kubectl label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" "node-role.kubernetes.io/worker=true" \
-                                                            "disktype=ssd" \
-                                                            "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
-kubectl label "node/k3d-${NODE_B}-0" "connector.dataspace.prometheus-x.org/enabled=true"
+${KCOLOR} label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" \
+                "disktype=ssd" \
+                "node-role.kubernetes.io/worker=true" \
+                "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
+${KCOLOR} label "node/k3d-${NODE_B}-0" \
+                "connector.dataspace.prometheus-x.org/enabled=true"
 
 log "Add multi-zone node"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_AB}" --cluster="${CLUSTER}" --replicas=1 --role=agent
-kubectl label "node/k3d-${NODE_AB}-0" "node-role.kubernetes.io/worker=true" \
-                                      "disktype=hdd" \
-                                      "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
-                                      "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
+${KCOLOR} label "node/k3d-${NODE_AB}-0" \
+                "disktype=hdd" \
+                "node-role.kubernetes.io/worker=true" \
+                "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
+                "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
 
 log "Build PTX-edge components..."
 make -C ../../src/rest-api build
@@ -48,13 +53,14 @@ make -C ../../src/builder build
 make -C ../ptx build
 
 log "Load PTX-edge component images"
-k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILD_IMG}" "${PDC_IMG}" "${MONGODB_IMG}"
+docker pull "${WORKER_IMG}"
+k3d image import -c "${CLUSTER}" "${API_IMG}" "${BUILD_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${WORKER_IMG}"
 echo
 docker exec -ti "$(k3d node list --no-headers | cut -d ' ' -f1 | grep '.*server-0')" crictl images | grep ptx
 
 log "Created K3s nodes"
-kubectl get nodes -L "privacy-zone.dataspace.prometheus-x.org/${PZ_A}" \
-                  -L "privacy-zone.dataspace.prometheus-x.org/${PZ_B}"
+${KCOLOR} get nodes -L "privacy-zone.dataspace.prometheus-x.org/${PZ_A}" \
+                    -L "privacy-zone.dataspace.prometheus-x.org/${PZ_B}"
 
 ########################################################################################################################
 

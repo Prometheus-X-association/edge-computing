@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/name: ${REST_API}
+    env: demo
   name: ${REST_API}
   namespace: ${PTX}
 spec:
@@ -14,6 +15,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${REST_API}
+        env: demo
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"

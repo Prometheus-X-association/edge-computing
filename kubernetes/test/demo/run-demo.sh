@@ -17,28 +17,43 @@ source config.sh
 
 ########################################################################################################################
 
-LOG "Execute Privacy Preserving use case..."
+LOG "Execute Edge Computing (BB-02) demo..."
 
-log "Initiate Data Processing Function without PTX-edge provision"
-envsubst <"rsc/builder-pvc.yaml" | kubectl apply -f=-
+log "Initiate Data Processing Function without dataspace restriction"
+envsubst <"rsc/builder-pvc.yaml" | ${KCOLOR} apply -f=-
+envsubst <"rsc/builder-worker-uc1.yaml" | ${KCOLOR} apply -f=-
+${KCOLOR} -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc-${PVC}"
+${KCOLOR} -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-no-pz"
 echo
-kubectl -n "${PTX}" get pvc
-envsubst <"rsc/builder-worker.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
-kubectl -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-no-pz"
-echo
-kubectl -n "${PTX}" get jobs -o wide
-echo
-read -rp "### Press ENTER to continue..."
+${KCOLOR} -n "${PTX}" get pvc,jobs -o wide
+wait_enter "with Privacy Preserving"
 
-log "Initiate Data Processing Function based on Privacy Zone restriction"
-envsubst <"rsc/builder-worker.yaml" | kubectl delete -f=-
-envsubst <"rsc/builder-pvc-pz.yaml" | kubectl apply -f=-
-envsubst <"rsc/builder-worker-pz.yaml" | kubectl apply -f=-
-kubectl -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc"
-kubectl -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-with-pz"
+########################################################################################################################
+
+log "Initiate Data Processing Function with Privacy Zone restriction"
+PVC=1
+envsubst <"rsc/builder-pvc.yaml" | ${KCOLOR} apply --prune --all \
+                                                    --prune-allowlist=core/v1/PersistentVolumeClaim -f=-
+envsubst <"rsc/builder-worker-uc2.yaml" | ${KCOLOR} apply --prune --all \
+                                                    --prune-allowlist=batch/v1/Job -f=-
+${KCOLOR} -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc-${PVC}"
+${KCOLOR} -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-with-pz"
 echo
-kubectl -n "${PTX}" get jobs -o wide
+${KCOLOR} -n "${PTX}" get pvc,jobs -o wide
+wait_enter "with Near-Data Processing"
+
+########################################################################################################################
+
+log "Initiate Data Processing Function with efficient near-data processing"
+PVC=2
+envsubst <"rsc/builder-pvc.yaml" | ${KCOLOR} apply --prune --all \
+                                                    --prune-allowlist=core/v1/PersistentVolumeClaim -f=-
+envsubst <"rsc/builder-worker-uc3.yaml" | ${KCOLOR} apply --prune --all \
+                                                    --prune-allowlist=batch/v1/Job -f=-
+${KCOLOR} -n "${PTX}" wait --for='jsonpath={.status.phase}=Bound' --timeout="${TIMEOUT}s" "pvc/${BUILD}-pvc-${PVC}"
+${KCOLOR} -n "${PTX}" wait --for="condition=Complete" --timeout="${TIMEOUT}s" "job/${BUILD}-with-ndp"
+echo
+${KCOLOR} -n "${PTX}" get pvc,jobs -o wide
 
 ########################################################################################################################
 

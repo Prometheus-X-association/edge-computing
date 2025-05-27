@@ -35,3 +35,7 @@ function _timeout() {
     # - Works with internal shell commands or functions, too.
     ( set +b; sleep "$1" & "${@:2}" & wait -n; r=$?; kill -9 "$(jobs -p)"; exit $r; )
 }
+
+function wait_enter() {
+    echo -e "\n\n" && read -rp ">>> Press ENTER to continue ${1}..."
+}

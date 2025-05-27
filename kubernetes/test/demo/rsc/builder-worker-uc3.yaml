@@ -1,10 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ${BUILD}-no-pz
+  name: ${BUILD}-with-ndp
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${BUILD}
+    env: demo
 spec:
   completions: 1
   parallelism: 1
@@ -13,19 +14,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${BUILD}
+        env: demo
     spec:
       initContainers:
         - name: ${BUILD}
           image: ${BUILD_IMG}
           imagePullPolicy: IfNotPresent
-          command: [ "/bin/sh", "-c" ]
-          args:
-            - echo ">>> builder started";
-              sleep 5s;
-              echo "App created" | tee /usr/src/app/app.py;
-              sleep 5s;
-              echo "Data created" | tee /var/cache/data/data.csv;
-              echo ">>> builder ended";
+          command: [ "python3.13", "-m", "app.builder", "-d" ]
           volumeMounts:
             - mountPath: "/usr/src/app"
               name: cache-volume-worker
@@ -34,16 +29,12 @@ spec:
               name: cache-volume-data
               readOnly: false
       containers:
-        - name: worker
-          image: ${BUILD_IMG}
+        - name: demo-worker
+          image: ${WORKER_IMG}
           imagePullPolicy: IfNotPresent
           command: [ "/bin/sh", "-c" ]
           args:
-            - echo ">>> worker started";
-              ls /usr/src/app/ /var/cache/data/;
-              sleep 5s;
-              echo "Result created" | tee /var/cache/result/result.csv;
-              echo ">>> worker ended";
+            - sleep 5s
           volumeMounts:
             - mountPath: "/usr/src/app"
               name: cache-volume-worker
@@ -57,14 +48,21 @@ spec:
       restartPolicy: OnFailure
       affinity:
         nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: privacy-zone.dataspace.prometheus-x.org/${PZ_A}
+                    operator: In
+                    values:
+                      - "true"
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 1
               preference:
                 matchExpressions:
-                  - key: disktype
+                  - key: connector.dataspace.prometheus-x.org/enabled
                     operator: In
                     values:
-                      - ssd
+                      - "true"
       volumes:
         - name: cache-volume-data
           emptyDir:
@@ -74,4 +72,4 @@ spec:
             sizeLimit: 10Mi
         - name: cache-volume-result
           persistentVolumeClaim:
-            claimName: ${BUILD}-pvc
+            claimName: ${BUILD}-pvc-${PVC}
