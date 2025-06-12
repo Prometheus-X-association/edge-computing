@@ -50,7 +50,7 @@ ${KCOLOR} label "node/k3d-${NODE_AB}-0" \
 log "Build PTX-edge components..."
 make -C ../../src/rest-api build
 make -C ../../src/builder build
-make -C ../ptx build
+make -C ../../src/ptx build
 
 log "Load PTX-edge component images"
 docker pull "${WORKER_IMG}"

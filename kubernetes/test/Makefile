@@ -31,7 +31,7 @@ build:
 	bash setup_k3d_test_env.sh -xs
 	${MAKE} -C ../src/rest-api/ build
 	${MAKE} -C ../src/builder/ build
-	${MAKE} -C ./ptx/ build
+	${MAKE} -C ../src/ptx/ build
 
 setup: build
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml

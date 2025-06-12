@@ -29,9 +29,6 @@ source "${ROOT_DIR}"/test/scripts/helper.sh
 #----------------------------------------------------------------------------------------------------------------------
 
 oneTimeSetUp() {
-    LOG "Build images..."
-    pushd "${ROOT_DIR}"/src/rest-api && make build && popd || return "${SHUNIT_ERROR}"
-    #
     LOG "Setup cluster..."
     k3d cluster create "${CLUSTER}" --wait --timeout=30s --config="${CLUSTER_CFG}"
     k3d cluster list "${CLUSTER}" >/dev/null || return "${SHUNIT_ERROR}"
@@ -68,7 +65,7 @@ testPolicyZoneSchedulingWithNodeSelector() {
     LOG "Create Privacy Zone restricted pod..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_selected_test_pod.yaml
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
-    assertTrue "pod creation failed!" "$?"
+    assertTrue "Pod creation failed!" "$?"
     #
     kubectl get nodes -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
     kubectl -n "${PTX}" get pod/"${POD}" -o wide
@@ -77,14 +74,14 @@ testPolicyZoneSchedulingWithNodeSelector() {
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
     echo "Selected node: ${NODE}"
-    assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
+    assertSame "Pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 
 testPolicyZoneSchedulingWithNodeAffinity() {
     LOG "Create Privacy Zone restricted pod..."
     kubectl -n "${PTX}" apply -f "${ROOT_DIR}"/test/manifests/ptx-edge-pz_affined_test_pod.yaml
     kubectl -n "${PTX}" wait --for="condition=Ready" --timeout=60s pod/"${POD}"
-    assertTrue "pod creation failed!" "$?"
+    assertTrue "Pod creation failed!" "$?"
     #
     kubectl get nodes -L "${PZ_LAB}/zone-A" -L "${PZ_LAB}/zone-B" -L "${PZ_LAB}/zone-C"
     kubectl -n "${PTX}" get pod/"${POD}" -o wide
@@ -93,7 +90,7 @@ testPolicyZoneSchedulingWithNodeAffinity() {
     NODE=$(kubectl -n "${PTX}" get pod/"${POD}" -o jsonpath="{.spec.nodeName}")
     assertNotNull "node name not found!" "${NODE}"
     echo "Selected node: ${NODE}"
-    assertSame "pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
+    assertSame "Pod scheduling failed!" "k3d-${CLUSTER}-agent-0" "${NODE}"
 }
 
 #----------------------------------------------------------------------------------------------------------------------

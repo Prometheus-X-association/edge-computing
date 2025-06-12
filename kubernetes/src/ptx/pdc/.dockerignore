@@ -12,7 +12,7 @@ src/keys/*
 src/public/
 src/config.sample.json
 **/*.md
-.*
+.dockerignore
 !.env.*
 .env.sample
 docker-compose.yml

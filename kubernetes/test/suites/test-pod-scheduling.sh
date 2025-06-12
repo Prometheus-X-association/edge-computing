@@ -23,7 +23,6 @@ PTX=ptx-edge
 
 CPOD=cpu-huge-pod
 MPOD=mem-huge-pod
-PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
 
 source "${ROOT_DIR}"/test/scripts/helper.sh
 
@@ -95,6 +94,7 @@ testSchedulingWithMemoryConstraint() {
     REASON=$(kubectl -n "${PTX}" get pod/"${MPOD}" -o jsonpath="{.status.conditions[].message}")
     assertTrue "Pod scheduling failed unexpectedly!" "[ $(expr "${REASON}" : '.*Insufficient memory.*' ) -ne 0 ]"
 }
+
 #----------------------------------------------------------------------------------------------------------------------
 
 source shunit2
