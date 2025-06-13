@@ -186,7 +186,7 @@ run-pdc-sandboxed:
 	kubectl -n ${PTX} apply -f manifests/ptx-sandbox-pdc_env.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
-	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_nodeport.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
 	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
