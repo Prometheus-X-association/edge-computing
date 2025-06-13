@@ -44,7 +44,8 @@ echo ">>> ${REST_API} is exposed on  http://localhost:8080/${PREFIX}/ui/"
 curl -I "http://localhost:8080/${PREFIX}/ui/"
 
 log "Set up PTX-core sandbox"
-docker compose -f ../ptx/core/docker-compose.yaml up -d --force-recreate --wait --wait-timeout="${TIMEOUT}"
+docker compose -f "${ROOT_DIR}"/src/ptx/core-sandbox/docker-compose.yaml up -d \
+                                                                    --force-recreate --wait --wait-timeout="${TIMEOUT}"
 
 log "Deploy per-zone PDCs"
 # Replace only the given envvars parameters with the given format ${}

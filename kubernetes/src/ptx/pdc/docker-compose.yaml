@@ -31,18 +31,18 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - internal
-      - ptx-core
+      - ptx-sandbox
     healthcheck:
       test: [ "CMD-SHELL", "curl -sSf http://localhost:27017 || exit 1" ]
       start_period: 30s
       start_interval: 3s
   catalog:
     container_name: ptx-catalog
-    image: ptx-core/catalog:1.9.2-slim
+    image: ptx-sandbox/catalog:1.9.2-slim
     ports:
       - "3002:8082"
     networks:
-      - ptx-core
+      - ptx-sandbox
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -53,5 +53,5 @@ services:
 networks:
   internal:
     external: false
-  ptx-core:
+  ptx-sandbox:
     external: false
