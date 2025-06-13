@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-env
+  namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/component: cfg-envvars
+data:
+  # Separate config entries for env
+  PDC_ENDPOINT: "http://host.docker.internal:8080/ptx-edge/pdc"
+  PDC_CATALOG_URI: "http://catalog.ptx-sandbox.svc.cluster.local:3002/v1/"
+  PDC_CONTRACT_URI: "http://contract.ptx-sandbox.svc.cluster.local:3001/"
+  PDC_CONSENT_URI: "http://consent.ptx-sandbox.svc.cluster.local:3003/v1/"
+  PDC_EXPRESS_LIMIT: "100mb"
+immutable: true

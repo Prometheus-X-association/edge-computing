@@ -5,6 +5,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
+    app.kubernetes.io/component: cfg-files
 data:
   env: |
     NODE_ENV=production
@@ -47,6 +48,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
+    app.kubernetes.io/component: cfg-envvars
 data:
   # Separate config entries for env
   PDC_ENDPOINT: "http://host.docker.internal:8080/ptx-edge/pdc"
@@ -68,6 +70,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
+    app.kubernetes.io/component: cfg-secrets
 data:
   PDC_SERVICE_KEY: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
   PDC_SECRET_KEY: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==

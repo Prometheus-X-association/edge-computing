@@ -26,6 +26,9 @@ PDC := pdc
 PDC_PORT := 3000
 PDC_NODE_PORT := 30003
 PDC_PREFIX := ptx-edge/pdc
+SANDBOX := ptx-sandbox
+CATALOG_IMG := ptx-sandbox/catalog:1.9.2-slim
+CATALOG := catalog
 
 build:
 	bash setup_k3d_test_env.sh -xs
@@ -38,7 +41,7 @@ setup: build
 	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
 	kubectl get nodes -o wide
-	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG}
+	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG} ${CATALOG_IMG}
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
 
 status:
@@ -46,6 +49,7 @@ status:
 	@k3d cluster list
 	@echo
 	@kubectl get namespace ${PTX} --ignore-not-found -o wide || exit 0
+	@kubectl get namespace ${SANDBOX} --ignore-not-found -o wide || exit 0
 	@echo
 	@kubectl get nodes -o wide || exit 0
 	@echo
@@ -60,6 +64,16 @@ status:
 
 view:
 	@bash ./scripts/start-kube-ops-view.sh
+
+run-huge-pods:
+	kubectl create namespace ${PTX}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-chuge_test_pod.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-mhuge_test_pod.yaml
+	@echo "\n>>> Waiting for potential escalation...\n" && sleep 3s
+	@#kubectl -n ${PTX} events --for=pod/cpu-huge-pod
+	@#kubectl -n ${PTX} events --for=pod/mem-huge-pod
+	kubectl -n ${PTX} events --types=Warning
+	kubectl -n ${PTX} top node
 
 run-api:
 	### Setup rest-api
@@ -160,20 +174,34 @@ run-pdc-daemon:
 		done; \
 	)
 
-run-huge-pods:
+run-pdc-sandboxed:
+	### Setup sandbox namespace
+	kubectl create namespace ${SANDBOX}
+	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml
+	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
+	kubectl -n ${SANDBOX} get all
+	### Deploy PDC
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-chuge_test_pod.yaml
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-mhuge_test_pod.yaml
-	@echo "\n>>> Waiting for potential escalation...\n" && sleep 3s
-	@#kubectl -n ${PTX} events --for=pod/cpu-huge-pod
-	@#kubectl -n ${PTX} events --for=pod/mem-huge-pod
-	kubectl -n ${PTX} events --types=Warning
-	kubectl -n ${PTX} top node
-
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-envvars
+	kubectl -n ${PTX} apply -f manifests/ptx-sandbox-pdc_env.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
+	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
+	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
+	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
+	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
+	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
+	@echo "Waiting for PDC to set up..."
+	@#timeout 3 grep -m1 "Server running on" <(kubectl -n ${PTX} logs deployments/${PDC} -fc ptx-connector)	# needs bash
+	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	@echo
+	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
+	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
+	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
 	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
+	kubectl delete namespace ${SANDBOX} --ignore-not-found --now || exit 0
 	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
 	docker container prune -f || exit 0
@@ -187,6 +215,6 @@ purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: build setup status run-api test-api run-builder test-builder run-ptx-core run-pdc test-pdc \
-			run-pdc-ingress run-pdc-daemon run-huge-pods stop cleanup tear-down purge
+.PHONY: build setup status run-huge-pods run-api test-api run-builder test-builder run-pdc test-pdc \
+			run-pdc-ingress run-pdc-daemon run-pdc-sandboxed stop cleanup tear-down purge
 .DEFAULT_GOAL := setup
