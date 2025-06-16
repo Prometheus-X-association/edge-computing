@@ -36,7 +36,7 @@ build:
 	${MAKE} -C ../src/builder/ build
 	${MAKE} -C ../src/ptx/ build
 
-setup: build
+setup:
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_single.yaml
 	k3d cluster create ${CLUSTER} --wait --timeout=30s --config=manifests/k3d-test_cluster_multi.yaml
 	@#k3d cluster create ${CLUSTER} --wait --timeout=30s --servers=1 --port="8080:80@loadbalancer"
@@ -83,7 +83,7 @@ run-api:
 	kubectl -n ${PTX} expose deployment/${REST_API} --target-port ${API_PORT} --port ${API_PORT} --name ${REST_API}
 	### Setup ingress
 	kubectl -n ${PTX} create ingress ${REST_API} --rule="/${PREFIX}/*=${REST_API}:${API_PORT},tls" --class=traefik \
-	 	--default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
+	 				--default-backend="${REST_API}:${API_PORT}" --annotation="ingress.kubernetes.io/ssl-redirect=false"
 	kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${REST_API}
 	kubectl -n ${PTX} get nodes,all,endpointslices,ingress,pv,pvc -o wide
 	@echo "Waiting for ingress to set up..." && sleep 10
@@ -115,7 +115,7 @@ run-builder:
 test-builder: | build setup run-builder
 
 run-pdc:
-	${MAKE} -C ./ptx/ run-catalog
+	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
@@ -136,7 +136,7 @@ run-pdc:
 test-pdc: | build setup run-pdc
 
 run-pdc-ingress:
-	${MAKE} -C ./ptx/ run-catalog
+	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment_ingress.yaml
@@ -155,19 +155,19 @@ run-pdc-ingress:
 	curl -Ssf "http://localhost:8080/ptx-edge/pdc" | grep "href"
 
 run-pdc-daemon:
-	${MAKE} -C ./ptx/ run-catalog
+	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 	echo "Waiting for PDC instances to set up..."
-	( \
+	@( \
 		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
 			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
 		done; \
 	)
-	( \
+	@( \
 		for node in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].status.hostIP}'); do \
 			echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
 			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
@@ -200,8 +200,7 @@ run-pdc-sandboxed:
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
-	kubectl delete namespace ${PTX} --ignore-not-found --now || exit 0
-	kubectl delete namespace ${SANDBOX} --ignore-not-found --now || exit 0
+	kubectl delete namespace ${PTX} ${SANDBOX} --ignore-not-found --now || exit 0
 	kubectl delete pv,pvc,ingress --all --ignore-not-found --force || exit 0
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
 	docker container prune -f || exit 0

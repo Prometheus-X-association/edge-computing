@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite
-  failures="0"
-  name="pod-scheduling"
-  tests="2"
-  timestamp="2025-06-16T08:38:58+0000"
-  time="62.83150043"
-  assertions="6"
+        failures="0"
+        name="pod-scheduling"
+        tests="2"
+        timestamp="2025-06-16T08:38:58+0000"
+        time="62.83150043"
+        assertions="6"
 >
-  <testcase
-    classname="pod-scheduling"
-    name="testSchedulingWithCPUConstraint"
-    time="32.987891084"
-    assertions="3"
-  >
-  </testcase>
-  <testcase
-    classname="pod-scheduling"
-    name="testSchedulingWithMemoryConstraint"
-    time="10.523444067"
-    assertions="3"
-  >
-  </testcase>
+    <testcase
+            classname="pod-scheduling"
+            name="testSchedulingWithCPUConstraint"
+            time="32.987891084"
+            assertions="3"
+    >
+    </testcase>
+    <testcase
+            classname="pod-scheduling"
+            name="testSchedulingWithMemoryConstraint"
+            time="10.523444067"
+            assertions="3"
+    >
+    </testcase>
 </testsuite>

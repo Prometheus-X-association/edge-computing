@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite
-  failures="0"
-  name="policy-zone-scheduling"
-  tests="2"
-  timestamp="2025-06-16T08:40:01+0000"
-  time="63.809280947"
-  assertions="6"
+        failures="0"
+        name="policy-zone-scheduling"
+        tests="2"
+        timestamp="2025-06-16T08:40:01+0000"
+        time="63.809280947"
+        assertions="6"
 >
-  <testcase
-    classname="policy-zone-scheduling"
-    name="testPolicyZoneSchedulingWithNodeSelector"
-    time="31.717930169"
-    assertions="3"
-  >
-  </testcase>
-  <testcase
-    classname="policy-zone-scheduling"
-    name="testPolicyZoneSchedulingWithNodeAffinity"
-    time="13.011769897"
-    assertions="3"
-  >
-  </testcase>
+    <testcase
+            classname="policy-zone-scheduling"
+            name="testPolicyZoneSchedulingWithNodeSelector"
+            time="31.717930169"
+            assertions="3"
+    >
+    </testcase>
+    <testcase
+            classname="policy-zone-scheduling"
+            name="testPolicyZoneSchedulingWithNodeAffinity"
+            time="13.011769897"
+            assertions="3"
+    >
+    </testcase>
 </testsuite>

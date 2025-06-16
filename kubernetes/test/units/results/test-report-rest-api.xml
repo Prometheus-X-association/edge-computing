@@ -1,1 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="ptx-edge-rest-api" errors="0" failures="0" skipped="0" tests="2" time="0.527" timestamp="2025-06-16T11:22:25.606233+00:00" hostname="c3bac16d24fd"><testcase classname="test_ptx_edge_health" name="test_health" time="0.048" /><testcase classname="test_ptx_edge_versions" name="test_versions" time="0.003" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+    <testsuite name="ptx-edge-rest-api" errors="0" failures="0" skipped="0" tests="2" time="0.527"
+               timestamp="2025-06-16T11:22:25.606233+00:00" hostname="c3bac16d24fd">
+        <testcase classname="test_ptx_edge_health" name="test_health" time="0.048"/>
+        <testcase classname="test_ptx_edge_versions" name="test_versions" time="0.003"/>
+    </testsuite>
+</testsuites>

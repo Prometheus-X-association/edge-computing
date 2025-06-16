@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 PORT=8081
-INTERVAL=3
+INTERVAL=2
 KUBE_PROXY_PID=""
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 source "${SCRIPT_DIR}/helper.sh"

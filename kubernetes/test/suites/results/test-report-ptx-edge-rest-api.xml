@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite
-  failures="0"
-  name="ptx-edge-rest-api"
-  tests="1"
-  timestamp="2025-06-16T08:45:41+0000"
-  time="82.326058231"
-  assertions="6"
+        failures="0"
+        name="ptx-edge-rest-api"
+        tests="1"
+        timestamp="2025-06-16T08:45:41+0000"
+        time="82.326058231"
+        assertions="6"
 >
-  <testcase
-    classname="ptx-edge-rest-api"
-    name="testPTXEdgeRESTAPI"
-    time="48.893634884"
-    assertions="6"
-  >
-  </testcase>
+    <testcase
+            classname="ptx-edge-rest-api"
+            name="testPTXEdgeRESTAPI"
+            time="48.893634884"
+            assertions="6"
+    >
+    </testcase>
 </testsuite>
