@@ -72,17 +72,19 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 > parts of `ptx-edge`'s planned capabilities.
 > Further test cases are expected to be added continuously.
 
-| Test Suite        | Test Case ID               | Description               | Expected Outcome                                             | Actual Outcome     | Status | Notes            |
-|-------------------|----------------------------|---------------------------|--------------------------------------------------------------|--------------------|--------|------------------|
-| ptx-edge-builder  | _test_builder_cfg_         | Test config loading       | [test-report-builder.xml](results/test-report-builder.xml)   | :heavy_check_mark: | OK     |                  |
-| ptx-edge-builder  | _test_builder_missing_cfg_ | Test external config      | [test-report-builder.xml](results/test-report-builder.xml)   | :x:                | OK     | Assert exception |
-| ptx-edge-rest-api | _test_health_              | Test healthcheck endpoint | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
-| ptx-edge-rest-api | _test_versions_            | Test API availability     | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                  |
+| Test Suite        | Test Case ID               | Description                  | Expected Outcome                                             | Actual Outcome     | Status | Notes                                    |
+|-------------------|----------------------------|------------------------------|--------------------------------------------------------------|--------------------|--------|------------------------------------------|
+| ptx-edge-builder  | _test_builder_cfg_         | Test config loading          | [test-report-builder.xml](results/test-report-builder.xml)   | :heavy_check_mark: | OK     |                                          |
+| ptx-edge-builder  | _test_builder_missing_cfg_ | Test external config         | [test-report-builder.xml](results/test-report-builder.xml)   | :x:                | OK     | Assert exception                         |
+| ptx-core-sandbox  | _test_core_sandbox_setup_  | Test PTX-core sandbox config |                                                              | :heavy_check_mark: | OK     | Sandbox component tests are out of scope |
+| ptx-edge-rest-api | _test_health_              | Test healthcheck endpoint    | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                                          |
+| ptx-edge-rest-api | _test_versions_            | Test API availability        | [test-report-rest-api.xml](results/test-report-rest-api.xml) | :heavy_check_mark: | OK     |                                          |
 
 | Test Suite        |               Test Case ID               | Description                | Expected Outcome                                             |   Actual Outcome   | Status | Notes          |
 |-------------------|:----------------------------------------:|----------------------------|--------------------------------------------------------------|:------------------:|:------:|----------------|
-| ptx-edge-mock-api |   _test_live_server_is_up_and_running_   | Test server status         | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |
-| ptx-edge-mock-api |      _test_request_edge_proc_a_ok_       | Test valid input           | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |
+| ptx-edge-mock-api |              _test_openapi_              | Test server scheme status  | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |
+| ptx-edge-mock-api |              _test_ui_doc_               | Test server UI status      | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |
+| ptx-edge-mock-api |             _test_versions_              | Test version/heartbeat     | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                || ptx-edge-mock-api |      _test_request_edge_proc_a_ok_       | Test valid input           | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |
 | ptx-edge-mock-api |     _test_request_edge_proc_fail400_     | Test invalid input         | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
 | ptx-edge-mock-api |     _test_request_edge_proc_fail403_     | Test unaccredited request  | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
 | ptx-edge-mock-api |     _test_request_edge_proc_fail404_     | Test incomplete request    | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
@@ -97,4 +99,3 @@ The helper script `runall.sh` follows this "UNIX" behavior as well.
 | ptx-edge-mock-api | _test_request_privacy_edge_proc_fail408_ | Test unfulfillable request | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
 | ptx-edge-mock-api | _test_request_privacy_edge_proc_fail412_ | Test restrictive request   | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
 | ptx-edge-mock-api | _test_request_privacy_edge_proc_fail503_ | Test oversize request      | [test-report-mock-api.xml](results/test-report-mock-api.xml) |        :x:         |   OK   | Assert failure |
-| ptx-edge-mock-api |     _test_get_versions_versions_get_     | Test version/heartbeat     | [test-report-mock-api.xml](results/test-report-mock-api.xml) | :heavy_check_mark: |   OK   |                |

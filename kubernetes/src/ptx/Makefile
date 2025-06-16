@@ -58,7 +58,7 @@ build:
 		done; \
 		rm -rf $${TMP_DIR}; \
 	)
-	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
+	docker images --no-trunc -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
 
 run-pdc:
 	cd pdc && docker compose up
@@ -79,8 +79,20 @@ run-catalog:
 					--add-host host.docker.internal:host-gateway -ti ptx-sandbox/catalog:${PDC_VER}-slim
 	docker ps -f name=ptx-catalog
 
+docker-test-setup: build
+
+docker-unit-tests:
+	cd core-sandbox && docker compose up --force-recreate --always-recreate-deps --wait --wait-timeout=60
+	curl -SsLI -o /dev/null http://localhost:3002/v1/catalog/participants/66d18a1dee71f9f096baec08
+	@echo ">>> No unit test is defined for ptx-core sandbox!"
+	cd core-sandbox && docker compose down --timeout=30
+
+unit-test:
+	@echo ">>> No local unit test is defined for ptx-core sandbox!"
+
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/* | xargs -r docker rmi -f
 
-.PHONY: build-orig build run-catalog run-pdc stop-pdc run-core stop-core purge
+.PHONY: build-orig build run-pdc stop-pdc run-sandbox stop-sandbox run-catalog docker-test-setup docker-unit-tests \
+ 		unit-test purge
 .DEFAULT_GOAL := build
