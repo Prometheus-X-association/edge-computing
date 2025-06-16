@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite
-        failures="0"
-        name="ptx-edge-builder"
-        tests="3"
-        assertions="6">
-    <testcase
-            classname="ptx-edge-builder"
-            name="testPTXEdgeStaticVolumeClaim"
-            assertions="2">
-    </testcase>
-    <testcase
-            classname="ptx-edge-builder"
-            name="testPTXEdgeDynamicVolumeClaim"
-            assertions="2">
-    </testcase>
-    <testcase
-            classname="ptx-edge-builder"
-            name="testPTXEdgeBuilder"
-            assertions="2">
-    </testcase>
+  failures="0"
+  name="ptx-edge-builder"
+  tests="3"
+  timestamp="2025-06-16T08:43:32+0000"
+  time="129.497523431"
+  assertions="6"
+>
+  <testcase
+    classname="ptx-edge-builder"
+    name="testPTXEdgeStaticVolumeClaim"
+    time="31.020345276"
+    assertions="2"
+  >
+  </testcase>
+  <testcase
+    classname="ptx-edge-builder"
+    name="testPTXEdgeDynamicVolumeClaim"
+    time="35.159445629"
+    assertions="2"
+  >
+  </testcase>
+  <testcase
+    classname="ptx-edge-builder"
+    name="testPTXEdgeBuilder"
+    time="27.347027793"
+    assertions="2"
+  >
+  </testcase>
 </testsuite>
