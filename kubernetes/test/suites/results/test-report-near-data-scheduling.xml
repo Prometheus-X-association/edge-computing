@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite
+  failures="0"
+  name="near-data-scheduling"
+  tests="1"
+  timestamp="2025-06-16T08:38:08+0000"
+  time="49.588900476"
+  assertions="3"
+>
+  <testcase
+    classname="near-data-scheduling"
+    name="testNearDataSchedulingWithNodeAffinity"
+    time="21.99866537"
+    assertions="3"
+  >
+  </testcase>
+</testsuite>
