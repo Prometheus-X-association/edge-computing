@@ -50,15 +50,24 @@ build:
 		docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
 						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim $${TMP_DIR}/dataspace-connector; \
 		# cd sandbox/infrastructure; \
-		docker build -f ./core-sandbox/mongoseed.Dockerfile -t ${PTX_SANDBOX_PREFIX}/mongo-seed:${PDC_VER}-slim \
+		docker build -f ./sandbox/mongoseed.Dockerfile -t ${PTX_SANDBOX_PREFIX}/mongo-seed:${PDC_VER}-slim \
 						$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/utils/connector/mongo-seed/; \
 		for bb in ${PTX_CORE}; do \
-			docker build -f ./core-sandbox/$${bb}.Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER}-slim \
+			docker build -f ./sandbox/$${bb}.Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER}-slim \
 								$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
 		done; \
 		rm -rf $${TMP_DIR}; \
 	)
 	docker images --no-trunc -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
+
+########################################################################################################################
+
+run-catalog:
+	@# cd pdc && docker compose up catalog
+	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
+	docker run -d --name ptx-catalog -p 3002:8082 --no-healthcheck \
+					--add-host gw.ptx-edge.cluster.local:host-gateway -ti ptx-sandbox/catalog:${PDC_VER}-slim
+	docker ps -f name=ptx-catalog
 
 run-pdc:
 	cd pdc && docker compose up
@@ -72,33 +81,36 @@ run-pdc-test:
 stop-pdc-test:
 	cd pdc && docker compose -f test/docker-compose.yaml down -v
 
+########################################################################################################################
+
+run-core:
+	cd sandbox && docker compose up
+
+stop-core:
+	cd sandbox && docker compose down -v
+
 run-sandbox:
-	cd core-sandbox && docker compose up
+	cd sandbox && docker compose --profile mocked up
 
 stop-sandbox:
-	cd core-sandbox && docker compose down -v
+	cd sandbox && docker compose --profile mocked down -v
 
-run-catalog:
-	@# cd pdc && docker compose up catalog
-	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
-	docker run -d --name ptx-catalog -p 3002:8082 --no-healthcheck \
-					--add-host host.docker.internal:host-gateway -ti ptx-sandbox/catalog:${PDC_VER}-slim
-	docker ps -f name=ptx-catalog
+########################################################################################################################
 
 docker-test-setup: build
 
 docker-unit-tests:
-	cd core-sandbox && docker compose up --force-recreate --always-recreate-deps --wait --wait-timeout=60
+	cd sandbox && docker compose up --force-recreate --always-recreate-deps --wait --wait-timeout=60
 	curl -SsLI -o /dev/null http://localhost:3002/v1/catalog/participants/66d18a1dee71f9f096baec08
-	@echo ">>> No unit test is defined for ptx-core sandbox!"
-	cd core-sandbox && docker compose down --timeout=30
+	@echo ">>> No unit test is defined for PTX sandbox!"
+	cd sandbox && docker compose down --timeout=30
 
 unit-test:
-	@echo ">>> No local unit test is defined for ptx-core sandbox!"
+	@echo ">>> No local unit test is defined for PTX sandbox!"
 
 purge:
 	docker image ls -q -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/* | xargs -r docker rmi -f
 
-.PHONY: build-orig build run-pdc stop-pdc run-sandbox stop-sandbox run-catalog docker-test-setup docker-unit-tests \
- 		unit-test purge
+.PHONY: build-orig build run-catalog run-pdc stop-pdc run-pdc-test stop-pdc-test run-core stop-core \
+			run-sandbox stop-sandbox docker-test-setup docker-unit-tests unit-test purge
 .DEFAULT_GOAL := build

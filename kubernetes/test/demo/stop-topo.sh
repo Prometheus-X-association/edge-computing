@@ -18,7 +18,7 @@ source config.sh
 ########################################################################################################################
 
 LOG "Shutting down test environment..."
-docker compose -f "${ROOT_DIR}"/src/ptx/core-sandbox/docker-compose.yaml down -v
+docker compose -f "${ROOT_DIR}"/src/ptx/sandbox/docker-compose.yaml down -v
 k3d cluster delete "${CLUSTER}"
 
 ########################################################################################################################
