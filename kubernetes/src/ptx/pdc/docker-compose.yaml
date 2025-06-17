@@ -3,35 +3,32 @@ services:
   connector:
     container_name: pdc-connector
     image: ptx/connector:1.9.2-slim
-    # restart: unless-stopped
-    restart: no
+    restart: unless-stopped
     volumes:
       - './config.production.json:/usr/src/app/dist/src/config.production.json'
       - './.env.production:/usr/src/app/.env.production'
     ports:
       - "3333:3000"
     environment:
-      MONGO_URI: mongodb://pdc-mongodb:27017/dataspace-connector
+      MONGO_URI: mongodb://mongodb:27017/dataspace-connector
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - internal
+      - local
     depends_on:
       mongodb:
         condition: service_healthy
       catalog:
         condition: service_healthy
+    healthcheck:
+      test: [ "NONE" ]
   mongodb:
     container_name: pdc-mongodb
-    # image: ptx/mongodb:4.0.5-alpine
     image: ptx/mongodb:8.0.5-slim
     ports:
       - "27018:27017"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
-      - internal
-      - ptx-sandbox
+      - local
     healthcheck:
       test: [ "CMD-SHELL", "curl -sSf http://localhost:27017 || exit 1" ]
       start_period: 30s
@@ -41,17 +38,12 @@ services:
     image: ptx-sandbox/catalog:1.9.2-slim
     ports:
       - "3002:8082"
-    networks:
-      - ptx-sandbox
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
       test: [ "CMD-SHELL", "wget --spider -O /dev/null http://localhost:8082/__admin/health || exit 1" ]
-      #test: [ "NONE" ]
       start_period: 30s
       start_interval: 3s
 networks:
-  internal:
-    external: false
-  ptx-sandbox:
+  local:
     external: false
