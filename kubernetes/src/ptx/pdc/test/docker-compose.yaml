@@ -1,0 +1,35 @@
+name: pdc
+services:
+  connector:
+    container_name: pdc-connector
+    image: ptx/connector:1.9.2-slim
+    restart: no
+    volumes:
+      - './config.docker.json:/usr/src/app/dist/src/config.production.json:ro'
+      - './.env.local:/usr/src/app/.env.production:ro'
+    ports:
+      - "3333:3000"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/dataspace-connector
+    networks:
+      - local
+      - core
+    depends_on:
+      - mongodb
+      - catalog
+  mongodb:
+    container_name: pdc-mongodb
+    image: ptx/mongodb:8.0.5-slim
+    networks:
+      - local
+  catalog:
+    container_name: ptx-catalog
+    image: ptx-sandbox/catalog:1.9.2-slim
+    networks:
+      - core
+networks:
+  local:
+    external: false
+  core:
+    external: false
+    name: ptx_core

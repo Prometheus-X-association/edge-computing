@@ -66,6 +66,12 @@ run-pdc:
 stop-pdc:
 	cd pdc && docker compose down -v
 
+run-pdc-test:
+	cd pdc && docker compose -f test/docker-compose.yaml up
+
+stop-pdc-test:
+	cd pdc && docker compose -f test/docker-compose.yaml down -v
+
 run-sandbox:
 	cd core-sandbox && docker compose up
 
