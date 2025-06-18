@@ -52,11 +52,9 @@ services:
     ports:
       - "3001:8081"
     extra_hosts:
-      - "gw.ptx-edge.cluster.local:host-gateway"
+      - "gw.ptx-edge.cluster.k3s:host-gateway"
     networks:
       - core
-    healthcheck:
-      test: [ "NONE" ]
   catalog:
     container_name: "ptx-catalog"
     image: ptx-sandbox/catalog:1.9.2-slim
@@ -64,11 +62,9 @@ services:
     ports:
       - "3002:8082"
     extra_hosts:
-      - "gw.ptx-edge.cluster.local:host-gateway"
+      - "gw.ptx-edge.cluster.k3s:host-gateway"
     networks:
       - core
-    healthcheck:
-      test: [ "NONE" ]
   consent:
     container_name: "ptx-consent"
     image: ptx-sandbox/consent:1.9.2-slim
@@ -76,7 +72,7 @@ services:
     ports:
       - "3003:8083"
     extra_hosts:
-      - "gw.ptx-edge.cluster.local:host-gateway"
+      - "gw.ptx-edge.cluster.k3s:host-gateway"
     networks:
       - core
 networks:

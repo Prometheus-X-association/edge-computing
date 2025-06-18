@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 CLUSTER := test-cluster
 PTX := ptx-edge
 API_IMG := ptx-edge/rest-api:1.0
@@ -149,7 +148,7 @@ run-pdc-ingress:
 	kubectl -n ${PTX} get nodes,all,endpointslices,ingressroute.traefik.io,middleware.traefik.io -o wide
 	echo "Waiting for PDC to set up..."
 	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
-	@echo
+	@echo "Waiting for ingress to set up..." & sleep 10
 	@echo ">>> ${PDC} is exposed on http://localhost:8080/ptx-edge/pdc"
 	@curl -I "http://localhost:8080/ptx-edge/pdc"
 	curl -Ssf "http://localhost:8080/ptx-edge/pdc" | grep "href"

@@ -66,7 +66,7 @@ run-catalog:
 	@# cd pdc && docker compose up catalog
 	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	docker run -d --name ptx-catalog -p 3002:8082 --no-healthcheck \
-					--add-host gw.ptx-edge.cluster.local:host-gateway -ti ptx-sandbox/catalog:${PDC_VER}-slim
+					--add-host gw.ptx-edge.cluster.k3s:host-gateway -ti ptx-sandbox/catalog:${PDC_VER}-slim
 	docker ps -f name=ptx-catalog
 
 run-pdc:

@@ -78,7 +78,7 @@ spec:
                   fieldPath: status.hostIP
       hostAliases:
         - hostnames:
-            - host.docker.internal
+            - gw.ptx-core.sandbox.local
           ip: 172.17.0.1
       volumes:
         - name: pdc-env

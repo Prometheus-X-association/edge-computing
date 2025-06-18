@@ -11,7 +11,7 @@ ports:
 hostAliases:
   - ip: 172.17.0.1
     hostnames:
-      - host.docker.internal
+      - gw.ptx-core.sandbox.local
 options:
   k3d:
     wait: true

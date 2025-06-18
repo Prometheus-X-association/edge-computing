@@ -12,7 +12,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongodb:27017/dataspace-connector
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "gw.ptx-core.sandbox.local:host-gateway"
     networks:
       - local
     depends_on:
@@ -39,7 +39,7 @@ services:
     ports:
       - "3002:8082"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "gw.ptx-edge.cluster.k3s:host-gateway"
     healthcheck:
       test: [ "CMD-SHELL", "wget --spider -O /dev/null http://localhost:8082/__admin/health || exit 1" ]
       start_period: 30s
