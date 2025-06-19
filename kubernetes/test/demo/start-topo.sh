@@ -26,26 +26,26 @@ k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_A}" --cluster="${CLUSTER}
 ${KCOLOR} label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" \
                 "disktype=hdd" \
                 "node-role.kubernetes.io/worker=true" \
-                "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true"
+                "privacy-zone.dataspace.ptx.org/${PZ_A}=true"
 ${KCOLOR} label "node/k3d-${NODE_A}-0" \
-                "connector.dataspace.prometheus-x.org/enabled=true"
+                "connector.dataspace.ptx.org/enabled=true"
 
 log "Create Zone B"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_B}" --cluster="${CLUSTER}" --replicas=2 --role=agent
 ${KCOLOR} label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" \
                 "disktype=ssd" \
                 "node-role.kubernetes.io/worker=true" \
-                "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
+                "privacy-zone.dataspace.ptx.org/${PZ_B}=true"
 ${KCOLOR} label "node/k3d-${NODE_B}-0" \
-                "connector.dataspace.prometheus-x.org/enabled=true"
+                "connector.dataspace.ptx.org/enabled=true"
 
 log "Add multi-zone node"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_AB}" --cluster="${CLUSTER}" --replicas=1 --role=agent
 ${KCOLOR} label "node/k3d-${NODE_AB}-0" \
                 "disktype=hdd" \
                 "node-role.kubernetes.io/worker=true" \
-                "privacy-zone.dataspace.prometheus-x.org/${PZ_A}=true" \
-                "privacy-zone.dataspace.prometheus-x.org/${PZ_B}=true"
+                "privacy-zone.dataspace.ptx.org/${PZ_A}=true" \
+                "privacy-zone.dataspace.ptx.org/${PZ_B}=true"
 
 log "Build PTX-edge components..."
 make -C ../../src/rest-api build
@@ -59,8 +59,8 @@ echo
 docker exec -ti "$(k3d node list --no-headers | cut -d ' ' -f1 | grep '.*server-0')" crictl images | grep ptx
 
 log "Created K3s nodes"
-${KCOLOR} get nodes -L "privacy-zone.dataspace.prometheus-x.org/${PZ_A}" \
-                    -L "privacy-zone.dataspace.prometheus-x.org/${PZ_B}"
+${KCOLOR} get nodes -L "privacy-zone.dataspace.ptx.org/${PZ_A}" \
+                    -L "privacy-zone.dataspace.ptx.org/${PZ_B}"
 
 ########################################################################################################################
 

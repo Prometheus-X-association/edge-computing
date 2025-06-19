@@ -14,7 +14,7 @@ spec:
         app: pdc
     spec:
       nodeSelector:
-        connector.dataspace.prometheus-x.org/enabled: "true"
+        connector.dataspace.ptx.org/enabled: "true"
       initContainers:
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim

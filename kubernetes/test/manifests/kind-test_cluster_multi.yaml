@@ -4,13 +4,13 @@ name: test-cluster
 nodes:
   - role: control-plane
     labels:
-      privacy-zone.dataspace.prometheus-x.org/zone-C: true
+      privacy-zone.dataspace.ptx.org/zone-C: true
   - role: worker
     labels:
-      privacy-zone.dataspace.prometheus-x.org/zone-A: true
-      privacy-zone.dataspace.prometheus-x.org/zone-B: true
-      connector.dataspace.prometheus-x.org/enabled: true
+      privacy-zone.dataspace.ptx.org/zone-A: true
+      privacy-zone.dataspace.ptx.org/zone-B: true
+      connector.dataspace.ptx.org/enabled: true
   - role: worker
     labels:
-      privacy-zone.dataspace.prometheus-x.org/zone-B: true
-      connector.dataspace.prometheus-x.org/enabled: true
+      privacy-zone.dataspace.ptx.org/zone-B: true
+      connector.dataspace.ptx.org/enabled: true

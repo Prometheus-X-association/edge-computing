@@ -51,7 +51,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: privacy-zone.dataspace.prometheus-x.org/${PZ_A}
+                  - key: privacy-zone.dataspace.ptx.org/${PZ_A}
                     operator: In
                     values:
                       - "true"

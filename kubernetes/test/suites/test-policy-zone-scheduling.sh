@@ -22,7 +22,7 @@ CLUSTER_CFG="${ROOT_DIR}"/test/manifests/k3d-test_cluster_multi.yaml
 PTX=ptx-edge
 
 POD=pz-restricted-pod
-PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
+PZ_LAB='privacy-zone.dataspace.ptx.org'
 
 source "${ROOT_DIR}"/test/scripts/helper.sh
 

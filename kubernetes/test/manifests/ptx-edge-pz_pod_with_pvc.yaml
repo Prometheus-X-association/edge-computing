@@ -17,7 +17,7 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: privacy-zone.dataspace.prometheus-x.org/zone-A
+              - key: privacy-zone.dataspace.ptx.org/zone-A
                 operator: In
                 values:
                   - "true"

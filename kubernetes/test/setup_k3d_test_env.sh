@@ -37,7 +37,7 @@ TEST_IMG='k8s.gcr.io/pause'
 TEST_CMD=''
 TEST_OK='Running'
 
-PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
+PZ_LAB='privacy-zone.dataspace.ptx.org'
 RET_VAL=0
 
 # Install actions --------------------------------------------------------------------------------

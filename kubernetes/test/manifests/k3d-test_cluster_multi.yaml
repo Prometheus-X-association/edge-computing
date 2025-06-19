@@ -18,16 +18,16 @@ options:
     timeout: 30s
   k3s:
     nodeLabels:
-      - label: privacy-zone.dataspace.prometheus-x.org/zone-C=true
+      - label: privacy-zone.dataspace.ptx.org/zone-C=true
         nodeFilters:
           - server:0
-      - label: privacy-zone.dataspace.prometheus-x.org/zone-A=true
+      - label: privacy-zone.dataspace.ptx.org/zone-A=true
         nodeFilters:
           - agent:0
-      - label: privacy-zone.dataspace.prometheus-x.org/zone-B=true
+      - label: privacy-zone.dataspace.ptx.org/zone-B=true
         nodeFilters:
           - agent:*
-      - label: connector.dataspace.prometheus-x.org/enabled=true
+      - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
           - agent:0
           - agent:1

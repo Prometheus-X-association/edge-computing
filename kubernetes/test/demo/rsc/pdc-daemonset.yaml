@@ -17,7 +17,7 @@ spec:
         env: demo
     spec:
       nodeSelector:
-        connector.dataspace.prometheus-x.org/enabled: "true"
+        connector.dataspace.ptx.org/enabled: "true"
       initContainers:
         - name: pdc-mongodb
           image: ${MONGODB_IMG}

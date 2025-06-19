@@ -10,5 +10,5 @@ spec:
       command: [ "/bin/sh" ]
       args: [ "-c", "sleep infinity" ]
   nodeSelector:
-    privacy-zone.dataspace.prometheus-x.org/zone-A: "true"
+    privacy-zone.dataspace.ptx.org/zone-A: "true"
   restartPolicy: Never

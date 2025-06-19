@@ -42,7 +42,7 @@ TEST_CMD=''
 TEST_OK='Running'
 KIND_CCM_NAME="kind-ccm"
 
-PZ_LAB='privacy-zone.dataspace.prometheus-x.org'
+PZ_LAB='privacy-zone.dataspace.ptx.org'
 RET_VAL=0
 
 # Install actions --------------------------------------------------------------------------------
