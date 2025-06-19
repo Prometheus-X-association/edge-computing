@@ -64,6 +64,10 @@ status:
 view:
 	@bash ./scripts/start-kube-ops-view.sh
 
+shell:
+	@kubectl -n ${PTX} run --rm -ti shell --restart=Never --image ${BUILDER_IMG} --command -- sh
+
+
 run-huge-pods:
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-chuge_test_pod.yaml
@@ -164,7 +168,7 @@ run-pdc-daemon:
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
-	echo "Waiting for PDC instances to set up..."
+	@echo "Waiting for PDC instances to set up..."
 	@( \
 		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
 			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
@@ -176,6 +180,9 @@ run-pdc-daemon:
 			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
 		done; \
 	)
+	@echo "Setup services for PDC instances..."
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset_services.yaml
+	kubectl -n ${PTX} get services,endpointslices -o wide
 
 run-pdc-sandboxed:
 	### Setup sandbox namespace

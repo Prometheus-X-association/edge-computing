@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc-zone-a
+  labels:
+    app.kubernetes.io/name: pdc
+  namespace: ptx-edge
+spec:
+  type: ClusterIP
+  clusterIP: None # Headless service without virtual IP and proxying
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000
+      targetPort: 30003
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: pdc-zone-a
+  labels:
+    kubernetes.io/service-name: pdc-zone-a  # Set its value to match the name of the Service
+    endpointslice.kubernetes.io/managed-by: zone-controller.ptx-edge.org
+addressType: IPv4
+ports:
+  - name: http # should match with the name of the service port defined above
+    appProtocol: http
+    protocol: TCP
+    port: 30003
+endpoints:
+  - addresses:
+      - "172.18.0.3"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc-zone-b
+  labels:
+    app.kubernetes.io/name: pdc
+  namespace: ptx-edge
+spec:
+  type: ClusterIP
+  clusterIP: None # Headless service without virtual IP and proxying
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000
+      targetPort: 30003
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: pdc-zone-b
+  labels:
+    kubernetes.io/service-name: pdc-zone-b  # Set its value to match the name of the Service
+    endpointslice.kubernetes.io/managed-by: zone-controller.ptx-edge.org
+addressType: IPv4
+ports:
+  - name: http # should match with the name of the service port defined above
+    appProtocol: http
+    protocol: TCP
+    port: 30003
+endpoints:
+  - addresses:
+      - "172.18.0.4"
