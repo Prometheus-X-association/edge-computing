@@ -131,6 +131,10 @@ run-pdc:
 	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
 	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
+	@echo
+	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
+	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
+								sh -c "wget -qSO- http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ | grep href"
 
 test-pdc: | build setup run-pdc
 
