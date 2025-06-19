@@ -1,6 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: contract
+  namespace: ptx-sandbox
+  labels:
+    app.kubernetes.io/name: contract
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: contract
+  template:
+    metadata:
+      labels:
+        app: contract
+    spec:
+      containers:
+        - name: contract-wiremock
+          image: ptx-sandbox/contract:1.9.2-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: contract-port
+              containerPort: 8081
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contract
+  namespace: ptx-sandbox
+  labels:
+    app.kubernetes.io/name: contract
+spec:
+  ports:
+    - port: 3001
+      protocol: TCP
+      targetPort: contract-port
+  selector:
+    app: contract
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: catalog
   namespace: ptx-sandbox
   labels:
@@ -38,3 +79,44 @@ spec:
       targetPort: catalog-port
   selector:
     app: catalog
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consent
+  namespace: ptx-sandbox
+  labels:
+    app.kubernetes.io/name: consent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consent
+  template:
+    metadata:
+      labels:
+        app: consent
+    spec:
+      containers:
+        - name: consent-mock
+          image: ptx-sandbox/consent:1.9.2-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: consent-port
+              containerPort: 8083
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consent
+  namespace: ptx-sandbox
+  labels:
+    app.kubernetes.io/name: consent
+spec:
+  ports:
+    - port: 3003
+      protocol: TCP
+      targetPort: consent-port
+  selector:
+    app: consent

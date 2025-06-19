@@ -176,7 +176,7 @@ run-pdc-daemon:
 run-pdc-sandboxed:
 	### Setup sandbox namespace
 	kubectl create namespace ${SANDBOX}
-	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml
+	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml -l app.kubernetes.io/name=catalog
 	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
 	kubectl -n ${SANDBOX} get all
 	### Deploy PDC
