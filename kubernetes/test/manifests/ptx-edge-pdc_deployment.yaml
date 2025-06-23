@@ -41,9 +41,9 @@ spec:
           image: ptx/connector:1.9.2-slim
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3000
+            - name: pdc-port
+              containerPort: 3000
               protocol: TCP
-              name: pdc-port
           resources:
             requests:
               cpu: 500m

@@ -28,6 +28,8 @@ PDC_PREFIX := ptx-edge/pdc
 SANDBOX := ptx-sandbox
 CATALOG_IMG := ptx-sandbox/catalog:1.9.2-slim
 CATALOG := catalog
+CONSENT := consent
+CONTRACT := contract
 
 build:
 	bash setup_k3d_test_env.sh -xs
@@ -130,7 +132,7 @@ run-pdc:
 	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
 	@echo "Waiting for PDC to set up..."
 	@#timeout 3 grep -m1 "Server running on" <(kubectl -n ${PTX} logs deployments/${PDC} -fc ptx-connector)	# needs bash
-	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo
 	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
@@ -139,6 +141,10 @@ run-pdc:
 	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
 	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
 								sh -c "wget -qSO- http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ | grep href"
+	@echo
+	@echo "Test PDC liveness..."
+	curl -sX POST "http://${NODE_IP}:${PDC_NODE_PORT}/login" >/dev/null
+	@( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"
 
 test-pdc: | build setup run-pdc
 
@@ -155,11 +161,15 @@ run-pdc-ingress:
 	#kubectl -n ${PTX} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout=30s ingress/${PDC}
 	kubectl -n ${PTX} get nodes,all,endpointslices,ingressroute.traefik.io,middleware.traefik.io -o wide
 	echo "Waiting for PDC to set up..."
-	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo "Waiting for ingress to set up..." & sleep 10
 	@echo ">>> ${PDC} is exposed on http://localhost:8080/ptx-edge/pdc"
 	@curl -I "http://localhost:8080/ptx-edge/pdc"
 	curl -Ssf "http://localhost:8080/ptx-edge/pdc" | grep "href"
+	@echo
+	@echo "Test PDC liveness..."
+	curl -sX POST "http://localhost:8080/ptx-edge/pdc/login" >/dev/null
+	@( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"
 
 run-pdc-daemon:
 	${MAKE} -C ../src/ptx/ run-catalog
@@ -178,11 +188,29 @@ run-pdc-daemon:
 		for node in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].status.hostIP}'); do \
 			echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
 			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
+			curl -sX POST "http://$${node}:${PDC_NODE_PORT}/login" >/dev/null; \
 		done; \
 	)
+	@echo
+	@echo "Test PDC liveness..."
+	@( \
+		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
+			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"; \
+		done; \
+	)
+	@echo
 	@echo "Setup services for PDC instances..."
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset_services.yaml
 	kubectl -n ${PTX} get services,endpointslices -o wide
+
+run-ptx-sandbox:
+	### Setup sandbox namespace
+	kubectl create namespace ${SANDBOX}
+	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml
+	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
+	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONSENT}
+	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONTRACT}
+	kubectl -n ${SANDBOX} get all
 
 run-pdc-sandboxed:
 	### Setup sandbox namespace
@@ -202,11 +230,15 @@ run-pdc-sandboxed:
 	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
 	@echo "Waiting for PDC to set up..."
 	@#timeout 3 grep -m1 "Server running on" <(kubectl -n ${PTX} logs deployments/${PDC} -fc ptx-connector)	# needs bash
-	( kubectl -n ${PTX} logs -f deployments/${PDC} -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo
 	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
 	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
+	@echo
+	@echo "Test PDC liveness..."
+	curl -sX POST "http://${NODE_IP}:${PDC_NODE_PORT}/login" >/dev/null
+	@( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
@@ -225,5 +257,5 @@ purge: cleanup
 		-f "reference=${PTX}/*" | xargs -r docker rmi -f
 
 .PHONY: build setup status run-huge-pods run-api test-api run-builder test-builder run-pdc test-pdc \
-			run-pdc-ingress run-pdc-daemon run-pdc-sandboxed stop cleanup tear-down purge
+			run-pdc-ingress run-pdc-daemon run-ptx-sandbox run-pdc-sandboxed stop cleanup tear-down purge
 .DEFAULT_GOAL := setup
