@@ -4,7 +4,11 @@ metadata:
   name: contract
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: contract
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: contract-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: contract
+    app.kubernetes.io/part-of: ptx-core
 spec:
   replicas: 1
   selector:
@@ -14,6 +18,11 @@ spec:
     metadata:
       labels:
         app: contract
+        app.kubernetes.io/name: sandbox
+        app.kubernetes.io/instance: contract-mock
+        app.kubernetes.io/version: "1.9.2"
+        app.kubernetes.io/component: contract
+        app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: contract-wiremock
@@ -30,14 +39,23 @@ metadata:
   name: contract
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: contract
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: contract-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: contract
+    app.kubernetes.io/part-of: ptx-core
 spec:
+  selector:
+    app: contract
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: contract-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: contract
+    app.kubernetes.io/part-of: ptx-core
   ports:
     - port: 3001
       protocol: TCP
       targetPort: contract-port
-  selector:
-    app: contract
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,7 +63,11 @@ metadata:
   name: catalog
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: catalog
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: catalog-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/part-of: ptx-core
 spec:
   replicas: 1
   selector:
@@ -55,6 +77,11 @@ spec:
     metadata:
       labels:
         app: catalog
+        app.kubernetes.io/name: sandbox
+        app.kubernetes.io/instance: catalog-mock
+        app.kubernetes.io/version: "1.9.2"
+        app.kubernetes.io/component: catalog
+        app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: catalog-wiremock
@@ -71,7 +98,11 @@ metadata:
   name: catalog
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: catalog
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: catalog-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/part-of: ptx-core
 spec:
   ports:
     - port: 3002
@@ -86,7 +117,11 @@ metadata:
   name: consent
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: consent
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: consent-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: consent
+    app.kubernetes.io/part-of: ptx-core
 spec:
   replicas: 1
   selector:
@@ -96,6 +131,11 @@ spec:
     metadata:
       labels:
         app: consent
+        app.kubernetes.io/name: sandbox
+        app.kubernetes.io/instance: consent-mock
+        app.kubernetes.io/version: "1.9.2"
+        app.kubernetes.io/component: consent
+        app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: consent-mock
@@ -112,7 +152,11 @@ metadata:
   name: consent
   namespace: ptx-sandbox
   labels:
-    app.kubernetes.io/name: consent
+    app.kubernetes.io/name: sandbox
+    app.kubernetes.io/instance: consent-mock
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: consent
+    app.kubernetes.io/part-of: ptx-core
 spec:
   ports:
     - port: 3003

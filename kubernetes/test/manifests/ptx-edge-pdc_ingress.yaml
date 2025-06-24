@@ -1,10 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
   name: pdc
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/instance: pdc-zone-a
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: traefik
   rules:

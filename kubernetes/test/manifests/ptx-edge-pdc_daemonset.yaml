@@ -4,6 +4,10 @@ metadata:
   name: pdc
   labels:
     app.kubernetes.io/name: pdc
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
+    #app.kubernetes.io/managed-by: controller.ptx-edge.org
 spec:
   selector:
     matchLabels:
@@ -12,6 +16,10 @@ spec:
     metadata:
       labels:
         app: pdc
+        app.kubernetes.io/name: pdc
+        app.kubernetes.io/version: "1.9.2"
+        app.kubernetes.io/component: connector
+        app.kubernetes.io/part-of: ptx-edge
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"

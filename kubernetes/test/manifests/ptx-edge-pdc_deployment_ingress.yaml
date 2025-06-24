@@ -5,18 +5,31 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
+    app.kubernetes.io/instance: pdc-zone-a
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
+    #app.kubernetes.io/managed-by: controller.ptx-edge.org
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: pdc
+      privacy-zone.dataspace.ptx.org/zone-A: "true"
   template:
     metadata:
       labels:
         app: pdc
+        privacy-zone.dataspace.ptx.org/zone-A: "true"
+        app.kubernetes.io/name: pdc
+        app.kubernetes.io/instance: pdc-zone-a
+        app.kubernetes.io/version: "1.9.2"
+        app.kubernetes.io/component: connector
+        app.kubernetes.io/part-of: ptx-edge
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
+        privacy-zone.dataspace.ptx.org/zone-A: "true"
       initContainers:
         - name: pdc-mongodb
           image: ptx/mongodb:8.0.5-slim

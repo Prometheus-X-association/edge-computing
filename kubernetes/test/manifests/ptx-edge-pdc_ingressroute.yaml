@@ -3,6 +3,9 @@ kind: IngressRoute
 metadata:
   name: pdc
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/instance: pdc-zone-a
 spec:
   entryPoints:
     - web
@@ -13,12 +16,15 @@ spec:
         - name: pdc
           port: 3000
       middlewares:
-        - name: pdc-stripprefix
+        - name: pdc-zone-a-stripprefix
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: pdc-stripprefix
+  name: pdc-zone-a-stripprefix
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/instance: pdc-zone-a
 spec:
   stripPrefix:
     prefixes:

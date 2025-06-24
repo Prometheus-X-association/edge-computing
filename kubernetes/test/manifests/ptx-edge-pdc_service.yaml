@@ -1,13 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app.kubernetes.io/name: pdc
   name: pdc
   namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/instance: pdc-zone-a
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 spec:
   selector:
     app: pdc
+    privacy-zone.dataspace.ptx.org/zone-A: "true"
   type: ClusterIP
   ports:
     - name: pdc-port

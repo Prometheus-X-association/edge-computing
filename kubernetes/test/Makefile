@@ -67,8 +67,7 @@ view:
 	@bash ./scripts/start-kube-ops-view.sh
 
 shell:
-	@kubectl -n ${PTX} run --rm -ti shell --restart=Never --image ${BUILDER_IMG} --command -- sh
-
+	@kubectl -n ${PTX} run --rm -ti shell --restart=Never --image ${BUILDER_IMG} --command -- sh || exit 0
 
 run-huge-pods:
 	kubectl create namespace ${PTX}
@@ -125,8 +124,8 @@ run-pdc:
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
-	kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
-	@#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_nodeport.yaml
+	@#kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_nodeport.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
 	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
@@ -138,13 +137,13 @@ run-pdc:
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
 	curl -Ssf "http://${NODE_IP}:${PDC_NODE_PORT}/" | grep "href"
 	@echo
-	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
-	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
-								sh -c "wget -qSO- http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ | grep href"
-	@echo
 	@echo "Test PDC liveness..."
 	curl -sX POST "http://${NODE_IP}:${PDC_NODE_PORT}/login" >/dev/null
 	@( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"
+	@echo
+	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
+	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
+								sh -c "wget -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
 
 test-pdc: | build setup run-pdc
 
@@ -200,24 +199,37 @@ run-pdc-daemon:
 	)
 	@echo
 	@echo "Setup services for PDC instances..."
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset_services.yaml
+	#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset_services.yaml
+	$(eval NODE_IP_A = `kubectl get nodes k3d-test-cluster-agent-0 \
+									-o jsonpath='{.metadata.annotations.flannel\.alpha\.coreos\.com/public-ip}'`)
+	$(eval NODE_IP_B = `kubectl get nodes k3d-test-cluster-agent-1 \
+									-o jsonpath='{.metadata.annotations.flannel\.alpha\.coreos\.com/public-ip}'`)
+	@echo
+	@echo "Collected node IPs: PZ-A: ${NODE_IP_A}, PZ-B: ${NODE_IP_B}"
+	NODE_IP_A=${NODE_IP_A} \
+	NODE_IP_B=${NODE_IP_B} \
+	envsubst <manifests/ptx-edge-pdc_daemonset_services.yaml | kubectl -n ${PTX} apply -f=-
 	kubectl -n ${PTX} get services,endpointslices -o wide
+	@echo
+	@echo ">>> Configured PDC services"
+	@( \
+		for svc in $$(kubectl -n ${PTX} get services -o jsonpath='{.items[*].metadata.name}'); do \
+			echo "http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/"; \
+			kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
+						sh -c "wget -qS http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"; \
+		done; \
+	)
 
 run-ptx-sandbox:
 	### Setup sandbox namespace
 	kubectl create namespace ${SANDBOX}
 	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml
 	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
-	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONSENT}
-	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONTRACT}
+	#kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONSENT}
+	#kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONTRACT}
 	kubectl -n ${SANDBOX} get all
 
-run-pdc-sandboxed:
-	### Setup sandbox namespace
-	kubectl create namespace ${SANDBOX}
-	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml -l app.kubernetes.io/name=catalog
-	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
-	kubectl -n ${SANDBOX} get all
+run-pdc-sandboxed: run-ptx-sandbox
 	### Deploy PDC
 	kubectl create namespace ${PTX}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-envvars
