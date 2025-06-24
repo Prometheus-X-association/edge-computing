@@ -1,14 +1,18 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pdc-config-env
+  name: pdc-nodeport-env
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/component: cfg-envvars
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: cfg-sandbox
+    app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
-  PDC_ENDPOINT: "http://gw.ptx-edge.cluster.k3s:8080/ptx-edge/pdc"
+  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  PDC_PORT: "8080"
+  PDC_SUBPATH: ""
   PDC_CONTRACT_URI: "http://contract.ptx-sandbox.svc.cluster.local:3001/"
   PDC_CATALOG_URI: "http://catalog.ptx-sandbox.svc.cluster.local:3002/v1/"
   PDC_CONSENT_URI: "http://consent.ptx-sandbox.svc.cluster.local:3003/v1/"

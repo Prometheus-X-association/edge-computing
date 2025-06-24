@@ -41,7 +41,7 @@ metadata:
   labels:
     app.kubernetes.io/name: pdc
     app.kubernetes.io/version: "1.9.2"
-    app.kubernetes.io/component: cfg-envvars
+    app.kubernetes.io/component: cfg-ingress
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
@@ -62,7 +62,7 @@ metadata:
   labels:
     app.kubernetes.io/name: pdc
     app.kubernetes.io/version: "1.9.2"
-    app.kubernetes.io/component: cfg-envvars
+    app.kubernetes.io/component: cfg-nodeport
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env

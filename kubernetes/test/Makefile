@@ -121,7 +121,7 @@ test-builder: | build setup run-builder
 run-pdc:
 	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-ingress
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	@#kubectl -n ${PTX} create service nodeport ${PDC} --tcp=${PDC_PORT}:${PDC_PORT} --node-port=${PDC_NODE_PORT}
@@ -150,7 +150,7 @@ test-pdc: | build setup run-pdc
 run-pdc-ingress:
 	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-nodeport
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment_ingress.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	### Setup ingress
@@ -173,7 +173,7 @@ run-pdc-ingress:
 run-pdc-daemon:
 	${MAKE} -C ../src/ptx/ run-catalog
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-ingress
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
@@ -224,7 +224,7 @@ run-pdc-daemon:
 run-ptx-sandbox:
 	### Setup sandbox namespace
 	kubectl create namespace ${SANDBOX}
-	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml
+	kubectl -n ${SANDBOX} apply -f manifests/ptx-sandbox-deployment.yaml -l app.kubernetes.io/component=catalog
 	kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CATALOG}
 	#kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONSENT}
 	#kubectl -n ${SANDBOX} wait --for="condition=Available" --timeout=20s deployment/${CONTRACT}
@@ -233,17 +233,18 @@ run-ptx-sandbox:
 run-pdc-sandboxed: run-ptx-sandbox
 	### Deploy PDC
 	kubectl create namespace ${PTX}
-	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml -l app.kubernetes.io/component!=cfg-envvars
+	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_config.yaml \
+								-l app.kubernetes.io/component!=cfg-nodeport,app.kubernetes.io/component!=cfg-ingress
 	kubectl -n ${PTX} apply -f manifests/ptx-sandbox-pdc_env.yaml
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_deployment.yaml
 	kubectl -n ${PTX} wait --for="condition=Available" --timeout=20s deployment/${PDC}
 	kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_nodeport.yaml
 	kubectl -n ${PTX} wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s service/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets,endpointslices -o wide
-	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
 	@echo "Waiting for PDC to set up..."
 	@#timeout 3 grep -m1 "Server running on" <(kubectl -n ${PTX} logs deployments/${PDC} -fc ptx-connector)	# needs bash
 	( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	$(eval NODE_IP = `kubectl -n ${PTX} get pod -l app=${PDC} -o jsonpath='{.items[].status.hostIP}'`)
 	@echo
 	@echo ">>> ${PDC} is exposed on http://${NODE_IP}:${PDC_NODE_PORT}/"
 	@curl -I "http://${NODE_IP}:${PDC_NODE_PORT}/"
@@ -252,6 +253,10 @@ run-pdc-sandboxed: run-ptx-sandbox
 	@echo "Test PDC liveness..."
 	curl -sX POST "http://${NODE_IP}:${PDC_NODE_PORT}/login" >/dev/null
 	@( kubectl -n ${PTX} logs -f deployments/${PDC} --all-pods -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"
+	@echo
+	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
+	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
+								sh -c "wget -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
 
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
