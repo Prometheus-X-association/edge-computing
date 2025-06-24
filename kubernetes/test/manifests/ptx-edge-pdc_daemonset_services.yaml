@@ -7,7 +7,7 @@ metadata:
   namespace: ptx-edge
 spec:
   type: ClusterIP
-  clusterIP: None # Headless service without virtual IP and proxying
+  #clusterIP: None # Headless service without virtual IP, proxying, and port translation
   ports:
     - name: pdc-port
       protocol: TCP
@@ -40,7 +40,7 @@ metadata:
   namespace: ptx-edge
 spec:
   type: ClusterIP
-  clusterIP: None # Headless service without virtual IP and proxying
+  #clusterIP: None # Headless service without virtual IP, proxying, and port translation
   ports:
     - name: pdc-port
       protocol: TCP
