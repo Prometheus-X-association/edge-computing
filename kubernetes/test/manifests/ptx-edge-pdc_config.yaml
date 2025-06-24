@@ -17,17 +17,7 @@ data:
     MONGO_URI=mongodb://pdc.ptx-edge.localhost:27017/dataspace-connector
   config-template: |
     {
-      "endpoint":         "${PDC_ENDPOINT}",
-      "serviceKey":       "${PDC_SERVICE_KEY}",
-      "secretKey":        "${PDC_SECRET_KEY}",
-      "catalogUri":       "${PDC_CATALOG_URI}",
-      "contractUri":      "${PDC_CONTRACT_URI}",
-      "consentUri":       "${PDC_CONSENT_URI}",
-      "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
-    }
-  config-template-nodeport: |
-    {
-      "endpoint":         "http://${PDC_NODE_IP}:30003",
+      "endpoint":         "${PDC_DOMAIN}:${PDC_PORT}/${PDC_SUBPATH}",
       "serviceKey":       "${PDC_SERVICE_KEY}",
       "secretKey":        "${PDC_SECRET_KEY}",
       "catalogUri":       "${PDC_CATALOG_URI}",
@@ -46,7 +36,7 @@ immutable: true
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pdc-config-env
+  name: pdc-ingress-env
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
@@ -55,7 +45,30 @@ metadata:
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
-  PDC_ENDPOINT: "http://gw.ptx-edge.cluster.k3s:8080/ptx-edge/pdc"
+  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  PDC_PORT: "8080"
+  PDC_SUBPATH: "ptx-edge/pdc"
+  PDC_CATALOG_URI: "http://gw.ptx-core.sandbox.local:3002/v1/"
+  PDC_CONTRACT_URI: "http://gw.ptx-core.sandbox.local:3001/"
+  PDC_CONSENT_URI: "http://gw.ptx-core.sandbox.local:3003/v1/"
+  PDC_EXPRESS_LIMIT: "100mb"
+immutable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-nodeport-env
+  namespace: ptx-edge
+  labels:
+    app.kubernetes.io/name: pdc
+    app.kubernetes.io/version: "1.9.2"
+    app.kubernetes.io/component: cfg-envvars
+    app.kubernetes.io/part-of: ptx-edge
+data:
+  # Separate config entries for env
+  #PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  PDC_PORT: "30003"
+  PDC_SUBPATH: ""
   PDC_CATALOG_URI: "http://gw.ptx-core.sandbox.local:3002/v1/"
   PDC_CONTRACT_URI: "http://gw.ptx-core.sandbox.local:3001/"
   PDC_CONSENT_URI: "http://gw.ptx-core.sandbox.local:3003/v1/"

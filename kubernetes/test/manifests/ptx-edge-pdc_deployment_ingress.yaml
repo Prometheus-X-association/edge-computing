@@ -80,7 +80,7 @@ spec:
             - ./dist/src/config.production.json
           envFrom:
             - configMapRef:
-                name: pdc-config-env
+                name: pdc-ingress-env
             - secretRef:
                 name: pdc-secrets-env
       hostAliases:

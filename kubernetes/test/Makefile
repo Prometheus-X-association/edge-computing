@@ -188,6 +188,7 @@ run-pdc-daemon:
 			echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
 			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
 			curl -sX POST "http://$${node}:${PDC_NODE_PORT}/login" >/dev/null; \
+			curl -Ssf "http://$${node}:${PDC_NODE_PORT}/" | grep "href"; \
 		done; \
 	)
 	@echo

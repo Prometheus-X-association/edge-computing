@@ -74,11 +74,11 @@ spec:
             - ./dist/src/config.production.json
           envFrom:
             - configMapRef:
-                name: pdc-config-env
+                name: pdc-nodeport-env
             - secretRef:
                 name: pdc-secrets-env
           env:
-            - name: PDC_NODE_IP
+            - name: PDC_DOMAIN
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
@@ -97,7 +97,7 @@ spec:
           configMap:
             name: pdc-config-files
             items:
-              - key: config-template-nodeport
+              - key: config-template
                 path: config.production.json.template
         - name: pdc-start
           configMap:
