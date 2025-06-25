@@ -17,6 +17,7 @@ API_IMG := ptx-edge/rest-api:1.0
 REST_API := rest-api
 API_PORT := 8080
 PREFIX := ptx-edge/v1
+SHELL_IMG := alpine:latest
 BUILDER_IMG := ptx-edge/builder:1.0
 BUILDER := builder
 PDC_IMG := ptx/connector:1.9.2-slim
@@ -67,7 +68,7 @@ view:
 	@bash ./scripts/start-kube-ops-view.sh
 
 shell:
-	@kubectl -n ${PTX} run --rm -ti shell --restart=Never --image ${BUILDER_IMG} --command -- sh || exit 0
+	@kubectl run --rm --grace-period=3 -ti shell --restart=Never --image ${SHELL_IMG} --command -- sh || exit 0
 
 run-huge-pods:
 	kubectl create namespace ${PTX}
