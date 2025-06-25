@@ -85,7 +85,7 @@ spec:
       hostAliases:
         - hostnames:
             - gw.ptx-core.sandbox.local
-          ip: 172.17.0.1
+          ip: 172.18.0.1
       volumes:
         - name: pdc-env
           configMap:

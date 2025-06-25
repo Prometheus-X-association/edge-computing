@@ -9,10 +9,13 @@ ports:
     nodeFilters:
       - loadbalancer
 hostAliases:
-  - ip: 172.17.0.1
+  - ip: 172.18.0.1
     hostnames:
       - gw.ptx-core.sandbox.local
 options:
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
   k3d:
     wait: true
     timeout: 30s

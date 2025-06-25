@@ -45,6 +45,7 @@ setup:
 	kubectl get nodes -o wide
 	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG} ${CATALOG_IMG}
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
+	kubectl create service externalname "ptx-core" --external-name "host.k3d.local"	# ptx-core.default.svc.cluster.local
 
 status:
 	@k3d cluster list --no-headers | grep -q ^	# check for existing cluster
