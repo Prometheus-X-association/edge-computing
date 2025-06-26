@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 NAME := rest-api
 VERSION := 0.1
 IMG := ptx-edge/${NAME}:${VERSION}
@@ -30,20 +29,16 @@ dev:
 	docker run --rm --name ${NAME} -ti -p 8080:8080 -v ./app:/usr/src/api/app ${IMG} \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
 
-
 # Local development in venv
 venv:
 	test -d .venv || (\
 		${PY} -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
 		${PY} -m pip install -U -r requirements.txt -r requirements-dev.txt \
-		)
+	)
 
 dev-local: venv
-		(\
-		. .venv/bin/activate && \
-		fastapi dev --port 8080 --reload app/main.py \
-		)
+	( . .venv/bin/activate && fastapi dev --port 8080 --reload app/main.py )
 
 setup:
 ifeq ($(shell [ `command -v ${PY} >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)

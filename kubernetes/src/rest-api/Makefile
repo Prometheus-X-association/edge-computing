@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 NAME := rest-api
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
@@ -36,20 +35,14 @@ venv:
 		python3.13 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
 		python3.13 -m pip install -U -r requirements.txt -r requirements-dev.txt \
-		)
+	)
 
 dev-local: venv
-		(\
-		. .venv/bin/activate && \
-		fastapi dev --port 8080 --reload app/main.py \
-		)
+	( . .venv/bin/activate && fastapi dev --port 8080 --reload app/main.py )
 
 # Specification generation
 openapi:
-	(\
-	. .venv/bin/activate && \
-	./scripts/generate_openapi.py --type yaml \
-	)
+	( . .venv/bin/activate && ./scripts/generate_openapi.py --type yaml )
 
 setup:
 ifeq ($(shell [ `command -v python3.13 >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)

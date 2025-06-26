@@ -45,7 +45,8 @@ setup:
 	kubectl get nodes -o wide
 	k3d image import -c ${CLUSTER} ${API_IMG} ${BUILDER_IMG} ${PDC_IMG} ${MONGODB_IMG} ${CATALOG_IMG}
 	docker exec -ti k3d-test-cluster-server-0 crictl images | grep ptx
-	kubectl create service externalname "ptx-core" --external-name "host.k3d.local"	# ptx-core.default.svc.cluster.local
+	#kubectl create service externalname "ptx-core" --external-name "host.k3d.local"	# ptx-core.default.svc.cluster.local
+	kubectl -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 
 status:
 	@k3d cluster list --no-headers | grep -q ^	# check for existing cluster
@@ -69,7 +70,9 @@ view:
 	@bash ./scripts/start-kube-ops-view.sh
 
 shell:
-	@kubectl run --rm --grace-period=3 -ti shell --restart=Never --image ${SHELL_IMG} --command -- sh || exit 0
+	@kubectl run --rm --grace-period=3 --restart=Never --image ${SHELL_IMG} -ti shell --command -- sh || exit 0
+
+########################################################################################################################
 
 run-huge-pods:
 	kubectl create namespace ${PTX}
@@ -119,6 +122,8 @@ run-builder:
 	kubectl -n ${PTX} logs job/${BUILDER} --all-containers
 
 test-builder: | build setup run-builder
+
+########################################################################################################################
 
 run-pdc:
 	${MAKE} -C ../src/ptx/ run-catalog
@@ -180,26 +185,20 @@ run-pdc-daemon:
 	kubectl -n ${PTX} wait --for=jsonpath='.status.numberReady'=2 daemonset/${PDC}
 	kubectl -n ${PTX} get all,configmaps,secrets -o wide
 	@echo "Waiting for PDC instances to set up..."
-	@( \
-		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
-			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
-		done; \
-	)
-	@( \
-		for node in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].status.hostIP}'); do \
-			echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
-			curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
-			curl -sX POST "http://$${node}:${PDC_NODE_PORT}/login" >/dev/null; \
-			curl -Ssf "http://$${node}:${PDC_NODE_PORT}/" | grep "href"; \
-		done; \
-	)
+	for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
+		( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
+	done
+	for node in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].status.hostIP}'); do \
+		echo "\n>>> PDC instance is exposed on http://$${node}:${PDC_NODE_PORT}/"; \
+		curl -Ssf -I "http://$${node}:${PDC_NODE_PORT}/"; \
+		curl -sX POST "http://$${node}:${PDC_NODE_PORT}/login" >/dev/null; \
+		curl -Ssf "http://$${node}:${PDC_NODE_PORT}/" | grep "href"; \
+	done
 	@echo
 	@echo "Test PDC liveness..."
-	@( \
-		for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
-			( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"; \
-		done; \
-	)
+	for pod in $$(kubectl -n ${PTX} get pods -l app=${PDC} -o jsonpath='{.items[*].metadata.name}'); do \
+		( kubectl -n ${PTX} logs -f pods/$${pod} -c ptx-connector & ) | timeout 5 grep -m1 "POST /login HTTP/1.1"; \
+	done
 	@echo
 	@echo "Setup services for PDC instances..."
 	#kubectl -n ${PTX} apply -f manifests/ptx-edge-pdc_daemonset_services.yaml
@@ -215,13 +214,11 @@ run-pdc-daemon:
 	kubectl -n ${PTX} get services,endpointslices -o wide
 	@echo
 	@echo ">>> Configured PDC services"
-	@( \
-		for svc in $$(kubectl -n ${PTX} get services -o jsonpath='{.items[*].metadata.name}'); do \
-			echo "http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/"; \
-			kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
-						sh -c "wget -qS http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"; \
-		done; \
-	)
+	for svc in $$(kubectl -n ${PTX} get services -o jsonpath='{.items[*].metadata.name}'); do \
+		echo "http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/"; \
+		kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
+					sh -c "wget -qS http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"; \
+	done
 
 run-ptx-sandbox:
 	### Setup sandbox namespace
@@ -260,6 +257,8 @@ run-pdc-sandboxed: run-ptx-sandbox
 	kubectl -n ${PTX} run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
 								sh -c "wget -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
 
+########################################################################################################################
+
 stop:
 	@#kubectl -n ${PTX} delete all --all --now
 	kubectl delete namespace ${PTX} ${SANDBOX} --ignore-not-found --now || exit 0
@@ -274,8 +273,7 @@ tear-down: | stop cleanup
 
 purge: cleanup
 	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
-		-f "reference=${PTX}/*" | xargs -r docker rmi -f
+													   -f "reference=${PTX}/*" | xargs -r docker rmi -f
 
-.PHONY: build setup status run-huge-pods run-api test-api run-builder test-builder run-pdc test-pdc \
-			run-pdc-ingress run-pdc-daemon run-ptx-sandbox run-pdc-sandboxed stop cleanup tear-down purge
+.PHONY: *
 .DEFAULT_GOAL := setup

@@ -23,41 +23,37 @@ PDC_ENV := production
 MONGO_VER := 8.0.5
 
 build-orig:
-	(\
-		TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
-		git clone ${PDC_REPO} && cd dataspace-connector; \
-		git switch --detach v${PDC_VER}; \
-		# docker compose build; \
-		docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
-		# docker build -f ./docker/mongodb/Dockerfile -t ${PTX_PREFIX}/mongodb:${PDC_VER} .; \
-		cd sandbox/infrastructure; \
-		for bb in ${PTX_CORE}; do \
-			docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER} .; \
-		done; \
-		rm -rf $${TMP_DIR}; \
-	)
+	TMP_DIR=$$(mktemp -d) && cd $${TMP_DIR}; \
+	git clone ${PDC_REPO} && cd dataspace-connector; \
+	git switch --detach v${PDC_VER}; \
+	# docker compose build; \
+	docker build -f ./docker/app/Dockerfile --build-arg ENV=${PDC_ENV} -t ${PTX_PREFIX}/connector:${PDC_VER} .; \
+	# docker build -f ./docker/mongodb/Dockerfile -t ${PTX_PREFIX}/mongodb:${PDC_VER} .; \
+	cd sandbox/infrastructure; \
+	for bb in ${PTX_CORE}; do \
+		docker build -f ./utils/$${bb}/Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER} .; \
+	done; \
+	rm -rf $${TMP_DIR}
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
 
 build:
-	(\
-		TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
-			git clone ${PDC_REPO} && cd dataspace-connector; \
-			git switch --detach v${PDC_VER}; \
-		popd; \
-		cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
-		docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
-						-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
-		docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
-						-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim $${TMP_DIR}/dataspace-connector; \
-		# cd sandbox/infrastructure; \
-		docker build -f ./sandbox/mongoseed.Dockerfile -t ${PTX_SANDBOX_PREFIX}/mongo-seed:${PDC_VER}-slim \
-						$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/utils/connector/mongo-seed/; \
-		for bb in ${PTX_CORE}; do \
-			docker build -f ./sandbox/$${bb}.Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER}-slim \
-								$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
-		done; \
-		rm -rf $${TMP_DIR}; \
-	)
+	TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
+		git clone ${PDC_REPO} && cd dataspace-connector; \
+		git switch --detach v${PDC_VER}; \
+	popd; \
+	cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
+	docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
+					-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
+	docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
+					-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim $${TMP_DIR}/dataspace-connector; \
+	# cd sandbox/infrastructure; \
+	docker build -f ./sandbox/mongoseed.Dockerfile -t ${PTX_SANDBOX_PREFIX}/mongo-seed:${PDC_VER}-slim \
+					$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/utils/connector/mongo-seed/; \
+	for bb in ${PTX_CORE}; do \
+		docker build -f ./sandbox/$${bb}.Dockerfile -t ${PTX_SANDBOX_PREFIX}/$${bb}:${PDC_VER}-slim \
+							$${TMP_DIR}/dataspace-connector/sandbox/infrastructure/; \
+	done; \
+	rm -rf $${TMP_DIR}
 	docker images --no-trunc -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
 
 ########################################################################################################################

@@ -13,31 +13,32 @@
 # limitations under the License.
 
 1-init:
-	@bash start-topo.sh
+	bash start-topo.sh
 
 2-viewer:
-	@( kubectl proxy 2>/dev/null & ) || exit 0
-	@docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
+	( kubectl proxy 2>/dev/null & ) || exit 0
+	docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
         		--port=8081 --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
-	@( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
-	@echo
-	@echo "K8s Ops Viewer is available on http://127.0.0.1:8081/"
-	@echo
+	( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
+	echo
+	echo "K8s Ops Viewer is available on http://127.0.0.1:8081/"
+	echo
 
 3-setup:
-	@bash setup-ptx-edge.sh
+	bash setup-ptx-edge.sh
 
 4-demo:
-	@bash run-demo.sh
+	bash run-demo.sh
 
 5-delete:
-	@bash delete-ptx-edge.sh
+	bash delete-ptx-edge.sh
 
 6-shutdown:
-	@docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
-	@bash stop-topo.sh
+	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
+	bash stop-topo.sh
 
 all: | 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
 
+.SILENT:	# Set silent mode (-s) by default
 .PHONY := 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
 .DEFAULT_GOAL := all
