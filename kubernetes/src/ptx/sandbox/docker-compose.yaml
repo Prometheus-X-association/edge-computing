@@ -52,7 +52,7 @@ services:
     ports:
       - "3001:8081"
     extra_hosts:
-      - "gw.ptx-edge.cluster.k3s:host-gateway"
+      - "gw.ptx-edge.cluster.k3d:host-gateway"
     networks:
       - core
   catalog:
@@ -62,7 +62,7 @@ services:
     ports:
       - "3002:8082"
     extra_hosts:
-      - "gw.ptx-edge.cluster.k3s:host-gateway"
+      - "gw.ptx-edge.cluster.k3d:host-gateway"
     networks:
       - core
   consent:
@@ -72,7 +72,7 @@ services:
     ports:
       - "3003:8083"
     extra_hosts:
-      - "gw.ptx-edge.cluster.k3s:host-gateway"
+      - "gw.ptx-edge.cluster.k3d:host-gateway"
     networks:
       - core
 networks:

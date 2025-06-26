@@ -50,7 +50,7 @@ metadata:
     app.kubernetes.io/name: ${PDC}
     env: demo
 data:
-  PDC_ENDPOINT: "http://gw.ptx-edge.cluster.k3s:8080/${PDC_PREFIX}"
+  PDC_ENDPOINT: "http://gw.ptx-edge.cluster.k3d:8080/${PDC_PREFIX}"
   PDC_CATALOG_URI: "http://gw.ptx-core.sandbox.local:3002/v1/"
   PDC_CONTRACT_URI: "http://gw.ptx-core.sandbox.local:3001/"
   PDC_CONSENT_URI: "http://gw.ptx-core.sandbox.local:3003/v1/"

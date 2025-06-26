@@ -14,7 +14,7 @@ data:
     PORT=3000
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
-    MONGO_URI=mongodb://pdc.ptx-edge.localhost:27017/dataspace-connector
+    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
   config-template: |
     {
       "endpoint":         "${PDC_DOMAIN}:${PDC_PORT}/${PDC_SUBPATH}",
@@ -27,7 +27,7 @@ data:
     }
   start.sh: |
     #!/usr/bin/env sh
-    CFG_FILE=$(readlink -f "${1:-/usr/src/app/dist/src/config.json}")
+    CFG_FILE=$(readlink -f "${1:-/usr/src/app/dist/src/config.production.json}")
     echo "Used config file: ${CFG_FILE}"
     envsubst <"${CFG_FILE}.template" >"${CFG_FILE}"
     npm run start --omit=dev
@@ -45,7 +45,7 @@ metadata:
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
-  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3d"
   PDC_PORT: "8080"
   PDC_SUBPATH: "ptx-edge/pdc"
   PDC_CATALOG_URI: "http://gw.ptx-core.sandbox.local:3002/v1/"
@@ -66,7 +66,7 @@ metadata:
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
-  #PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  #PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3d"
   PDC_PORT: "30003"
   PDC_SUBPATH: ""
   PDC_CATALOG_URI: "http://gw.ptx-core.sandbox.local:3002/v1/"

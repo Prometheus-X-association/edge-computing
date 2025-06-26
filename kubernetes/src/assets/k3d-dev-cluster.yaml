@@ -1,0 +1,44 @@
+kind: Simple
+apiVersion: k3d.io/v1alpha5
+metadata:
+  name: dev
+servers: 1
+agents: 0
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
+volumes:
+  - volume: ${PROJECT_ROOT}/builder/app:/usr/src/builder/app
+    nodeFilters:
+      - all
+  - volume: ${PROJECT_ROOT}/rest-api/app:/usr/src/api/app
+    nodeFilters:
+      - all
+registries:
+  create:
+    name: ${REGISTRY}
+    hostPort: "5000"
+    volumes:
+      - ${PROJECT_ROOT}/.cache:/var/lib/registry   # Persist data locally
+options:
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+  k3d:
+    wait: true
+    timeout: 30s
+    disableLoadbalancer: false
+    disableImageVolume: false
+    disableRollback: false
+  k3s:
+    nodeLabels:
+      - label: privacy-zone.dataspace.ptx.org/zone-A=true
+        nodeFilters:
+          - all
+      - label: privacy-zone.dataspace.ptx.org/zone-B=true
+        nodeFilters:
+          - all
+      - label: connector.dataspace.ptx.org/enabled=true
+        nodeFilters:
+          - all

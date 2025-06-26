@@ -1,5 +1,5 @@
 {
-  "endpoint": "http://gw.ptx-edge.cluster.k3s:3333/",
+  "endpoint": "http://gw.ptx-edge.cluster.k3d:3333/",
   "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
   "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
   "contractUri": "http://gw.ptx-core.sandbox.local:3001/",

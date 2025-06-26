@@ -39,7 +39,7 @@ services:
     ports:
       - "3002:8082"
     extra_hosts:
-      - "gw.ptx-edge.cluster.k3s:host-gateway"
+      - "gw.ptx-edge.cluster.k3d:host-gateway"
     healthcheck:
       test: [ "CMD-SHELL", "wget --spider -O /dev/null http://localhost:8082/__admin/health || exit 1" ]
       start_period: 30s

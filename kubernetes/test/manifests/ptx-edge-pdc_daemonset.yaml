@@ -34,8 +34,7 @@ spec:
             requests:
               cpu: 100m
               memory: 150Mi
-          # Native sidecar container
-          restartPolicy: Always
+          restartPolicy: Always # Native sidecar container
           livenessProbe:
             httpGet:
               port: 27017

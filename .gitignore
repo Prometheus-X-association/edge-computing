@@ -7,3 +7,4 @@
 **/*.dtmp
 **/*.log
 kubernetes/test/**/*.xml
+kubernetes/src/.cache

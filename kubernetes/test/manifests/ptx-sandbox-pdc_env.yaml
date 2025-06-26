@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: ptx-edge
 data:
   # Separate config entries for env
-  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3s"
+  PDC_DOMAIN: "http://gw.ptx-edge.cluster.k3d"
   PDC_PORT: "8080"
   PDC_SUBPATH: ""
   PDC_CONTRACT_URI: "http://contract.ptx-sandbox.svc.cluster.local:3001/"

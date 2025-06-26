@@ -65,6 +65,8 @@ status:
 	@kubectl -n ${PTX} top pod --containers || exit 0
 	@echo
 	@kubectl -n ${PTX} top node || exit 0
+	@echo
+	@kubectl -n ${PTX} events || exit 0
 
 view:
 	@bash ./scripts/start-kube-ops-view.sh

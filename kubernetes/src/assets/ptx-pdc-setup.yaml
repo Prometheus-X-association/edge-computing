@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config
+  namespace: ptx-edge
+data:
+  .env: |
+    NODE_ENV=production
+    PORT=3000
+    SESSION_SECRET=abc
+    SESSION_COOKIE_EXPIRATION=24000
+    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
+  config.json: |
+    {
+      "endpoint": "http://pdc.ptx-edge.cluster.local:3000/",
+      "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
+      "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
+      "contractUri": "http://contract.ptx-sandbox.svc.cluster.local:3001/",
+      "catalogUri": "http://catalog.ptx-sandbox.svc.cluster.local:3002/v1/",
+      "consentUri": "http://consent.ptx-sandbox.svc.cluster.local:3003/v1/",
+      "expressLimitSize": "100mb"
+    }
+immutable: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pdc
+  namespace: ptx-edge
+  labels:
+    app: pdc
+spec:
+  initContainers:
+    - name: pdc-mongodb
+      image: registry.k3d.local:5000/ptx/mongodb:8.0.5-slim
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: mongo-port
+          containerPort: 27017
+      restartPolicy: Always # Native sidecar container
+  containers:
+    - name: ptx-connector
+      image: registry.k3d.local:5000/ptx/connector:1.9.2-slim
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: pdc-port
+          containerPort: 3000
+      volumeMounts:
+        - name: pdc-env
+          mountPath: "/usr/src/app/.env.production"
+          subPath: .env.production
+          readOnly: true
+        - name: pdc-config
+          mountPath: "/usr/src/app/dist/src/config.production.json"
+          subPath: config.production.json
+          readOnly: true
+      command: [ "npm", "run", "start" ]
+  volumes:
+    - name: pdc-env
+      configMap:
+        name: pdc-config
+        items:
+          - key: .env
+            path: .env.production
+    - name: pdc-config
+      configMap:
+        name: pdc-config
+        items:
+          - key: config.json
+            path: config.production.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc
+  namespace: ptx-edge
+spec:
+  selector:
+    app: pdc
+  type: NodePort
+  ports:
+    - name: pdc-port
+      port: 3000
+      nodePort: 30030

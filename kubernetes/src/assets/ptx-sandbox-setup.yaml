@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: contract
+  namespace: ptx-sandbox
+  labels:
+    app: contract
+spec:
+  containers:
+    - name: contract-wiremock
+      image: registry.k3d.local:5000/ptx-sandbox/contract:1.9.2-slim
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: contract-port
+          containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contract
+  namespace: ptx-sandbox
+  labels:
+    app: contract
+spec:
+  selector:
+    app: contract
+  type: NodePort
+  ports:
+    - name: contract-port
+      port: 3001
+      targetPort: contract-port
+      nodePort: 30031
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: catalog
+  namespace: ptx-sandbox
+  labels:
+    app: catalog
+spec:
+  containers:
+    - name: catalog-wiremock
+      image: registry.k3d.local:5000/ptx-sandbox/catalog:1.9.2-slim
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: catalog-port
+          containerPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+  namespace: ptx-sandbox
+  labels:
+    app: catalog
+spec:
+  selector:
+    app: catalog
+  type: NodePort
+  ports:
+    - name: catalog-port
+      port: 3002
+      targetPort: catalog-port
+      nodePort: 30032
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: consent
+  namespace: ptx-sandbox
+  labels:
+    app: consent
+spec:
+  containers:
+    - name: consent-wiremock
+      image: registry.k3d.local:5000/ptx-sandbox/consent:1.9.2-slim
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: consent-port
+          containerPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consent
+  namespace: ptx-sandbox
+  labels:
+    app: consent
+spec:
+  selector:
+    app: consent
+  type: NodePort
+  ports:
+    - name: consent-port
+      port: 3003
+      targetPort: consent-port
+      nodePort: 30033
+
+
+
+
+
+
