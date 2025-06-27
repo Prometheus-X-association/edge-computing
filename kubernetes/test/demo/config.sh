@@ -60,4 +60,4 @@ BUILD=builder
 PVC=0
 
 # Worker
-WORKER_IMG=busybox:1.37
+WORKER_IMG=busybox:latest
