@@ -14,20 +14,20 @@
 export REGISTRY = "registry.k3d.local"
 export PROJECT_ROOT = ${PWD}
 
-MODULES = builder rest-api
+COMPONENTS = builder rest-api
 PTX_CORE = catalog contract consent
 CONNECTOR = connector mongodb
 EXTRA = busybox:latest
 
 build:
-	for mod in ${MODULES}; do ${MAKE} -C "../src/$${mod}/" build; done
+	for mod in ${COMPONENTS}; do ${MAKE} -C "../src/$${mod}/" build; done
 	${MAKE} -C ../src/ptx/ build
 
 setup:
 	k3d cluster create dev --config=assets/k3d-dev-cluster.yaml
 	kubectl create namespace ptx-edge
 	kubectl create namespace ptx-sandbox
-	for img in ${MODULES}; do \
+	for img in ${COMPONENTS}; do \
 		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		LOCAL_IMG="localhost:5000/$${IMG}"; \
 		docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
@@ -57,16 +57,21 @@ setup:
 	kubectl -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 
 status:
-	@kubectl -n ptx-edge get nodes --ignore-not-found -o wide || exit 0
+	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
+	@kubectl -n ptx-edge get nodes --ignore-not-found -o wide
 	@echo
-	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || exit 0
+	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || true
 	@echo
-	@kubectl -n ptx-edge get all,configmaps,pv,pvc,ingress --ignore-not-found -o wide || exit 0
+	@kubectl -n ptx-edge get all,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
 	@echo
-	@kubectl -n ptx-edge events || exit 0
+	@kubectl -n ptx-edge events || true
+	@echo
+	@pgrep -fa "^kubectl.*port-forward.*8888:8080" || true
 
 shell:
-	@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh || exit 0
+	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
+
+########################################################################################################################
 
 run-sandbox:
 	kubectl -n ptx-sandbox apply -f assets/ptx-sandbox-setup.yaml -l app=catalog
@@ -77,7 +82,7 @@ run-sandbox:
 	@echo ">>> Catalog is exposed as 'catalog.ptx-sandbox.svc.cluster.local'"
 	kubectl -n ptx-edge run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
-								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || exit 0
+								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
 
 run-pdc: run-sandbox
 	kubectl -n ptx-edge apply -f assets/ptx-pdc-setup.yaml
@@ -90,23 +95,38 @@ run-pdc: run-sandbox
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
 	kubectl -n ptx-edge run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -qS pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || exit 0
+								 	   wget -qS pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
 	@echo
 	$(eval NODE_IP = `kubectl -n ptx-edge get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30030/"
 	@curl -Ssf "http://${NODE_IP}:30030/" | grep "href"
 
+run-api:
+	kubectl -n ptx-edge apply -f assets/ptx-rest-api-setup.yaml
+	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=20s pod/rest-api
+	( kubectl -n ptx-edge port-forward service/rest-api 8888:8080 & ) && sleep 3
+	@echo
+	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/v1/ui/"
+	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
+	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
+
+run-builder:
+	echo
+
+########################################################################################################################
+
 stop:
+	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
 	kubectl delete namespace ptx-sandbox --ignore-not-found --now && kubectl create namespace ptx-sandbox
 
 clear:
-	docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f || exit 0
+	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	k3d cluster delete dev || exit 0
 
 purge: clear
 	rm -rf ${PROJECT_ROOT}/.cache
 	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" -f "reference=ptx-sandbox/*" | xargs -r docker rmi -f
 
-.PHONY: *
+.PHONY:
 .DEFAULT_GOAL := setup

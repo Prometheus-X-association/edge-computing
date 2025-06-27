@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rest-api
+  namespace: ptx-edge
+  labels:
+    app: rest-api
+spec:
+  containers:
+    - name: rest-api
+      image: registry.k3d.local:5000/ptx-edge/rest-api:1.0
+      imagePullPolicy: IfNotPresent
+      command: [ "uvicorn", "app.main:app", "--port=8080", "--reload", "--reload-dir=app" ]
+      ports:
+        - name: api-port
+          containerPort: 8080
+      volumeMounts:
+        - name: src
+          mountPath: /usr/src/rest-api/app
+  volumes:
+    - name: src
+      hostPath:
+        path: /usr/local/share/rest-api/app
+        type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rest-api
+  namespace: ptx-edge
+spec:
+  selector:
+    app: rest-api
+  type: ClusterIP
+  ports:
+    - name: api-port
+      port: 8080
+      targetPort: api-port

@@ -9,10 +9,10 @@ ports:
     nodeFilters:
       - loadbalancer
 volumes:
-  - volume: ${PROJECT_ROOT}/builder/app:/usr/src/builder/app
+  - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
     nodeFilters:
       - all
-  - volume: ${PROJECT_ROOT}/rest-api/app:/usr/src/api/app
+  - volume: ${PROJECT_ROOT}/rest-api:/usr/local/share/rest-api
     nodeFilters:
       - all
 registries:
