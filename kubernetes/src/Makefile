@@ -110,8 +110,17 @@ run-api:
 	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
 	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
 
-run-builder:
-	echo
+run-worker:
+	kubectl -n ptx-edge apply -f assets/ptx-worker-setup.yaml
+	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	@echo
+	kubectl -n ptx-edge get all,pv,pvc -o wide
+	@echo
+	kubectl -n ptx-edge wait --for="condition=Complete" --timeout=20s job/builder
+	@echo
+	kubectl -n ptx-edge get all -o wide
+	@echo
+	kubectl -n ptx-edge logs job/builder builder && kubectl -n ptx-edge logs job/builder worker
 
 ########################################################################################################################
 
