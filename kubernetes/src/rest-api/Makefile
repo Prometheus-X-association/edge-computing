@@ -22,12 +22,11 @@ build:
 	docker images --no-trunc ${IMG}
 
 run: build
-	docker run --rm --name ${NAME} -ti -p 8080:8080 ${IMG}
+	docker run --rm --name ${NAME} -ti -p 8888:8080 ${IMG}
 
 dev:
-	docker run --rm --name ${NAME} -ti -p 8080:8080 -v ./app:/usr/src/api/app ${IMG} \
+	docker run --rm --name ${NAME} -ti -p 8888:8080 -v ./app:/usr/src/api/app ${IMG} \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
-
 
 # Local development in venv
 venv:

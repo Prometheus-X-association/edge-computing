@@ -1,3 +1,0 @@
-connexion[swagger-ui,uvicorn]~=3.1.0
-gunicorn~=23.0.0
-uvicorn-worker~=0.2.0
