@@ -14,10 +14,10 @@
 export REGISTRY = "registry.k3d.local"
 export PROJECT_ROOT = ${PWD}
 
-COMPONENTS = builder rest-api
-PTX_CORE = catalog contract consent
-CONNECTOR = connector mongodb
-EXTRA = busybox:latest
+COMPONENTS := builder rest-api
+PTX_CORE := catalog contract consent
+CONNECTOR := connector mongodb
+EXTRA := "busybox:latest"
 
 build:
 	for mod in ${COMPONENTS}; do ${MAKE} -C "../src/$${mod}/" build; done
@@ -121,6 +121,15 @@ run-worker:
 	kubectl -n ptx-edge get all -o wide
 	@echo
 	kubectl -n ptx-edge logs job/builder builder && kubectl -n ptx-edge logs job/builder worker
+
+run-builder:
+	kubectl -n ptx-edge apply -f assets/ptx-builder-setup.yaml
+	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=10s pod/builder
+	@echo
+	kubectl -n ptx-edge get all -o wide
+	@echo
+	-kubectl -n ptx-edge exec -ti pod/builder -- sh
+	kubectl -n ptx-edge delete pod/builder --now --wait
 
 ########################################################################################################################
 

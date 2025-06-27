@@ -29,4 +29,3 @@ def print_config(cfg: configparser.ConfigParser):
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
     log.warning(f"Waiting for builder to finish[{_delay}s]...")
     time.sleep(_delay)
-    exit(0)

@@ -35,7 +35,7 @@ def main():
     parser.add_argument("-V", "--version", action='version', version=f"{parser.description} v{__version__}")
     args = parser.parse_args()
     set_logging_level(verbosity=args.verbose)
-    log.info("builder started.")
+    log.info("=== builder started ===")
     log.debug(args)
     # Load configuration
     cfg = load_configuration(cfg_file=args.config)
@@ -43,7 +43,7 @@ def main():
     if args.dummy:
         print_config(cfg=cfg)
         wait_and_exit()
-    log.info("builder ended.")
+    log.info("=== builder ended ===")
 
 
 if __name__ == '__main__':
