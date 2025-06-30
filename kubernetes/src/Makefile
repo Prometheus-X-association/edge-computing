@@ -23,6 +23,8 @@ build:
 	for mod in ${COMPONENTS}; do ${MAKE} -C "../src/$${mod}/" build; done
 	${MAKE} -C ../src/ptx/ build
 
+rebuild: | purge build
+
 setup:
 	k3d cluster create dev --config=assets/k3d-dev-cluster.yaml
 	kubectl create namespace ptx-edge
@@ -51,7 +53,7 @@ setup:
 	@echo
 	@echo ">>> Uploaded repositories:"
 	curl -Sskf -X GET http://localhost:5000/v2/_catalog | python3 -m json.tool
-	#${MAKE} -C ../src/ptx/ run-catalog
+	@#${MAKE} -C ../src/ptx/ run-catalog
 	@echo
 	@echo ">>> Configured CoreDNS entries:"
 	kubectl -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
@@ -133,6 +135,16 @@ run-builder:
 
 ########################################################################################################################
 
+set-env: | rebuild setup run-pdc run-builder
+
+pdc-log:
+	kubectl -n ptx-edge logs pdc ptx-connector -f || true
+
+catalog-log:
+	kubectl -n ptx-sandbox logs pods/catalog catalog-wiremock -f || true
+
+########################################################################################################################
+
 stop:
 	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
@@ -140,11 +152,12 @@ stop:
 
 clear:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
-	k3d cluster delete dev || exit 0
+	k3d cluster delete dev || true
 
 purge: clear
 	rm -rf ${PROJECT_ROOT}/.cache
 	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" -f "reference=ptx-sandbox/*" | xargs -r docker rmi -f
+	docker image prune -f
 
 .PHONY:
 .DEFAULT_GOAL := setup
