@@ -1,1 +1,1 @@
-requests>=2.32.0
+httpx[cli]>=0.28.1

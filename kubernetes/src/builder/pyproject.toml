@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    'requests>=2.32.0'
+    'httpx[cli]>=0.28.1'
 ]
 
 [project.urls]
@@ -30,9 +30,9 @@ Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
 [project.optional-dependencies]
 test = [
     "virtualenv~=20.29.2",
-    "pytest~=8.3.4",
+    "pytest~=8.4.1",
     "pytest-custom_exit_code~=0.3.0",
-    "tox~=4.24.1"
+    "tox~=4.27.0"
 ]
 
 [tool.setuptools.dynamic]
