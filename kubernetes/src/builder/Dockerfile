@@ -3,6 +3,5 @@ LABEL maintainer="czentye@tmit.bme.hu"
 WORKDIR /usr/src/builder
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
-COPY pyproject.toml .
 COPY ./app ./app
-CMD ["python3.13", "-m", "app.builder"]
+CMD ["python3.13", "-m", "app"]
