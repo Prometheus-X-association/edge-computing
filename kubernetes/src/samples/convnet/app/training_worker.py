@@ -19,10 +19,10 @@ import keras
 import numpy as np
 
 # os.environ["KERAS_BACKEND"] = "jax"
-INPUT_DATA_PATH = pathlib.Path(os.environ.get('INPUT_DATA_PATH', "./mnist_train_data.npz")).resolve()
-OUTPUT_DATA_PATH = pathlib.Path(os.environ.get('OUTPUT_DATA_PATH', "./convnet_model.keras")).resolve()
+TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', "./mnist_train_data.npz")).resolve()
 TRAIN_BATCH_SIZE = int(os.environ.get('TRAIN_BATCH_SIZE', 128))
 TRAIN_EPOCHS = int(os.environ.get('TRAIN_EPOCHS', 30))
+TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', "./convnet_model.keras")).resolve()
 
 
 def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:
@@ -68,10 +68,10 @@ def store_model(model: keras.models.Model, dst_path: pathlib.Path | str) -> None
 
 
 def execute():
-    x_train, y_train = load_data(INPUT_DATA_PATH)
+    x_train, y_train = load_data(TASK_DATA_SRC)
     model = create_convnet_model()
     model = train_model(model, x_train, y_train)
-    store_model(model, dst_path=OUTPUT_DATA_PATH)
+    store_model(model, dst_path=TASK_DATA_DST)
 
 
 if __name__ == '__main__':

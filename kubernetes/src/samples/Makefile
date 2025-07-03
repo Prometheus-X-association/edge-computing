@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-CONVNET_IMG := samples/convnet-worker:0.1
-GBC_IMG := samples/gbc-worker:0.1
+SAMPLES_PREFIX := samples
+CONVNET_IMG := ${SAMPLES_PREFIX}/convnet-worker:0.1
+GBC_IMG := ${SAMPLES_PREFIX}/gbc-worker:0.1
 
 # Docker commands
 build-convnet:
@@ -29,6 +30,8 @@ build-gbc:
 run-gbc: build-gbc
 	docker run --rm --name gbc -ti ${GBC_IMG}
 
+build-all: build-convnet build-gbc
+
 # Cleanup
 clean:
 	py3clean -v .
@@ -38,6 +41,6 @@ docker-test-setup:
 	echo "Skipped."
 
 docker-unit-tests:
-	echo "Skipped"
+	echo "Skipped."
 
 .PHONY: *

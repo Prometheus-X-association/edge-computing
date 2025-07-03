@@ -19,11 +19,11 @@ import joblib
 import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
-INPUT_DATA_PATH = pathlib.Path(os.environ.get('INPUT_DATA_PATH', "./olivetti_train_data.npz")).resolve()
-OUTPUT_DATA_PATH = pathlib.Path(os.environ.get('OUTPUT_DATA_PATH', "./gbc_model.pkl")).resolve()
+TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', "./olivetti_train_data.npz")).resolve()
 TRAIN_ESTIMATORS = int(os.environ.get('TRAIN_ESTIMATOR', 30))
 TRAIN_RATE = float(os.environ.get('TRAIN_RATE', 0.2))
 TRAIN_DEPTH = int(os.environ.get('TRAIN_DEPTH', 2))
+TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', "./gbc_model.pkl")).resolve()
 
 
 def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:
@@ -54,10 +54,10 @@ def store_model(model: GradientBoostingClassifier, dst_path: pathlib.Path | str)
 
 
 def execute():
-    x_train, y_train = load_data(INPUT_DATA_PATH)
+    x_train, y_train = load_data(TASK_DATA_SRC)
     model = create_svm_model()
     model = train_model(model, x_train, y_train)
-    store_model(model, dst_path=OUTPUT_DATA_PATH)
+    store_model(model, dst_path=TASK_DATA_DST)
 
 
 if __name__ == '__main__':

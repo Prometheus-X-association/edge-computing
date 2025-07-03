@@ -19,12 +19,12 @@ import pprint
 import numpy as np
 from sklearn.datasets import fetch_olivetti_faces
 
-RAW_DATA_TRIM_RATIO = int(os.environ.get('RAW_DATA_TRIM_RATIO', 5))
-OUTPUT_DATA_PATH = pathlib.Path(os.environ.get('OUTPUT_DATA_FILENAME', "./olivetti_train_data.npz")).resolve()
+BUILD_TRIM_RATIO = int(os.environ.get('BUILD_TRIM_RATIO', 5))
+BUILD_DATA_DST = pathlib.Path(os.environ.get('BUILD_DATA_DST', "./olivetti_train_data.npz")).resolve()
 
 
 def get_digits_dataset() -> tuple[np.ndarray, np.ndarray]:
-    print("\n@@@ Getting Digits dataset...")
+    print("\n@@@ Getting Olivetti dataset...")
     raw_data = fetch_olivetti_faces(data_home=pathlib.Path(".").resolve(), shuffle=True, random_state=42)
     pprint.pprint(raw_data.DESCR.split('\n'))
     return raw_data.data, raw_data.target
@@ -49,8 +49,8 @@ def store_data(data: tuple[np.ndarray, np.ndarray], dst_path: pathlib.Path | str
 
 def prepare_training_data():
     raw_data = get_digits_dataset()
-    processed_data = preprocess_dataset(raw_data, trim_ratio=RAW_DATA_TRIM_RATIO)
-    store_data(processed_data, dst_path=OUTPUT_DATA_PATH)
+    processed_data = preprocess_dataset(raw_data, trim_ratio=BUILD_TRIM_RATIO)
+    store_data(processed_data, dst_path=BUILD_DATA_DST)
 
 
 if __name__ == "__main__":
