@@ -20,7 +20,7 @@ spec:
         - name: ${BUILD}
           image: ${BUILD_IMG}
           imagePullPolicy: IfNotPresent
-          command: [ "python3.13", "-m", "app.builder", "-d" ]
+          command: [ "python3", "-m", "app.builder", "-d" ]
           volumeMounts:
             - mountPath: "/usr/src/app"
               name: cache-volume-worker

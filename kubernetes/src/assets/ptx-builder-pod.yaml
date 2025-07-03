@@ -8,7 +8,7 @@ spec:
     - name: builder
       image: registry.k3d.local:5000/ptx-edge/builder:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "python3.13", "-m", "app.builder"]
+      #command: [ "python3", "-m", "app"]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
       volumeMounts:
         - name: src

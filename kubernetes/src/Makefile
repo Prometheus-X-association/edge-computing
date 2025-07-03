@@ -17,11 +17,13 @@ export PROJECT_ROOT = ${PWD}
 COMPONENTS := builder rest-api
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
+SAMPLES := convnet gbc
 EXTRA := "busybox:latest"
 
 build:
 	for mod in ${COMPONENTS}; do ${MAKE} -C "../src/$${mod}/" build; done
 	${MAKE} -C ../src/ptx/ build
+	${MAKE} -C ../src/samples/ build-all
 
 rebuild: | purge build
 
@@ -41,6 +43,11 @@ setup:
 	done
 	for img in ${CONNECTOR}; do \
 		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
+		LOCAL_IMG="localhost:5000/$${IMG}"; \
+		docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
+	done
+	for img in ${SAMPLES}; do \
+		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		LOCAL_IMG="localhost:5000/$${IMG}"; \
 		docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
 	done
@@ -112,26 +119,51 @@ run-api:
 	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
 	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
 
-run-worker:
-	kubectl -n ptx-edge apply -f assets/ptx-worker-setup.yaml
-	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
-	@echo
-	kubectl -n ptx-edge get all,pv,pvc -o wide
-	@echo
-	kubectl -n ptx-edge wait --for="condition=Complete" --timeout=20s job/builder
-	@echo
-	kubectl -n ptx-edge get all -o wide
-	@echo
-	kubectl -n ptx-edge logs job/builder builder && kubectl -n ptx-edge logs job/builder worker
-
 run-builder:
-	kubectl -n ptx-edge apply -f assets/ptx-builder-setup.yaml
+	kubectl -n ptx-edge apply -f assets/ptx-builder-pod.yaml
 	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=10s pod/builder
 	@echo
 	kubectl -n ptx-edge get all -o wide
 	@echo
 	-kubectl -n ptx-edge exec -ti pod/builder -- sh
 	kubectl -n ptx-edge delete pod/builder --now --wait
+
+run-worker:
+	kubectl -n ptx-edge apply -f assets/ptx-test-worker-job.yaml
+	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	@echo
+	kubectl -n ptx-edge get all,pv,pvc -o wide
+	@echo
+	kubectl -n ptx-edge wait --for="condition=Complete" --timeout=20s job/consumer
+	@echo
+	kubectl -n ptx-edge get all -o wide
+	@echo
+	kubectl -n ptx-edge logs job/consumer builder && kubectl -n ptx-edge logs job/consumer worker
+
+run-convnet:
+	kubectl -n ptx-edge apply -f assets/ptx-samples-convnet-job.yaml
+	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	@echo
+	kubectl -n ptx-edge get all,pv,pvc -o wide
+	@echo
+	@#kubectl -n ptx-edge logs -f --all-containers --prefix --ignore-errors -l app=consumer
+	kubectl -n ptx-edge wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
+	kubectl -n ptx-edge logs -f --prefix job/consumer builder
+	kubectl -n ptx-edge wait --for="condition=ContainersReady" pods -l app=consumer
+	kubectl -n ptx-edge logs -f --prefix job/consumer worker
+
+run-gbc:
+	kubectl -n ptx-edge apply -f assets/ptx-samples-gbc-job.yaml
+	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	@echo
+	kubectl -n ptx-edge get all,pv,pvc -o wide
+	@echo
+	@#kubectl -n ptx-edge logs -f --all-containers --prefix --ignore-errors -l app=consumer
+	kubectl -n ptx-edge wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
+	kubectl -n ptx-edge logs -f --prefix job/consumer builder
+	kubectl -n ptx-edge wait --for="condition=ContainersReady" pods -l app=consumer
+	@#kubectl -n ptx-edge logs -f --prefix -l app=consumer
+	kubectl -n ptx-edge logs -f --prefix job/consumer worker
 
 ########################################################################################################################
 
@@ -156,7 +188,8 @@ clear:
 
 purge: clear
 	rm -rf ${PROJECT_ROOT}/.cache
-	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" -f "reference=ptx-sandbox/*" | xargs -r docker rmi -f
+	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" \
+					 -f "reference=ptx-sandbox/*" -f "reference=samples/*" | xargs -r docker rmi -f
 	docker image prune -f
 
 .PHONY:

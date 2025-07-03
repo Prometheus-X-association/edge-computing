@@ -17,63 +17,59 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: builder
+  name: consumer
   namespace: ptx-edge
 spec:
   completions: 1
   parallelism: 1
-  backoffLimit: 2
+  backoffLimit: 1
   template:
+    metadata:
+      labels:
+        app: consumer
     spec:
       initContainers:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3.13", "-m", "app.builder"]
+          #command: [ "python3", "-m", "app" ]
+          command: [ "/bin/sh", "-c" ]
+          args:
+            #- sleep infinity
+            - wget -P /var/cache/data ${BUILD_DATA_SRC}
           volumeMounts:
-            - name: src
+            - name: builder-src
               mountPath: /usr/src/builder/app
-            - name: worker-dir
-              mountPath: /usr/src/worker
-              readOnly: false
             - name: data-dir
               mountPath: /var/cache/data
               readOnly: false
+          env:
+            - name: BUILD_DATA_SRC
+              value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/olivetti_train_data.npz"
       containers:
         - name: worker
-          image: registry.k3d.local:5000/busybox:latest
+          image: registry.k3d.local:5000/samples/gbc-worker:0.1
           imagePullPolicy: IfNotPresent
-          command: [ "/bin/sh", "-c" ]
-          args:
-            - echo "=== worker started ===";
-              echo ">>> INPUTS";
-              ls -hl /usr/src/worker /var/cache/data;
-              echo -e "\n@@@ Generating results...\n";
-              sleep 5s;
-              echo "Result created" >> /var/cache/result/result.txt;
-              echo ">>> OUTPUTS";
-              ls -hl /var/cache/result;
-              echo "=== worker ended ===";
+          command: [ "python3", "-m", "app.training_worker" ]
           volumeMounts:
-            - name: worker-dir
-              mountPath: /usr/src/worker
-              readOnly: true
             - name: data-dir
               mountPath: /var/cache/data
               readOnly: true
             - name: result-dir
               mountPath: /var/cache/result
               readOnly: false
+          env:
+            - name: TASK_DATA_SRC
+              value: "/var/cache/data/olivetti_train_data.npz"
+            - name: TASK_DATA_DST
+              value: "/var/cache/result/gbc_model.pkl"
       restartPolicy: OnFailure
       volumes:
-        - name: src
+        - name: builder-src
           hostPath:
             path: /usr/local/share/builder/app
             type: Directory
         - name: data-dir
-          emptyDir:
-            sizeLimit: 100Mi
-        - name: worker-dir
           emptyDir:
             sizeLimit: 100Mi
         - name: result-dir

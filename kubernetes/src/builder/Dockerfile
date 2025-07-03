@@ -4,4 +4,4 @@ WORKDIR /usr/src/builder
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
 COPY ./app ./app
-CMD ["python3.13", "-m", "app"]
+CMD ["python3", "-m", "app"]
