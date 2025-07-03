@@ -12,7 +12,7 @@ data:
     MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
   config.json: |
     {
-      "endpoint": "http://pdc.ptx-edge.cluster.local:3000/",
+      "endpoint": "http://pdc.ptx-edge.svc.cluster.local:3000/",
       "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
       "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
       "contractUri": "http://contract.ptx-sandbox.svc.cluster.local:3001/",

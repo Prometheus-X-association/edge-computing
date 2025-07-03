@@ -167,13 +167,13 @@ run-gbc:
 
 ########################################################################################################################
 
-set-env: | rebuild setup run-pdc run-builder
+launch: | rebuild setup run-pdc run-builder
 
-pdc-log:
-	kubectl logs pdc ptx-connector -f || true
+log-pdc:
+	kubectl logs --prefix --ignore-errors -f pdc ptx-connector || true
 
-catalog-log:
-	kubectl -n ptx-sandbox logs pods/catalog catalog-wiremock -f || true
+log-catalog:
+	kubectl -n ptx-sandbox logs --prefix --ignore-errors -f pods/catalog catalog-wiremock || true
 
 ########################################################################################################################
 
