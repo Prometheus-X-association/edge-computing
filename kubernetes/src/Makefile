@@ -29,7 +29,7 @@ rebuild: | purge build
 
 setup:
 	k3d cluster create dev --config=assets/k3d-dev-cluster.yaml
-	kubectl create namespace ptx-edge
+	kubectl create namespace ptx-edge && kubectl config set-context --current --namespace ptx-edge
 	kubectl create namespace ptx-sandbox
 	for img in ${COMPONENTS}; do \
 		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
@@ -67,13 +67,13 @@ setup:
 
 status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
-	@kubectl -n ptx-edge get nodes --ignore-not-found -o wide
+	@kubectl get nodes --ignore-not-found -o wide
 	@echo
 	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || true
 	@echo
-	@kubectl -n ptx-edge get all,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
+	@kubectl get all,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
 	@echo
-	@kubectl -n ptx-edge events || true
+	@kubectl events || true
 	@echo
 	@pgrep -fa "^kubectl.*port-forward.*8888:8080" || true
 
@@ -89,88 +89,88 @@ run-sandbox:
 	@kubectl -n ptx-sandbox get all -o wide
 	@echo
 	@echo ">>> Catalog is exposed as 'catalog.ptx-sandbox.svc.cluster.local'"
-	kubectl -n ptx-edge run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
 								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
 
 run-pdc: run-sandbox
-	kubectl -n ptx-edge apply -f assets/ptx-pdc-setup.yaml
-	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=20s pod/pdc
+	kubectl apply -f assets/ptx-pdc-setup.yaml
+	kubectl wait --for="condition=Ready" --timeout=20s pod/pdc
 	@echo "Waiting for PDC to set up..."
-	( kubectl -n ptx-edge logs -f pod/pdc -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	( kubectl logs -f pod/pdc -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo
-	@kubectl -n ptx-edge get all -o wide
+	@kubectl get all -o wide
 	@echo
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
-	kubectl -n ptx-edge run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
 								 	   wget -qS pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
 	@echo
-	$(eval NODE_IP = `kubectl -n ptx-edge get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
+	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30030/"
 	@curl -Ssf "http://${NODE_IP}:30030/" | grep "href"
 
 run-api:
-	kubectl -n ptx-edge apply -f assets/ptx-rest-api-setup.yaml
-	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=20s pod/rest-api
-	( kubectl -n ptx-edge port-forward service/rest-api 8888:8080 & ) && sleep 3
+	kubectl apply -f assets/ptx-rest-api-setup.yaml
+	kubectl wait --for="condition=Ready" --timeout=20s pod/rest-api
+	( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
 	@echo
 	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/v1/ui/"
 	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
 	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
 
 run-builder:
-	kubectl -n ptx-edge apply -f assets/ptx-builder-pod.yaml
-	kubectl -n ptx-edge wait --for="condition=Ready" --timeout=10s pod/builder
+	kubectl apply -f assets/ptx-builder-pod.yaml
+	kubectl wait --for="condition=Ready" --timeout=10s pod/builder
 	@echo
-	kubectl -n ptx-edge get all -o wide
+	kubectl get all -o wide
 	@echo
-	-kubectl -n ptx-edge exec -ti pod/builder -- sh
-	kubectl -n ptx-edge delete pod/builder --now --wait
+	-kubectl exec -ti pod/builder -- sh
+	kubectl delete pod/builder --now --wait
 
 run-worker:
-	kubectl -n ptx-edge apply -f assets/ptx-test-worker-job.yaml
-	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	kubectl apply -f assets/ptx-test-worker-job.yaml
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
-	kubectl -n ptx-edge get all,pv,pvc -o wide
+	kubectl get all,pv,pvc -o wide
 	@echo
-	kubectl -n ptx-edge wait --for="condition=Complete" --timeout=20s job/consumer
+	kubectl wait --for="condition=Complete" --timeout=20s job/consumer
 	@echo
-	kubectl -n ptx-edge get all -o wide
+	kubectl get all -o wide
 	@echo
-	kubectl -n ptx-edge logs job/consumer builder && kubectl -n ptx-edge logs job/consumer worker
+	kubectl logs job/consumer builder && kubectl logs job/consumer worker
 
 run-convnet:
-	kubectl -n ptx-edge apply -f assets/ptx-samples-convnet-job.yaml
-	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	kubectl apply -f assets/ptx-samples-convnet-job.yaml
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
 	@echo
-	kubectl -n ptx-edge get all,pv,pvc -o wide
+	kubectl get all,pv,pvc -o wide
 	@echo
-	@#kubectl -n ptx-edge logs -f --all-containers --prefix --ignore-errors -l app=consumer
-	kubectl -n ptx-edge wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
-	kubectl -n ptx-edge logs -f --prefix job/consumer builder
-	kubectl -n ptx-edge wait --for="condition=ContainersReady" pods -l app=consumer
-	kubectl -n ptx-edge logs -f --prefix job/consumer worker
+	@#kubectl logs -f --all-containers --prefix --ignore-errors -l app=consumer
+	kubectl wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
+	kubectl logs -f --prefix job/consumer builder
+	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
+	kubectl logs -f --prefix job/consumer worker
 
 run-gbc:
-	kubectl -n ptx-edge apply -f assets/ptx-samples-gbc-job.yaml
-	kubectl -n ptx-edge wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	kubectl apply -f assets/ptx-samples-gbc-job.yaml
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
 	@echo
-	kubectl -n ptx-edge get all,pv,pvc -o wide
+	kubectl get all,pv,pvc -o wide
 	@echo
-	@#kubectl -n ptx-edge logs -f --all-containers --prefix --ignore-errors -l app=consumer
-	kubectl -n ptx-edge wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
-	kubectl -n ptx-edge logs -f --prefix job/consumer builder
-	kubectl -n ptx-edge wait --for="condition=ContainersReady" pods -l app=consumer
-	@#kubectl -n ptx-edge logs -f --prefix -l app=consumer
-	kubectl -n ptx-edge logs -f --prefix job/consumer worker
+	@#kubectl logs -f --all-containers --prefix --ignore-errors -l app=consumer
+	kubectl wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
+	kubectl logs -f --prefix job/consumer builder
+	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
+	@#kubectl logs -f --prefix -l app=consumer
+	kubectl logs -f --prefix job/consumer worker
 
 ########################################################################################################################
 
 set-env: | rebuild setup run-pdc run-builder
 
 pdc-log:
-	kubectl -n ptx-edge logs pdc ptx-connector -f || true
+	kubectl logs pdc ptx-connector -f || true
 
 catalog-log:
 	kubectl -n ptx-sandbox logs pods/catalog catalog-wiremock -f || true
