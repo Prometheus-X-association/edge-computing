@@ -37,10 +37,7 @@ clean:
 	py3clean -v .
 
 # Tests
-docker-test-setup:
-	echo "Skipped."
-
-docker-unit-tests:
-	echo "Skipped."
+docker-unit-tests docker-test-setup unit-tests:
+	@echo "Skipped."
 
 .PHONY: *

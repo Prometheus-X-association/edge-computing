@@ -1,5 +1,5 @@
 # Development
-virtualenv~=20.29.2
+virtualenv
 setuptools>=61.0
 # Testing
 pytest~=8.4.1

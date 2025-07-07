@@ -30,7 +30,7 @@ Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
 
 [project.optional-dependencies]
 test = [
-    "virtualenv~=20.29.2",
+    "virtualenv",
     "fastapi[standard]~=0.115.14", # For the fastapi shell command
     "pytest~=8.3.4",
     "pytest-custom_exit_code~=0.3.0",

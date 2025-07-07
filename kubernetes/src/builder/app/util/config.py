@@ -15,7 +15,7 @@ import configparser
 import logging
 import pathlib
 
-DEF_CFG_FILE = pathlib.Path("config.ini")
+DEF_CFG_FILE = pathlib.Path("config.ini").resolve()
 
 log = logging.getLogger(__package__)
 

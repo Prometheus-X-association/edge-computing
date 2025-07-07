@@ -20,7 +20,7 @@ from app.util.config import load_configuration
 
 
 def test_builder_cfg():
-    cfg = load_configuration(pathlib.Path("app/config.ini"))
+    cfg = load_configuration(pathlib.Path("./app/config.ini"))
     assert cfg is not None
 
 

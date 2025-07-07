@@ -101,7 +101,7 @@ docker-unit-tests:
 	@echo ">>> No unit test is defined for PTX sandbox!"
 	cd sandbox && docker compose down --timeout=30
 
-unit-test:
+unit-tests:
 	@echo ">>> No local unit test is defined for PTX sandbox!"
 
 purge:

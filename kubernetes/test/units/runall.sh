@@ -79,7 +79,7 @@ while getopts ":o:dch" flag; do
 done
 
 echo -e "\nCollecting projects..."
-mapfile -t PROJECTS < <( ls -d "${ROOT_DIR}"/src/* )
+mapfile -t PROJECTS < <( find "${ROOT_DIR}"/src/* -maxdepth 0 -type d -not -name "*assets")
 PROJECTS+=("${ROOT_DIR}/test/mock-api")
 printf "  - %s\n" "${PROJECTS[@]}"
 

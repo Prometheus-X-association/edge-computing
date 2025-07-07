@@ -19,7 +19,7 @@ import pathlib
 from . import __version__
 from .util.config import load_configuration, DEF_CFG_FILE
 from .util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS
-from .util.logging import set_logging_level
+from .util.logger import set_logging_level
 
 log = logging.getLogger(__package__)
 

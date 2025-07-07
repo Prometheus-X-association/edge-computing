@@ -26,7 +26,7 @@ run: build
 
 dev:
 	docker run --rm --name ${NAME} -ti -v ./app:/usr/src/builder/app ${IMG} \
-				python3.13 -m app.builder -v
+				python3.13 -m app -v
 
 venv:
 	test -d .venv || (\
