@@ -39,9 +39,9 @@ def main():
     log.debug(args)
     # Load configuration
     cfg = load_configuration(cfg_file=args.config)
+    print_config(cfg=cfg)
     # Testing builder
     if args.dummy:
-        print_config(cfg=cfg)
         wait_and_exit()
     log.info("=== builder ended ===")
 

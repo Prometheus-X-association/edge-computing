@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import configparser
 import logging
 import pprint
 import time
@@ -21,9 +20,8 @@ log = logging.getLogger(__package__)
 DEF_WAIT_SECONDS = 5
 
 
-def print_config(cfg: configparser.ConfigParser):
-    log.debug("Configuration:\n" + pprint.pformat([f"[{sec}] {k}: {v}" for sec in cfg for k, v in cfg.items(sec)],
-                                                  indent=2, sort_dicts=False))
+def print_config(cfg: dict):
+    log.debug("Builder configuration:\n" + pprint.pformat(cfg, indent=2, sort_dicts=False))
 
 
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):

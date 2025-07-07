@@ -19,7 +19,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    'httpx[cli]>=0.28.1'
+    'httpx[cli]>=0.28.1',
+    'toml'
 ]
 
 [project.urls]

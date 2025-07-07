@@ -16,11 +16,11 @@ import time
 
 import pytest
 
-from app.util.config import load_configuration
+from app.util.config import load_configuration, DEF_CFG_FILE
 
 
 def test_builder_cfg():
-    cfg = load_configuration(pathlib.Path("./app/config.ini"))
+    cfg = load_configuration(DEF_CFG_FILE)
     assert cfg is not None
 
 
