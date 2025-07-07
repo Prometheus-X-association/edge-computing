@@ -30,9 +30,9 @@ Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
 [project.optional-dependencies]
 test = [
     "virtualenv",
-    "pytest~=8.4.1",
+    "pytest",
     "pytest-custom_exit_code~=0.3.0",
-    "tox~=4.27.0"
+    "tox"
 ]
 
 [tool.setuptools.dynamic]

@@ -15,13 +15,13 @@ import configparser
 import logging
 import pathlib
 
-DEF_CFG_FILE = pathlib.Path("config.ini").resolve()
+DEF_CFG_FILE = pathlib.Path("config.ini")
 
 log = logging.getLogger(__package__)
 
 def load_configuration(cfg_file: pathlib.Path | None) -> configparser.ConfigParser:
     # Load default config
-    log.info(f"Loading configuration from {DEF_CFG_FILE.name}...")
+    log.debug(f"Loading configuration from {DEF_CFG_FILE.name}...")
     parser = configparser.ConfigParser()
     sections = parser.read(DEF_CFG_FILE)
     log.debug(f"Section loaded: {sections}")
@@ -29,7 +29,7 @@ def load_configuration(cfg_file: pathlib.Path | None) -> configparser.ConfigPars
     if cfg_file is not None:
         if not cfg_file.exists():
             raise FileNotFoundError(f"Configuration file {cfg_file} not found")
-        log.info(f"Loading configuration from {cfg_file.name}...")
+        log.debug(f"Loading configuration from {cfg_file.name}...")
         parser = configparser.ConfigParser()
         sections = parser.read(cfg_file)
         log.debug(f"Section loaded: {sections}")

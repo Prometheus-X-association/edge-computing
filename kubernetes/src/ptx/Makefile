@@ -95,7 +95,7 @@ stop-sandbox:
 
 docker-test-setup: build
 
-docker-unit-tests:
+docker-unit-tests: docker-test-setup
 	cd sandbox && docker compose up --force-recreate --always-recreate-deps --wait --wait-timeout=60
 	curl -SsLI -o /dev/null http://localhost:3002/v1/catalog/participants/66d18a1dee71f9f096baec08
 	@echo ">>> No unit test is defined for PTX sandbox!"
