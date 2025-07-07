@@ -9,13 +9,13 @@ metadata:
     app.kubernetes.io/component: cfg-files
     app.kubernetes.io/part-of: ptx-edge
 data:
-  env: |
+  .env: |
     NODE_ENV=production
     PORT=3000
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
     MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
-  config-template: |
+  config-template.json: |
     {
       "endpoint":         "${PDC_DOMAIN}:${PDC_PORT}/${PDC_SUBPATH}",
       "serviceKey":       "${PDC_SERVICE_KEY}",

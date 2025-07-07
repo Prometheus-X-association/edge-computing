@@ -86,13 +86,13 @@ spec:
           configMap:
             name: pdc-config-files
             items:
-              - key: env
+              - key: .env
                 path: .env.production
         - name: pdc-config
           configMap:
             name: pdc-config-files
             items:
-              - key: config-template-nodeport
+              - key: config-template-nodeport.json
                 path: config.production.json.template
         - name: pdc-start
           configMap:

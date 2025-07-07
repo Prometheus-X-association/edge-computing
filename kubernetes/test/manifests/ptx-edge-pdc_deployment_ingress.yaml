@@ -92,13 +92,13 @@ spec:
           configMap:
             name: pdc-config-files
             items:
-              - key: env
+              - key: .env
                 path: .env.production
         - name: pdc-config
           configMap:
             name: pdc-config-files
             items:
-              - key: config-template
+              - key: config-template.json
                 path: config.production.json.template
         - name: pdc-start
           configMap:

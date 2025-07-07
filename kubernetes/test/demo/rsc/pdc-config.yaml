@@ -7,13 +7,13 @@ metadata:
     app.kubernetes.io/name: ${PDC}
     env: demo
 data:
-  env: |
+  .env: |
     NODE_ENV=production
     PORT=${PDC_PORT}
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
-    MONGO_URI=mongodb://${PDC}.${PTX}.localhost:27017/dataspace-connector
-  config-template: |
+    MONGO_URI="mongodb://${PDC}.${PTX}.localhost:27017/dataspace-connector"
+  config-template.json: |
     {
       "endpoint":         "${PDC_ENDPOINT}",
       "serviceKey":       "${PDC_SERVICE_KEY}",
@@ -23,7 +23,7 @@ data:
       "consentUri":       "${PDC_CONSENT_URI}",
       "expressLimitSize": "${PDC_EXPRESS_LIMIT}"
     }
-  config-template-nodeport: |
+  config-template-nodeport.json: |
     {
       "endpoint":         "http://${PDC_NODE_IP}:${PDC_NODE_PORT}",
       "serviceKey":       "${PDC_SERVICE_KEY}",
