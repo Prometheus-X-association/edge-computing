@@ -18,6 +18,8 @@ import tempfile
 
 import httpx
 
+from app.util.helper import get_datasource_path
+
 log = logging.getLogger(__package__)
 
 
@@ -30,12 +32,11 @@ def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
     :return:
     """
     log.info(f"Collecting data from {src}...")
-    src_path, dst_path = pathlib.Path(src.split('//', 1)[-1]), pathlib.Path(dst.split('//', 1)[-1])
+    src_path, dst_path = get_datasource_path(src), get_datasource_path(dst)
     shutil.copy(src_path, dst_path)
-    data = pathlib.Path(dst_path).resolve()
-    log.debug(f"Collected data bytes: {data.stat().st_size}")
-    log.info(f"Data is stored in {data.as_uri()}")
-    return data
+    log.debug(f"Collected data bytes: {dst_path.stat().st_size}")
+    log.info(f"Data is stored in {dst_path.as_uri()}")
+    return dst_path
 
 
 def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pathlib.Path:
@@ -48,24 +49,24 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pat
     :return:
     """
     log.info(f"Downloading data from {url}...")
-    src_url, dst_path = httpx.URL(url), pathlib.Path(dst.split('//', 1)[-1])
+    src_url, dst_path = httpx.URL(url), get_datasource_path(dst)
     with tempfile.NamedTemporaryFile() as tmp:
-        client = httpx.Client(http2=True, timeout=timeout)
+        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout)
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")
                 resp.raise_for_status()
-            for chunk in resp.iter_bytes():
+            for chunk in resp.iter_bytes(4096):
                 tmp.write(chunk)
         data = pathlib.Path(tmp.name).resolve()
         log.debug(f"Collected data bytes: {data.stat().st_size}")
+        if dst_path.is_dir():
+            dst_path /= pathlib.Path(src_url.path).name
+            dst_path.resolve()
         shutil.move(data, dst_path)
-    data = pathlib.Path(dst_path).resolve()
-    log.info(f"Data is stored in {data.as_uri()}")
-    return data
+    log.info(f"Data is stored in {dst_path.as_uri()}")
+    return dst_path
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    collect_data_from_url("https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz", "./mnist.npz")
-    collect_data_from_file("file://mnist.npz", "file://./mnist_copy.npz")
+def collect_data_from_ptx(provider_id: str, consumer_dst: str) -> pathlib.Path:
+    raise NotImplementedError()

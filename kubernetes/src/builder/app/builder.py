@@ -13,15 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-import logging
-import pathlib
 
-from . import __version__
-from .util.config import load_configuration, DEF_CFG_FILE
-from .util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS
-from .util.logger import set_logging_level
+from app import __version__
+from app.datasource import *
+from app.util.config import load_configuration, DEF_CFG_FILE, CONFIG
+from app.util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS, get_datasource_protocol
+from app.util.logger import set_logging_level
 
 log = logging.getLogger(__package__)
+
+
+def build():
+    log.info("Building configuration...")
+    data_src, data_dst = CONFIG['data']['src'].strip(), CONFIG['data']['dst'].strip()
+    log.debug(f"{data_src = }, {data_dst = }")
+    match get_datasource_protocol(data_src):
+        case 'ptx':
+            collect_data_from_ptx(provider_id=data_src, consumer_dst=data_dst)
+        case 'http' | 'https':
+            collect_data_from_url(url=data_src, dst=data_dst)
+        case 'file' | 'local':
+            collect_data_from_file(src=data_src, dst=data_dst)
+        case other:
+            raise RuntimeError(f"Unknown data source protocol: {other}")
 
 
 def main():
@@ -35,15 +49,18 @@ def main():
     parser.add_argument("-V", "--version", action='version', version=f"{parser.description} v{__version__}")
     args = parser.parse_args()
     set_logging_level(verbosity=args.verbose)
-    log.info("=== builder started ===")
+    log.info(" builder started ".center(60, '='))
     log.debug(args)
     # Load configuration
     cfg = load_configuration(cfg_file=args.config)
     print_config(cfg=cfg)
-    # Testing builder
     if args.dummy:
+        # Testing builder
         wait_and_exit()
-    log.info("=== builder ended ===")
+    else:
+        # Invoke building functionality
+        build()
+    log.info(" builder ended ".center(60, '='))
 
 
 if __name__ == '__main__':

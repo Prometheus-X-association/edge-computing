@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import pathlib
 import pprint
 import time
 
@@ -27,3 +28,11 @@ def print_config(cfg: dict):
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
     log.warning(f"Waiting for builder to finish[{_delay}s]...")
     time.sleep(_delay)
+
+
+def get_datasource_protocol(path: str) -> str:
+    return path.strip().split('://', 1)[0]
+
+
+def get_datasource_path(path: str) -> pathlib.Path:
+    return pathlib.Path(path.strip().split('//', 1)[-1]).resolve()
