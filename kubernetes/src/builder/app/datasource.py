@@ -50,23 +50,29 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pat
     """
     log.info(f"Downloading data from {url}...")
     src_url, dst_path = httpx.URL(url), get_datasource_path(dst)
-    with tempfile.NamedTemporaryFile() as tmp:
-        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout)
+    with tempfile.NamedTemporaryFile(delete_on_close=False) as tmp:
+        client = httpx.Client(http2=False, follow_redirects=True, timeout=timeout)
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")
                 resp.raise_for_status()
-            for chunk in resp.iter_bytes(4096):
+            for chunk in resp.iter_bytes():
                 tmp.write(chunk)
         data = pathlib.Path(tmp.name).resolve()
         log.debug(f"Collected data bytes: {data.stat().st_size}")
         if dst_path.is_dir():
             dst_path /= pathlib.Path(src_url.path).name
             dst_path.resolve()
-        shutil.move(data, dst_path)
+        shutil.copy(data, dst_path)
     log.info(f"Data is stored in {dst_path.as_uri()}")
     return dst_path
 
 
 def collect_data_from_ptx(provider_id: str, consumer_dst: str) -> pathlib.Path:
     raise NotImplementedError()
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    collect_data_from_url("https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz", ".")
+    collect_data_from_file("file://mnist_train_data.npz", "file://./copy.npz")

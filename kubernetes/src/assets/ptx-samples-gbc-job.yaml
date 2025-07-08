@@ -32,8 +32,8 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "/bin/sh", "-c", "wget -P ${BUILD_DATA_DST} ${BUILD_DATA_SRC}" ]
-          #command: [ "python3", "-m", "app" ]
+          #command: [ "/bin/sh", "-c", "wget -P ${BUILD_DATA_DST} ${BUILD_DATA_SRC}" ]
+          command: [ "python3", "-m", "app" ]
           volumeMounts:
             - name: builder-src
               mountPath: /usr/src/builder/app
