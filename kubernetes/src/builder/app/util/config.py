@@ -18,7 +18,7 @@ import tomllib
 from typing import Generator
 
 DEF_CFG_FILE = pathlib.Path("app/config.toml")
-ENV_PREFIX_KEY = "prefix"
+CFG_ENV_PREFIX = "prefix"
 CONFIG = {}
 
 log = logging.getLogger(__package__)
@@ -39,6 +39,11 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
 
 
 def cfg_sections(data: dict) -> Generator[str, None, None]:
+    """
+    Generator for enlisting multi-level configuration sections
+    :param data:
+    :return:
+    """
     for key in data:
         if isinstance(data[key], dict):
             yield from (f"{key:s}.{sub}" for sub in cfg_sections(data[key]))
@@ -47,11 +52,17 @@ def cfg_sections(data: dict) -> Generator[str, None, None]:
 
 
 def load_configuration(cfg_file: pathlib.Path | None) -> dict:
-    # Load default config
+    """
+    Load configuration form multiple sources.
+
+    :param cfg_file:
+    :return:
+    """
+    # Load default config from file
     log.debug(f"Loading default configuration from {DEF_CFG_FILE.name}...")
     cfg = tomllib.loads(DEF_CFG_FILE.read_text(encoding="utf-8"))
     log.debug(f"Section(s) loaded: {list(cfg_sections(cfg))}")
-    # Load additional config
+    # Load additional config from file
     if cfg_file is not None:
         if not cfg_file.exists():
             raise FileNotFoundError(f"Configuration file {cfg_file} not found!")
@@ -60,13 +71,14 @@ def load_configuration(cfg_file: pathlib.Path | None) -> dict:
         cfg = deep_update(cfg, loaded_cfg)
         log.debug(f"Section(s) loaded: {list(cfg_sections(loaded_cfg))}")
     # Load configuration from envvars
-    if prefix := cfg.get('env', {}).get(ENV_PREFIX_KEY):
-        log.debug(f"Loading configuration from envvars[{prefix}]...")
+    if prefix := cfg.get('env', {}).get(CFG_ENV_PREFIX):
+        log.debug(f"Loading configuration from envvars[{prefix}*]...")
         env_cfg = '\n'.join((f'{k.lstrip(prefix).replace('_', '.').lower()} = "{v}"'
                              for k, v in os.environ.items() if k.startswith(prefix)))
         loaded_cfg = tomllib.loads(env_cfg)
         cfg = deep_update(cfg, tomllib.loads(env_cfg))
         log.debug(f"Section(s) loaded: {list(cfg_sections(loaded_cfg))}")
+    # Cache config as a module parameter
     global CONFIG
     CONFIG = cfg
     return cfg

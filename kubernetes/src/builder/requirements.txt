@@ -1,2 +1,2 @@
-httpx[cli]>=0.28.1
+httpx[cli,http2]>=0.28.1
 toml

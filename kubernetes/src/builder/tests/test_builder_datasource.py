@@ -11,19 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pathlib
-import time
+import os
 
-import pytest
-
-from app.util.config import load_configuration, DEF_CFG_FILE
+from app.datasource import collect_data_from_file, collect_data_from_url
 
 
-def test_builder_cfg():
-    cfg = load_configuration(DEF_CFG_FILE)
-    assert cfg is not None
+def test_builder_datasource_file():
+    collect_data_from_file("file://app/util/helper.py", "file://./dst_file.txt")
+    os.remove("./dst_file.txt")
 
 
-def test_builder_missing_cfg():
-    with pytest.raises(FileNotFoundError):
-        load_configuration(pathlib.Path(f"missing_config_{time.time()}.toml"))
+def test_builder_datasource_url():
+    collect_data_from_url("https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz", "./dst_file.txt")
+    os.remove("./dst_file.txt")
