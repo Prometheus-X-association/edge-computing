@@ -32,11 +32,8 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh", "-c", "wget -P ${BUILD_DATA_DST} ${BUILD_DATA_SRC}" ]
           #command: [ "python3", "-m", "app" ]
-          command: [ "/bin/sh", "-c" ]
-          args:
-            #- sleep infinity
-            - wget -P /var/cache/data ${BUILD_DATA_SRC}
           volumeMounts:
             - name: builder-src
               mountPath: /usr/src/builder/app
@@ -46,6 +43,8 @@ spec:
           env:
             - name: BUILD_DATA_SRC
               value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data"
       containers:
         - name: worker
           image: registry.k3d.local:5000/samples/convnet-worker:0.1
