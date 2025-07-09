@@ -18,7 +18,7 @@ PTX_PREFIX := ptx
 PTX_SANDBOX_PREFIX := ptx-sandbox
 PTX_CORE := catalog contract consent
 PDC_REPO := https://github.com/Prometheus-X-association/dataspace-connector.git
-PDC_VER := 1.9.2
+PDC_VER := 1.9.4
 PDC_ENV := production
 MONGO_VER := 8.0.5
 

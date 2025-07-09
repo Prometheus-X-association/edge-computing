@@ -61,6 +61,7 @@ while getopts ":o:h" flag; do
             exit 1;;
         ?)
             echo "Invalid parameter: -${OPTARG} !"
+            display_help
             exit 1;;
     esac
 done
