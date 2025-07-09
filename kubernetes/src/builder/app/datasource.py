@@ -50,8 +50,8 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pat
     """
     log.info(f"Downloading data from {url}...")
     src_url, dst_path = httpx.URL(url), get_datasource_path(dst)
-    with tempfile.NamedTemporaryFile(delete_on_close=False) as tmp:
-        client = httpx.Client(http2=False, follow_redirects=True, timeout=timeout)
+    with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
+        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout)
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")

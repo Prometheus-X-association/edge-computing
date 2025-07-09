@@ -17,7 +17,7 @@ import argparse
 from app import __version__
 from app.datasource import *
 from app.util.config import load_configuration, DEF_CFG_FILE, CONFIG
-from app.util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS, get_datasource_protocol
+from app.util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS, get_datasource_scheme
 from app.util.logger import set_logging_level
 
 log = logging.getLogger(__package__)
@@ -27,7 +27,7 @@ def build():
     log.info("Building configuration...")
     data_src, data_dst = CONFIG['data']['src'].strip(), CONFIG['data']['dst'].strip()
     log.debug(f"{data_src = }, {data_dst = }")
-    match get_datasource_protocol(data_src):
+    match get_datasource_scheme(data_src):
         case 'ptx':
             collect_data_from_ptx(provider_id=data_src, consumer_dst=data_dst)
         case 'http' | 'https':
@@ -35,7 +35,7 @@ def build():
         case 'file' | 'local':
             collect_data_from_file(src=data_src, dst=data_dst)
         case other:
-            raise RuntimeError(f"Unknown data source protocol: {other}")
+            raise Exception(f"Unknown data source protocol: {other}")
 
 
 def main():

@@ -30,7 +30,7 @@ def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
     time.sleep(_delay)
 
 
-def get_datasource_protocol(path: str) -> str:
+def get_datasource_scheme(path: str) -> str:
     return path.strip().split('://', 1)[0]
 
 

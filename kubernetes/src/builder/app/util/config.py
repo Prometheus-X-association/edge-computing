@@ -14,6 +14,7 @@
 import logging
 import os
 import pathlib
+import pprint
 import tomllib
 from typing import Generator
 
@@ -75,7 +76,7 @@ def load_configuration(cfg_file: pathlib.Path | None) -> dict:
         log.debug(f"Loading configuration from envvars[{prefix}*]...")
         env_items = [f'{k.removeprefix(prefix).replace('_', '.').lower()} = "{v}"'
                       for k, v in os.environ.items() if k.startswith(prefix)]
-        log.debug(f"Found: {env_items}")
+        log.debug(f"Configuration found:\n{pprint.pformat(env_items, indent=4)}")
         loaded_cfg = tomllib.loads("\n".join(env_items))
         cfg = deep_update(cfg, loaded_cfg)
         log.info(f"Section(s) loaded: {list(get_cfg_sections(loaded_cfg))}")
