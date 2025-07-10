@@ -23,25 +23,25 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.log_error("GET request received.")
-        self.send_error(405)
+        self.send_error(http.HTTPStatus.METHOD_NOT_ALLOWED)
 
     def do_POST(self):
         if self.path != self.WEBHOOK_PATH:
             self.log_error(f"Not a valid webhook request path: {self.path}")
-            self.send_error(404)
+            self.send_error(http.HTTPStatus.NOT_FOUND)
             return
         if self.headers.get("Content-Type") != "application/json":
             self.log_error(f"Invalid Content-Type: {self.headers.get("Content-Type")}")
-            self.send_error(415)
+            self.send_error(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
             return
         content_length = int(self.headers.get("Content-Length"))
         try:
             self.server.webhook_data = json.loads(self.rfile.read(content_length))
         except Exception as e:
             self.log_error(str(e))
-            self.send_error(400)
+            self.send_error(http.HTTPStatus.BAD_REQUEST)
             return
-        self.send_response(200)
+        self.send_response(http.HTTPStatus.OK)
         self.end_headers()
         self.server.received = True
         # self.server.shutdown_request(self.request)
@@ -49,10 +49,11 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
 
 
 class WebHookServer(http.server.HTTPServer):
-    DEF_SERVER_ADDR = "127.0.0.1"
-    DEF_SERVER_PORT = 8080
+    DEF_SERVER_ADDR = "0.0.0.0"
+    DEF_SERVER_PORT = 8888
 
     def __init__(self, address=DEF_SERVER_ADDR, port=DEF_SERVER_PORT, timeout=None):
+        # noinspection PyTypeChecker
         super().__init__((address, port), HandleWebHook)
         self.timeout = timeout
         self.webhook_data = None
@@ -65,7 +66,8 @@ class WebHookServer(http.server.HTTPServer):
         # self.socket.close()
 
     def wait_for_hook(self):
-        self.logger.info("Webhook server listening on http://{0}:{1}...".format(*self.server_address))
+        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
+                                                                                   HandleWebHook.WEBHOOK_PATH))
         # self.serve_forever()
         while True:
             try:

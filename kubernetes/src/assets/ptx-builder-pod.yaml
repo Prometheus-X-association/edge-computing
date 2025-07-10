@@ -19,6 +19,10 @@ spec:
         - name: data-dir
           mountPath: /var/cache/data
           readOnly: false
+      ports:
+        - name: webhook-port
+          containerPort: 8888
+          protocol: TCP
       env:
         - name: BUILD_DATA_SRC
           value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"

@@ -4,10 +4,13 @@ metadata:
   name: dev
 servers: 1
 agents: 0
-#ports:
+ports:
 #  - port: 8080:80
 #    nodeFilters:
 #      - loadbalancer
+  - port: 8888:30030
+    nodeFilters:
+      - server:0
 volumes:
   - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
     nodeFilters:
@@ -28,7 +31,7 @@ options:
   k3d:
     wait: true
     timeout: 30s
-    disableLoadbalancer: true
+    #disableLoadbalancer: true
     disableImageVolume: false
     disableRollback: false
   k3s:
