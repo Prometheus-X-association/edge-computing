@@ -90,6 +90,7 @@ run-sandbox:
 
 stop-sandbox:
 	cd sandbox && docker compose --profile mocked down -v
+	rm .pdc.login.json
 
 ########################################################################################################################
 
