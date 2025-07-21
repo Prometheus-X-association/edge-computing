@@ -3,6 +3,8 @@ services:
   mongodb-sandbox:
     container_name: "mongodb-sandbox"
     image: ptx/mongodb:8.0.5-slim
+    # noinspection ComposeUnknownKeys
+    attach: false
     restart: no
     networks:
       - core
@@ -44,6 +46,27 @@ services:
       - provider-nw
     profiles:
       - mocked
+  consumer:
+    container_name: "consumer-pdc"
+    image: ptx/connector:1.9.4-slim
+    restart: no
+    volumes:
+      - './rsc/consumer.config.json:/usr/src/app/dist/src/config.production.json'
+      - './rsc/.env.consumer:/usr/src/app/.env.production'
+    ports:
+      - "3011:3000"
+    environment:
+      MONGO_URI: mongodb://mongodb-sandbox:27017/consumer
+    depends_on:
+      mongo-seed:
+        condition: service_completed_successfully
+      catalog:
+        condition: service_started
+    networks:
+      - core
+      - consumer-nw
+    profiles:
+      - mocked
   ######################################################################################################################
   contract:
     container_name: "ptx-contract"
@@ -79,4 +102,6 @@ networks:
   core:
     external: false
   provider-nw:
+    external: false
+  consumer-nw:
     external: false
