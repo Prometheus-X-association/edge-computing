@@ -13,6 +13,10 @@ data:
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
     MONGO_URI="mongodb://${PDC}.${PTX}.localhost:27017/dataspace-connector"
+    WINSTON_LOGS_MAX_FILES=14d
+    WINSTON_LOGS_MAX_SIZE=20m
+    JWT_BEARER_TOKEN_EXPIRATION=3h
+    JWT_REFRESH_TOKEN_EXPIRATION=1d
   config-template.json: |
     {
       "endpoint":         "${PDC_ENDPOINT}",

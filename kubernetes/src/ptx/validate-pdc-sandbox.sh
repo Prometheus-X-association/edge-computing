@@ -29,6 +29,8 @@ echo "PDC node port: ${PDC_NODE_PORT}"
 echo
 echo "OpenAPI docs available at http://${PDC_NODE_IP}:${PDC_NODE_PORT}/docs"
 
+########################################################################################################################
+
 if [ ! -e .pdc.login.json ]; then
     echo -e "\n>>> RUN /login"
 
@@ -55,7 +57,7 @@ if [ ! -e .pdc.login.json ]; then
 else
     echo -e "\n>>> Loading cached login response..."
     TOKEN=$(jq -r '.content.token' <.pdc.login.json)
-    echo ">>> Validating Bearer token..."
+    echo -e "\n>>> Validating Bearer token..."
     RET=$(curl -SsLv -o /dev/null -w '%{http_code}' "http:/${PDC_NODE_IP}:${PDC_NODE_PORT}/private/configuration/" \
                                                             -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}")
     if [[ "${RET}" -ne 200 ]]; then
@@ -64,6 +66,8 @@ else
         exit 0
     fi
 fi
+
+########################################################################################################################
 
 ENDPOINT="/private/configuration/"
 echo
