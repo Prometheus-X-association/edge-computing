@@ -40,25 +40,28 @@ OpenAPI docs available at http://${PDC_IP}:${PDC_PORT}/docs
 if [ ! -e "${PDC_LOGIN_FILE}" ]; then
     echo -e "\n>>> RUN /login"
 
-    BODY=$(jq -n --arg secret "${PDC_SECRET_KEY}" --arg service "${PDC_SERVICE_KEY}" \
-            '{secretKey: $secret, serviceKey: $service}')
+    BODY=$(jq -n --arg secret "${PDC_SECRET_KEY}" \
+                 --arg service "${PDC_SERVICE_KEY}" \
+                    '{secretKey: $secret, serviceKey: $service}')
+
     echo -e "\n>>> Prepared request:"
     echo "${BODY}"
 
-    RES=$(curl -sX POST "http://${PDC_IP}:${PDC_PORT}/login" \
-        -H 'accept: application/json' -H 'Content-Type: application/json' \
-        -d "${BODY}")
+    RESP=$(curl -sX POST "http://${PDC_IP}:${PDC_PORT}/login" \
+                            -H 'accept: application/json' \
+                            -H 'Content-Type: application/json' \
+                            -d "${BODY}")
 
     echo
-    if [[ $(jq '.code' <<<"${RES}") -ne 200 ]]; then
+    if [[ $(jq '.code' <<<"${RESP}") -ne 200 ]]; then
         echo -e "\n>>> Login request failed!"
-        echo "${RES}" | jq
+        echo "${RESP}" | jq
         exit 1
     else
         echo -e "\n>>> Login was successful!"
-        echo "${RES}" > "${PDC_LOGIN_FILE}"
+        echo "${RESP}" > "${PDC_LOGIN_FILE}"
     fi
-    TOKEN=$(jq -r '.content.token' <<<"${RES}")
+    TOKEN=$(jq -r '.content.token' <<<"${RESP}")
     echo -e "\nExtracted Bearer token: ${TOKEN}"
 else
     echo -e "\n>>> Loading cached login response..."
@@ -81,27 +84,27 @@ echo "============================= Check PDC private API ======================
 ENDPOINT="/private/configuration/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-    -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/catalogs/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-    -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/credentials/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-    -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/infrastructure/configurations/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-    -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/users/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-    -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ########################################################################################################################
 
@@ -111,8 +114,8 @@ CONTRACT_PORT=3001
 echo
 echo "============================= Check Contract API ============================="
 
-contractID=672c89942308b486f7d0bca1
-#contractID=66db1a6dc29e3ba863a85e0f
+#contractID=672c89942308b486f7d0bca1
+contractID=66db1a6dc29e3ba863a85e0f
 echo -e "\n>>> Using contract id: ${contractID}"
 
 contract=$(curl -Ssf "http://${CONTRACT_IP}:${CONTRACT_PORT}/contracts/${contractID}")
@@ -120,15 +123,57 @@ echo "${contract}" | jq
 
 ########################################################################################################################
 
-echo
-echo "============================= Check Catalog API - provider ============================="
-
 CATALOG_IP="127.0.0.1"
 CATALOG_PORT=3002
 
+#echo
+#echo "============================= Check Catalog API - provider ============================="
+#
+#providerID=66d18724ee71f9f096bae810 # orchestrator / provider
+#providerOfferID=672c89cb870a096712ca4d59
+#providerDataID=672c8a28870a096712ca4e63
+#
+#echo -e "\n >>> Check provider: ${providerID}"
+#provider=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/participants/${providerID}")
+#echo "${provider}" | jq
+#
+#echo -e "\n >>> Check provider offer: ${providerOfferID}"
+#providerOffer=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/serviceofferings/${providerOfferID}")
+#echo "${providerOffer}" | jq
+#
+#echo -e "\n >>> Check provider data: ${providerDataID}"
+#providerData=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/dataresources/${providerDataID}")
+#echo "${providerData}" | jq
+#
+########################################################################################################################
+#
+#echo
+#echo "============================= Check Catalog API - consumer ============================="
+#
+#consumerID=66d18a1dee71f9f096baec08 # participant / consumer
+#consumerOfferID=672c8ae4870a096712ca56d7
+#consumerSoftwareID=672c8acc870a096712ca565d
+#
+#echo -e "\n >>> Check consumer: ${consumerID}"
+#consumer=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/participants/${consumerID}")
+#echo "${consumer}" | jq
+#
+#echo -e "\n >>> Check consumer offer: ${consumerOfferID}"
+#consumerOffer=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/serviceofferings/${consumerOfferID}")
+#echo "${consumerOffer}" | jq
+#
+#echo -e "\n >>> Check consumer software: ${consumerSoftwareID}"
+#consumerSoftware=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/softwareresources/${consumerSoftwareID}")
+#echo "${consumerSoftware}" | jq
+
+########################################################################################################################
+
+echo
+echo "============================= Check Catalog API - provider ============================="
+
 providerID=66d18724ee71f9f096bae810 # orchestrator / provider
-providerOfferID=672c89cb870a096712ca4d59
-providerDataID=672c8a28870a096712ca4e63
+providerOfferID=66d187f4ee71f9f096bae8ca
+providerDataID=66d1889cee71f9f096bae98b
 
 echo -e "\n >>> Check provider: ${providerID}"
 provider=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/participants/${providerID}")
@@ -142,14 +187,16 @@ echo -e "\n >>> Check provider data: ${providerDataID}"
 providerData=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/dataresources/${providerDataID}")
 echo "${providerData}" | jq
 
+# --> GET http://provider-api:8011/users
+
 ########################################################################################################################
 
 echo
 echo "============================= Check Catalog API - consumer ============================="
 
 consumerID=66d18a1dee71f9f096baec08 # participant / consumer
-consumerOfferID=672c8ae4870a096712ca56d7
-consumerSoftwareID=672c8acc870a096712ca565d
+consumerOfferID=66d18b79ee71f9f096baecb1
+consumerSoftwareID=66d18bf6ee71f9f096baed58
 
 echo -e "\n >>> Check consumer: ${consumerID}"
 consumer=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/participants/${consumerID}")
@@ -162,3 +209,26 @@ echo "${consumerOffer}" | jq
 echo -e "\n >>> Check consumer software: ${consumerSoftwareID}"
 consumerSoftware=$(curl -Ssf "http://${CATALOG_IP}:${CATALOG_PORT}/v1/catalog/softwareresources/${consumerSoftwareID}")
 echo "${consumerSoftware}" | jq
+
+# --> POST http://consumer-api:8031/users
+
+########################################################################################################################
+
+echo && read -rp ">>> Press ENTER to continue or CTRL+C to abort..."
+
+echo -e "\n>>> RUN /consumer/exchange"
+
+EXCHANGE_BODY=$(jq -n --arg contID "http://contract:8081/contracts/${contractID}" \
+                      --arg purpID "http://catalog:8082/v1/catalog/serviceofferings/${consumerOfferID}" \
+                      --arg resID "http://catalog:8082/v1/catalog/serviceofferings/${providerOfferID}" \
+                        '{contract: $contID, purposeId: $purpID, resourceId: $resID}')
+
+echo -e "\n>>> Prepared request:"
+echo "${EXCHANGE_BODY}"
+
+RESP=$(curl -Ssfv -X POST "http://${PDC_IP}:${PDC_PORT}/consumer/exchange" \
+                            -H 'accept: */*' \
+                            -H 'Content-Type: application/json' \
+                            -H "Authorization: Bearer ${TOKEN}" \
+                            -d "${EXCHANGE_BODY}")
+echo "${RESP}" | jq
