@@ -1,2 +1,5 @@
 [env]
 prefix = "BUILD_"
+
+[build.data]
+dst = "/var/cache/data/"
