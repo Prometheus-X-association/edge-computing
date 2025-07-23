@@ -1,2 +1,3 @@
 httpx[cli,http2]>=0.28.1
+httpx-retries~=0.4.0
 toml

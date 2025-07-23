@@ -82,7 +82,7 @@ shell:
 
 ########################################################################################################################
 
-run-sandbox:
+run-catalog:
 	kubectl -n ptx-sandbox apply -f assets/ptx-sandbox-setup.yaml -l app=catalog
 	kubectl -n ptx-sandbox wait --for="condition=Ready" --timeout=20s pod/catalog
 	@echo
@@ -93,7 +93,7 @@ run-sandbox:
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
 								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
 
-run-pdc: run-sandbox
+run-pdc: run-catalog
 	kubectl apply -f assets/ptx-pdc-setup.yaml
 	kubectl wait --for="condition=Ready" --timeout=20s pod/pdc
 	@echo "Waiting for PDC to set up..."
@@ -134,11 +134,12 @@ run-worker:
 	@echo
 	kubectl get all,pv,pvc -o wide
 	@echo
-	kubectl wait --for="condition=Complete" --timeout=20s job/consumer
-	@echo
-	kubectl get all -o wide
-	@echo
-	kubectl logs job/consumer builder && kubectl logs job/consumer worker
+	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
+	kubectl wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
+	kubectl logs -f --prefix job/consumer builder
+	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
+	kubectl logs -f --prefix job/consumer worker
 
 run-convnet:
 	kubectl apply -f assets/ptx-samples-convnet-job.yaml

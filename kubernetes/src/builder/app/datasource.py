@@ -16,8 +16,8 @@ import pathlib
 import tempfile
 
 import httpx
+from httpx_retries import RetryTransport, Retry
 
-from app.connector import login_to_connector, perform_data_exchange
 from app.util.helper import local_copy
 
 log = logging.getLogger(__package__)
@@ -51,7 +51,8 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pat
     log.info(f"Downloading data from {url}...")
     src_url = httpx.URL(url)
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
-        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout)
+        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout,
+                              transport=RetryTransport(retry=Retry(total=5, backoff_factor=1)))
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")

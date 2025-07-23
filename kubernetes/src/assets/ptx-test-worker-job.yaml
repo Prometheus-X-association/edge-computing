@@ -24,15 +24,16 @@ spec:
   parallelism: 1
   backoffLimit: 2
   template:
+    metadata:
+      labels:
+        app: consumer
     spec:
       initContainers:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app"]
+          command: [ "python3", "-m", "app", "-vd" ]
           volumeMounts:
-            - name: builder-src
-              mountPath: /usr/src/builder/app
             - name: worker-dir
               mountPath: /usr/src/worker
               readOnly: false
@@ -66,10 +67,6 @@ spec:
               readOnly: false
       restartPolicy: OnFailure
       volumes:
-        - name: builder-src
-          hostPath:
-            path: /usr/local/share/builder/app
-            type: Directory
         - name: data-dir
           emptyDir:
             sizeLimit: 100Mi
