@@ -14,6 +14,7 @@
 import logging
 import pathlib
 import pprint
+import shutil
 import time
 
 log = logging.getLogger(__package__)
@@ -22,17 +23,54 @@ DEF_WAIT_SECONDS = 5
 
 
 def print_config(cfg: dict):
+    """
+
+    :param cfg:
+    :return:
+    """
     log.debug("Builder configuration:\n" + pprint.pformat(cfg, indent=2, sort_dicts=False))
 
 
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
+    """
+
+    :param _delay:
+    :return:
+    """
     log.warning(f"Waiting for builder to finish[{_delay}s]...")
     time.sleep(_delay)
 
 
 def get_datasource_scheme(path: str) -> str:
+    """
+
+    :param path:
+    :return:
+    """
     return path.strip().split('://', 1)[0]
 
 
-def get_datasource_path(path: str) -> pathlib.Path:
-    return pathlib.Path(path.strip().split('//', 1)[-1]).resolve()
+def get_datasource_path(path: str) -> str:
+    """
+
+    :param path:
+    :return:
+    """
+    return path.strip().split('//', 1)[-1]
+
+
+def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str = None) -> pathlib.Path:
+    """
+
+    :param src:
+    :param dst:
+    :param orig_name:
+    :return:
+    """
+    dst = pathlib.Path(dst) if isinstance(dst, str) else dst
+    if orig_name and dst.suffix == '':
+        dst /= orig_name
+    dest_dir = dst.parent if dst.suffix else dst
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dst = shutil.copy(src, dst)
+    return pathlib.Path(dst).resolve(strict=True)

@@ -27,7 +27,7 @@ spec:
         - name: BUILD_DATA_SRC
           value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
         - name: BUILD_DATA_DST
-          value: "/var/cache/data"
+          value: "/var/cache/data/"
   restartPolicy: Never
   volumes:
     - name: src

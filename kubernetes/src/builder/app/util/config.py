@@ -20,23 +20,21 @@ from typing import Generator
 
 DEF_CFG_FILE = pathlib.Path("app/config.toml")
 CFG_ENV_PREFIX = "prefix"
+# Global config object
 CONFIG = {}
 
 log = logging.getLogger(__package__)
 
 
-def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
-    """From pydantic's deep_update
+def deep_update(base: dict, *mapping: dict) -> dict:
+    """Based on pydantic's deep_update function:
     https://github.com/samuelcolvin/pydantic/blob/fd2991fe6a73819b48c906e3c3274e8e47d0f761/pydantic/utils.py#L200
     """
-    updated = mapping.copy()
-    for sub_mapping in updating_mappings:
-        for k, v in sub_mapping.items():
-            if k in updated and isinstance(updated[k], dict) and isinstance(v, dict):
-                updated[k] = deep_update(updated[k], v)
-            else:
-                updated[k] = v
-    return updated
+    new = base.copy()
+    for sub in mapping:
+        for k, v in sub.items():
+            new[k] = deep_update(new[k], v) if k in new and isinstance(new[k], dict) and isinstance(v, dict) else v
+    return new
 
 
 def get_cfg_sections(data: dict) -> Generator[str, None, None]:
@@ -75,7 +73,7 @@ def load_configuration(cfg_file: pathlib.Path | None) -> dict:
     if prefix := cfg.get('env', {}).get(CFG_ENV_PREFIX):
         log.debug(f"Loading configuration from envvars[{prefix}*]...")
         env_items = [f'{k.removeprefix(prefix).replace('_', '.').lower()} = "{v}"'
-                      for k, v in os.environ.items() if k.startswith(prefix)]
+                     for k, v in os.environ.items() if k.startswith(prefix)]
         log.debug(f"Configuration found:\n{pprint.pformat(env_items, indent=4)}")
         loaded_cfg = tomllib.loads("\n".join(env_items))
         cfg = deep_update(cfg, loaded_cfg)
