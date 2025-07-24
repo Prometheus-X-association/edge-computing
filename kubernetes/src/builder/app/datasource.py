@@ -18,6 +18,7 @@ import tempfile
 import httpx
 from httpx_retries import RetryTransport, Retry
 
+from app.connector import login_to_connector, perform_data_exchange
 from app.util.helper import local_copy
 
 log = logging.getLogger(__package__)
@@ -39,7 +40,7 @@ def collect_data_from_file(src_file: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pathlib.Path:
+def collect_data_from_url(url: str, dst: str, timeout: int | None = 10) -> pathlib.Path:
     """
     Download data from url.
 
@@ -66,8 +67,34 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = None) -> pat
     return dst_path
 
 
-def collect_data_from_ptx(contract_id: str, dst: str) -> pathlib.Path:
-    raise NotImplementedError()
+def collect_data_from_ptx(contract_id: str, dst: str):
+    log.info(f"Acquiring private data based on contract[{contract_id}]...")
+    tokens = login_to_connector()
+    bearer = tokens['token']
+    log.debug(f"Assigned token: {bearer}")
+    log.info(f"Login to connector was successful!")
+    ###############
+    log.info("Initiate data exchange...")
+    data = perform_data_exchange(contract_id=contract_id, token=bearer)
+    if data:
+        log.info(f"Data exchange was successful!")
+    ###############
+    data_type = data['type']
+    log.info(f"Process received data as type: {data_type}")
+    match data_type:
+        case 'raw' | 'file' | 'json':
+            with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
+                tmp.write(data['content'])
+                dst_path = collect_data_from_file(src_file=tmp.name, dst=dst)
+        case 'url':
+            dst_path = collect_data_from_url(url=data['url'], dst=dst)
+            # TODO - manage authentication params defined in 'data'
+        case 'docker':
+            raise NotImplementedError
+            # TODO - manage authentication params defined in 'data'
+        case other:
+            raise Exception(f"Unknown data type: {other}")
+    return dst_path
 
 
 if __name__ == '__main__':

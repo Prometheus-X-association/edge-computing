@@ -48,7 +48,7 @@ if [ ! -e "${PDC_LOGIN_FILE}" ]; then
     echo "${BODY}"
 
     RESP=$(curl -sX POST "http://${PDC_IP}:${PDC_PORT}/login" \
-                            -H 'accept: application/json' \
+                            -H 'Accept: application/json' \
                             -H 'Content-Type: application/json' \
                             -d "${BODY}")
 
@@ -68,7 +68,7 @@ else
     TOKEN=$(jq -r '.content.token' <"${PDC_LOGIN_FILE}")
     echo -e "\n>>> Validating Bearer token..."
     RET=$(curl -SsLv -o /dev/null -w '%{http_code}' "http:/${PDC_IP}:${PDC_PORT}/private/configuration/" \
-                                                            -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}")
+                                                            -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}")
     if [[ "${RET}" -ne 200 ]]; then
         echo -e "\n>>> Invalid token! Removing cached response..."
         rm -f "${PDC_LOGIN_FILE}"
@@ -84,27 +84,27 @@ echo "============================= Check PDC private API ======================
 ENDPOINT="/private/configuration/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/catalogs/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/credentials/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/infrastructure/configurations/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ENDPOINT="/private/users/"
 echo -e "\n>>> RUN ${ENDPOINT}"
 curl -sX GET "http://${PDC_IP}:${PDC_PORT}${ENDPOINT}" \
-                -H 'accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
+                -H 'Accept: */*' -H "Authorization: Bearer ${TOKEN}" | jq
 
 ########################################################################################################################
 
@@ -227,7 +227,7 @@ echo -e "\n>>> Prepared request:"
 echo "${EXCHANGE_BODY}"
 
 RESP=$(curl -Ssfv -X POST "http://${PDC_IP}:${PDC_PORT}/consumer/exchange" \
-                            -H 'accept: */*' \
+                            -H 'Accept: */*' \
                             -H 'Content-Type: application/json' \
                             -H "Authorization: Bearer ${TOKEN}" \
                             -d "${EXCHANGE_BODY}")

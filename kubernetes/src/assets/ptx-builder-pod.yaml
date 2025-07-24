@@ -1,3 +1,32 @@
+# kubectl -n ptx-edge create secret generic pdc-secrets-env --type=Opaque \
+# --from-literal=PDC_SERVICE_KEY=dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV \
+# --from-literal=PDC_SECRET_KEY=Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x \
+# -o yaml --dry-run=client
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: pdc-secrets-env
+  namespace: ptx-edge
+data:
+  BUILD_PDC_KEY_SERVICE: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
+  BUILD_PDC_KEY_SECRET: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==
+immutable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdc-config-env
+  namespace: ptx-edge
+data:
+  BUILD_PDC_HOST: "pdc.ptx-edge.svc.cluster.local"
+  BUILD_PDC_PORT: "3000"
+  BUILD_CONTRACT_HOST: "contract.ptx-sandbox.svc.cluster.local"
+  BUILD_CONTRACT_PORT: "3001"
+  BUILD_CATALOG_HOST: "catalog.ptx-sandbox.svc.cluster.local"
+  BUILD_CATALOG_PORT: "3002"
+immutable: true
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -8,7 +37,7 @@ spec:
     - name: builder
       image: registry.k3d.local:5000/ptx-edge/builder:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "python3", "-m", "app"]
+      #command: [ "python3", "-m", "app", "-v"]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
       volumeMounts:
         - name: src
@@ -23,12 +52,22 @@ spec:
         - name: webhook-port
           containerPort: 8888
           protocol: TCP
+      envFrom:
+        - secretRef:
+            name: pdc-secrets-env
+        - configMapRef:
+            name: pdc-config-env
       env:
         - name: BUILD_DATA_SRC
-          value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+          #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
           #value: "file:///etc/hostname"
+          value: "ptx://66db1a6dc29e3ba863a85e0f"
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
+        - name: BUILD_CATALOG_OFFER_PROVIDER
+          value: 66d187f4ee71f9f096bae8ca
+        - name: BUILD_CATALOG_OFFER_CONSUMER
+          value: 66d18b79ee71f9f096baecb1
   restartPolicy: Never
   volumes:
     - name: src
