@@ -13,22 +13,12 @@
 # limitations under the License.
 import logging
 import pathlib
-import pprint
 import shutil
 import time
 
 log = logging.getLogger(__package__)
 
 DEF_WAIT_SECONDS = 5
-
-
-def print_config(cfg: dict):
-    """
-
-    :param cfg:
-    :return:
-    """
-    log.debug("Builder configuration:\n" + pprint.pformat(cfg, indent=2, sort_dicts=False))
 
 
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):

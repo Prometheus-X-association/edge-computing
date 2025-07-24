@@ -121,7 +121,7 @@ run-api:
 
 run-builder:
 	kubectl apply -f assets/ptx-builder-pod.yaml
-	kubectl wait --for="condition=Ready" --timeout=10s pod/builder
+	kubectl wait --for="condition=Ready" --timeout=20s pod/builder
 	@echo
 	kubectl get all -o wide
 	@echo

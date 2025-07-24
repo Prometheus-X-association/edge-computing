@@ -16,8 +16,8 @@ import argparse
 
 from app import __version__
 from app.datasource import *
-from app.util.config import load_configuration, DEF_CFG_FILE, CONFIG
-from app.util.helper import wait_and_exit, print_config, DEF_WAIT_SECONDS, get_datasource_scheme, get_datasource_path
+from app.util.config import load_configuration, DEF_CFG_FILE, CONFIG, print_config
+from app.util.helper import wait_and_exit, DEF_WAIT_SECONDS, get_datasource_scheme, get_datasource_path
 from app.util.logger import set_logging_level
 
 log = logging.getLogger(__package__)
@@ -25,15 +25,15 @@ log = logging.getLogger(__package__)
 
 def build():
     log.info("Building worker environment...")
-    data_src, data_dst = CONFIG['data']['src'].strip(), CONFIG['data']['dst'].strip()
+    data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"{data_src = }, {data_dst = }")
     match get_datasource_scheme(data_src):
-        case 'ptx':
-            collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst)
-        case 'http' | 'https':
-            collect_data_from_url(url=data_src, dst=data_dst)
         case 'file' | 'local':
             collect_data_from_file(src_file=get_datasource_path(data_src), dst=data_dst)
+        case 'http' | 'https':
+            collect_data_from_url(url=data_src, dst=data_dst)
+        case 'ptx':
+            collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst)
         case other:
             raise Exception(f"Unknown data source protocol: {other}")
     log.info("Worker environment finished")
