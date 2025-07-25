@@ -25,6 +25,7 @@ log = logging.getLogger(__package__)
 
 def build():
     log.info("Building worker environment...")
+    log.info("Obtaining input data...")
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"{data_src = }, {data_dst = }")
     timeout = CONFIG.get('connection.timeout', 30)
@@ -32,11 +33,14 @@ def build():
         case 'file' | 'local':
             collect_data_from_file(src_file=get_datasource_path(data_src), dst=data_dst)
         case 'http' | 'https':
-            collect_data_from_url(url=data_src, dst=data_dst, timeout=timeout)
+            auth = CONFIG.get('data.src.auth')
+            collect_data_from_url(url=data_src, dst=data_dst, auth=auth, timeout=timeout)
         case 'ptx':
             collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst, timeout=timeout)
         case other:
             raise Exception(f"Unknown data source protocol: {other}")
+    log.info("Obtaining worker configuration...")
+    # TODO - implement based on datasource
     log.info("Worker environment finished")
 
 
