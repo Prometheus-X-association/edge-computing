@@ -1,5 +1,8 @@
 [env]
 prefix = "BUILD_"
 
+[connection]
+timeout = 30
+
 [data]
 dst = "/var/cache/data/"

@@ -27,13 +27,14 @@ def build():
     log.info("Building worker environment...")
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"{data_src = }, {data_dst = }")
+    timeout = CONFIG.get('connection.timeout', 30)
     match get_datasource_scheme(data_src):
         case 'file' | 'local':
             collect_data_from_file(src_file=get_datasource_path(data_src), dst=data_dst)
         case 'http' | 'https':
-            collect_data_from_url(url=data_src, dst=data_dst)
+            collect_data_from_url(url=data_src, dst=data_dst, timeout=timeout)
         case 'ptx':
-            collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst)
+            collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst, timeout=timeout)
         case other:
             raise Exception(f"Unknown data source protocol: {other}")
     log.info("Worker environment finished")
