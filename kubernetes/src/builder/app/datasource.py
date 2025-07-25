@@ -20,6 +20,7 @@ from httpx_retries import RetryTransport, Retry
 
 from app.connector import login_to_connector, perform_data_exchange
 from app.util.helper import local_copy
+from app.util.types import DataSourceAuth
 
 log = logging.getLogger(__package__)
 
@@ -40,20 +41,31 @@ def collect_data_from_file(src_file: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, timeout: int | None = 10) -> pathlib.Path:
+def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = None) -> pathlib.Path:
     """
     Download data from url.
 
     :param url:
     :param dst:
+    :param auth:
     :param timeout:
     :return:
     """
     log.info(f"Downloading data from {url}...")
     src_url = httpx.URL(url)
+    dst_path = None
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
-        client = httpx.Client(http2=True, follow_redirects=True, timeout=timeout,
+        auth = DataSourceAuth.parse(auth)
+        match auth.scheme:
+            case "basic":
+                auth = httpx.BasicAuth(**auth.params)
+            case "digest":
+                auth = httpx.DigestAuth(**auth.params)
+            case custom:
+                auth = getattr(httpx, custom)(**auth.params)
+        client = httpx.Client(http2=True, follow_redirects=True, auth=auth, timeout=timeout,
                               transport=RetryTransport(retry=Retry(total=5, backoff_factor=1)))
+        log.info(f"Sending GET request to {url}...")
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")
@@ -67,33 +79,38 @@ def collect_data_from_url(url: str, dst: str, timeout: int | None = 10) -> pathl
     return dst_path
 
 
-def collect_data_from_ptx(contract_id: str, dst: str):
+def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
     log.info(f"Acquiring private data based on contract[{contract_id}]...")
-    tokens = login_to_connector()
+    tokens = login_to_connector(timeout=timeout)
     bearer = tokens['token']
     log.debug(f"Assigned token: {bearer}")
     log.info(f"Login to connector was successful!")
     ###############
     log.info("Initiate data exchange...")
-    data = perform_data_exchange(contract_id=contract_id, token=bearer)
-    if data:
+    data = perform_data_exchange(contract_id=contract_id, token=bearer, timeout=timeout)
+    if data is None:
+        log.error("Data exchange failed!")
+        return None
+    else:
         log.info(f"Data exchange was successful!")
     ###############
-    data_type = data['type']
+    data_type, data_content = data['type'], data['content']
     log.info(f"Process received data as type: {data_type}")
     match data_type:
-        case 'raw' | 'file' | 'json':
+        case 'raw' | 'file':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
-                tmp.write(data['content'])
+                log.debug(f"Cache content into {tmp.name}...")
+                enc = data.get("encoding")
+                tmp.write(data_content.encode(encoding=enc if enc else "utf-8"))
                 dst_path = collect_data_from_file(src_file=tmp.name, dst=dst)
         case 'url':
-            dst_path = collect_data_from_url(url=data['url'], dst=dst)
-            # TODO - manage authentication params defined in 'data'
+            url, auth = data['url'], data.get('auth')
+            dst_path = collect_data_from_url(url=url, dst=dst, auth=auth)
         case 'docker':
             raise NotImplementedError
             # TODO - manage authentication params defined in 'data'
         case other:
-            raise Exception(f"Unknown data type: {other}")
+            raise Exception(f"Unsupported data type: {other}")
     return dst_path
 
 
