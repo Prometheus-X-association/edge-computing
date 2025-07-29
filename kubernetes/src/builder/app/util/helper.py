@@ -31,22 +31,22 @@ def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
     time.sleep(_delay)
 
 
-def get_datasource_scheme(path: str) -> str:
+def get_resource_scheme(path: str) -> str:
     """
 
     :param path:
     :return:
     """
-    return path.strip().split('://', 1)[0]
+    return path.strip().split('://', 1)[0].lower()
 
 
-def get_datasource_path(path: str) -> str:
+def get_resource_path(path: str) -> str:
     """
 
     :param path:
     :return:
     """
-    return path.strip().split('//', 1)[-1]
+    return path.strip().split('://', 1)[-1]
 
 
 def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str = None) -> pathlib.Path:

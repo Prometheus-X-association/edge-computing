@@ -13,12 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
+import logging
+import pathlib
 
 from app import __version__
-from app.datasource import *
-from app.util.config import load_configuration, DEF_CFG_FILE, CONFIG, print_config
-from app.util.helper import wait_and_exit, DEF_WAIT_SECONDS, get_datasource_scheme, get_datasource_path
+from app.datasource import collect_data_from_file, collect_data_from_url, collect_data_from_ptx
+from app.util.config import DEF_CFG_FILE, CONFIG, load_configuration, print_config
+from app.util.helper import DEF_WAIT_SECONDS, wait_and_exit, get_resource_scheme, get_resource_path
 from app.util.logger import set_logging_level
+from app.worker import collect_worker_from_repo, configure_worker_credential, collect_worker_from_ptx
 
 log = logging.getLogger(__package__)
 
@@ -26,21 +30,49 @@ log = logging.getLogger(__package__)
 def build():
     log.info("Building worker environment...")
     log.info("Obtaining input data...")
-    data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
-    log.debug(f"{data_src = }, {data_dst = }")
     timeout = CONFIG.get('connection.timeout', 30)
-    match get_datasource_scheme(data_src):
+    ##########################################################################################
+    data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
+    log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
+    match get_resource_scheme(data_src):
         case 'file' | 'local':
-            collect_data_from_file(src_file=get_datasource_path(data_src), dst=data_dst)
+            data_path = collect_data_from_file(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
         case 'http' | 'https':
             auth = CONFIG.get('data.src.auth')
-            collect_data_from_url(url=data_src, dst=data_dst, auth=auth, timeout=timeout)
+            data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
+                                              auth=auth, timeout=timeout)
         case 'ptx':
-            collect_data_from_ptx(contract_id=get_datasource_path(data_src), dst=data_dst, timeout=timeout)
+            data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
+                                              dst=get_resource_path(data_dst),
+                                              timeout=timeout)
         case other:
             raise Exception(f"Unknown data source protocol: {other}")
+    if data_path is None:
+        log.error("No data is collected. Abort builder...")
+        return
+    ##########################################################################################
     log.info("Obtaining worker configuration...")
-    # TODO - implement based on datasource
+    worker_src = CONFIG.get('worker.src')
+    log.debug(f"Worker setup is loaded from configuration: {worker_src = }")
+    if worker_src is None or worker_src.lower().startswith('inline'):
+        log.debug(f"Trying to load worker configuration from {data_path}...")
+        with open(data_path, 'r') as f:
+            worker_cfg = json.load(f)
+        load_configuration(base=worker_cfg['worker'])
+    worker_src, worker_dst = CONFIG['worker.src'], CONFIG['worker.dst']
+    log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
+    match get_resource_scheme(worker_src):
+        case 'git':
+            raise NotImplementedError
+        case 'docker' | 'container':
+            auth = CONFIG.get('worker.src.auth')
+            collect_worker_from_repo(src=worker_src, dst=worker_dst, auth=auth, timeout=timeout)
+        case 'auth':
+            configure_worker_credential()
+        case 'ptx':
+            collect_worker_from_ptx(contract_id=get_resource_path(data_src), dst=data_dst, timeout=timeout)
+        case other:
+            raise Exception(f"Unknown data source protocol: {other}")
     log.info("Worker environment finished")
 
 
@@ -58,7 +90,7 @@ def main():
     log.info(" builder started ".center(60, '='))
     log.debug(args)
     # Load configuration
-    cfg = load_configuration(cfg_file=args.config)
+    cfg = load_configuration(cfg_file=args.config, from_env=True)
     print_config(cfg=cfg)
     if args.dummy:
         # Testing builder

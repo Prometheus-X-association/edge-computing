@@ -25,17 +25,17 @@ from app.util.types import DataSourceAuth
 log = logging.getLogger(__package__)
 
 
-def collect_data_from_file(src_file: str, dst: str) -> pathlib.Path:
+def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
     """
     Collect data from file.
 
-    :param src_file:
+    :param src:
     :param dst:
     :return:
     """
-    src_file = pathlib.Path(src_file).resolve(strict=True)
-    log.info(f"Collecting data from {src_file}...")
-    dst_path = local_copy(src=src_file, dst=dst)
+    src = pathlib.Path(src).resolve(strict=True)
+    log.info(f"Collecting data from {src}...")
+    dst_path = local_copy(src=src, dst=dst)
     log.debug(f"Copied data bytes: {dst_path.stat().st_size}")
     log.info(f"Data is stored in {dst_path.as_uri()}")
     return dst_path
@@ -80,12 +80,19 @@ def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = 
 
 
 def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
+    """
+
+    :param contract_id:
+    :param dst:
+    :param timeout:
+    :return:
+    """
     log.info(f"Acquiring private data based on contract[{contract_id}]...")
     tokens = login_to_connector(timeout=timeout)
     bearer = tokens['token']
     log.debug(f"Assigned token: {bearer}")
     log.info(f"Login to connector was successful!")
-    ###############
+    ##########################################################################################
     log.info("Initiate data exchange...")
     data = perform_data_exchange(contract_id=contract_id, token=bearer, timeout=timeout)
     if data is None:
@@ -93,7 +100,7 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
         return None
     else:
         log.info(f"Data exchange was successful!")
-    ###############
+    ##########################################################################################
     data_type, data_content = data['type'], data['content']
     log.info(f"Process received data as type: {data_type}")
     match data_type:
@@ -102,7 +109,7 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
                 log.debug(f"Cache content into {tmp.name}...")
                 enc = data.get("encoding")
                 tmp.write(data_content.encode(encoding=enc if enc else "utf-8"))
-                dst_path = collect_data_from_file(src_file=tmp.name, dst=dst)
+                dst_path = collect_data_from_file(src=tmp.name, dst=dst)
         case 'url':
             url, auth = data['url'], data.get('auth')
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth)
