@@ -42,21 +42,28 @@ def isections(data: dict, sep: str = '.') -> typing.Generator[str, None, None]:
             yield str(key)
 
 
-def load_configuration(cfg_file: pathlib.Path = None) -> benedict:
+def load_configuration(base: dict = None, cfg_file: pathlib.Path = None, from_env: bool = False) -> benedict:
     """
     Load configuration form multiple sources.
 
+    :param base:
     :param cfg_file:
+    :param from_env:
     :return:
     """
-    # Load default config from file
-    if DEF_CFG_FILE.exists():
-        log.debug(f"Loading default configuration from {DEF_CFG_FILE.name}...")
-        cfg = benedict.from_toml(DEF_CFG_FILE.read_text(encoding="utf-8"))
-        log.debug(f"Section(s) loaded: {list(isections(cfg))}")
+    if base is None:
+        # Load default config from file
+        if DEF_CFG_FILE.exists():
+            log.debug(f"Loading default configuration from {DEF_CFG_FILE.name}...")
+            cfg = benedict.from_toml(DEF_CFG_FILE.read_text(encoding="utf-8"))
+            log.debug(f"Section(s) loaded: {list(isections(cfg))}")
+        else:
+            log.warning(f"No default configuration file found at {DEF_CFG_FILE.name}.")
+            cfg = benedict()
     else:
-        log.warning(f"No default configuration file found at {DEF_CFG_FILE.name}.")
-        cfg = benedict()
+        # Use given dict as the base configuration
+        cfg = benedict(base)
+        log.debug(f"Configuration section(s): {list(isections(cfg))}")
     # Load additional config from file
     if cfg_file is not None:
         if not cfg_file.exists():
@@ -66,7 +73,8 @@ def load_configuration(cfg_file: pathlib.Path = None) -> benedict:
         cfg.merge(loaded_cfg, overwrite=True, concat=False)
         log.info(f"Section(s) loaded: {list(isections(loaded_cfg))}")
     # Load configuration from envvars
-    if prefix := cfg.get('env', {}).get(CFG_ENV_PREFIX):
+    if from_env:
+        prefix = cfg.get('env', {}).get(CFG_ENV_PREFIX)
         log.debug(f"Loading configuration from envvars[{prefix}*]...")
         envvars = [(k, v) for k, v in os.environ.items() if k.startswith(prefix)]
         log.debug(f"Envvars found:\n{pprint.pformat(envvars)}")

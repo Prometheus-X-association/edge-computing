@@ -20,10 +20,10 @@ from app.util.config import load_configuration, DEF_CFG_FILE
 
 
 def test_builder_cfg():
-    cfg = load_configuration(DEF_CFG_FILE)
+    cfg = load_configuration(cfg_file=DEF_CFG_FILE)
     assert cfg is not None
 
 
 def test_builder_missing_cfg():
     with pytest.raises(FileNotFoundError):
-        load_configuration(pathlib.Path(f"missing_config_{time.time()}.toml"))
+        load_configuration(cfg_file=pathlib.Path(f"missing_config_{time.time()}.toml"))
