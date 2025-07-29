@@ -57,10 +57,14 @@ def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str 
     :param orig_name:
     :return:
     """
+    src = pathlib.Path(src) if isinstance(src, str) else src
     dst = pathlib.Path(dst) if isinstance(dst, str) else dst
     if orig_name and dst.suffix == '':
         dst /= orig_name
     dest_dir = dst.parent if dst.suffix else dst
     dest_dir.mkdir(parents=True, exist_ok=True)
-    dst = shutil.copy(src, dst)
+    if src.suffix == '' and src.is_dir():
+        dst = shutil.copytree(src, dst, dirs_exist_ok=True)
+    else:
+        dst = shutil.copy2(src, dst, follow_symlinks=False)
     return pathlib.Path(dst).resolve(strict=True)
