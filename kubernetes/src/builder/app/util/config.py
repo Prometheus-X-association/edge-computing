@@ -15,6 +15,7 @@ import logging
 import os
 import pathlib
 import pprint
+import typing
 
 from benedict import benedict
 
@@ -26,6 +27,21 @@ CONFIG = benedict(keypath_separator='.', keyattr_dynamic=True)
 log = logging.getLogger(__package__)
 
 
+def isections(data: dict, sep: str = '.') -> typing.Generator[str, None, None]:
+    """
+    Generator for enlisting multi-level configuration sections
+
+    :param data:
+    :param sep:
+    :return:
+    """
+    for key in data:
+        if isinstance(data[key], dict):
+            yield from (f"{key:s}{sep}{sub}" for sub in isections(data[key]))
+        else:
+            yield str(key)
+
+
 def load_configuration(cfg_file: pathlib.Path = None) -> benedict:
     """
     Load configuration form multiple sources.
@@ -34,17 +50,21 @@ def load_configuration(cfg_file: pathlib.Path = None) -> benedict:
     :return:
     """
     # Load default config from file
-    log.debug(f"Loading default configuration from {DEF_CFG_FILE.name}...")
-    cfg = benedict.from_toml(DEF_CFG_FILE.read_text(encoding="utf-8"))
-    log.debug(f"Section(s) loaded: {cfg.keypaths(sort=False)}")
+    if DEF_CFG_FILE.exists():
+        log.debug(f"Loading default configuration from {DEF_CFG_FILE.name}...")
+        cfg = benedict.from_toml(DEF_CFG_FILE.read_text(encoding="utf-8"))
+        log.debug(f"Section(s) loaded: {list(isections(cfg))}")
+    else:
+        log.warning(f"No default configuration file found at {DEF_CFG_FILE.name}.")
+        cfg = benedict()
     # Load additional config from file
     if cfg_file is not None:
         if not cfg_file.exists():
             raise FileNotFoundError(f"Configuration file {cfg_file} not found!")
-        log.info(f"Loading configuration from {cfg_file.name}...")
+        log.info(f"Loading configuration file: {cfg_file.name}...")
         loaded_cfg = benedict.from_toml(cfg_file.read_text(encoding="utf-8"))
         cfg.merge(loaded_cfg, overwrite=True, concat=False)
-        log.info(f"Section(s) loaded: {loaded_cfg.keypaths(sort=False)}")
+        log.info(f"Section(s) loaded: {list(isections(loaded_cfg))}")
     # Load configuration from envvars
     if prefix := cfg.get('env', {}).get(CFG_ENV_PREFIX):
         log.debug(f"Loading configuration from envvars[{prefix}*]...")
@@ -53,7 +73,7 @@ def load_configuration(cfg_file: pathlib.Path = None) -> benedict:
         loaded_cfg = benedict.from_toml("\n".join(f'{k.removeprefix(prefix).replace('_', '.').lower()}="{v}"'
                                                   for k, v in envvars))
         cfg.merge(loaded_cfg, overwrite=True, concat=False)
-        log.info(f"Section(s) loaded: {loaded_cfg.keypaths(sort=False)}")
+        log.info(f"Section(s) loaded: {list(isections(loaded_cfg))}")
     # Cache config as a module parameter
     global CONFIG
     CONFIG.merge(cfg)
