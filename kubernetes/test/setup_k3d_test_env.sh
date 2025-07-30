@@ -54,6 +54,12 @@ function install_k3d() {
 	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
 }
 
+function install_tools() {
+	echo -e "\n>>> Install skopeo binary...\n"
+	sudo apt-get update && sudo apt-get install -y skopeo
+	# TODO - install latest (from source?)
+}
+
 function setup_k3d_bash_completion() {
     echo -e "\n>>> Install k3d bash completion...\n"
     sudo apt-get install -y bash-completion
@@ -223,6 +229,12 @@ if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     # Validation
 	echo
 	(set -x; k3d version)
+fi
+
+### Tools and utils [skopeo,...]
+
+if ! command -v skopeo >/dev/null 2>&1; then
+    install_tools
 fi
 
 ### Kubectl
