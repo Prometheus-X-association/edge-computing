@@ -15,19 +15,21 @@
 import argparse
 import json
 import logging
+import os
 import pathlib
+import sys
 
 from app import __version__
 from app.datasource import collect_data_from_file, collect_data_from_url, collect_data_from_ptx
 from app.util.config import DEF_CFG_FILE, CONFIG, load_configuration, print_config
 from app.util.helper import DEF_WAIT_SECONDS, wait_and_exit, get_resource_scheme, get_resource_path
 from app.util.logger import set_logging_level
-from app.worker import collect_worker_from_repo, configure_worker_credential, collect_worker_from_ptx
+from app.worker import collect_worker_image_from_repo, configure_worker_credential, collect_worker_from_ptx
 
 log = logging.getLogger(__package__)
 
 
-def build():
+def build() -> int:
     log.info("Building worker environment...")
     log.info("Obtaining input data...")
     timeout = CONFIG.get('connection.timeout', 30)
@@ -46,15 +48,16 @@ def build():
                                               dst=get_resource_path(data_dst),
                                               timeout=timeout)
         case other:
-            raise Exception(f"Unknown data source protocol: {other}")
+            log.error(f"Unknown data source protocol: {other}")
+            data_path = None
     if data_path is None:
-        log.error("No data is collected. Abort builder...")
-        return
+        log.error("No data resource is collected. Abort builder...")
+        return 1
     ##########################################################################################
     log.info("Obtaining worker configuration...")
     worker_src = CONFIG.get('worker.src')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }")
-    if worker_src is None or worker_src.lower().startswith('inline'):
+    if worker_src is None or worker_src.lower() in ('inline', 'datasource'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
             worker_cfg = json.load(f)
@@ -64,16 +67,23 @@ def build():
     match get_resource_scheme(worker_src):
         case 'git':
             raise NotImplementedError
-        case 'docker' | 'container':
+        case 'docker' | 'remote':
             auth = CONFIG.get('worker.src.auth')
-            collect_worker_from_repo(src=worker_src, dst=worker_dst, auth=auth, timeout=timeout)
-        case 'auth':
-            configure_worker_credential()
+            worker_path = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, auth=auth, timeout=timeout)
+        case 'auth' | 'secret':
+            worker_path = configure_worker_credential(src=get_resource_path(worker_src),
+                                                      dst=get_resource_path(worker_dst))
         case 'ptx':
-            collect_worker_from_ptx(contract_id=get_resource_path(data_src), dst=data_dst, timeout=timeout)
+            worker_path = collect_worker_from_ptx(contract_id=get_resource_path(data_src), dst=data_dst,
+                                                  timeout=timeout)
         case other:
-            raise Exception(f"Unknown data source protocol: {other}")
-    log.info("Worker environment finished")
+            log.error(f"Unknown data source protocol: {other}")
+            worker_path = None
+    if worker_path is None:
+        log.error("No worker resource is collected. Abort builder...")
+        return 1
+    log.info("Worker environment built.")
+    return 0
 
 
 def main():
@@ -94,11 +104,15 @@ def main():
     print_config(cfg=cfg)
     if args.dummy:
         # Testing builder
-        wait_and_exit()
-    else:
+        return wait_and_exit()
+    try:
         # Invoke building functionality
-        build()
+        failed = build()
+    except Exception as e:
+        log.error(f"Build failed: {e}")
+        sys.exit(os.EX_SOFTWARE)
     log.info(" builder ended ".center(60, '='))
+    sys.exit(os.EX_DATAERR if failed else os.EX_OK)
 
 
 if __name__ == '__main__':

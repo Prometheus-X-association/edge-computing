@@ -127,20 +127,9 @@ run-builder:
 	-kubectl exec -ti pod/builder -- sh
 	kubectl delete pod/builder --now --wait
 
-run-worker:
-	kubectl apply -f assets/ptx-test-worker-job.yaml
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
-	@echo
-	kubectl get all,pv,pvc -o wide
-	@echo
-	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
-	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
-	kubectl wait --for="condition=PodReadyToStartContainers" pods -l app=consumer
-	kubectl logs -f --prefix job/consumer builder
-	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
-	kubectl logs -f --prefix job/consumer worker
+########################################################################################################################
 
-run-convnet:
+run-sample-convnet:
 	kubectl apply -f assets/ptx-samples-convnet-job.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
 	@echo
@@ -152,7 +141,7 @@ run-convnet:
 	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
 	kubectl logs -f --prefix job/consumer worker
 
-run-gbc:
+run-sample-gbc:
 	kubectl apply -f assets/ptx-samples-gbc-job.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
 	@echo
@@ -164,6 +153,35 @@ run-gbc:
 	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
 	@#kubectl logs -f --prefix -l app=consumer
 	kubectl logs -f --prefix job/consumer worker
+
+########################################################################################################################
+
+run-test-job:
+	kubectl apply -f assets/ptx-test-worker-job.yaml
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	@echo
+	kubectl get all,pv,pvc -o wide
+	@echo
+	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-job builder
+	kubectl wait --for="condition=ContainersReady" --timeout=10s pods -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-job worker
+
+
+run-test-img:
+	kubectl apply -f assets/ptx-test-worker-img.yaml
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	@echo
+	kubectl get all,pv,pvc -o wide
+	@echo
+	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-img builder
+	kubectl wait --for="condition=ContainersReady" pods --timeout=10s -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-img worker
 
 ########################################################################################################################
 
@@ -181,6 +199,8 @@ stop:
 	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
 	kubectl delete namespace ptx-sandbox --ignore-not-found --now && kubectl create namespace ptx-sandbox
+	skopeo delete --tls-verify=false "docker://localhost:5000/myworker:latest" || true
+	kubectl delete events --all
 
 clear:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f

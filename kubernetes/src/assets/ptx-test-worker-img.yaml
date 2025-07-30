@@ -17,7 +17,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: consumer-test-job
+  name: consumer-test-img
   namespace: ptx-edge
 spec:
   completions: 1
@@ -32,7 +32,7 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app", "-vd" ]
+          command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
             - name: src
               mountPath: /usr/src/builder/app
@@ -42,17 +42,26 @@ spec:
             - name: data-dir
               mountPath: /var/cache/data
               readOnly: false
+          env:
+            - name: BUILD_DATA_SRC
+              value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data/"
+            - name: BUILD_WORKER_SRC
+              value: "remote://busybox:latest"
+            - name: BUILD_WORKER_DST
+              value: "docker://registry.k3d.local:5000/myworker:latest"
       containers:
         - name: worker
-          image: registry.k3d.local:5000/busybox:latest
-          imagePullPolicy: IfNotPresent
+          image: registry.k3d.local:5000/myworker:latest
+          imagePullPolicy: Always
           command: [ "/bin/sh", "-c" ]
           args:
             - echo "=== worker started ===";
               echo ">>> INPUTS";
               ls -hl /usr/src/worker /var/cache/data;
               echo -e "\n@@@ Generating results...\n";
-              sleep 5s;
+              sleep 1s;
               echo "Result created" >> /var/cache/result/result.txt;
               echo ">>> OUTPUTS";
               ls -hl /var/cache/result;
