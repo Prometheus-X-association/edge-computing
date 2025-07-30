@@ -57,6 +57,8 @@ def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = 
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
         auth = DataSourceAuth.parse(auth)
         match auth.scheme:
+            case None:
+                auth = None
             case "basic":
                 auth = httpx.BasicAuth(**auth.params)
             case "digest":
