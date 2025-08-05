@@ -120,10 +120,10 @@ spec:
         - name: BUILD_CATALOG_OFFER_CONSUMER
           value: 66d18b79ee71f9f096baecb1
         - name: BUILD_WORKER_SRC
-          #value: "docker://busybox:latest"
-          value: "auth://worker-pull-secret"
-        - name: BUILD_WORKER_AUTH_SRC
-          value: "demo:demo"
+          value: "docker://busybox:latest"
+          #value: "auth://worker-pull-secret"
+#        - name: BUILD_WORKER_AUTH_SRC
+#          value: "demo:demo"
         - name: BUILD_WORKER_DST
           value: "docker://registry.k3d.local:5000/myworker:latest"
   volumes:

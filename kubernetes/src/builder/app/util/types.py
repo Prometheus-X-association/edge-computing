@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
+from typing import Self
 
 
-@dataclass
-class DataSourceAuth:
+@dataclass(frozen=True)
+class DataSourceAuth(object):
     scheme: str = None
     params: dict = None
 
     @classmethod
-    def parse(cls, cfg: str | dict):
+    def parse(cls, cfg: str | dict) -> Self:
         if isinstance(cfg, str):
             cfg = cfg.split(':')
             if len(cfg) == 3:
@@ -33,3 +34,25 @@ class DataSourceAuth:
             return cls(scheme=cfg['scheme'], params={k: v for k, v in cfg.items() if k != 'scheme'})
         else:
             raise ValueError(f'Invalid datasource auth scheme/params: {cfg}!')
+
+
+@dataclass(frozen=True)
+class DockerRegistryAuth(object):
+    username: str = None
+    password: str = None
+
+    @classmethod
+    def parse(cls, cfg: str | dict) -> Self:
+        if isinstance(cfg, str):
+            cfg = cfg.split(':')
+            if len(cfg) == 2:
+                return cls(username=cfg[0], password=cfg[1])
+            else:
+                raise ValueError(f'Invalid registry auth cfg: username:passwd! <> {cfg}')
+        elif isinstance(cfg, dict):
+            return cls(username=cfg['username'], password=cfg['password'])
+        else:
+            raise ValueError(f'Invalid registry auth username/password: {cfg}!')
+
+    def to_str(self) -> str:
+        return f"{self.username}:{self.password}"

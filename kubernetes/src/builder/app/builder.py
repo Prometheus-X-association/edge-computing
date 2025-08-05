@@ -73,9 +73,9 @@ def build() -> bool:
                                                     dst_auth=dst_auth, timeout=timeout)
         case 'auth' | 'secret':
             secret_name = get_resource_path(worker_src)
-            cred = CONFIG['worker.auth.src'].split(':', maxsplit=1)
+            cred = CONFIG['worker.auth.src']
             app = CONFIG.get('worker.app', 'worker')
-            result = configure_worker_credential(name=secret_name, cred=(cred[0], cred[1]), app=app)
+            result = configure_worker_credential(name=secret_name, cred=cred, app=app)
         case 'ptx':
             result = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,
                                              timeout=timeout)

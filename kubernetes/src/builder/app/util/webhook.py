@@ -12,14 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import annotations
-
 import http.client
 import http.server
 import json
 import logging
 from concurrent.futures import Executor, Future
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Self
 
 
 class HandleWebHook(http.server.BaseHTTPRequestHandler):
@@ -123,7 +122,7 @@ class WebHooKManager(object):
         finally:
             self.__executor.shutdown(wait=True, cancel_futures=True)
 
-    def __enter__(self) -> WebHooKManager:
+    def __enter__(self) -> Self:
         self.start()
         return self
 

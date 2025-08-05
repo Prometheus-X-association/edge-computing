@@ -60,8 +60,8 @@ def inspect_image(registry: str, image: str, user: str = None, passwd: str = Non
 
 
 def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_reference: str = None,
-                           src_auth: tuple[str, str] = None, dst_auth: tuple[str, str] = None,
-                           insecure: bool = False, timeout: int = None) -> subprocess.CompletedProcess | None:
+                           src_auth: str = None, dst_auth: str = None, insecure: bool = False,
+                           timeout: int = None) -> subprocess.CompletedProcess | None:
     """
 
     :param src_scheme:
@@ -79,9 +79,9 @@ def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_refe
     if logging.getLogger().level < logging.INFO:
         cmd.append('--debug')
     if src_auth:
-        cmd.append('--src-creds={0}:{1}'.format(*src_auth))  # username[:password]
+        cmd.append(f'--src-creds={src_auth}')  # username[:password]
     if dst_auth:
-        cmd.append('--dest-creds={0}:{1}'.format(*dst_auth))  # username[:password]
+        cmd.append(f'--dest-creds={dst_auth}')  # username[:password]
     if insecure:
         cmd.append('--dest-tls-verify=false')
     match src_scheme:

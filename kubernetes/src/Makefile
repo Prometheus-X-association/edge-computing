@@ -125,6 +125,7 @@ run-builder:
 	kubectl get all -o wide
 	@echo
 	-kubectl exec -ti pod/builder -- sh
+	kubectl delete pods/builder --now --wait
 	kubectl delete pods,secrets -l app=builder -l app=worker --now --wait
 
 ########################################################################################################################
