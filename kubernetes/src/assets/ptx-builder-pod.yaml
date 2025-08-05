@@ -101,9 +101,18 @@ spec:
             name: pdc-config-env
       env:
         - name: BUILD_DATA_SRC
-          value: "file:///etc/hostname"
-          #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+          #value: "file:///etc/hostname"
+          #value: "http://host.k3d.internal:9000/datetime.txt"
+          value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
           #value: "ptx://66db1a6dc29e3ba863a85e0f"
+        - name: BUILD_DATA_AUTH
+          value: "basic:demo:demo"
+        #- name: BUILD_DATA_AUTH_SCHEME
+        #  value: basic
+        #- name: BUILD_DATA_AUTH_USERNAME
+        #  value: demo
+        #- name: BUILD_DATA_AUTH_PASSWORD
+        #  value: demo
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
         - name: BUILD_CATALOG_OFFER_PROVIDER
@@ -112,9 +121,9 @@ spec:
           value: 66d18b79ee71f9f096baecb1
         - name: BUILD_WORKER_SRC
           #value: "docker://busybox:latest"
-          value: "auth://worker-secret"
+          value: "auth://worker-pull-secret"
         - name: BUILD_WORKER_AUTH_SRC
-          value: "test-user:passwd1234"
+          value: "demo:demo"
         - name: BUILD_WORKER_DST
           value: "docker://registry.k3d.local:5000/myworker:latest"
   volumes:

@@ -16,6 +16,7 @@ import pathlib
 import tempfile
 
 import httpx
+import httpx_auth
 from httpx_retries import RetryTransport, Retry
 
 from app.connector import login_to_connector, perform_data_exchange
@@ -41,7 +42,7 @@ def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = None) -> pathlib.Path:
+def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: int = None) -> pathlib.Path:
     """
     Download data from url.
 
@@ -63,10 +64,10 @@ def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = 
             case "digest":
                 auth = httpx.DigestAuth(**auth.params)
             case custom:
-                auth = getattr(httpx, custom)(**auth.params)
+                auth = getattr(httpx_auth, custom)(**auth.params)
         client = httpx.Client(http2=True, follow_redirects=True, auth=auth, timeout=timeout,
                               transport=RetryTransport(retry=Retry(total=5, backoff_factor=1)))
-        log.info(f"Sending GET request to {url}...")
+        log.info(f"Sending GET request to {url} with auth: {type(auth).__name__}...")
         with client.stream("GET", src_url) as resp:
             if resp.status_code != httpx.codes.OK:
                 log.error(f"Failed to collect data: HTTP {resp.status_code}")

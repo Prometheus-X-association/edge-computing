@@ -20,5 +20,16 @@ class DataSourceAuth:
     params: dict = None
 
     @classmethod
-    def parse(cls, items: dict):
-        return cls(**items) if items else cls()
+    def parse(cls, cfg: str | dict):
+        if isinstance(cfg, str):
+            cfg = cfg.split(':')
+            if len(cfg) == 3:
+                return cls(scheme=cfg[0], params=dict(username=cfg[1], password=cfg[2]))
+            elif len(cfg) == 2:
+                return cls(scheme='basic', params=dict(username=cfg[0], password=cfg[1]))
+            else:
+                raise ValueError(f'Invalid datasource auth cfg: [scheme:]username:passwd! <> {cfg}')
+        elif isinstance(cfg, dict):
+            return cls(scheme=cfg['scheme'], params={k: v for k, v in cfg.items() if k != 'scheme'})
+        else:
+            raise ValueError(f'Invalid datasource auth scheme/params: {cfg}!')
