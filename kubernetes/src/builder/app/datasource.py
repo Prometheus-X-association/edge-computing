@@ -52,8 +52,7 @@ def collect_data_from_url(url: str, dst: str, auth: dict = None, timeout: int = 
     :return:
     """
     log.info(f"Downloading data from {url}...")
-    src_url = httpx.URL(url)
-    dst_path = None
+    src_url, dst_path = httpx.URL(url), None
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
         auth = DataSourceAuth.parse(auth)
         match auth.scheme:
@@ -109,8 +108,7 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
         case 'raw' | 'file':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
-                enc = data.get("encoding")
-                tmp.write(data_content.encode(encoding=enc if enc else "utf-8"))
+                tmp.write(data_content.encode(encoding=data.get("encoding", "utf-8")))
                 dst_path = collect_data_from_file(src=tmp.name, dst=dst)
         case 'url':
             url, auth = data['url'], data.get('auth')

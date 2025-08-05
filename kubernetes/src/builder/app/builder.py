@@ -29,7 +29,7 @@ from app.worker import collect_worker_image_from_repo, configure_worker_credenti
 log = logging.getLogger(__package__)
 
 
-def build() -> int:
+def build() -> bool:
     log.info("Building worker environment...")
     log.info("Obtaining input data...")
     timeout = CONFIG.get('connection.timeout', 30)
@@ -40,7 +40,7 @@ def build() -> int:
         case 'file' | 'local':
             data_path = collect_data_from_file(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
         case 'http' | 'https':
-            auth = CONFIG.get('data.src.auth')
+            auth = CONFIG.get('data.auth')
             data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
                                               auth=auth, timeout=timeout)
         case 'ptx':
@@ -52,11 +52,11 @@ def build() -> int:
             data_path = None
     if data_path is None:
         log.error("No data resource is collected. Abort builder...")
-        return 1
+        return True
     ##########################################################################################
     log.info("Obtaining worker configuration...")
     worker_src = CONFIG.get('worker.src')
-    log.debug(f"Worker setup is loaded from configuration: {worker_src = }")
+    log.debug(f"Check worker setup in configuration...")
     if worker_src is None or worker_src.lower() in ('inline', 'datasource'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
@@ -68,22 +68,25 @@ def build() -> int:
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':
-            auth = CONFIG.get('worker.src.auth')
-            worker_path = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, auth=auth, timeout=timeout)
+            src_auth, dst_auth = CONFIG.get('worker.auth.src'), CONFIG.get('worker.auth.dst')
+            result = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, src_auth=src_auth,
+                                                    dst_auth=dst_auth, timeout=timeout)
         case 'auth' | 'secret':
-            worker_path = configure_worker_credential(src=get_resource_path(worker_src),
-                                                      dst=get_resource_path(worker_dst))
+            secret_name = get_resource_path(worker_src)
+            cred = CONFIG['worker.auth.src'].split(':', maxsplit=1)
+            app = CONFIG.get('worker.app', 'worker')
+            result = configure_worker_credential(name=secret_name, cred=(cred[0], cred[1]), app=app)
         case 'ptx':
-            worker_path = collect_worker_from_ptx(contract_id=get_resource_path(data_src), dst=data_dst,
-                                                  timeout=timeout)
+            result = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,
+                                             timeout=timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")
-            worker_path = None
-    if worker_path is None:
+            result = None
+    if result is None:
         log.error("No worker resource is collected. Abort builder...")
-        return 1
+        return True
     log.info("Worker environment built.")
-    return 0
+    return False
 
 
 def main():
@@ -110,6 +113,8 @@ def main():
         failed = build()
     except Exception as e:
         log.error(f"Build failed: {e}")
+        if args.verbose:
+            log.exception(e)
         sys.exit(os.EX_SOFTWARE)
     log.info(" builder ended ".center(60, '='))
     sys.exit(os.EX_DATAERR if failed else os.EX_OK)

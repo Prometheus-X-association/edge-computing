@@ -14,15 +14,66 @@
 # limitations under the License.
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 
 log = logging.getLogger(__package__)
 
 
+def inspect_image(registry: str, image: str, user: str = None, passwd: str = None, insecure: bool = False,
+                  timeout: int = None) -> dict | None:
+    """
+
+    :param registry:
+    :param image:
+    :param user:
+    :param passwd:
+    :param insecure:
+    :param timeout:
+    :return:
+    """
+    log.info(f"Validating {image} in {registry}...")
+    cmd = ['skopeo', 'inspect']
+    if user:
+        cmd.append(f"--username={user}")
+        if passwd:
+            cmd.append(f"--password={passwd}")
+    if insecure:
+        cmd.append('--tls-verify=false')
+    cmd.append(f"docker://{registry}/{image}")
+    log.debug(f"Assembled command: {' '.join(cmd)}")
+    try:
+        ret = subprocess.run(cmd, stdout=subprocess.PIPE, timeout=timeout, check=True)
+    except (subprocess.CalledProcessError, subprocess.SubprocessError) as e:
+        log.error(str(e))
+        log.error("Failed to inspect image in registry!")
+        return None
+    except subprocess.TimeoutExpired as e:
+        log.error(f"Image inspect timeout[{e.timeout}] expired!")
+        log.error("Failed to inspect image in registry!")
+        return None
+    try:
+        return json.loads(ret.stdout)
+    except json.decoder.JSONDecodeError:
+        log.error(f"Failed to decode image description!")
+
+
 def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_reference: str = None,
                            src_auth: tuple[str, str] = None, dst_auth: tuple[str, str] = None,
                            insecure: bool = False, timeout: int = None) -> subprocess.CompletedProcess | None:
+    """
+
+    :param src_scheme:
+    :param image:
+    :param registry:
+    :param with_reference:
+    :param src_auth:
+    :param dst_auth:
+    :param insecure:
+    :param timeout:
+    :return:
+    """
     log.info(f"Copying {image} to {registry}...")
     cmd = ['skopeo', 'copy']
     if logging.getLogger().level < logging.INFO:
@@ -30,7 +81,7 @@ def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_refe
     if src_auth:
         cmd.append('--src-creds={0}:{1}'.format(*src_auth))  # username[:password]
     if dst_auth:
-        cmd.append('--dest-creds={0}:{1}'.format(*src_auth))  # username[:password]
+        cmd.append('--dest-creds={0}:{1}'.format(*dst_auth))  # username[:password]
     if insecure:
         cmd.append('--dest-tls-verify=false')
     match src_scheme:
@@ -59,6 +110,7 @@ def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_refe
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    copy_image_to_registry(src_scheme='docker', image='gcr.io/google-containers/pause:latest',
-                           registry='registry.k3d.local:5000', with_reference='my-pause:latest', insecure=True,
-                           timeout=10)
+    print(copy_image_to_registry(src_scheme='docker', image='gcr.io/google-containers/pause:latest',
+                                 registry='registry.k3d.local:5000', with_reference='my-pause:latest',
+                                 insecure=True, timeout=10))
+    print(inspect_image(registry='gcr.io/google-containers', image='pause:latest', insecure=True, timeout=10))

@@ -27,12 +27,51 @@ data:
   BUILD_CATALOG_PORT: "3002"
 immutable: true
 ---
+# kubectl create serviceaccount builder
+# kubectl config set-credentials builder --token=$(kubectl create token builder)
+# kubectl config set-context builder-context --cluster=k3d-dev --user=builder
+# kubectl config use-context builder-context
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: builder
+  labels:
+    app: builder
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-creator
+  namespace: ptx-edge
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "secrets" ]
+    verbs: [ "create" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secret-creator
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: builder
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: secret-creator
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: builder
   namespace: ptx-edge
+  labels:
+    app: builder
 spec:
+  serviceAccountName: builder
   containers:
     - name: builder
       image: registry.k3d.local:5000/ptx-edge/builder:1.0
@@ -48,6 +87,9 @@ spec:
         - name: data-dir
           mountPath: /var/cache/data
           readOnly: false
+        - name: kube-api-token
+          mountPath: /var/run/secrets/projected
+          readOnly: true
       ports:
         - name: webhook-port
           containerPort: 8888
@@ -59,15 +101,22 @@ spec:
             name: pdc-config-env
       env:
         - name: BUILD_DATA_SRC
+          value: "file:///etc/hostname"
           #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
-          #value: "file:///etc/hostname"
-          value: "ptx://66db1a6dc29e3ba863a85e0f"
+          #value: "ptx://66db1a6dc29e3ba863a85e0f"
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
         - name: BUILD_CATALOG_OFFER_PROVIDER
           value: 66d187f4ee71f9f096bae8ca
         - name: BUILD_CATALOG_OFFER_CONSUMER
           value: 66d18b79ee71f9f096baecb1
+        - name: BUILD_WORKER_SRC
+          #value: "docker://busybox:latest"
+          value: "auth://worker-secret"
+        - name: BUILD_WORKER_AUTH_SRC
+          value: "test-user:passwd1234"
+        - name: BUILD_WORKER_DST
+          value: "docker://registry.k3d.local:5000/myworker:latest"
   volumes:
     - name: src
       hostPath:
@@ -79,4 +128,22 @@ spec:
     - name: worker-dir
       emptyDir:
         sizeLimit: 100Mi
+    - name: kube-api-token
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+                - key: ca.crt
+                  path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+                - fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.namespace
+                  path: namespace
   restartPolicy: Never

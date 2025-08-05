@@ -1,3 +1,6 @@
+[app]
+name = "builder"
+
 [env]
 prefix = "BUILD_"
 
@@ -6,3 +9,6 @@ timeout = 30
 
 [data]
 dst = "/var/cache/data/"
+
+[worker]
+app = "worker"

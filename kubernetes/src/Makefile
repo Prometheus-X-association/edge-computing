@@ -28,7 +28,7 @@ build:
 rebuild: | purge build
 
 setup:
-	k3d cluster create dev --config=assets/k3d-dev-cluster.yaml
+	k3d cluster create --config=assets/k3d-dev-cluster.yaml
 	kubectl create namespace ptx-edge && kubectl config set-context --current --namespace ptx-edge
 	kubectl create namespace ptx-sandbox
 	for img in ${COMPONENTS}; do \
@@ -70,7 +70,7 @@ status:
 	@echo
 	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || true
 	@echo
-	@kubectl get all,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
+	@kubectl get all,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
 	@echo
 	@kubectl events || true
 	@echo
@@ -125,7 +125,7 @@ run-builder:
 	kubectl get all -o wide
 	@echo
 	-kubectl exec -ti pod/builder -- sh
-	kubectl delete pod/builder --now --wait
+	kubectl delete pods,secrets -l app=builder --now --wait
 
 ########################################################################################################################
 
