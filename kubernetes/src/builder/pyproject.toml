@@ -23,7 +23,8 @@ dependencies = [
     'httpx-retries~=0.4.0',
     'httpx_auth~=0.23.1',
     'python-benedict[toml]~=0.34',
-    'kubernetes~=33.1.0'
+    'kubernetes~=33.1.0',
+    'PyYAML~=6.0.2'
 ]
 
 [project.urls]

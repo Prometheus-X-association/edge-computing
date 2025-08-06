@@ -16,10 +16,13 @@ import json
 import logging
 import pathlib
 
+import yaml
 from kubernetes import config, client
 from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
+
+from app.util.helper import deep_filter
 
 log = logging.getLogger(__package__)
 
@@ -67,7 +70,7 @@ PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
 
 def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "", namespace: str = None,
-                             app: str = None, projected: bool = False) -> client.V1Secret | None:
+                             app: str = None, projected: bool = True) -> client.V1Secret | None:
     """
         E.g.:
     >>> create_image_pull_secret(name="test-pull-sec", user='test-user', passwd='pass1234',
@@ -95,6 +98,7 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
                                                                labels={"app": app} if app else None),
                                   type="kubernetes.io/dockerconfigjson",
                                   data={'.dockerconfigjson': b64_docker_cfg})
+    log.debug(f"Created secret body:\n{yaml.dump(deep_filter(secret_body.to_dict()))}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
@@ -103,12 +107,78 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
         log.error(f"Error: {e}")
 
 
-def create_service():
-    ...
+def create_standalone_service(name: str, port: int, target_port: int, namespace: str = None, app: str = None,
+                              headless: bool = False, projected: bool = True) -> client.V1Service | None:
+    """
+
+    :param name:
+    :param port:
+    :param target_port:
+    :param namespace:
+    :param app:
+    :param projected:
+    :return:
+    """
+    log.info("Creating service...")
+    log.debug(f"Loading K8s configuration...")
+    if projected:
+        _load_incluster_projected_config(token=PROJECTED_TOKEN_FILE, cert=PROJECTED_CERT_FILE)
+    else:
+        config.load_incluster_config()
+    service_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
+                                                                 labels={"app": app} if app else None),
+                                    spec=client.V1ServiceSpec(type="None" if headless else "ClusterIP",
+                                                              ports=[client.V1ServicePort(name="pdc-port",
+                                                                                          protocol="TCP",
+                                                                                          port=port,
+                                                                                          target_port=target_port)]))
+    log.debug(f"Created service body:\n{yaml.dump(deep_filter(service_body.to_dict()))}")
+    if namespace is None:
+        namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
+    try:
+        return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=service_body)
+    except OpenApiException as e:
+        log.error(f"Error: {e}")
 
 
-def create_endpoint():
-    ...
+def create_endpointslice(service_name: str, node_ip: str, target_port: int, namespace: str = None,
+                         app: str = None, projected: bool = True) -> client.V1EndpointSlice | None:
+    """
+
+    :param service_name:
+    :param node_ip:
+    :param target_port:
+    :param zone:
+    :param namespace:
+    :param app:
+    :param projected:
+    :return:
+    """
+    log.info("Creating endpointslice...")
+    log.debug(f"Loading K8s configuration...")
+    if projected:
+        _load_incluster_projected_config(token=PROJECTED_TOKEN_FILE, cert=PROJECTED_CERT_FILE)
+    else:
+        config.load_incluster_config()
+    labels = {"kubernetes.io/service-name": service_name,
+              "endpointslice.kubernetes.io/managed-by": "controller.pdc.ptx-edge.org"}
+    if app:
+        labels["app"] = app
+    endpointslice_body = client.V1EndpointSlice(metadata=client.V1ObjectMeta(name=service_name,
+                                                                             labels=labels),
+                                                address_type="IPv4",
+                                                ports=[client.V1ServicePort(name="pdc-port",
+                                                                            app_protocol="http",
+                                                                            protocol="TCP",
+                                                                            port=target_port)],
+                                                endpoints=[client.V1Endpoint(addresses=[node_ip])])
+    log.debug(f"Created endpointslice body:\n{yaml.dump(deep_filter(endpointslice_body.to_dict()))}")
+    if namespace is None:
+        namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
+    try:
+        return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=endpointslice_body)
+    except OpenApiException as e:
+        log.error(f"Error: {e}")
 
 
 if __name__ == '__main__':
@@ -116,7 +186,3 @@ if __name__ == '__main__':
     ###
     check_kube_api_cfg()
     check_projected_kube_api_cfg()
-    ###
-    ret = create_image_pull_secret(name="test-pull-sec", user='test-user', passwd='pass1234', namespace='ptx-edge',
-                                   app='builder', projected=True)
-    print(ret)

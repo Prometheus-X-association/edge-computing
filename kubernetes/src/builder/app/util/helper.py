@@ -15,6 +15,7 @@ import logging
 import pathlib
 import shutil
 import time
+import typing
 
 log = logging.getLogger(__package__)
 
@@ -68,3 +69,20 @@ def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str 
     else:
         dst = shutil.copy2(src, dst, follow_symlinks=False)
     return pathlib.Path(dst).resolve(strict=True)
+
+
+def deep_filter(data: object, keep: typing.Callable = bool) -> object:
+    """
+
+    :param data:
+    :param keep:
+    :return:
+    """
+    if isinstance(data, dict):
+        return dict(filter(lambda kv: bool(kv[1]), ((k, deep_filter(v, keep)) for k, v in data.items())))
+    elif isinstance(data, (list, tuple, set)):
+        return type(data)(filter(bool, (deep_filter(v, keep) for v in data)))
+    elif keep(data):
+        return data
+    else:
+        return None

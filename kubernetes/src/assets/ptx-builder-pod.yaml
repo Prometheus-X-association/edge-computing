@@ -20,13 +20,28 @@ metadata:
   namespace: ptx-edge
 data:
   BUILD_PDC_HOST: "pdc.ptx-edge.svc.cluster.local"
-  BUILD_PDC_PORT: "3000"
+  BUILD_PDC_PORT: "30003"
   BUILD_CONTRACT_HOST: "contract.ptx-sandbox.svc.cluster.local"
   BUILD_CONTRACT_PORT: "3001"
   BUILD_CATALOG_HOST: "catalog.ptx-sandbox.svc.cluster.local"
   BUILD_CATALOG_PORT: "3002"
 immutable: true
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: builder-webhook
+  namespace: ptx-edge
+spec:
+  selector:
+    app: builder
+  type: ClusterIP
+  ports:
+    - name: webhook-port
+      protocol: TCP
+      port: 8888
+      targetPort: webhook-port
+--- ####################################################################################################################
 # kubectl create serviceaccount builder
 # kubectl config set-credentials builder --token=$(kubectl create token builder)
 # kubectl config set-context builder-context --cluster=k3d-dev --user=builder
@@ -122,8 +137,8 @@ spec:
         - name: BUILD_WORKER_SRC
           value: "docker://busybox:latest"
           #value: "auth://worker-pull-secret"
-#        - name: BUILD_WORKER_AUTH_SRC
-#          value: "demo:demo"
+        #        - name: BUILD_WORKER_AUTH_SRC
+        #          value: "demo:demo"
         - name: BUILD_WORKER_DST
           value: "docker://registry.k3d.local:5000/myworker:latest"
   volumes:
