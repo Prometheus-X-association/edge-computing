@@ -92,11 +92,30 @@ run-catalog:
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
 								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
 
-run-pdc: run-catalog
-	kubectl apply -f assets/ptx-pdc-setup.yaml
+run-pdc-pod: run-catalog
+	kubectl apply -f assets/ptx-pdc-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=20s pod/pdc
 	@echo "Waiting for PDC to set up..."
 	( kubectl logs -f pod/pdc -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	@echo
+	@kubectl get all -o wide
+	@echo
+	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
+	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
+								 	   wget -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
+	@echo
+	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
+	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
+	@curl -Ssf "http://${NODE_IP}:30003/" | grep "href"
+
+run-pdc-daemon: run-catalog
+	kubectl apply -f assets/ptx-pdc-daemon.yaml
+	kubectl wait --for=jsonpath='.status.numberReady'=1 daemonset/pdc
+	@echo "Waiting for PDC to set up..."
+	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
+		( kubectl logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
+	done
 	@echo
 	@kubectl get all -o wide
 	@echo

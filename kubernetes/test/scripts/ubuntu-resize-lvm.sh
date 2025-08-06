@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -eou pipefail
+#set -eou pipefail
 
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 LV_DEV=/dev/ubuntu-vg/ubuntu-lv
