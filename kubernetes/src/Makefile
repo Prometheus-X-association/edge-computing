@@ -70,7 +70,7 @@ status:
 	@echo
 	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || true
 	@echo
-	@kubectl get all,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
+	@kubectl get all,endpointslices,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
 	@echo
 	@kubectl events || true
 	@echo
@@ -103,11 +103,11 @@ run-pdc: run-catalog
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
 	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -qS pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
+								 	   wget -qS http://pdc.ptx-edge.svc.cluster.local:30003/ >/dev/null" || true
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
-	@echo ">>> PDC is exposed on http://${NODE_IP}:30030/"
-	@curl -Ssf "http://${NODE_IP}:30030/" | grep "href"
+	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
+	@curl -Ssf "http://${NODE_IP}:30003/" | grep "href"
 
 run-api:
 	kubectl apply -f assets/ptx-rest-api-setup.yaml

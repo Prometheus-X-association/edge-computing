@@ -16,7 +16,7 @@ data:
     JWT_REFRESH_TOKEN_EXPIRATION=1d
   config.json: |
     {
-      "endpoint": "http://pdc.ptx-edge.svc.cluster.local:3000/",
+      "endpoint": "http://pdc.ptx-edge.svc.cluster.local:30003/",
       "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
       "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
       "contractUri": "http://contract.ptx-sandbox.svc.cluster.local:3001/",
@@ -34,6 +34,7 @@ metadata:
   labels:
     app: pdc
 spec:
+  serviceAccountName: builder
   initContainers:
     - name: pdc-mongodb
       image: registry.k3d.local:5000/ptx/mongodb:8.0.5-slim
@@ -49,6 +50,8 @@ spec:
       ports:
         - name: pdc-port
           containerPort: 3000
+          protocol: TCP
+          hostPort: 30003
       volumeMounts:
         - name: pdc-env
           mountPath: "/usr/src/app/.env.production"
@@ -72,17 +75,72 @@ spec:
         items:
           - key: config.json
             path: config.production.json
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: pdc
+#  namespace: ptx-edge
+#spec:
+#  selector:
+#    app: pdc
+#  type: NodePort
+#  ports:
+#    - name: pdc-port
+#      port: 3000
+#      nodePort: 30003
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: service-creator
+  namespace: ptx-edge
+rules:
+  - apiGroups: [ "", "discovery.k8s.io" ]
+    resources: [ "services", "endpointslices" ]
+    verbs: [ "create" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: service-creator
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: builder
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: service-creator
+--- ####################################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
   name: pdc
   namespace: ptx-edge
 spec:
-  selector:
-    app: pdc
-  type: NodePort
+  type: ClusterIP
+  clusterIP: None # Headless service without virtual IP, proxying, and port translation
   ports:
     - name: pdc-port
-      port: 3000
-      nodePort: 30030
+      protocol: TCP
+      port: 30003   # Must match the target port in case of headless
+      targetPort: 30003
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: pdc
+  labels:
+    kubernetes.io/service-name: pdc  # Set its value to match the name of the Service
+    endpointslice.kubernetes.io/managed-by: controller.ptx-edge.org
+addressType: IPv4
+ports:
+  - name: pdc-port # should match with the name of the service port defined above
+    appProtocol: http
+    protocol: TCP
+    port: 30003
+endpoints:
+  - addresses:
+      - "172.21.0.2"
