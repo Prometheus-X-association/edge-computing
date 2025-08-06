@@ -17,7 +17,7 @@ import pprint
 from app.util.helper import get_resource_path
 from app.util.k8s import create_image_pull_secret
 from app.util.skopeo import copy_image_to_registry, inspect_image
-from app.util.types import DockerRegistryAuth
+from app.util.parsers import DockerRegistryAuth
 
 log = logging.getLogger(__package__)
 

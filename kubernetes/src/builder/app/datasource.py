@@ -21,7 +21,7 @@ from httpx_retries import RetryTransport, Retry
 
 from app.connector import login_to_connector, perform_data_exchange
 from app.util.helper import local_copy
-from app.util.types import DataSourceAuth
+from app.util.parsers import DataSourceAuth
 
 log = logging.getLogger(__package__)
 
