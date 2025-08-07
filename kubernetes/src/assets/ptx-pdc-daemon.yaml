@@ -29,7 +29,7 @@ immutable: true
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: pdc-init
+  name: pdc
   labels:
     app: pdc
 automountServiceAccountToken: false
@@ -51,12 +51,36 @@ metadata:
   namespace: ptx-edge
 subjects:
   - kind: ServiceAccount
-    name: pdc-init
+    name: pdc
     namespace: ptx-edge
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: service-creator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-lister
+  namespace: ptx-edge
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "list" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-lister
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: pdc
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: node-lister
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -76,13 +100,13 @@ spec:
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
-      serviceAccountName: pdc-init
+      serviceAccountName: pdc
       initContainers:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          #command: [ "python3", "-m", "app", "-v"]
-          command: [ "/bin/sh", "-c", "echo 'init'" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v" ]
+          #command: [ "/bin/sh", "-c", "sleep infinity" ]
           volumeMounts:
             - name: src
               mountPath: /usr/src/builder/app
@@ -90,7 +114,7 @@ spec:
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
-            - name: PDC_NODE_IP
+            - name: NODE_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
@@ -155,34 +179,34 @@ spec:
                         apiVersion: v1
                         fieldPath: metadata.namespace
                       path: namespace
---- ####################################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: pdc
-  namespace: ptx-edge
-spec:
-  type: ClusterIP
-  clusterIP: None # Headless service without virtual IP, proxying, and port translation
-  ports:
-    - name: pdc-port
-      protocol: TCP
-      port: 30003   # Must match the target port in case of headless
-      targetPort: 30003
----
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
-metadata:
-  name: pdc
-  labels:
-    kubernetes.io/service-name: pdc  # Set its value to match the name of the Service
-    endpointslice.kubernetes.io/managed-by: controller.ptx-edge.org
-addressType: IPv4
-ports:
-  - name: pdc-port # should match with the name of the service port defined above
-    appProtocol: http
-    protocol: TCP
-    port: 30003
-endpoints:
-  - addresses:
-      - "172.21.0.2"
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: pdc
+#  namespace: ptx-edge
+#spec:
+#  type: ClusterIP
+#  clusterIP: None # Headless service without virtual IP, proxying, and port translation
+#  ports:
+#    - name: pdc-port
+#      protocol: TCP
+#      port: 30003   # Must match the target port in case of headless
+#      targetPort: 30003
+#---
+#apiVersion: discovery.k8s.io/v1
+#kind: EndpointSlice
+#metadata:
+#  name: pdc
+#  labels:
+#    kubernetes.io/service-name: pdc  # Set its value to match the name of the Service
+#    endpointslice.kubernetes.io/managed-by: controller.ptx-edge.org
+#addressType: IPv4
+#ports:
+#  - name: pdc-port # should match with the name of the service port defined above
+#    appProtocol: http
+#    protocol: TCP
+#    port: 30003
+#endpoints:
+#  - addresses:
+#      - "172.21.0.2"

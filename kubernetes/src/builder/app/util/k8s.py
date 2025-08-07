@@ -47,7 +47,7 @@ def check_kube_api_cfg():
     print("  Check automount serviceaccount config  ".center(60, "="))
     try:
         config.load_incluster_config()
-        print(client.VersionApi().get_code())
+        print("Received response:\n", client.VersionApi().get_code())
     except ConfigException as e:
         print(f"Error: {e}")
 
@@ -57,7 +57,7 @@ def check_projected_kube_api_cfg(projected_dir: str = '/var/run/secrets/projecte
     try:
         _load_incluster_projected_config(token=projected_dir + '/token',
                                          cert=projected_dir + '/ca.crt')
-        print(client.VersionApi().get_code())
+        print("Received response:\n", client.VersionApi().get_code())
     except ConfigException as e:
         print(f"Error: {e}")
 
@@ -70,7 +70,8 @@ PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
 
 def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "", namespace: str = None,
-                             app: str = None, projected: bool = True) -> client.V1Secret | None:
+                             app: str = None, projected: bool = True,
+                             raise_err: bool = False) -> client.V1Secret | None:
     """
         E.g.:
     >>> create_image_pull_secret(name="test-pull-sec", user='test-user', passwd='pass1234',
@@ -104,18 +105,20 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
     try:
         return client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret_body)
     except OpenApiException as e:
-        log.error(f"Error: {e}")
+        log.error(f"Error:\n{e}")
 
 
-def create_standalone_service(name: str, port: int, target_port: int, namespace: str = None, app: str = None,
-                              headless: bool = False, projected: bool = True) -> client.V1Service | None:
+def create_service(name: str, port: int, target_port: int, namespace: str = None, selector: dict[str, str] = None,
+                   stype: str = "ClusterIP", app: str = None, projected: bool = True) -> client.V1Service | None:
     """
 
     :param name:
     :param port:
     :param target_port:
     :param namespace:
+    :param selector:
     :param app:
+    :param stype:
     :param projected:
     :return:
     """
@@ -127,7 +130,8 @@ def create_standalone_service(name: str, port: int, target_port: int, namespace:
         config.load_incluster_config()
     service_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
                                                                  labels={"app": app} if app else None),
-                                    spec=client.V1ServiceSpec(type="None" if headless else "ClusterIP",
+                                    spec=client.V1ServiceSpec(type=stype,
+                                                              selector=selector,
                                                               ports=[client.V1ServicePort(name="pdc-port",
                                                                                           protocol="TCP",
                                                                                           port=port,
@@ -138,15 +142,15 @@ def create_standalone_service(name: str, port: int, target_port: int, namespace:
     try:
         return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=service_body)
     except OpenApiException as e:
-        log.error(f"Error: {e}")
+        log.error(f"Error:\n{e}")
 
 
-def create_endpointslice(service_name: str, node_ip: str, target_port: int, namespace: str = None,
+def create_endpointslice(service_name: str, address: str, target_port: int, namespace: str = None,
                          app: str = None, projected: bool = True) -> client.V1EndpointSlice | None:
     """
 
     :param service_name:
-    :param node_ip:
+    :param address:
     :param target_port:
     :param zone:
     :param namespace:
@@ -171,14 +175,14 @@ def create_endpointslice(service_name: str, node_ip: str, target_port: int, name
                                                                             app_protocol="http",
                                                                             protocol="TCP",
                                                                             port=target_port)],
-                                                endpoints=[client.V1Endpoint(addresses=[node_ip])])
+                                                endpoints=[client.V1Endpoint(addresses=[address])])
     log.debug(f"Created endpointslice body:\n{yaml.dump(deep_filter(endpointslice_body.to_dict()))}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
         return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=endpointslice_body)
     except OpenApiException as e:
-        log.error(f"Error: {e}")
+        log.error(f"Error:\n{e}")
 
 
 if __name__ == '__main__':
