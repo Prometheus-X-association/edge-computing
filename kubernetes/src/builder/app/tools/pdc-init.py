@@ -20,7 +20,7 @@ import sys
 
 import yaml
 from kubernetes import client
-from kubernetes.client import OpenApiException
+from kubernetes.client import OpenApiException, ApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
 
@@ -87,7 +87,17 @@ def _collect_privacy_zone_labels(node_ip: str) -> list:
     return labels
 
 
-def _create_headless_service(name: str, port: int, namespace: str = None, app: str = None) -> client.V1Service:
+def _delete_service(name: str, namespace: str) -> client.V1Service:
+    log.debug(f">>> Delete service[{name}]...")
+    return client.CoreV1Api().delete_namespaced_service(name=name, namespace=namespace)
+
+
+def _delete_endpointslice(name: str, namespace: str, ) -> client.V1Status:
+    log.debug(f">>> Delete endpointslice[{name}]...")
+    return client.DiscoveryV1Api().delete_namespaced_endpoint_slice(name=name, namespace=namespace)
+
+
+def _create_headless_service(name: str, port: int, namespace: str, app: str = None) -> client.V1Service:
     """
 
     :param name:
@@ -96,6 +106,7 @@ def _create_headless_service(name: str, port: int, namespace: str = None, app: s
     :param app:
     :return:
     """
+    log.debug(f">>> Creating headless service with name: {name}")
     srv_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
                                                              labels={"app": app} if app else None),
                                 spec=client.V1ServiceSpec(type="ClusterIP",
@@ -118,6 +129,7 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     :param app:
     :return:
     """
+    log.debug(f">>> Creating endpointslice for service: {service_name}...")
     labels = {K8S_ENDPOINTSLICE_SRV_NAME: service_name,
               K8S_ENDPOINTSLICE_MGR: "controller.ptx-edge.org"}
     if app:
@@ -135,16 +147,31 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
 
 ########################################################################################################################
 
-def create_pdc_services(port: int, ip: str, namespace: str, app: str = None):
+def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, force: bool = False, **kwargs):
     _load_config()
     log.info("Creating service(s) for PDC...")
     try:
+        zones = _collect_privacy_zone_labels(node_ip=ip)
+        if len(zones) == 0:
+            log.warning("No privacy zone label detected!")
+            if force:
+                log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
+                zones.append(None)
         for zone in _collect_privacy_zone_labels(node_ip=ip):
-            srv_name = f"pdc-{zone.split('/')[-1]}".lower()
-            log.debug(f">>> Creating headless service with name: {srv_name}")
-            srv = _create_headless_service(name=srv_name, port=port, namespace=namespace, app=app)
+            srv_name = f"{DEF_APP}-{zone.split('/')[-1]}".lower() if zone else DEF_APP
+            try:
+                srv = _create_headless_service(name=srv_name, port=port, namespace=namespace, app=app)
+            except ApiException as e:
+                if e.reason == 'Conflict' and force:
+                    log.warning(f"Service[{srv_name}] already exists. Recreate resources...")
+                    del_eps = _delete_endpointslice(name=srv_name, namespace=namespace)
+                    log.info(f"Endpointslice[{srv_name}] deleted with status: {del_eps.status}")
+                    del_srv = _delete_service(name=srv_name, namespace=namespace)
+                    log.info(f"Service[{srv_name}] deleted with status: {del_srv.status}")
+                    srv = _create_headless_service(name=srv_name, port=port, namespace=namespace, app=app)
+                else:
+                    raise
             log.debug(f"Created service:\n{yaml.dump(deep_filter(srv.to_dict()))}")
-            log.debug(f">>> Creating endpointslice for service: {srv_name}...")
             eps = _create_nodeport_endpointslice(service_name=srv_name, address=ip, target_port=port,
                                                  namespace=namespace, app=app)
             log.debug(f"Created endpointslice:\n{yaml.dump(deep_filter(eps.to_dict()))}")
@@ -159,13 +186,16 @@ def main():
     parser.add_argument("-i", "--ip", type=str, help="Node IP address")
     parser.add_argument("-n", "--namespace", type=str, help="Namespace name")
     parser.add_argument("-a", "--app", type=str, help="Application name")
+    parser.add_argument("-f", "--force", action="store_true",
+                        help="Recreate resource even if it already exists")
     parser.add_argument("-v", "--verbose", action="store_true", help="Make logging verbose")
-    args = vars(parser.parse_args())
-    logging.basicConfig(level=logging.DEBUG if args['verbose'] else logging.INFO,
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logging.getLogger('kubernetes.client.rest').setLevel(logging.INFO)
     log.info(" Service Creator START ".center(80, '#'))
     log.debug(f"Parsed CLI args: {args}")
-    CONFIG.update((param, args[param]) for param in CONFIG.keys() if args[param] is not None)
+    CONFIG.update(kv for kv in vars(args).items() if kv[1] is not None)
     if not all(map(lambda param: bool(CONFIG[param]), ('ip', 'port', 'namespace'))):
         log.error(f"Missing one of required parameters: {REQUIRED_FIELDS} from {CONFIG}")
         sys.exit(os.EX_CONFIG)

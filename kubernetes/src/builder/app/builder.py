@@ -117,7 +117,7 @@ def main():
             log.exception(e)
         sys.exit(os.EX_SOFTWARE)
     log.info(" builder ended ".center(60, '='))
-    sys.exit(os.EX_DATAERR if failed else os.EX_OK)
+    sys.exit(os.EX_SOFTWARE if failed else os.EX_OK)
 
 
 if __name__ == '__main__':

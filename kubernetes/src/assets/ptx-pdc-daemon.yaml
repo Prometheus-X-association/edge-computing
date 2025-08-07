@@ -42,7 +42,7 @@ metadata:
 rules:
   - apiGroups: [ "", "discovery.k8s.io" ]
     resources: [ "services", "endpointslices" ]
-    verbs: [ "create" ]
+    verbs: [ "create", "delete" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -105,8 +105,8 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v" ]
-          #command: [ "/bin/sh", "-c", "sleep infinity" ]
+#          command: [ "python3", "-m", "app.tools.pdc-init", "-v" ]
+          command: [ "/bin/sh", "-c", "sleep infinity" ]
           volumeMounts:
             - name: src
               mountPath: /usr/src/builder/app
