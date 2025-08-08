@@ -37,7 +37,8 @@ def _load_incluster_projected_config(token: str, cert: str, client_configuration
     :param try_refresh_token:
     :return:
     """
-    return InClusterConfigLoader(token_filename=token, cert_filename=cert,
+    return InClusterConfigLoader(token_filename=token,
+                                 cert_filename=cert,
                                  try_refresh_token=try_refresh_token).load_and_set(client_configuration)
 
 
@@ -70,8 +71,7 @@ PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
 
 def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "", namespace: str = None,
-                             app: str = None, projected: bool = True,
-                             raise_err: bool = False) -> client.V1Secret | None:
+                             app: str = None, projected: bool = True, timeout: int = None) -> client.V1Secret | None:
     """
         E.g.:
     >>> create_image_pull_secret(name="test-pull-sec", user='test-user', passwd='pass1234',
@@ -84,6 +84,7 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
     :param namespace:
     :param app:
     :param projected:
+    :param timeout:
     :return:
     """
     log.info("Creating image pull secret...")
@@ -93,7 +94,7 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
     else:
         config.load_incluster_config()
     b64_auth = base64.b64encode(f"{user}:{passwd}".encode("utf-8")).decode("utf-8")
-    docker_cfg = dict(auths=dict(registry=dict(username=user, password=passwd, auth=b64_auth, email=email)))
+    docker_cfg = {'auths': {'registry': {'username': user, 'password': passwd, 'auth': b64_auth, 'email': email}}}
     b64_docker_cfg = base64.b64encode(json.dumps(docker_cfg).encode("utf-8")).decode("utf-8")
     secret_body = client.V1Secret(metadata=client.V1ObjectMeta(name=name,
                                                                labels={"app": app} if app else None),
@@ -103,13 +104,16 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
-        return client.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret_body)
+        return client.CoreV1Api().create_namespaced_secret(namespace=namespace,
+                                                           body=secret_body,
+                                                           _request_timeout=timeout)
     except OpenApiException as e:
         log.error(f"Error:\n{e}")
 
 
 def create_service(name: str, port: int, target_port: int, namespace: str = None, selector: dict[str, str] = None,
-                   stype: str = "ClusterIP", app: str = None, projected: bool = True) -> client.V1Service | None:
+                   stype: str = "ClusterIP", app: str = None, projected: bool = True,
+                   timeout: int = None) -> client.V1Service | None:
     """
 
     :param name:
@@ -120,6 +124,7 @@ def create_service(name: str, port: int, target_port: int, namespace: str = None
     :param app:
     :param stype:
     :param projected:
+    :param timeout:
     :return:
     """
     log.info("Creating service...")
@@ -140,13 +145,15 @@ def create_service(name: str, port: int, target_port: int, namespace: str = None
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
-        return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=service_body)
+        return client.CoreV1Api().create_namespaced_service(namespace=namespace,
+                                                            body=service_body,
+                                                            _request_timeout=timeout)
     except OpenApiException as e:
         log.error(f"Error:\n{e}")
 
 
 def create_endpointslice(service_name: str, address: str, target_port: int, namespace: str = None,
-                         app: str = None, projected: bool = True) -> client.V1EndpointSlice | None:
+                         app: str = None, projected: bool = True, timeout: int = None) -> client.V1EndpointSlice | None:
     """
 
     :param service_name:
@@ -156,6 +163,7 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
     :param namespace:
     :param app:
     :param projected:
+    :param timeout:
     :return:
     """
     log.info("Creating endpointslice...")
@@ -180,7 +188,9 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
-        return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=endpointslice_body)
+        return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace,
+                                                                        body=endpointslice_body,
+                                                                        _request_timeout=timeout)
     except OpenApiException as e:
         log.error(f"Error:\n{e}")
 
