@@ -19,8 +19,9 @@ import httpx
 import httpx_auth
 from httpx_retries import RetryTransport, Retry
 
-from app.connector import login_to_connector, perform_data_exchange
-from app.util.helper import local_copy
+from app.ptx.connector import perform_pdc_data_exchange
+from app.util.config import CONFIG
+from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth
 
 log = logging.getLogger(__package__)
@@ -90,18 +91,12 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
     :return:
     """
     log.info(f"Acquiring private data based on contract[{contract_id}]...")
-    tokens = login_to_connector(timeout=timeout)
-    bearer = tokens['token']
-    log.debug(f"Assigned token: {bearer}")
-    log.info(f"Login to connector was successful!")
-    ##########################################################################################
-    log.info("Initiate data exchange...")
-    data = perform_data_exchange(contract_id=contract_id, token=bearer, timeout=timeout)
+    data = perform_pdc_data_exchange(contract_id=contract_id, timeout=timeout)
     if data is None:
-        log.error("Data exchange failed!")
+        log.error("Private data exchange failed!")
         return None
     else:
-        log.info(f"Data exchange was successful!")
+        log.info(f"Private data exchange was successful!")
     ##########################################################################################
     data_type, data_content = data['type'], data['content']
     log.info(f"Process received data as type: {data_type}")
@@ -120,6 +115,34 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
         case other:
             raise Exception(f"Unsupported data type: {other}")
     return dst_path
+
+
+########################################################################################################################
+
+def get_data_resources() -> pathlib.Path:
+    """
+
+    :return:
+    """
+    log.info("Obtaining input data...")
+    timeout = CONFIG.get('connection.timeout', 30)
+    data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
+    log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
+    match get_resource_scheme(data_src):
+        case 'file' | 'local':
+            data_path = collect_data_from_file(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
+        case 'http' | 'https':
+            auth = CONFIG.get('data.auth')
+            data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
+                                              auth=auth, timeout=timeout)
+        case 'ptx':
+            data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
+                                              dst=get_resource_path(data_dst),
+                                              timeout=timeout)
+        case other:
+            log.error(f"Unknown data source protocol: {other}")
+            data_path = None
+    return data_path
 
 
 if __name__ == '__main__':

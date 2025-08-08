@@ -16,6 +16,7 @@ import pprint
 import sys
 
 import httpx
+from httpx import HTTPStatusError
 
 from app.util.config import CONFIG
 from app.util.webhook import WebHooKManager
@@ -53,7 +54,7 @@ def login_to_connector(timeout: int = None) -> dict:
     return resp.json().get('content')
 
 
-def perform_data_exchange(contract_id: str, token: str, timeout: int = None):
+def make_data_exchange(contract_id: str, token: str, timeout: int = None) -> dict | None:
     """
 
     :param contract_id:
@@ -74,7 +75,7 @@ def perform_data_exchange(contract_id: str, token: str, timeout: int = None):
            'Accept': '*/*',
            'Authorization': f"Bearer {token}"}
     webhook_data = None
-    with WebHooKManager(timeout=5) as mgr:
+    with WebHooKManager(timeout=timeout) as mgr:
         url = EXCHANGE_URL.format(host=pdc_host, port=pdc_port)
         log.info(f"Sending POST request to {url}...")
         resp = httpx.post(url=url, json=body, headers=hdr, timeout=timeout)
@@ -84,9 +85,28 @@ def perform_data_exchange(contract_id: str, token: str, timeout: int = None):
         else:
             log.info("Data exchange initiated successfully!")
             log.debug(f"Response body:\n{pprint.pformat(resp.json())}")
-            log.info("Waiting for private data response...")
+            log.info("Waiting for connector response...")
             webhook_data = mgr.wait()
     if webhook_data:
-        log.info("Data received successfully!")
+        log.info("Webhook received successfully!")
         log.debug(f"Received data size: {sys.getsizeof(webhook_data)}")
     return webhook_data
+
+def perform_pdc_data_exchange(contract_id: str, timeout: int = None) -> dict | None:
+    """
+
+    :param contract_id:
+    :param timeout:
+    :return:
+    """
+    log.debug(f"Trying to authenticate to the connector...")
+    try:
+        tokens = login_to_connector(timeout=timeout)
+    except HTTPStatusError as e:
+        log.error(f"Failed to login to PDC: {e}")
+        return None
+    bearer = tokens['token']
+    log.debug(f"Assigned token: {bearer}")
+    log.info(f"Login to connector was successful!")
+    log.info("Initiate data exchange...")
+    return make_data_exchange(contract_id=contract_id, token=bearer, timeout=timeout)
