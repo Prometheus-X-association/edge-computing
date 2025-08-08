@@ -14,22 +14,11 @@
 import logging
 import pathlib
 import shutil
-import time
 import typing
 
 log = logging.getLogger(__package__)
 
 DEF_WAIT_SECONDS = 5
-
-
-def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):
-    """
-
-    :param _delay:
-    :return:
-    """
-    log.warning(f"Waiting for builder to finish[{_delay}s]...")
-    time.sleep(_delay)
 
 
 def get_resource_scheme(path: str) -> str:

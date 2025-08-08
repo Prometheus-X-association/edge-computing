@@ -85,6 +85,8 @@ def load_configuration(base: dict = None, cfg_file: pathlib.Path = None, from_en
     # Cache config as a module parameter
     global CONFIG
     CONFIG.merge(cfg)
+    # Print result
+    print_config(CONFIG)
     return CONFIG
 
 
