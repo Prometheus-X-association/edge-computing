@@ -41,6 +41,8 @@ def inspect_image(registry: str, image: str, user: str = None, passwd: str = Non
             cmd.append(f"--password={passwd}")
     if insecure:
         cmd.append('--tls-verify=false')
+    if timeout:
+        cmd.append(f"--command-timeout={timeout}")
     cmd.append(f"docker://{registry}/{image}")
     log.debug(f"Assembled command: {' '.join(cmd)}")
     try:
@@ -84,6 +86,8 @@ def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_refe
         cmd.append(f'--dest-creds={dst_auth}')  # username[:password]
     if insecure:
         cmd.append('--dest-tls-verify=false')
+    if timeout:
+        cmd.append(f"--command-timeout={timeout}")
     match src_scheme:
         case 'docker' | 'remote':
             cmd.append(f'docker://{image}')
