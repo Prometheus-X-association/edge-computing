@@ -3,21 +3,21 @@ apiVersion: k3d.io/v1alpha5
 metadata:
   name: dev
 servers: 1
-agents: 0
+agents: 1
 ports:
 #  - port: 8080:80
 #    nodeFilters:
 #      - loadbalancer
-  - port: 8888:30030
+  - port: 8888:30003
     nodeFilters:
-      - server:0
+      - agent:0
 volumes:
   - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
     nodeFilters:
-      - all
+      - agent:0
   - volume: ${PROJECT_ROOT}/rest-api:/usr/local/share/rest-api
     nodeFilters:
-      - all
+      - server:0
 registries:
   create:
     name: ${REGISTRY}
@@ -38,10 +38,10 @@ options:
     nodeLabels:
       - label: privacy-zone.dataspace.ptx.org/zone-A=true
         nodeFilters:
-          - all
+          - agent:*
       - label: privacy-zone.dataspace.ptx.org/zone-B=true
         nodeFilters:
-          - all
+          - agent:*
       - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
-          - all
+          - agent:*
