@@ -21,7 +21,7 @@ class DataSourceAuth(object):
     params: dict = None
 
     @classmethod
-    def parse(cls, cfg: str | dict) -> Self:
+    def parse(cls, cfg: str | dict | None) -> Self:
         if isinstance(cfg, str):
             cfg = cfg.split(':')
             if len(cfg) == 3:
@@ -29,7 +29,7 @@ class DataSourceAuth(object):
             elif len(cfg) == 2:
                 return cls(scheme='basic', params=dict(username=cfg[0], password=cfg[1]))
             else:
-                raise ValueError(f'Invalid datasource auth cfg: [scheme:]username:passwd! <> {cfg}')
+                raise ValueError(f'Invalid datasource auth cfg: [scheme:]<username>:<passwd>! -- {cfg}')
         elif isinstance(cfg, dict):
             return cls(scheme=cfg['scheme'], params={k: v for k, v in cfg.items() if k != 'scheme'})
         elif cfg is None:
@@ -40,21 +40,24 @@ class DataSourceAuth(object):
 
 @dataclass(frozen=True)
 class DockerRegistryAuth(object):
-    username: str = None
-    password: str = None
+    on_behalf: str = None
+    secret: str = None
 
     @classmethod
     def parse(cls, cfg: str | dict) -> Self:
         if isinstance(cfg, str):
             cfg = cfg.split(':')
             if len(cfg) == 2:
-                return cls(username=cfg[0], password=cfg[1])
+                return cls(on_behalf=cfg[0], secret=cfg[1])
             else:
-                raise ValueError(f'Invalid registry auth cfg: username:passwd! <> {cfg}')
+                raise ValueError(f'Invalid registry auth cfg: <on_behalf>:<secret>! -- {cfg}')
         elif isinstance(cfg, dict):
-            return cls(username=cfg['username'], password=cfg['password'])
+            return cls(on_behalf=cfg['on_behalf'], secret=cfg['secret'])
         else:
             raise ValueError(f'Invalid registry auth username/password: {cfg}!')
 
     def to_str(self) -> str:
-        return f"{self.username}:{self.password}"
+        return f"{self.on_behalf}:{self.secret}"
+
+    def to_tuple(self) -> tuple:
+        return self.on_behalf, self.secret

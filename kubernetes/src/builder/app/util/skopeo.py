@@ -21,28 +21,32 @@ import subprocess
 log = logging.getLogger(__package__)
 
 
-def inspect_image(registry: str, image: str, user: str = None, passwd: str = None, insecure: bool = False,
-                  timeout: int = None) -> dict | None:
+def inspect_image(registry: str, image: str, on_behalf: str = None, secret: str = None, insecure: bool = False,
+                  retry: bool = None, timeout: int = None) -> dict | None:
     """
 
     :param registry:
     :param image:
-    :param user:
-    :param passwd:
+    :param on_behalf:
+    :param secret:
     :param insecure:
+    :param retry:
     :param timeout:
     :return:
     """
     log.info(f"Validating {image} in {registry}...")
-    cmd = ['skopeo', 'inspect']
-    if user:
-        cmd.append(f"--username={user}")
-        if passwd:
-            cmd.append(f"--password={passwd}")
-    if insecure:
-        cmd.append('--tls-verify=false')
+    cmd = ['skopeo']
     if timeout:
-        cmd.append(f"--command-timeout={timeout}")
+        cmd.append(f'--command-timeout={timeout}s')
+    cmd.append('inspect')
+    if on_behalf:
+        if on_behalf == 'bearer':
+            cmd.append(f"--registry-token={secret}")
+        else:
+            cmd.extend((f"--username={on_behalf}", f"--password={secret}"))
+    cmd.append(f'--tls-verify={str(not insecure).lower()}')
+    if retry:
+        cmd.append(f"--retry-times={retry}")
     cmd.append(f"docker://{registry}/{image}")
     log.debug(f"Assembled command: {' '.join(cmd)}")
     try:
@@ -62,8 +66,9 @@ def inspect_image(registry: str, image: str, user: str = None, passwd: str = Non
 
 
 def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_reference: str = None,
-                           src_auth: str = None, dst_auth: str = None, insecure: bool = False,
-                           timeout: int = None) -> subprocess.CompletedProcess | None:
+                           src_auth: tuple[str, str] = None, src_insecure: bool = False,
+                           dst_auth: tuple[str, str] = None, dst_insecure: bool = False,
+                           retry: int = None, timeout: int = None) -> subprocess.CompletedProcess | None:
     """
 
     :param src_scheme:
@@ -71,23 +76,34 @@ def copy_image_to_registry(src_scheme: str, image: str, registry: str, with_refe
     :param registry:
     :param with_reference:
     :param src_auth:
+    :param src_insecure:
     :param dst_auth:
-    :param insecure:
+    :param dst_insecure:
+    :param retry:
     :param timeout:
     :return:
     """
     log.info(f"Copying {image} to {registry}...")
-    cmd = ['skopeo', 'copy']
+    cmd = ['skopeo']
+    if timeout:
+        cmd.append(f"--command-timeout={timeout}")
+    cmd.append('copy')
     if logging.getLogger().level < logging.INFO:
         cmd.append('--debug')
     if src_auth:
-        cmd.append(f'--src-creds={src_auth}')  # username[:password]
+        if src_auth[0] == 'bearer':
+            cmd.append(f"--src-registry-token={src_auth[1]}")
+        else:
+            cmd.extend((f"--src-username={src_auth[0]}", f"--src-password={src_auth[1]}"))  # username[:password]
+    cmd.append(f'--src-tls-verify={str(not src_insecure).lower()}')
     if dst_auth:
-        cmd.append(f'--dest-creds={dst_auth}')  # username[:password]
-    if insecure:
-        cmd.append('--dest-tls-verify=false')
-    if timeout:
-        cmd.append(f"--command-timeout={timeout}")
+        if dst_auth[0] == 'bearer':
+            cmd.append(f"--dst-registry-token={dst_auth[1]}")
+        else:
+            cmd.extend((f"--dst-username={dst_auth[0]}", f"--dst-password={dst_auth[1]}"))  # username[:password]
+    cmd.append(f'--dst-tls-verify={str(not dst_insecure).lower()}')
+    if retry:
+        cmd.append(f"--retry-times={retry}")
     match src_scheme:
         case 'docker' | 'remote':
             cmd.append(f'docker://{image}')
@@ -116,5 +132,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     print(copy_image_to_registry(src_scheme='docker', image='gcr.io/google-containers/pause:latest',
                                  registry='registry.k3d.local:5000', with_reference='my-pause:latest',
-                                 insecure=True, timeout=10))
+                                 dst_insecure=True, timeout=10))
     print(inspect_image(registry='gcr.io/google-containers', image='pause:latest', insecure=True, timeout=10))

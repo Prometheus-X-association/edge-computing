@@ -6,6 +6,7 @@ prefix = "BUILD_"
 
 [connection]
 timeout = 30
+retry = 3
 
 [data]
 dst = "/var/cache/data/"
