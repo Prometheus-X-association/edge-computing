@@ -102,7 +102,7 @@ spec:
         - name: data-dir
           mountPath: /var/cache/data
           readOnly: false
-        - name: kube-api-token
+        - name: kube-api-client-cfg
           mountPath: /var/run/secrets/projected
           readOnly: true
       ports:
@@ -152,7 +152,7 @@ spec:
     - name: worker-dir
       emptyDir:
         sizeLimit: 100Mi
-    - name: kube-api-token
+    - name: kube-api-client-cfg
       projected:
         defaultMode: 420
         sources:

@@ -16,7 +16,7 @@ data:
     JWT_REFRESH_TOKEN_EXPIRATION=1d
   config.json: |
     {
-      "endpoint": "http://pdc.ptx-edge.svc.cluster.local:30003/",
+      "endpoint": "http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/",
       "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
       "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
       "contractUri": "http://contract.ptx-sandbox.svc.cluster.local:3001/",
@@ -110,7 +110,7 @@ spec:
           volumeMounts:
             - name: src
               mountPath: /usr/src/builder/app
-            - name: kube-api-token
+            - name: kube-api-client-cfg
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
@@ -161,7 +161,7 @@ spec:
           hostPath:
             path: /usr/local/share/builder/app
             type: Directory
-        - name: kube-api-token
+        - name: kube-api-client-cfg
           projected:
             defaultMode: 420
             sources:
@@ -209,4 +209,4 @@ spec:
 #    port: 30003
 #endpoints:
 #  - addresses:
-#      - "172.21.0.2"
+#      - "172.21.0.3"

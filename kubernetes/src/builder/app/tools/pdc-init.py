@@ -148,6 +148,16 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
 ########################################################################################################################
 
 def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, force: bool = False, **kwargs):
+    """
+
+    :param port:
+    :param ip:
+    :param namespace:
+    :param app:
+    :param force:
+    :param kwargs:
+    :return:
+    """
     _load_config()
     log.info("Creating service(s) for PDC...")
     try:
@@ -157,6 +167,13 @@ def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, for
             if force:
                 log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
                 zones.append(None)
+        elif len(zones) > 1:
+            log.warning(f"Multiple privacy zone label detected for one node[{ip}]!")
+            if force:
+                log.info("Forcing to create PDC service for each privacy zone...")
+            else:
+                log.error("Skip creating PDC service...")
+                zones.clear()
         for zone in _collect_privacy_zone_labels(node_ip=ip):
             srv_name = f"{DEF_APP}-{zone.split('/')[-1]}".lower() if zone else DEF_APP
             try:
