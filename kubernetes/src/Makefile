@@ -90,7 +90,7 @@ run-catalog:
 	@echo ">>> Catalog is exposed as 'catalog.ptx-sandbox.svc.cluster.local'"
 	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
-								wget -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
+								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
 
 run-pdc-pod: run-catalog
 	kubectl apply -f assets/ptx-pdc-pod.yaml
@@ -103,7 +103,7 @@ run-pdc-pod: run-catalog
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
 	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
+								 	   wget -T3 -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
@@ -121,8 +121,9 @@ run-pdc-daemon: run-catalog
 	@echo
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
 	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
-								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -qS http://pdc.ptx-edge.svc.cluster.local:30003/ >/dev/null" || true
+								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
+									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
+								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/ >/dev/null" || true
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"

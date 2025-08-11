@@ -153,7 +153,7 @@ run-pdc:
 	@echo
 	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
 	kubectl run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
-								sh -c "wget -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
+								sh -c "wget -T3 -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
 
 test-pdc: | build setup run-pdc
 
@@ -220,7 +220,7 @@ run-pdc-daemon:
 	for svc in $$(kubectl get services -o jsonpath='{.items[*].metadata.name}'); do \
 		echo "http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/"; \
 		kubectl run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
-					sh -c "wget -qS http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"; \
+					sh -c "wget -T3 -qS http://$${svc}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"; \
 	done
 
 run-ptx-sandbox:
@@ -258,7 +258,7 @@ run-pdc-sandboxed: run-ptx-sandbox
 	@echo
 	@echo ">>> PDC service is configured with DNS name '${PDC}.${PTX}.svc.cluster.local'"
 	kubectl run --rm -ti dns-tester --restart=Never --image ${PDC_IMG} --command -- \
-								sh -c "wget -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
+								sh -c "wget -T3 -qS http://${PDC}.${PTX}.svc.cluster.local:${PDC_PORT}/ >/dev/null"
 
 ########################################################################################################################
 
