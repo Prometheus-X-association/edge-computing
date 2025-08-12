@@ -28,9 +28,9 @@ SAMPLES := convnet gbc
 EXTRA := "busybox:latest"
 
 build:
-	for mod in ${COMPONENTS}; do ${MAKE} -C "../src/$${mod}/" build; done
-	${MAKE} -C ../src/ptx/ build
-	${MAKE} -C ../src/samples/ build-all
+	for mod in ${COMPONENTS}; do ${MAKE} -C $${mod} build; done
+	${MAKE} -C ptx build
+	${MAKE} -C samples build-all
 
 rebuild: | purge build
 
