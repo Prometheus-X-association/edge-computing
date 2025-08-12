@@ -11,10 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export REGISTRY = "registry.k3d.local"
-export PROJECT_ROOT = ${PWD}
+export PROJECT_ROOT=${PWD}
+export REGISTRY=registry.k3d.local
+export REGISTRY_PORT=5000
+export REGISTRY_USER=demo
+export REGISTRY_SECRET=demo
 
-COMPONENTS := builder rest-api
+K3D_REG := registry.k3d.localhost:5000
+CREDS := ${REGISTRY_USER}:${REGISTRY_SECRET}
+CA_DIR := ${PROJECT_ROOT}/registry/.certs/ca
+
+COMPONENTS := builder rest-api registry
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
 SAMPLES := convnet gbc
@@ -35,30 +42,30 @@ setup:
 		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
-		skopeo copy --dest-tls-verify=false "docker-daemon:$${IMG}" "docker://localhost:5000/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
 	done
 	for img in ${PTX_CORE}; do \
 		IMG=$$(docker image ls -f reference="ptx-sandbox/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-tls-verify=false "docker-daemon:$${IMG}" "docker://localhost:5000/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
 	done
 	for img in ${CONNECTOR}; do \
 		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-tls-verify=false "docker-daemon:$${IMG}" "docker://localhost:5000/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
 	done
 	for img in ${SAMPLES}; do \
 		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-tls-verify=false "docker-daemon:$${IMG}" "docker://localhost:5000/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
 	done
 	for img in ${EXTRA}; do \
     	# docker pull $${img}; \
 		# IMG=$$(docker image ls -f reference="$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
-		skopeo copy --dest-tls-verify=false "docker://$${img}" "docker://localhost:5000/$${img}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker://$${img}" "docker://${K3D_REG}/$${img}"; \
 	done
 	@echo
 	@echo ">>> Uploaded repositories:"
-	curl -Sskf -X GET http://localhost:5000/v2/_catalog | python3 -m json.tool
+	curl -Sskf --cacert ${CA_DIR}/ca.crt -u ${CREDS} -X GET https://${K3D_REG}/v2/_catalog | python3 -m json.tool
 	@#${MAKE} -C ../src/ptx/ run-catalog
 	@echo
 	@echo ">>> Configured CoreDNS entries:"
@@ -68,11 +75,11 @@ status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
 	@kubectl get nodes --ignore-not-found -o wide
 	@echo
-	@kubectl -n ptx-sandbox get all --ignore-not-found -o wide || true
+	@-kubectl -n ptx-sandbox get all --ignore-not-found -o wide
 	@echo
-	@kubectl get all,endpointslices,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide || true
+	@-kubectl get all,endpointslices,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide
 	@echo
-	@kubectl events || true
+	@-kubectl events
 	@echo
 	@pgrep -fa "^kubectl.*port-forward.*8888:8080" || true
 
@@ -88,9 +95,9 @@ run-catalog:
 	@kubectl -n ptx-sandbox get all -o wide
 	@echo
 	@echo ">>> Catalog is exposed as 'catalog.ptx-sandbox.svc.cluster.local'"
-	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
-								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health" || true
+								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health"
 
 run-pdc-pod: run-catalog
 	kubectl apply -f assets/ptx-pdc-pod.yaml
@@ -101,9 +108,9 @@ run-pdc-pod: run-catalog
 	@kubectl get all -o wide
 	@echo
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
-	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -T3 -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null" || true
+								 	   wget -T3 -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null"
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
@@ -120,10 +127,10 @@ run-pdc-daemon: run-catalog
 	@kubectl get all -o wide
 	@echo
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
-	kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
 									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
-								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/ >/dev/null" || true
+								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/ >/dev/null"
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
@@ -209,10 +216,10 @@ run-test-img:
 launch: | rebuild setup run-pdc run-builder
 
 log-pdc:
-	kubectl logs --prefix --ignore-errors -f pdc ptx-connector || true
+	-kubectl logs --prefix --ignore-errors -f pdc ptx-connector
 
 log-catalog:
-	kubectl -n ptx-sandbox logs --prefix --ignore-errors -f pods/catalog catalog-wiremock || true
+	-kubectl -n ptx-sandbox logs --prefix --ignore-errors -f pods/catalog catalog-wiremock
 
 ########################################################################################################################
 
@@ -220,12 +227,12 @@ stop:
 	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
 	kubectl delete namespace ptx-sandbox --ignore-not-found --now && kubectl create namespace ptx-sandbox
-	skopeo delete --tls-verify=false "docker://localhost:5000/myworker:latest" || true
+	-skopeo delete --cert-dir=${CA_DIR} --creds=${CREDS} "docker://${K3D_REG}/myworker:latest"
 	kubectl delete events --all
 
 clear:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
-	k3d cluster delete dev || true
+	-k3d cluster delete dev
 
 purge: clear
 	rm -rf ${PROJECT_ROOT}/.cache

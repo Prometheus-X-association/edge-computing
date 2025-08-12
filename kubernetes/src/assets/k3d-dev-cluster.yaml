@@ -5,25 +5,44 @@ metadata:
 servers: 1
 agents: 1
 ports:
-#  - port: 8080:80
-#    nodeFilters:
-#      - loadbalancer
+  #- port: 8080:80
+  #  nodeFilters:
+  #    - loadbalancer
   - port: 8888:30003
     nodeFilters:
       - agent:0
 volumes:
+  # Development purposes
   - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
     nodeFilters:
       - agent:0
+  # Development purposes
   - volume: ${PROJECT_ROOT}/rest-api:/usr/local/share/rest-api
     nodeFilters:
       - server:0
+  # Add registry CA cert
+  - volume: ${PROJECT_ROOT}/registry/.certs/ca/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
+    nodeFilters:
+      - all
 registries:
   create:
     name: ${REGISTRY}
-    hostPort: "5000"
+    image: ptx-edge/registry:1.0
+    hostPort: "${REGISTRY_PORT}"
     volumes:
       - ${PROJECT_ROOT}/.cache:/var/lib/registry   # Persist data locally
+  config: |
+    mirrors:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        endpoint:
+          - https://${REGISTRY}:${REGISTRY_PORT}
+    configs:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        auth:
+          username: ${REGISTRY_USER}
+          password: ${REGISTRY_SECRET}
+        tls:
+          ca_file: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
 options:
   kubeconfig:
     updateDefaultKubeconfig: true
@@ -39,9 +58,9 @@ options:
       - label: privacy-zone.dataspace.ptx.org/zone-A=true
         nodeFilters:
           - agent:*
-      - label: privacy-zone.dataspace.ptx.org/zone-B=true
-        nodeFilters:
-          - agent:*
+      #- label: privacy-zone.dataspace.ptx.org/zone-B=true
+      #  nodeFilters:
+      #    - agent:*
       - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
           - agent:*
