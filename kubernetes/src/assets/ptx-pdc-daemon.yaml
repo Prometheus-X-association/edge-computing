@@ -127,7 +127,7 @@ spec:
           restartPolicy: Always # Native sidecar container
       containers:
         - name: ptx-connector
-          image: registry.k3d.local:5000/ptx/connector:1.9.4-slim
+          image: registry.k3d.local:5000/ptx/connector:1.9.5-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: pdc-port

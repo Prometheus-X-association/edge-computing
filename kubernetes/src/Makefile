@@ -42,19 +42,19 @@ setup:
 		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
-		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${PTX_CORE}; do \
 		IMG=$$(docker image ls -f reference="ptx-sandbox/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${CONNECTOR}; do \
 		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${SAMPLES}; do \
 		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
-		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker-daemon:$${IMG}" "docker://${K3D_REG}/$${IMG}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${EXTRA}; do \
     	# docker pull $${img}; \
@@ -227,7 +227,7 @@ stop:
 	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
 	kubectl delete namespace ptx-sandbox --ignore-not-found --now && kubectl create namespace ptx-sandbox
-	-skopeo delete --cert-dir=${CA_DIR} --creds=${CREDS} "docker://${K3D_REG}/myworker:latest"
+	-skopeo delete --cert-dir=${CA_DIR} --creds=${CREDS} docker://${K3D_REG}/myworker:latest
 	kubectl delete events --all
 
 clear:
