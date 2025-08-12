@@ -3,9 +3,11 @@
 **/.venv
 **/.tox
 **/__pycache__
+**/*.egg-info
 **/*.zip
 **/*.bkp
 **/*.dtmp
 **/*.log
 kubernetes/test/**/*.xml
 kubernetes/src/.cache
+kubernetes/src/registry/.certs
