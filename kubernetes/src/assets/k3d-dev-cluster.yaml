@@ -15,11 +15,13 @@ volumes:
   # Development purposes
   - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
     nodeFilters:
-      - agent:0
+      - agent:*
+      - server:*
   # Development purposes
   - volume: ${PROJECT_ROOT}/rest-api:/usr/local/share/rest-api
     nodeFilters:
-      - server:0
+      - agent:*
+      - server:*
   # Add registry CA cert
   - volume: ${PROJECT_ROOT}/registry/.certs/ca/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
     nodeFilters:
