@@ -24,7 +24,7 @@ from kubernetes.config.incluster_config import InClusterConfigLoader
 
 from app.util.helper import deep_filter
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 
 def _load_incluster_projected_config(token: str, cert: str, client_configuration: client.Configuration = None,

@@ -25,7 +25,7 @@ from app.util.dummy import wait_and_exit
 from app.util.logger import set_logging_level
 from app.worker import get_worker_resources
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 
 def build() -> bool:
@@ -37,13 +37,17 @@ def build() -> bool:
     data_path = get_data_resources()
     if data_path is None:
         log.error("No data resource is collected. Abort builder...")
-        return True
+        return False
+    else:
+        log.info(f"Collected data resources: {data_path}")
     result = get_worker_resources(data_path)
     if result is None:
-        log.error("No worker resource is collected. Abort builder...")
-        return True
-    log.info("Worker environment built.")
-    return False
+        log.error("No worker configuration is collected. Abort builder...")
+        return False
+    else:
+        log.info(f"Worker is configured successfully!")
+    log.info("Worker environment has been built successfully.")
+    return True
 
 
 def main():
@@ -59,8 +63,8 @@ def main():
                         version=f"{parser.description} v{__version__}")
     args = parser.parse_args()
     set_logging_level(verbosity=args.verbose)
-    log.info(" builder START ".center(60, '='))
-    log.debug(args)
+    log.info(" builder START ".center(80, '='))
+    log.debug("Configuration arguments: %s", args)
     # Load configuration
     load_configuration(cfg_file=args.config, from_env=True)
     if args.dummy:
@@ -68,14 +72,14 @@ def main():
         return wait_and_exit()
     try:
         # Invoke building functionality
-        failed = build()
+        success = build()
     except Exception as e:
         log.error(f"Build failed unexpectedly: {e}")
         if args.verbose:
             log.exception(e)
         sys.exit(os.EX_SOFTWARE)
-    log.info(" builder END ".center(60, '='))
-    sys.exit(os.EX_SOFTWARE if failed else os.EX_OK)
+    log.info(" builder END ".center(80, '='))
+    sys.exit(os.EX_OK if success else os.EX_SOFTWARE)
 
 
 if __name__ == '__main__':

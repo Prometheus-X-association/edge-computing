@@ -21,7 +21,7 @@ from httpx import HTTPStatusError
 from app.util.config import CONFIG
 from app.util.webhook import WebHooKManager
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 LOGIN_URL = r"http://{host}:{port}/login"
 EXCHANGE_URL = r"http://{host}:{port}/consumer/exchange"

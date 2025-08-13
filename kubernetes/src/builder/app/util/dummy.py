@@ -16,7 +16,7 @@ import time
 
 from app.util.helper import DEF_WAIT_SECONDS
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 
 def wait_and_exit(_delay: int = DEF_WAIT_SECONDS):

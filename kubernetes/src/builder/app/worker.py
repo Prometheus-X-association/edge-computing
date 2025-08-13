@@ -21,9 +21,9 @@ from app.util.config import CONFIG, load_configuration
 from app.util.helper import get_resource_path, get_resource_scheme
 from app.util.k8s import create_image_pull_secret
 from app.util.parsers import DockerRegistryAuth
-from app.util.skopeo import copy_image_to_registry, inspect_image
+from app.util.skopeo import copy_image_to_registry, inspect_docker_image
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 
 def collect_worker_image_from_repo(src: str, dst: str, src_auth: dict = None, dst_auth: dict = None,
@@ -44,11 +44,15 @@ def collect_worker_image_from_repo(src: str, dst: str, src_auth: dict = None, ds
     ref = with_ref if with_ref else img
     src_auth = DockerRegistryAuth.parse(src_auth).to_tuple() if src_auth else None
     dst_auth = DockerRegistryAuth.parse(dst_auth).to_tuple() if dst_auth else None
-    ret = copy_image_to_registry(src_scheme='remote', image=src_path, registry=repo, with_reference=ref,
-                                 src_auth=src_auth, dst_auth=dst_auth, dst_insecure=True, retry=retry, timeout=timeout)
-    if ret is None or ret.returncode != 0:
+    success = copy_image_to_registry(image=src_path, registry=repo, with_reference=ref,
+                                     src_auth=src_auth, src_insecure=True,
+                                     dst_auth=dst_auth, dst_insecure=True,
+                                     retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
+    if not success:
         return None
-    image = inspect_image(registry=repo, image=src_path, insecure=True, timeout=timeout)
+    image = inspect_docker_image(image=ref, registry=repo,
+                                 on_behalf=dst_auth[0], secret=dst_auth[1], insecure=True,
+                                 retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
     log.debug(f"Created image description:\n{pprint.pformat(image)}")
     return image.get('Digest') if image else None
 
@@ -76,6 +80,7 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
 
     :param contract_id:
     :param dst:
+    :param retry:
     :param timeout:
     :return:
     """

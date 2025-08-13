@@ -16,7 +16,7 @@ import pathlib
 import shutil
 import typing
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 DEF_WAIT_SECONDS = 5
 

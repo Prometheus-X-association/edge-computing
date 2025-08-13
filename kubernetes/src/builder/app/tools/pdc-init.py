@@ -26,7 +26,7 @@ from kubernetes.config.incluster_config import InClusterConfigLoader
 
 from app.util.helper import deep_filter
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 PROJECTED_TOKEN_FILE = "/var/run/secrets/projected/token"
 PROJECTED_CERT_FILE = "/var/run/secrets/projected/ca.crt"
