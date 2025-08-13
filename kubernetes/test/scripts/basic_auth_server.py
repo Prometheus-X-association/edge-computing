@@ -93,7 +93,7 @@ if __name__ == '__main__':
                         help='bind to this address (default: %(default)s)')
     parser.add_argument('-d', '--directory', default=os.getcwd(),
                         help='serve this directory (default: current directory)')
-    parser.add_argument('-m', '--mock',
+    parser.add_argument('-m', '--mock', nargs='?', const='datetime.txt', default=None,
                         help='mock server with given filename in an empty temporary dir')
     parser.add_argument('-p', '--port', default=9000, type=int,
                         help='bind to this port (default: %(default)s)')

@@ -24,7 +24,7 @@ from app.util.config import CONFIG
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth
 
-log = logging.getLogger(__package__)
+log = logging.getLogger(__name__)
 
 
 def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
@@ -43,7 +43,8 @@ def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: int = None) -> pathlib.Path:
+def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: int = None,
+                          retry: int = 1) -> pathlib.Path | None:
     """
     Download data from url.
 
@@ -51,6 +52,7 @@ def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: 
     :param dst:
     :param auth:
     :param timeout:
+    :param retry:
     :return:
     """
     log.info(f"Downloading data from {url}...")
@@ -67,14 +69,24 @@ def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: 
             case custom:
                 auth = getattr(httpx_auth, custom)(**auth.params)
         client = httpx.Client(http2=True, follow_redirects=True, auth=auth, timeout=timeout,
-                              transport=RetryTransport(retry=Retry(total=5, backoff_factor=1)))
+                              transport=RetryTransport(retry=Retry(total=retry, backoff_factor=1)))
         log.info(f"Sending GET request to {url} with auth: {type(auth).__name__}...")
-        with client.stream("GET", src_url) as resp:
-            if resp.status_code != httpx.codes.OK:
-                log.error(f"Failed to collect data: HTTP {resp.status_code}")
-                resp.raise_for_status()
-            for chunk in resp.iter_bytes():
-                tmp.write(chunk)
+        try:
+            with client.stream("GET", src_url) as resp:
+                if resp.status_code != httpx.codes.OK:
+                    log.warning(f"Received response: HTTP {resp.status_code}")
+                    # log.debug(f"Received body: {resp.read().decode("utf-8")}")
+                    resp.raise_for_status()
+                for chunk in resp.iter_bytes():
+                    tmp.write(chunk)
+        except httpx.HTTPError as e:
+            log.error(f"Failed to collect data: {e}")
+            return None
+        except httpx.ConnectError as e:
+            log.error(f"Failed to connect to URL: {url} -- {e}")
+            return None
+        # Force small amount of data to be written into tmp file in any case
+        tmp.flush()
         data_path = pathlib.Path(tmp.name).resolve(strict=True)
         log.debug(f"Collected data bytes: {data_path.stat().st_size}")
         dst_path = local_copy(src=data_path, dst=dst, orig_name=src_url.path.rsplit("/", maxsplit=1)[-1])
@@ -126,6 +138,7 @@ def get_data_resources() -> pathlib.Path:
     """
     log.info("Obtaining input data...")
     timeout = CONFIG.get('connection.timeout', 30)
+    retry = CONFIG.get('connection.retry', 3)
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     match get_resource_scheme(data_src):
@@ -134,7 +147,7 @@ def get_data_resources() -> pathlib.Path:
         case 'http' | 'https':
             auth = CONFIG.get('data.auth')
             data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
-                                              auth=auth, timeout=timeout)
+                                              auth=auth, retry=retry, timeout=timeout)
         case 'ptx':
             data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
                                               dst=get_resource_path(data_dst),
@@ -147,4 +160,5 @@ def get_data_resources() -> pathlib.Path:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    collect_data_from_url("https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz", ".")
+    # collect_data_from_url("https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz", ".")
+    collect_data_from_url("http://localhost:9000/datetime.txt", ".", auth="basic:demo:demo")
