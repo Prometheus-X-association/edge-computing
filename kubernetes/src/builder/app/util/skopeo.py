@@ -62,7 +62,7 @@ def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '',
             cmd.extend((f"--username={on_behalf}", f"--password={secret}"))
     cmd.append(f'--tls-verify={str(not insecure).lower()}')
     if ca_dir:
-        cmd.append(f'--cert_dir={ca_dir}')
+        cmd.append(f'--cert-dir={ca_dir}')
     if retry:
         cmd.append(f"--retry-times={retry}")
     cmd.append(f"{mode}{path}{'/' if path and ref else ''}{ref}")
@@ -88,7 +88,7 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
             cmd.extend((f"--src-username={src_auth[0]}", f"--src-password={src_auth[1]}"))
     cmd.append(f'--src-tls-verify={str(not src_insecure).lower()}')
     if src_ca_dir:
-        cmd.append(f'--src-cert_dir={src_ca_dir}')
+        cmd.append(f'--src-cert-dir={src_ca_dir}')
     if dst_auth:
         if dst_auth[0] == 'bearer':
             cmd.append(f"--dest-registry-token={dst_auth[1]}")
@@ -96,7 +96,7 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
             cmd.extend((f"--dest-username={dst_auth[0]}", f"--dest-password={dst_auth[1]}"))
     cmd.append(f'--dest-tls-verify={str(not dst_insecure).lower()}')
     if dst_ca_dir:
-        cmd.append(f'--dest_cert_dir={dst_ca_dir}')
+        cmd.append(f'--dest-cert-dir={dst_ca_dir}')
     if retry:
         cmd.append(f"--retry-times={retry}")
     cmd.extend((f"{src_mode}{src_path}{'/' if src_path and src_ref else ''}{src_ref}",
@@ -106,15 +106,16 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
 
 
 def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str = None, secret: str = None,
-                         insecure: bool = False, retry: bool = None, timeout: int = None,
+                         insecure: bool = False, ca_dir: str = None, retry: bool = None, timeout: int = None,
                          verbose: bool = False) -> dict | None:
     """
 
-    :param registry:
     :param image:
+    :param registry:
     :param on_behalf:
     :param secret:
     :param insecure:
+    :param ca_dir:
     :param retry:
     :param timeout:
     :param verbose:
@@ -122,7 +123,7 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
     """
     log.info(f"Validating {image} in {registry}...")
     cmd = get_direct_skopeo_command(op="inspect", mode="docker://", path=registry, ref=image,
-                                    on_behalf=on_behalf, secret=secret, insecure=insecure,
+                                    on_behalf=on_behalf, secret=secret, insecure=insecure, ca_dir=ca_dir,
                                     retry=retry, timeout=timeout, verbose=verbose)
     ret = None
     try:
@@ -144,14 +145,15 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
 
 
 def delete_docker_image(image: str, registry: str, on_behalf: str = None, secret: str = None, insecure: bool = False,
-                        retry: bool = None, timeout: int = None, verbose: bool = False) -> bool:
+                        ca_dir: str = None, retry: bool = None, timeout: int = None, verbose: bool = False) -> bool:
     """
 
-    :param registry:
     :param image:
+    :param registry:
     :param on_behalf:
     :param secret:
     :param insecure:
+    :param ca_dir:
     :param retry:
     :param timeout:
     :param verbose:
@@ -159,7 +161,7 @@ def delete_docker_image(image: str, registry: str, on_behalf: str = None, secret
     """
     log.info(f"Deleting {image} from {registry}...")
     cmd = get_direct_skopeo_command(op="delete", mode="docker://", path=registry, ref=image,
-                                    on_behalf=on_behalf, secret=secret, insecure=insecure,
+                                    on_behalf=on_behalf, secret=secret, insecure=insecure, ca_dir=ca_dir,
                                     retry=retry, timeout=timeout, verbose=verbose)
     ret = None
     try:

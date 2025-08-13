@@ -13,3 +13,7 @@ dst = "/var/cache/data/"
 
 [worker]
 app = "worker"
+
+[registry]
+url = "registry.k3d.local:5000"
+ca_dir = "/usr/share/ca-certificates/ptx-edge"
