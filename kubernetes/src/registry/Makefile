@@ -23,12 +23,12 @@ IMG := ptx-edge/${NAME}:${VERSION}
 
 cert:
 	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs/ca && mkdir -p ${CURDIR}/.certs/auth
-	@#openssl req -x509 -newkey rsa:4096 -sha256 -keyout .certs/registry.key -out .certs/registry.cert -days 365 -noenc \
+	@#openssl req -x509 -newkey rsa:2048 -sha256 -keyout .certs/registry.key -out .certs/registry.cert -days 365 -noenc \
 	# -subj "/C=EU/ST=''/L=''/O=PTX/OU=ptx-edge/CN=registry.k3d.local"
-	openssl genrsa -out ${CURDIR}/.certs/ca.key 4096
+	openssl genrsa -out ${CURDIR}/.certs/ca.key 2048
 	openssl req -new -x509 -days 365 -key ${CURDIR}/.certs/ca.key -out ${CURDIR}/.certs/ca/ca.crt \
 			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
-	openssl req -newkey rsa:4096 -noenc -keyout ${CURDIR}/.certs/auth/server.key -out ${CURDIR}/.certs/server.csr \
+	openssl req -newkey rsa:2048 -noenc -keyout ${CURDIR}/.certs/auth/server.key -out ${CURDIR}/.certs/server.csr \
 			-subj "/C=EU/ST=''/L=''/O=ptx-edge/OU=ptx-edge/CN=*ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
 			-in ${CURDIR}/.certs/server.csr -CA ${CURDIR}/.certs/ca/ca.crt -CAkey ${CURDIR}/.certs/ca.key \

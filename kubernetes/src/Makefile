@@ -64,6 +64,8 @@ setup:
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${CREDS} "docker://$${img}" "docker://${K3D_REG}/$${img}"; \
 	done
 	@echo
+	kubectl create configmap registry-root-ca.crt --from-file=ca.crt=registry/.certs/ca/ca.crt
+	@echo
 	@echo ">>> Uploaded repositories:"
 	curl -Sskf --cacert ${CA_DIR}/ca.crt -u ${CREDS} -X GET https://${K3D_REG}/v2/_catalog | python3 -m json.tool
 	@#${MAKE} -C ../src/ptx/ run-catalog

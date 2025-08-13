@@ -26,16 +26,16 @@ from app.util.skopeo import copy_image_to_registry, inspect_docker_image
 log = logging.getLogger(__name__)
 
 
-def collect_worker_image_from_repo(src: str, dst: str, src_auth: dict = None, dst_auth: dict = None,
-                                   with_ref: str = None, ca_dir: str = None, retry: int = None,
-                                   timeout: int = None) -> str | None:
+def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
+                                   src_auth: dict = None, src_insecure: bool = False, ca_dir: str = None,
+                                   retry: int = None, timeout: int = None) -> str | None:
     """
 
     :param src:
     :param dst:
-    :param src_auth:
-    :param dst_auth:
     :param with_ref:
+    :param src_auth:
+    :param src_insecure:
     :param ca_dir:
     :param retry:
     :param timeout:
@@ -46,12 +46,13 @@ def collect_worker_image_from_repo(src: str, dst: str, src_auth: dict = None, ds
     ref = with_ref if with_ref else img
     if repo == "registry":
         repo = CONFIG.get('registry.url')
-    dst_ca_dir = CONFIG.get('registry.ca_dir')
+    dst_auth, dst_ca_dir = CONFIG.get('registry.auth.cred'), CONFIG.get('registry.auth.ca_dir')
+    dst_insecure = CONFIG.get('registry.auth.insecure', False)
     src_auth = DockerRegistryAuth.parse(src_auth).to_tuple() if src_auth else None
     dst_auth = DockerRegistryAuth.parse(dst_auth).to_tuple() if dst_auth else None
     success = copy_image_to_registry(image=src_path, registry=repo, with_reference=ref,
-                                     src_auth=src_auth, src_insecure=True, src_ca_dir=ca_dir,
-                                     dst_auth=dst_auth, dst_insecure=False, dst_ca_dir=dst_ca_dir,
+                                     src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=ca_dir,
+                                     dst_auth=dst_auth, dst_insecure=dst_insecure, dst_ca_dir=dst_ca_dir,
                                      retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
     if not success:
         return None
@@ -104,9 +105,10 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
             raise NotImplementedError
         case 'docker' | 'remote':
             docker_src, src_auth = data_content['image'], data_content.get('auth')
-            docker_dst, dst_auth = data_content.get('dst', dst), CONFIG.get('worker.auth.dst')
+            docker_dst = data_content.get('dst', dst)
+            src_insecure = src_auth.get('insecure', False) if src_auth else False
             result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst,
-                                                       src_auth=src_auth, dst_auth=dst_auth,
+                                                       src_auth=src_auth, src_insecure=src_insecure, ca_dir=None,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
             cred = data_content.get('credentials')
@@ -142,13 +144,15 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':
-            src_auth, dst_auth = CONFIG.get('worker.auth.src'), CONFIG.get('worker.auth.dst')
+            src_auth = CONFIG.get('worker.auth.cred')
+            src_insecure = CONFIG.get('worker.auth.insecure', False)
+            ca_dir = CONFIG.get('worker.auth.ca_dir')
             result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst,
-                                                       src_auth=src_auth, dst_auth=dst_auth,
+                                                       src_auth=src_auth, src_insecure=src_insecure, ca_dir=ca_dir,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
             secret_name = get_resource_path(worker_src)
-            cred = CONFIG['worker.auth.src']
+            cred = CONFIG['worker.auth.cred']
             app = CONFIG.get('worker.app', 'worker')
             result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=timeout)
         case 'ptx':

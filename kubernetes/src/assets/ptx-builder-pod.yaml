@@ -1,4 +1,4 @@
-# kubectl -n ptx-edge create secret generic pdc-secrets-env --type=Opaque \
+# kubectl -n ptx-edge create secret generic pdc-secrets.env --type=Opaque \
 # --from-literal=PDC_SERVICE_KEY=dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV \
 # --from-literal=PDC_SECRET_KEY=Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x \
 # -o yaml --dry-run=client
@@ -6,7 +6,7 @@ apiVersion: v1
 kind: Secret
 type: Opaque
 metadata:
-  name: pdc-secrets-env
+  name: pdc-secrets.env
   namespace: ptx-edge
 data:
   BUILD_PDC_KEY_SERVICE: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
@@ -16,7 +16,7 @@ immutable: true
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pdc-config-env
+  name: pdc-config.env
   namespace: ptx-edge
 data:
   BUILD_PDC_HOST: "pdc.ptx-edge.svc.cluster.local"
@@ -105,20 +105,23 @@ spec:
         - name: kube-api-client-cfg
           mountPath: /var/run/secrets/projected
           readOnly: true
+        - name: registry-ca
+          mountPath: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+          readOnly: true
       ports:
         - name: webhook-port
           containerPort: 8888
           protocol: TCP
       envFrom:
         - secretRef:
-            name: pdc-secrets-env
+            name: pdc-secrets.env
         - configMapRef:
-            name: pdc-config-env
+            name: pdc-config.env
       env:
         - name: BUILD_DATA_SRC
-          #value: "file:///etc/hostname"
-          #value: "http://host.k3d.internal:9000/datetime.txt"
-          value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+          value: "file:///etc/hostname"  # collect_data_from_file
+          #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"  # collect_data_from_url
+          #value: "http://host.k3d.internal:9000/datetime.txt" # collect_data_from_url + auth
           #value: "ptx://66db1a6dc29e3ba863a85e0f"
         - name: BUILD_DATA_AUTH
           value: "basic:demo:demo"
@@ -131,21 +134,28 @@ spec:
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
         - name: BUILD_CATALOG_OFFER_PROVIDER
-          value: 66d187f4ee71f9f096bae8ca
+          value: "66d187f4ee71f9f096bae8ca"
         - name: BUILD_CATALOG_OFFER_CONSUMER
-          value: 66d18b79ee71f9f096baecb1
+          value: "66d18b79ee71f9f096baecb1"
         - name: BUILD_WORKER_SRC
-          value: "docker://busybox:latest"
+          #value: "docker://busybox:latest"  # collect_worker_image_from_repo
+          value: "docker://registry.k3d.local:5000/busybox:latest" # collect_worker_image_from_repo + auth
           #value: "auth://worker-pull-secret"
-        #        - name: BUILD_WORKER_AUTH_SRC
-        #          value: "demo:demo"
+        - name: BUILD_WORKER_AUTH_CRED
+          value: "demo:demo"
+        - name: BUILD_WORKER_AUTH_INSECURE
+          value: "True"
         - name: BUILD_WORKER_DST
-          value: "docker://registry.k3d.local:5000/myworker:latest"
+          value: "registry/myworker:latest"
   volumes:
     - name: src
       hostPath:
         path: /usr/local/share/builder/app
         type: Directory
+    - name: registry-ca
+      hostPath:
+        path: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+        type: File
     - name: data-dir
       emptyDir:
         sizeLimit: 100Mi
