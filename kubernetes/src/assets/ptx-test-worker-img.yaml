@@ -42,6 +42,10 @@ spec:
             - name: data-dir
               mountPath: /var/cache/data
               readOnly: false
+            - name: registry-ca
+              mountPath: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+              subPath: registry_CA.crt
+              readOnly: true
           env:
             - name: BUILD_DATA_SRC
               value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
@@ -50,7 +54,7 @@ spec:
             - name: BUILD_WORKER_SRC
               value: "remote://busybox:latest"
             - name: BUILD_WORKER_DST
-              value: "docker://registry.k3d.local:5000/myworker:latest"
+              value: "registry/myworker:latest"
       containers:
         - name: worker
           image: registry.k3d.local:5000/myworker:latest
@@ -90,4 +94,10 @@ spec:
         - name: result-dir
           persistentVolumeClaim:
             claimName: worker-pvc
+        - name: registry-ca
+          configMap:
+            name: registry-root-ca.crt
+            items:
+              - key: ca.crt
+                path: registry_CA.crt
       restartPolicy: Never

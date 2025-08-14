@@ -15,6 +15,7 @@ dst = "/var/cache/data/"
 app = "worker"
 
 [registry]
+name = "registry.k3d"
 url = "registry.k3d.local:5000"
 
 [registry.auth]

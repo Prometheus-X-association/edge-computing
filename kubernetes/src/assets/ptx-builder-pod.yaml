@@ -139,8 +139,8 @@ spec:
           value: "66d18b79ee71f9f096baecb1"
         - name: BUILD_WORKER_SRC
           #value: "docker://busybox:latest"  # collect_worker_image_from_repo
-          value: "docker://registry.k3d.local:5000/busybox:latest" # collect_worker_image_from_repo + auth
-          #value: "auth://worker-pull-secret"
+          #value: "docker://registry.k3d.local:5000/busybox:latest" # collect_worker_image_from_repo + auth
+          value: "secret://demo:demo" # create_image_pull_secret
         - name: BUILD_WORKER_AUTH_CRED
           value: "demo:demo"
         - name: BUILD_WORKER_AUTH_INSECURE

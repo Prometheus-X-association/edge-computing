@@ -23,8 +23,6 @@ IMG := ptx-edge/${NAME}:${VERSION}
 
 cert:
 	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs/ca && mkdir -p ${CURDIR}/.certs/auth
-	@#openssl req -x509 -newkey rsa:2048 -sha256 -keyout .certs/registry.key -out .certs/registry.cert -days 365 -noenc \
-	# -subj "/C=EU/ST=''/L=''/O=PTX/OU=ptx-edge/CN=registry.k3d.local"
 	openssl genrsa -out ${CURDIR}/.certs/ca.key 2048
 	openssl req -new -x509 -days 365 -key ${CURDIR}/.certs/ca.key -out ${CURDIR}/.certs/ca/ca.crt \
 			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
@@ -50,7 +48,8 @@ build: cert
 run: build
 	docker run --rm -ti -p 5555:5000 --restart=no --name ptx-registry \
 		-v ${CURDIR}/.certs/auth:/opt/registry/auth:ro \
-		-e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+		-e "REGISTRY_AUTH=htpasswd" \
+		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
 		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
 		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
 		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
@@ -59,7 +58,8 @@ run: build
 test: clear
 	docker run -d -p 5678:5000 --restart=no --name test-registry \
 		-v ${CURDIR}/.certs/auth:/opt/registry/auth:ro \
-		-e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+		-e "REGISTRY_AUTH=htpasswd" \
+		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
 		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
 		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
 		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
@@ -79,6 +79,31 @@ test: clear
 			https://registry.k3d.localhost:5678/v2/_catalog
 	@echo
 	skopeo inspect --cert-dir=.certs/ca --creds=${CRED} docker://${LOCAL_REGISTRY}:5678/busybox:latest
+
+run-mock:
+	docker rm -f mock-registry || true
+	rm -rf ${CURDIR}/.mock && mkdir -p ${CURDIR}/.mock
+	openssl req -x509 -newkey rsa:2048 -sha256 -keyout .mock/server.key -out .mock/server.cert -days 365 -noenc \
+				-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=host.k3d.internal"
+	htpasswd -Bbn mock mock > ${CURDIR}/.mock/htpasswd
+	docker run -d -p 5555:5000 --restart=no --name mock-registry \
+		-v ${CURDIR}/.mock:/opt/registry/auth:ro \
+		-e "REGISTRY_AUTH=htpasswd" \
+		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
+		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
+		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
+		registry:3
+	docker ps -a -f name=mock-registry
+	docker pull busybox:latest
+	docker login -u mock -p mock localhost:5555
+	docker tag busybox:latest localhost:5555/busybox:latest
+	docker push localhost:5555/busybox:latest
+	docker logout localhost:5555
+	docker rmi localhost:5555/busybox:latest
+	curl -k -u mock:mock https://localhost:5555/v2/_catalog
+	read -r "Press ENTER to stop mock registry...." || true
+	docker rm -f mock-registry
 
 ########################################################################################################################
 

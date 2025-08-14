@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
-                                   src_auth: dict = None, src_insecure: bool = False, ca_dir: str = None,
+                                   src_auth: dict | str = None, src_insecure: bool = False, ca_dir: str = None,
                                    retry: int = None, timeout: int = None) -> str | None:
     """
 
@@ -63,7 +63,7 @@ def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
     return image.get('Digest') if image else None
 
 
-def configure_worker_credential(name: str, cred: dict, app: str, namespace: str = None,
+def configure_worker_credential(name: str, cred: dict | str, app: str, namespace: str = None,
                                 timeout: int = None) -> str | None:
     """
 
@@ -111,9 +111,9 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
                                                        src_auth=src_auth, src_insecure=src_insecure, ca_dir=None,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
+            secret_name = data_content.get('name', CONFIG.get('registry.name', "registry"))
             cred = data_content.get('credentials')
             app = CONFIG.get('worker.app', 'worker')
-            secret_name = data_content.get('name', app)
             result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=timeout)
         case other:
             raise Exception(f"Unsupported data type: {other}")
@@ -151,8 +151,11 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
                                                        src_auth=src_auth, src_insecure=src_insecure, ca_dir=ca_dir,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
-            secret_name = get_resource_path(worker_src)
-            cred = CONFIG['worker.auth.cred']
+            src_path = get_resource_path(worker_src)
+            if ':' in src_path:
+                secret_name, cred = CONFIG.get('registry.name', "registry"), src_path
+            else:
+                secret_name, cred = src_path, CONFIG.get('worker.auth.cred')
             app = CONFIG.get('worker.app', 'worker')
             result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=timeout)
         case 'ptx':
