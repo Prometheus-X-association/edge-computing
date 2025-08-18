@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
-                                   src_auth: dict | str = None, src_insecure: bool = False, ca_dir: str = None,
+                                   src_auth: dict | str = None, src_insecure: bool = False, src_ca_dir: str = None,
                                    retry: int = None, timeout: int = None) -> str | None:
     """
 
@@ -36,7 +36,7 @@ def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
     :param with_ref:
     :param src_auth:
     :param src_insecure:
-    :param ca_dir:
+    :param src_ca_dir:
     :param retry:
     :param timeout:
     :return:
@@ -44,14 +44,14 @@ def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
     src_path, dst_path = get_resource_path(src), get_resource_path(dst)
     repo, img = dst_path.split('/', maxsplit=1)
     ref = with_ref if with_ref else img
-    if repo == "registry":
+    if repo.lower() == "registry":
         repo = CONFIG.get('registry.url')
     dst_auth, dst_ca_dir = CONFIG.get('registry.auth.cred'), CONFIG.get('registry.auth.ca_dir')
     dst_insecure = CONFIG.get('registry.auth.insecure', False)
     src_auth = DockerRegistryAuth.parse(src_auth).to_tuple() if src_auth else None
     dst_auth = DockerRegistryAuth.parse(dst_auth).to_tuple() if dst_auth else None
     success = copy_image_to_registry(image=src_path, registry=repo, with_reference=ref,
-                                     src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=ca_dir,
+                                     src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=src_ca_dir,
                                      dst_auth=dst_auth, dst_insecure=dst_insecure, dst_ca_dir=dst_ca_dir,
                                      retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
     if not success:
@@ -108,7 +108,7 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
             docker_dst = data_content.get('dst', dst)
             src_insecure = src_auth.get('insecure', False) if src_auth else False
             result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst,
-                                                       src_auth=src_auth, src_insecure=src_insecure, ca_dir=None,
+                                                       src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=None,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
             secret_name = data_content.get('name', CONFIG.get('registry.name', "registry"))
@@ -129,10 +129,9 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
     :return:
     """
     log.info("Obtaining worker configuration...")
-    timeout = CONFIG.get('connection.timeout', 30)
-    retry = CONFIG.get('connection.retry', 3)
-    worker_src = CONFIG.get('worker.src')
+    conn_timeout, conn_retry = CONFIG.get('connection.timeout', 30), CONFIG.get('connection.retry', 3)
     log.debug(f"Check worker setup in configuration...")
+    worker_src = CONFIG.get('worker.src')
     if worker_src is None or worker_src.lower() in ('inline', 'datasource'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
@@ -148,8 +147,8 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
             src_insecure = CONFIG.get('worker.auth.insecure', False)
             ca_dir = CONFIG.get('worker.auth.ca_dir')
             result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst,
-                                                       src_auth=src_auth, src_insecure=src_insecure, ca_dir=ca_dir,
-                                                       retry=retry, timeout=timeout)
+                                                       src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=ca_dir,
+                                                       retry=conn_retry, timeout=conn_timeout)
         case 'auth' | 'secret':
             src_path = get_resource_path(worker_src)
             if ':' in src_path:
@@ -157,10 +156,10 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
             else:
                 secret_name, cred = src_path, CONFIG.get('worker.auth.cred')
             app = CONFIG.get('worker.app', 'worker')
-            result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=timeout)
+            result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=conn_timeout)
         case 'ptx':
             result_id = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,
-                                                retry=retry, timeout=timeout)
+                                                retry=conn_retry, timeout=conn_timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")
             result_id = None

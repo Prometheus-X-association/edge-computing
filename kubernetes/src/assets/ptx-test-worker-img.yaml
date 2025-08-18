@@ -54,7 +54,7 @@ spec:
             - name: BUILD_WORKER_SRC
               value: "remote://busybox:latest"
             - name: BUILD_WORKER_DST
-              value: "registry/myworker:latest"
+              value: "REGISTRY/myworker:latest"
       containers:
         - name: worker
           image: registry.k3d.local:5000/myworker:latest

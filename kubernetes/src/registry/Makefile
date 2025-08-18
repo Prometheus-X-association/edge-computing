@@ -13,8 +13,11 @@
 # limitations under the License.
 export REGISTRY := registry.k3d.local
 export LOCAL_REGISTRY := registry.k3d.localhost
-REGISTRY_USER := demo
-REGISTRY_SECRET := demo
+
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+REGISTRY_USER := admin
+REGISTRY_SECRET := admin
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 CRED := ${REGISTRY_USER}:${REGISTRY_SECRET}
 
 NAME := registry
@@ -31,15 +34,15 @@ cert:
 	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
 			-in ${CURDIR}/.certs/server.csr -CA ${CURDIR}/.certs/ca/ca.crt -CAkey ${CURDIR}/.certs/ca.key \
 			-out ${CURDIR}/.certs/auth/server.cert -extfile=- #-CAcreateserial
-	@#docker run --entrypoint htpasswd httpd:2 -Bbn demo demo > .certs/htpasswd
+	@#docker run --entrypoint htpasswd httpd:2 -Bbn admin admin > .certs/htpasswd
 	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > ${CURDIR}/.certs/auth/htpasswd
-	@#curl -k -u demo:demo https://localhost:5555/v2/_catalog
-	@#wget -O- --no-check-certificate --user=demo --password=demo https://localhost:5555/v2/_catalog
+	@#curl -k -u admin:admin https://localhost:5555/v2/_catalog
+	@#wget -O- --no-check-certificate --user=admin --password=admin https://localhost:5555/v2/_catalog
 	@#
-	@#curl --cacert .certs/ca/ca.crt -u demo:demo https://registry.k3d.localhost:5555/v2/_catalog
-	@#curl --cacert .certs/ca/ca.crt -u demo:demo --resolve registry.k3d.local:5555:127.0.0.1 https://registry.k3d.local:5555/v2/_catalog
-	@#wget -O- --ca-certificate=.certs/ca/ca.crt --user=demo --password=demo https://registry.k3d.localhost:5555/v2/_catalog
-	@#skopeo inspect --cert-dir=.certs/ca --creds=demo:demo docker://registry.k3d.localhost:5555/busybox:latest
+	@#curl --cacert .certs/ca/ca.crt -u admin:admin https://registry.k3d.localhost:5555/v2/_catalog
+	@#curl --cacert .certs/ca/ca.crt -u admin:admin --resolve registry.k3d.local:5555:127.0.0.1 https://registry.k3d.local:5555/v2/_catalog
+	@#wget -O- --ca-certificate=.certs/ca/ca.crt --user=admin --password=admin https://registry.k3d.localhost:5555/v2/_catalog
+	@#skopeo inspect --cert-dir=.certs/ca --creds=admin:admin docker://registry.k3d.localhost:5555/busybox:latest
 
 build: cert
 	docker build -t ${IMG} .
@@ -80,14 +83,25 @@ test: clear
 	@echo
 	skopeo inspect --cert-dir=.certs/ca --creds=${CRED} docker://${LOCAL_REGISTRY}:5678/busybox:latest
 
+MOCK_USER := mock
+MOCK_PASS := mock
+
 run-mock:
 	docker rm -f mock-registry || true
-	rm -rf ${CURDIR}/.mock && mkdir -p ${CURDIR}/.mock
-	openssl req -x509 -newkey rsa:2048 -sha256 -keyout .mock/server.key -out .mock/server.cert -days 365 -noenc \
-				-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=host.k3d.internal"
-	htpasswd -Bbn mock mock > ${CURDIR}/.mock/htpasswd
+	rm -rf ${CURDIR}/.mock && mkdir -p ${CURDIR}/.mock/ca && mkdir -p ${CURDIR}/.mock/auth
+	#openssl req -x509 -newkey rsa:2048 -sha256 -keyout .mock/server.key -out .mock/server.cert -days 365 -noenc \
+	#				-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=host.k3d.internal"
+	openssl genrsa -out ${CURDIR}/.mock/ca.key 2048
+	openssl req -new -x509 -days 365 -key ${CURDIR}/.mock/ca.key -out ${CURDIR}/.mock/ca/ca.crt \
+			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
+	openssl req -newkey rsa:2048 -noenc -keyout ${CURDIR}/.mock/auth/server.key -out ${CURDIR}/.mock/server.csr \
+			-subj "/C=EU/ST=''/L=''/O=ptx-edge/OU=ptx-edge/CN=*ptx-edge.prometheus-x.org"
+	printf "subjectAltName=DNS:localhost,DNS:host.k3d.internal" | openssl x509 -req -days 365 \
+			-in ${CURDIR}/.mock/server.csr -CA ${CURDIR}/.mock/ca/ca.crt -CAkey ${CURDIR}/.mock/ca.key \
+			-out ${CURDIR}/.mock/auth/server.cert -extfile=- #-CAcreateserial
+	htpasswd -Bbn ${MOCK_USER} ${MOCK_PASS} > ${CURDIR}/.mock/auth/htpasswd
 	docker run -d -p 5555:5000 --restart=no --name mock-registry \
-		-v ${CURDIR}/.mock:/opt/registry/auth:ro \
+		-v ${CURDIR}/.mock/auth:/opt/registry/auth:ro \
 		-e "REGISTRY_AUTH=htpasswd" \
 		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
 		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
@@ -101,8 +115,8 @@ run-mock:
 	docker push localhost:5555/busybox:latest
 	docker logout localhost:5555
 	docker rmi localhost:5555/busybox:latest
-	curl -k -u mock:mock https://localhost:5555/v2/_catalog
-	read -r "Press ENTER to stop mock registry...." || true
+	curl -k -u ${MOCK_USER}:${MOCK_PASS} https://localhost:5555/v2/_catalog
+	read -r 'Press ENTER to stop mock registry....' || true
 	docker rm -f mock-registry
 
 ########################################################################################################################

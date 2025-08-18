@@ -19,6 +19,6 @@ name = "registry.k3d"
 url = "registry.k3d.local:5000"
 
 [registry.auth]
-cred = "demo:demo"
+cred = "admin:admin"
 insecure = "False"
-ca_dir = "/usr/share/ca-certificates/ptx-edge"
+ca_dir = "/usr/share/ca-certificates/ptx-edge/"

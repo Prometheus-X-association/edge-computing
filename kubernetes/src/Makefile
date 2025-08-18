@@ -14,8 +14,8 @@
 export PROJECT_ROOT=${PWD}
 export REGISTRY=registry.k3d.local
 export REGISTRY_PORT=5000
-export REGISTRY_USER=demo
-export REGISTRY_SECRET=demo
+export REGISTRY_USER=admin
+export REGISTRY_SECRET=admin
 
 K3D_REG := registry.k3d.localhost:5000
 CREDS := ${REGISTRY_USER}:${REGISTRY_SECRET}
