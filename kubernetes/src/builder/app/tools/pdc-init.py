@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
 import logging
 import os
 import pathlib
 import pprint
 import sys
 
-import yaml
 from kubernetes import client
 from kubernetes.client import OpenApiException, ApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
-
-from app.util.helper import deep_filter
 
 log = logging.getLogger(__name__)
 
@@ -76,7 +74,7 @@ def _collect_privacy_zone_labels(node_ip: str) -> list:
     """
     log.debug(f">>> Collect Privacy Zone labels...")
     v1_node_list = client.CoreV1Api().list_node(label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
-    log.debug(f"Received nodes:\n{yaml.dump(deep_filter(v1_node_list.to_dict()))}")
+    log.debug(f"Received nodes:\n{json.dumps(v1_node_list.to_dict())}")
     labels = [node.metadata.labels for node in v1_node_list.items
               if len(node.status.addresses) > 0 and
               list(filter(lambda a: a.type == 'InternalIP' and a.address == node_ip, node.status.addresses))]
@@ -188,10 +186,10 @@ def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, for
                     srv = _create_headless_service(name=srv_name, port=port, namespace=namespace, app=app)
                 else:
                     raise
-            log.debug(f"Created service:\n{yaml.dump(deep_filter(srv.to_dict()))}")
+            log.debug(f"Created service:\n{json.dumps(srv.to_dict())}")
             eps = _create_nodeport_endpointslice(service_name=srv_name, address=ip, target_port=port,
                                                  namespace=namespace, app=app)
-            log.debug(f"Created endpointslice:\n{yaml.dump(deep_filter(eps.to_dict()))}")
+            log.debug(f"Created endpointslice:\n{json.dumps(eps.to_dict())}")
     except OpenApiException as e:
         log.error(f"Received error:\n{e}")
         sys.exit(os.EX_IOERR)
