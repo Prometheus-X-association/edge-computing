@@ -13,9 +13,9 @@ dst = "/var/cache/data/"
 
 [worker]
 app = "worker"
+pull-secret = "worker-pull-cred"
 
 [registry]
-name = "registry.k3d"
 url = "registry.k3d.local:5000"
 
 [registry.auth]

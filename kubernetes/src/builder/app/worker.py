@@ -44,12 +44,12 @@ def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
     src_path, dst_path = get_resource_path(src), get_resource_path(dst)
     repo, img = dst_path.split('/', maxsplit=1)
     ref = with_ref if with_ref else img
-    if repo.lower() == "registry":
-        repo = CONFIG.get('registry.url')
+    if repo.upper() == "REGISTRY":
+        repo = CONFIG['registry.url']
     dst_auth, dst_ca_dir = CONFIG.get('registry.auth.cred'), CONFIG.get('registry.auth.ca_dir')
-    dst_insecure = CONFIG.get('registry.auth.insecure', False)
-    src_auth = DockerRegistryAuth.parse(src_auth).to_tuple() if src_auth else None
-    dst_auth = DockerRegistryAuth.parse(dst_auth).to_tuple() if dst_auth else None
+    dst_insecure = CONFIG.get('registry.auth.insecure', default=False)
+    src_auth = DockerRegistryAuth.parse(src_auth).get_creds() if src_auth else None
+    dst_auth = DockerRegistryAuth.parse(dst_auth).get_creds() if dst_auth else None
     success = copy_image_to_registry(image=src_path, registry=repo, with_reference=ref,
                                      src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=src_ca_dir,
                                      dst_auth=dst_auth, dst_insecure=dst_insecure, dst_ca_dir=dst_ca_dir,
@@ -63,8 +63,8 @@ def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
     return image.get('Digest') if image else None
 
 
-def configure_worker_credential(name: str, cred: dict | str, app: str, namespace: str = None,
-                                timeout: int = None) -> str | None:
+def configure_worker_pull_credential(name: str, cred: dict | str, app: str, namespace: str = None,
+                                     timeout: int = None) -> str | None:
     """
 
     :param name:
@@ -75,8 +75,8 @@ def configure_worker_credential(name: str, cred: dict | str, app: str, namespace
     :return:
     """
     cred = DockerRegistryAuth.parse(cred)
-    secret = create_image_pull_secret(name=name, user=cred.on_behalf, passwd=cred.secret, namespace=namespace,
-                                      app=app, projected=True, timeout=timeout)
+    secret = create_image_pull_secret(name=name, user=cred.on_behalf, passwd=cred.secret, server=cred.get_registry(),
+                                      namespace=namespace, app=app, projected=True, timeout=timeout)
     log.debug(f"Created secret description:\n{pprint.pformat(secret.to_dict()) if secret else None}")
     return secret.metadata.uid if secret else None
 
@@ -105,16 +105,16 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
             raise NotImplementedError
         case 'docker' | 'remote':
             docker_src, src_auth = data_content['image'], data_content.get('auth')
-            docker_dst = data_content.get('dst', dst)
+            docker_dst = data_content.get('dst', default=dst)
             src_insecure = src_auth.get('insecure', False) if src_auth else False
             result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst,
                                                        src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=None,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
-            secret_name = data_content.get('name', CONFIG.get('registry.name', "registry"))
+            name = CONFIG.get('worker.pull-secret', data_content.get('worker.dst'))
             cred = data_content.get('credentials')
-            app = CONFIG.get('worker.app', 'worker')
-            result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=timeout)
+            app = CONFIG.get('worker.app', default='worker')
+            result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=timeout)
         case other:
             raise Exception(f"Unsupported data type: {other}")
     return result_id
@@ -129,34 +129,32 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
     :return:
     """
     log.info("Obtaining worker configuration...")
-    conn_timeout, conn_retry = CONFIG.get('connection.timeout', 30), CONFIG.get('connection.retry', 3)
+    conn_timeout, conn_retry = CONFIG.get('connection.timeout', default=30), CONFIG.get('connection.retry', default=3)
     log.debug(f"Check worker setup in configuration...")
     worker_src = CONFIG.get('worker.src')
-    if worker_src is None or worker_src.lower() in ('inline', 'datasource'):
+    if worker_src is None or worker_src.upper() in ('INLINE', 'DATASOURCE'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
             worker_cfg = json.load(f)
         load_configuration(base=worker_cfg['worker'])
-    worker_src, worker_dst = CONFIG['worker.src'], CONFIG['worker.dst']
+    worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     match get_resource_scheme(worker_src):
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':
             src_auth = CONFIG.get('worker.auth.cred')
-            src_insecure = CONFIG.get('worker.auth.insecure', False)
+            src_insecure = CONFIG.get('worker.auth.insecure', default=False)
             ca_dir = CONFIG.get('worker.auth.ca_dir')
             result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst,
                                                        src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=ca_dir,
                                                        retry=conn_retry, timeout=conn_timeout)
         case 'auth' | 'secret':
+            name = CONFIG.get('worker.pull-secret', default=worker_dst)
             src_path = get_resource_path(worker_src)
-            if ':' in src_path:
-                secret_name, cred = CONFIG.get('registry.name', "registry"), src_path
-            else:
-                secret_name, cred = src_path, CONFIG.get('worker.auth.cred')
-            app = CONFIG.get('worker.app', 'worker')
-            result_id = configure_worker_credential(name=secret_name, cred=cred, app=app, timeout=conn_timeout)
+            cred = CONFIG.get('worker.auth.cred') if src_path.upper() == 'REGISTRY' else src_path
+            app = CONFIG.get('worker.app', default='worker')
+            result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
         case 'ptx':
             result_id = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,
                                                 retry=conn_retry, timeout=conn_timeout)

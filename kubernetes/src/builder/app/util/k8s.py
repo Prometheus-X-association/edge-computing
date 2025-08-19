@@ -16,7 +16,6 @@ import json
 import logging
 import pathlib
 
-import yaml
 from kubernetes import config, client
 from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
@@ -70,17 +69,15 @@ PROJECTED_CERT_FILE = "/var/run/secrets/projected/ca.crt"
 PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
 
-def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "", namespace: str = None,
-                             app: str = None, projected: bool = True, timeout: int = None) -> client.V1Secret | None:
+def create_image_pull_secret(name: str, user: str, passwd: str, server: str = "https://index.docker.io/v1/",
+                             namespace: str = None, app: str = None, projected: bool = True,
+                             timeout: int = None) -> client.V1Secret | None:
     """
-        E.g.:
-    >>> create_image_pull_secret(name="test-pull-sec", user='test-user', passwd='pass1234',
-    >>>                               namespace='ptx-edge', app='builder', projected=True)
 
     :param name:
     :param user:
     :param passwd:
-    :param email:
+    :param server:
     :param namespace:
     :param app:
     :param projected:
@@ -94,13 +91,13 @@ def create_image_pull_secret(name: str, user: str, passwd: str, email: str = "",
     else:
         config.load_incluster_config()
     b64_auth = base64.b64encode(f"{user}:{passwd}".encode("utf-8")).decode("utf-8")
-    docker_cfg = {'auths': {'registry': {'username': user, 'password': passwd, 'auth': b64_auth, 'email': email}}}
+    docker_cfg = {'auths': {server: {'auth': b64_auth}}}
     b64_docker_cfg = base64.b64encode(json.dumps(docker_cfg).encode("utf-8")).decode("utf-8")
     secret_body = client.V1Secret(metadata=client.V1ObjectMeta(name=name,
                                                                labels={"app": app} if app else None),
                                   type="kubernetes.io/dockerconfigjson",
                                   data={'.dockerconfigjson': b64_docker_cfg})
-    log.debug(f"Created secret body:\n{yaml.dump(deep_filter(secret_body.to_dict()))}")
+    log.debug(f"Created secret body:\n{json.dumps(deep_filter(secret_body.to_dict()))}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
@@ -141,7 +138,7 @@ def create_service(name: str, port: int, target_port: int, namespace: str = None
                                                                                           protocol="TCP",
                                                                                           port=port,
                                                                                           target_port=target_port)]))
-    log.debug(f"Created service body:\n{yaml.dump(deep_filter(service_body.to_dict()))}")
+    log.debug(f"Created service body:\n{json.dumps(deep_filter(service_body.to_dict()))}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
@@ -184,7 +181,7 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
                                                                             protocol="TCP",
                                                                             port=target_port)],
                                                 endpoints=[client.V1Endpoint(addresses=[address])])
-    log.debug(f"Created endpointslice body:\n{yaml.dump(deep_filter(endpointslice_body.to_dict()))}")
+    log.debug(f"Created endpointslice body:\n{json.dumps(deep_filter(endpointslice_body.to_dict()))}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:

@@ -137,8 +137,7 @@ def get_data_resources() -> pathlib.Path:
     :return:
     """
     log.info("Obtaining input data...")
-    timeout = CONFIG.get('connection.timeout', 30)
-    retry = CONFIG.get('connection.retry', 3)
+    conn_timeout, conn_retry = CONFIG.get('connection.timeout', default=30), CONFIG.get('connection.retry', default=3)
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     match get_resource_scheme(data_src):
@@ -147,11 +146,11 @@ def get_data_resources() -> pathlib.Path:
         case 'http' | 'https':
             auth = CONFIG.get('data.auth')
             data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
-                                              auth=auth, retry=retry, timeout=timeout)
+                                              auth=auth, retry=conn_retry, timeout=conn_timeout)
         case 'ptx':
             data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
                                               dst=get_resource_path(data_dst),
-                                              timeout=timeout)
+                                              timeout=conn_timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")
             data_path = None

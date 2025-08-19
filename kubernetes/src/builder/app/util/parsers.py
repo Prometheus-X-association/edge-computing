@@ -40,24 +40,34 @@ class DataSourceAuth(object):
 
 @dataclass(frozen=True)
 class DockerRegistryAuth(object):
+    __DEF_DOCKER_REGISTRY: str = 'https://index.docker.io/v1/'
+
     on_behalf: str = None
     secret: str = None
+    server: str = None
 
     @classmethod
     def parse(cls, cfg: str | dict) -> Self:
         if isinstance(cfg, str):
-            cfg = cfg.split(':')
-            if len(cfg) == 2:
-                return cls(on_behalf=cfg[0], secret=cfg[1])
+            cfg = cfg.rsplit('@', maxsplit=1)
+            user_pass = cfg[0].split(':')
+            if len(cfg) == 2 and len(user_pass) == 2:
+                return cls(on_behalf=user_pass[0], secret=user_pass[1], server=cfg[1])
+            elif len(user_pass) == 2:
+                return cls(on_behalf=user_pass[0], secret=user_pass[1])
             else:
-                raise ValueError(f'Invalid registry auth cfg: <on_behalf>:<secret>! -- {cfg}')
+                raise ValueError(f'Invalid registry auth cfg: <on_behalf>:<secret>[@<server>]! -- {cfg}')
         elif isinstance(cfg, dict):
-            return cls(on_behalf=cfg['on_behalf'], secret=cfg['secret'])
+            return cls(on_behalf=cfg['on_behalf'], secret=cfg['secret'],
+                       server=cfg.get('server', 'https://index.docker.io/v1/'))
         else:
             raise ValueError(f'Invalid registry auth username/password: {cfg}!')
 
     def to_str(self) -> str:
         return f"{self.on_behalf}:{self.secret}"
 
-    def to_tuple(self) -> tuple:
+    def get_creds(self) -> tuple:
         return self.on_behalf, self.secret
+
+    def get_registry(self) -> str:
+        return self.server if self.server else self.__DEF_DOCKER_REGISTRY
