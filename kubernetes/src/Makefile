@@ -148,7 +148,7 @@ run-api:
 	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
 
 run-builder:
-	kubectl apply -f assets/ptx-builder-pod.yaml
+	envsubst <assets/ptx-test-worker-secret.yaml '$${DH_TOKEN}' | kubectl apply -f=-
 	kubectl wait --for="condition=Ready" --timeout=20s pod/builder
 	@echo
 	kubectl get all -o wide
@@ -207,7 +207,7 @@ run-test-img: registry-ca
 	kubectl apply -f assets/ptx-test-worker-img.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
-	kubectl get all,pv,pvc,configmaps -o wide
+	kubectl get all,pv,pvc,configmaps,secrets -o wide
 	@echo
 	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
@@ -215,6 +215,24 @@ run-test-img: registry-ca
 	kubectl logs -f --prefix job/consumer-test-img builder
 	kubectl wait --for="condition=ContainersReady" pods --timeout=10s -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-img worker
+
+ifneq (,$(wildcard ./.creds/dockerhub.token))
+    include ./.creds/dockerhub.token
+    export
+endif
+
+run-test-secret:
+	envsubst <assets/ptx-test-worker-secret.yaml '$${DH_TOKEN}' | kubectl apply -f=-
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	@echo
+	kubectl get all,pv,pvc,configmaps,secrets -o wide
+	@echo
+	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-secret builder
+	kubectl wait --for="condition=ContainersReady" pods --timeout=10s -l app=consumer
+	kubectl logs -f --prefix job/consumer-test-secret worker
 
 ########################################################################################################################
 
