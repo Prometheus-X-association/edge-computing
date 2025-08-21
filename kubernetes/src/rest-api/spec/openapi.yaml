@@ -9,7 +9,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2025-02-27T16:17:54'
+  x-creation-date: '2025-08-21T15:27:15'
 servers:
 - url: /ptx-edge/v1
   description: PTX Edge Computing

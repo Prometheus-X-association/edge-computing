@@ -1,4 +1,4 @@
-# Copyright 2024 Janos Czentye
+# Copyright 2025 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -211,8 +211,8 @@ def main():
     log.info(" Service Creator START ".center(80, '#'))
     log.debug(f"Parsed CLI args: {args}")
     CONFIG.update(kv for kv in vars(args).items() if kv[1] is not None)
-    if not all(map(lambda param: bool(CONFIG[param]), ('ip', 'port', 'namespace'))):
-        log.error(f"Missing one of required parameters: {REQUIRED_FIELDS} from {CONFIG}")
+    if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
+        log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")
         sys.exit(os.EX_CONFIG)
     log.debug(f"Configuration parameters: {CONFIG}")
     create_pdc_services(**CONFIG)
