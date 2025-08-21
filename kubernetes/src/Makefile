@@ -21,7 +21,7 @@ K3D_REG := registry.k3d.localhost:5000
 CREDS := ${REGISTRY_USER}:${REGISTRY_SECRET}
 CA_DIR := ${PROJECT_ROOT}/registry/.certs/ca
 
-COMPONENTS := builder rest-api registry
+COMPONENTS := builder rest-api scheduler registry
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
 SAMPLES := convnet gbc
@@ -139,7 +139,7 @@ run-pdc-daemon: run-catalog
 	@curl -Ssf "http://${NODE_IP}:30003/" | grep "href"
 
 run-api:
-	kubectl apply -f assets/ptx-rest-api-setup.yaml
+	kubectl apply -f assets/ptx-rest-api-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=20s pod/rest-api
 	( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
 	@echo
@@ -148,7 +148,7 @@ run-api:
 	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
 
 run-builder:
-	envsubst <assets/ptx-test-worker-secret.yaml '$${DH_TOKEN}' | kubectl apply -f=-
+	envsubst <assets/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-
 	kubectl wait --for="condition=Ready" --timeout=20s pod/builder
 	@echo
 	kubectl get all -o wide
@@ -156,6 +156,16 @@ run-builder:
 	-kubectl exec -ti pod/builder -- sh
 	kubectl delete pods/builder --now --wait
 	kubectl delete pods,secrets -l app=builder -l app=worker --now --wait
+
+run-scheduler:
+	kubectl apply -f assets/ptx-scheduler-pod.yaml
+	kubectl wait --for="condition=Ready" --timeout=20s pod/scheduler
+	@echo
+	kubectl get all -o wide
+	@echo
+	-kubectl exec -ti pod/scheduler -- sh || true
+	kubectl delete pods/scheduler --now --wait
+	kubectl delete pods -l app=worker
 
 ########################################################################################################################
 

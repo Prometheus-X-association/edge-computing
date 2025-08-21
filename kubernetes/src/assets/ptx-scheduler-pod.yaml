@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scheduler
+  namespace: ptx-edge
+  labels:
+    app: scheduler
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: scheduler-rbac
+  namespace: ptx-edge
+rules:
+  - apiGroups: [ "", ]
+    resources: [ "pods" ]
+    verbs: [ "watch" ]
+  - apiGroups: [ "", ]
+    resources: [ "bindings" ]
+    verbs: [ "create" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: scheduler-rbac
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: scheduler
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: scheduler-rbac
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-lister
+  namespace: ptx-edge
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "list" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-lister
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: scheduler
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: node-lister
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: scheduler
+  namespace: ptx-edge
+  labels:
+    app: scheduler
+spec:
+  serviceAccountName: scheduler
+  containers:
+    - name: scheduler
+      image: registry.k3d.local:5000/ptx-edge/scheduler:1.0
+      imagePullPolicy: IfNotPresent
+      #command: [ "python3", "-m", "app", "-v"]
+      command: [ "/bin/sh", "-c", "sleep infinity" ]
+      volumeMounts:
+        - name: src
+          mountPath: /usr/src/scheduler/app
+  volumes:
+    - name: src
+      hostPath:
+        path: /usr/local/share/scheduler/app
+        type: Directory

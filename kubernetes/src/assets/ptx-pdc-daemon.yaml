@@ -30,6 +30,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: pdc
+  namespace: ptx-edge
   labels:
     app: pdc
 automountServiceAccountToken: false
