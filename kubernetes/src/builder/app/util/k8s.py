@@ -97,7 +97,7 @@ def create_image_pull_secret(name: str, user: str, passwd: str, server: str = "h
                                                                labels={"app": app} if app else None),
                                   type="kubernetes.io/dockerconfigjson",
                                   data={'.dockerconfigjson': b64_docker_cfg})
-    log.debug(f"Created secret body:\n{json.dumps(deep_filter(secret_body.to_dict()))}")
+    log.debug(f"Created secret body:\n{json.dumps(deep_filter(secret_body.to_dict()), default=str)}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
@@ -138,7 +138,7 @@ def create_service(name: str, port: int, target_port: int, namespace: str = None
                                                                                           protocol="TCP",
                                                                                           port=port,
                                                                                           target_port=target_port)]))
-    log.debug(f"Created service body:\n{json.dumps(deep_filter(service_body.to_dict()))}")
+    log.debug(f"Created service body:\n{json.dumps(deep_filter(service_body.to_dict()), default=str)}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
@@ -181,7 +181,7 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
                                                                             protocol="TCP",
                                                                             port=target_port)],
                                                 endpoints=[client.V1Endpoint(addresses=[address])])
-    log.debug(f"Created endpointslice body:\n{json.dumps(deep_filter(endpointslice_body.to_dict()))}")
+    log.debug(f"Created endpointslice body:\n{json.dumps(deep_filter(endpointslice_body.to_dict()), default=str)}")
     if namespace is None:
         namespace = pathlib.Path(PROJECTED_NS_FILE).read_text() if projected else "default"
     try:
