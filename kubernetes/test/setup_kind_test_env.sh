@@ -47,15 +47,18 @@ RET_VAL=0
 
 # Install actions --------------------------------------------------------------------------------
 
+function install_deps() {
+	echo -e "\n>>> Install dependencies...\n"
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl uidmap make bash-completion git
+}
+
 function install_docker() {
 	echo -e "\n>>> Install Docker[latest]...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl
 	curl -fsSL https://get.docker.com/ | sh
 }
 
 function setup_rootless_docker() {
 	echo -e "\n>>> Setup rootless Docker...\n"
-    sudo apt-get update && sudo apt-get install -y uidmap
     dockerd-rootless-setuptool.sh install
     sudo loginctl enable-linger "${USER}"
     echo -e "\n# Rootless docker\nexport DOCKER_HOST=unix:///run/user/1000/docker.sock" >> ~/.bashrc
@@ -81,7 +84,6 @@ EOF
 
 function install_kind() {
 	echo -e "\n>>> Install Kind binary[${KIND_VER}]...\n"
-	sudo apt-get update && sudo apt-get install -y curl make git
 	[ "$(uname -m)" = x86_64 ] && curl -Lo ./kind "https://kind.sigs.k8s.io/dl/${KIND_VER}/kind-linux-amd64"
 	chmod +x ./kind
 	sudo mv -v ./kind /usr/local/bin/kind
@@ -98,7 +100,6 @@ function install_cloud_provider_kind() {
 
 function setup_kind_bash_completion() {
     echo -e "\n>>> Install Kind bash completion...\n"
-    sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
     kind completion bash | sudo tee /etc/bash_completion.d/kind > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kind
@@ -124,10 +125,22 @@ function install_kubectl() {
 
 function setup_kubectl_bash_completion() {
     echo -e "\n>>> Install Kubectl bash completion...\n"
-    sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
+    source ~/.bashrc
+}
+
+function install_helm() {
+	echo -e "\n>>> Install Helm binary[latest]...\n"
+	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+}
+
+function setup_helm_bash_completion() {
+    echo -e "\n>>> Install Helm bash completion...\n"
+    mkdir -p /etc/bash_completion.d
+    helm completion bash | sudo tee /etc/bash_completion.d/helm > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/helm
     source ~/.bashrc
 }
 
@@ -336,6 +349,19 @@ if ! command -v kubectl >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     # Validation
 	echo
 	(set -x; kubectl version --client)
+fi
+
+### Helm
+if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+	# Binary
+	install_helm
+    if [ ${SLIM_SETUP} = false ]; then
+        # Bash completion
+        setup_helm_bash_completion
+    fi
+    # Validation
+	echo
+	(set -x; helm version)
 fi
 
 # Register cleanup

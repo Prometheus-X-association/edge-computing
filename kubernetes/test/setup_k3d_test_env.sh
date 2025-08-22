@@ -42,16 +42,24 @@ RET_VAL=0
 
 # Install actions --------------------------------------------------------------------------------
 
+function install_deps() {
+	echo -e "\n>>> Install dependencies...\n"
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl make bash-completion
+}
+
 function install_docker() {
 	echo -e "\n>>> Install Docker[latest]...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl make
 	curl -fsSL https://get.docker.com/ | sh
 }
 
 function install_k3d() {
 	echo -e "\n>>> Install k3d binary[${K3D_VER}]...\n"
-	sudo apt-get update && sudo apt-get install -y curl make
 	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
+}
+
+function install_helm() {
+	echo -e "\n>>> Install Helm binary[latest]...\n"
+	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 }
 
 function install_tools() {
@@ -62,7 +70,6 @@ function install_tools() {
 
 function setup_k3d_bash_completion() {
     echo -e "\n>>> Install k3d bash completion...\n"
-    sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
     k3d completion bash | sudo tee /etc/bash_completion.d/k3d > /dev/null
     sudo chmod a+r /etc/bash_completion.d/k3d
@@ -77,10 +84,17 @@ function install_kubectl() {
 
 function setup_kubectl_bash_completion() {
     echo -e "\n>>> Install Kubectl bash completion...\n"
-    sudo apt-get install -y bash-completion
     mkdir -p /etc/bash_completion.d
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
+    source ~/.bashrc
+}
+
+function setup_helm_bash_completion() {
+    echo -e "\n>>> Install Helm bash completion...\n"
+    mkdir -p /etc/bash_completion.d
+    helm completion bash | sudo tee /etc/bash_completion.d/helm > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/helm
     source ~/.bashrc
 }
 
@@ -198,6 +212,9 @@ done
 
 # Main --------------------------------------------------------------------------------
 
+### Basic dependencies
+install_deps
+
 ### Docker
 if ! command -v docker >/dev/null 2>&1; then
     # Binaries
@@ -231,10 +248,26 @@ if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	(set -x; k3d version)
 fi
 
+### Helm
+if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+	# Binary
+	install_helm
+    if [ ${SLIM_SETUP} = false ]; then
+        # Bash completion
+        setup_helm_bash_completion
+    fi
+    # Validation
+	echo
+	(set -x; helm version)
+fi
+
+
 ### Tools and utils [skopeo,...]
 
 if ! command -v skopeo >/dev/null 2>&1; then
     install_tools
+    echo
+    (set -x; skopeo --version)
 fi
 
 ### Kubectl
