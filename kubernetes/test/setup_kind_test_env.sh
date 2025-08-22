@@ -192,7 +192,7 @@ function perform_test_deployment() {
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
                 --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
                 -- /bin/sh -c "${TEST_CMD}"
-    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=20s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for=condition=Ready --timeout=60s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
@@ -210,7 +210,7 @@ function perform_test_deployment() {
 function perform_lb_deployment() {
     echo -e "\n>>> Perform a LoadBalancer test deployment for ${TEST_ID}...\n"
     kubectl -n ${TEST_NS} expose pod/${TEST_ID} --name=${TEST_ID} --type=LoadBalancer --target-port=8888 --port=8888
-    kubectl -n ${TEST_NS} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=20s service/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for=jsonpath='{.status.loadBalancer.ingress}' --timeout=60s service/${TEST_ID}
     kubectl -n ${TEST_NS} get services,endpoints -o wide
     if [[ "$(kubectl -n ${TEST_NS} get services/${TEST_ID} -o jsonpath=\{.status.loadBalancer.ingress[].ip\})" ]]; then
         echo -e "\n>>> Validation result: OK!\n"

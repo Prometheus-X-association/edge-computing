@@ -106,7 +106,7 @@ function setup_test_cluster() {
 #        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
 #        --k3s-node-label="$PZ_LAB/zone-A=true@agent:0" \
 #        --k3s-node-label="$PZ_LAB/zone-B=true@agent:*"
-    cat <<EOF | k3d cluster create "${TEST_K8S}" --wait --timeout=30s --config=-
+    cat <<EOF | k3d cluster create "${TEST_K8S}" --wait --timeout=60s --config=-
 kind: Simple
 apiVersion: k3d.io/v1alpha5
 metadata:
@@ -149,7 +149,7 @@ function perform_test_deployment() {
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
                 --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
                 -- /bin/sh -c "${TEST_CMD}"
-    kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout=20s pod/${TEST_ID}
+    kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout=60s pod/${TEST_ID}
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
