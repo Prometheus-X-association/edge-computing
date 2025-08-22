@@ -36,6 +36,18 @@ build-orig:
 	rm -rf $${TMP_DIR}
 	docker images -f reference=${PTX_PREFIX}/* -f reference=${PTX_SANDBOX_PREFIX}/*
 
+build-pdc:
+	TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
+		git clone ${PDC_REPO} && cd dataspace-connector; \
+		git switch --detach v${PDC_VER}; \
+	popd; \
+	cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
+	docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
+					-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
+	docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
+					-t ${PTX_PREFIX}/mongodb:${MONGO_VER}-slim $${TMP_DIR}/dataspace-connector; \
+	rm -rf $${TMP_DIR}
+
 build:
 	TMP_DIR=$$(mktemp -d) && pushd $${TMP_DIR}; \
 		git clone ${PDC_REPO} && cd dataspace-connector; \

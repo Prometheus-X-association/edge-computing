@@ -1,0 +1,60 @@
+kind: Simple
+apiVersion: k3d.io/v1alpha5
+metadata:
+  name: bme
+servers: 1
+agents: 2
+ports:
+  # Export loadbalancer
+  - port: ${LOADBALANCER_PORT}:80
+    nodeFilters:
+      - loadbalancer
+  # Export PDC
+  - port: ${PDC_ENDPOINT_PORT}:${PDC_NODEPORT}
+    nodeFilters:
+      - agent:0
+volumes:
+  # Add registry CA cert
+  - volume: ${CA_DIR}/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
+    nodeFilters:
+      - all
+registries:
+  create:
+    name: ${REGISTRY}
+    image: ptx-edge/registry:1.0
+    hostPort: "${REGISTRY_PORT}"
+    volumes:
+      # Persist loaded images locally
+      - ${CFG_DIR}/.cache:/var/lib/registry
+  config: |
+    mirrors:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        endpoint:
+          - https://${REGISTRY}:${REGISTRY_PORT}
+    configs:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        auth:
+          username: ${REGISTRY_USER}
+          password: ${REGISTRY_SECRET}
+        tls:
+          ca_file: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+options:
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+  k3d:
+    wait: true
+    timeout: 30s
+    disableLoadbalancer: false
+    disableImageVolume: false
+    disableRollback: false
+  k3s:
+    nodeLabels:
+      # Put each agent node into Privacy Zone 0
+      - label: privacy-zone.dataspace.ptx.org/zone-0=true
+        nodeFilters:
+          - agent:*
+      # Mark agent-0 as the zone leader
+      - label: connector.dataspace.ptx.org/enabled=true
+        nodeFilters:
+          - agent:0

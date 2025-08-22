@@ -66,7 +66,7 @@ setup:
 	@echo
 	kubectl create configmap registry-root-ca.crt --from-file=ca.crt=registry/.certs/ca/ca.crt
 	@echo
-	@echo ">>> Uploaded repositories:"
+	@echo ">>> Uploaded images:"
 	curl -Sskf --cacert ${CA_DIR}/ca.crt -u ${CREDS} -X GET https://${K3D_REG}/v2/_catalog | python3 -m json.tool
 	@#${MAKE} -C ../src/ptx/ run-catalog
 	@echo
@@ -120,7 +120,7 @@ run-pdc-pod: run-catalog
 
 run-pdc-daemon: run-catalog
 	kubectl apply -f assets/ptx-pdc-daemon.yaml
-	kubectl wait --for=jsonpath='.status.numberReady'=1 daemonset/pdc
+	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=20s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
 		( kubectl logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
