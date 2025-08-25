@@ -15,9 +15,18 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
+SUB_MODULES = ('kubernetes.client.rest',)
+
 
 def set_logging_level(verbosity: int = 0):
-    if verbosity == 0:
+    if verbosity < 1:
         logging.getLogger().setLevel(logging.INFO)
+        for submodule in SUB_MODULES:
+            logging.getLogger(submodule).setLevel(logging.WARNING)
     elif verbosity == 1:
         logging.getLogger().setLevel(logging.DEBUG)
+        for submodule in SUB_MODULES:
+            logging.getLogger(submodule).setLevel(logging.INFO)
+    elif verbosity > 1:
+        for submodule in SUB_MODULES:
+            logging.getLogger(submodule).setLevel(logging.DEBUG)

@@ -62,6 +62,7 @@ def main():
     parser.add_argument("-V", "--version", action='version',
                         version=f"{parser.description} v{__version__}")
     args = parser.parse_args()
+    # Set up logging
     set_logging_level(verbosity=args.verbose)
     log.info(" builder START ".center(80, '='))
     log.debug("Configuration arguments: %s", args)
@@ -79,6 +80,7 @@ def main():
             log.exception(e)
         sys.exit(os.EX_SOFTWARE)
     log.info(" builder END ".center(80, '='))
+    # Return value based on success
     sys.exit(os.EX_OK if success else os.EX_SOFTWARE)
 
 
