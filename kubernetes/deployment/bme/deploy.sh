@@ -20,10 +20,13 @@ source ./bme-setup-config.sh
 
 function cleanup() {
     echo
-    echo ">>>>>>>>> Invoke ${0}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
-    k3d cluster delete --all || true
+    k3d cluster list "${CLUSTER}" || cluster_missing="$?"
+    if [ ! "${cluster_missing+0}" ]; then
+        kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
+    fi
+    k3d cluster delete "${CLUSTER}" || true
     rm -rf "${CFG_DIR}/.cache"
     docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
 	docker image prune -f
@@ -31,7 +34,7 @@ function cleanup() {
 
 function build() {
     echo
-    echo ">>>>>>>>> Invoke ${0}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     for modul in ${PTX_EDGE_COMPONENTS}; do
         make -C "${PROJECT_ROOT}/src/${modul}" build
@@ -45,7 +48,7 @@ function build() {
 
 function setup() {
     echo
-    echo ">>>>>>>>> Invoke ${0}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster create --config="${CFG_DIR}/k3d-bme-cluster.yaml"
 	kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}"
@@ -65,7 +68,7 @@ function setup() {
 
 function deploy() {
     echo
-    echo ">>>>>>>>> Invoke ${0}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
 	envsubst <"${CFG_DIR}/ptx-pdc-daemon.yaml" | kubectl apply -f=-
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
@@ -77,7 +80,7 @@ function deploy() {
 
 function status() {
     echo
-    echo ">>>>>>>>> Deployment status:"
+    echo ">>>>>>>>> Cluster[${CLUSTER}] deployment status:"
     echo
 	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
 }

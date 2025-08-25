@@ -23,6 +23,8 @@ PDC_COMPONENTS="connector mongodb"
 
 ################################## Deploy parameters
 
+CLUSTER=bme
+
 REGISTRY="registry.k3d.local"
 REGISTRY_IMG="ptx-edge/registry:1.0"
 REGISTRY_PORT=5000
