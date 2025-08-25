@@ -46,7 +46,7 @@ NAMESPACE="ptx-edge"
 
 ################################## PDC setup
 
-source "${CFG_DIR}/.cred/bme-pdc-creds.sh"
+source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
 #PDC_ENDPOINT_HOST=
 #PDC_SERVICE_KEY=
 #PDC_SECRET_KEY=
