@@ -49,7 +49,7 @@ RET_VAL=0
 
 function install_deps() {
 	echo -e "\n>>> Install dependencies...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl uidmap make bash-completion git
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl uidmap make bash-completion git apache2-utils
 }
 
 function install_docker() {
@@ -290,6 +290,9 @@ EOF
 done
 
 # Main --------------------------------------------------------------------------------
+
+### Basic dependencies
+install_deps
 
 ### Docker
 if ! command -v docker >/dev/null 2>&1; then

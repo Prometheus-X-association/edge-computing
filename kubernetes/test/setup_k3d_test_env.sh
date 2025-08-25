@@ -44,7 +44,7 @@ RET_VAL=0
 
 function install_deps() {
 	echo -e "\n>>> Install dependencies...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl make bash-completion
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl make bash-completion apache2-utils
 }
 
 function install_docker() {
