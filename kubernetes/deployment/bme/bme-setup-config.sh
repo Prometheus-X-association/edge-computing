@@ -23,7 +23,8 @@ PDC_COMPONENTS="connector mongodb"
 
 ################################## Deploy parameters
 
-REGISTRY=registry.k3d.local
+REGISTRY="registry.k3d.local"
+REGISTRY_IMG="ptx-edge/registry:1.0"
 REGISTRY_PORT=5000
 REGISTRY_USER="admin"
 REGISTRY_SECRET="admin"
@@ -31,15 +32,19 @@ REGISTRY_SECRET="admin"
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
 CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
+CA_CERT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 
 LOADBALANCER_PORT=8888
 PDC_NODEPORT=30003
-
-##################################
-
-NAMESPACE=ptx-edge
-
-#PDC_ENDPOINT_HOST=
 PDC_ENDPOINT_PORT=3000
+
+################################## PTX-edge setup
+
+NAMESPACE="ptx-edge"
+
+################################## PDC setup
+
+source "${CFG_DIR}/.cred/bme-pdc-creds.sh"
+#PDC_ENDPOINT_HOST=
 #PDC_SERVICE_KEY=
 #PDC_SECRET_KEY=

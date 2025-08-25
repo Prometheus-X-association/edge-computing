@@ -15,13 +15,13 @@ ports:
       - agent:0
 volumes:
   # Add registry CA cert
-  - volume: ${CA_DIR}/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
+  - volume: ${CA_DIR}/ca.crt:${CA_CERT_PATH}:ro
     nodeFilters:
       - all
 registries:
   create:
     name: ${REGISTRY}
-    image: ptx-edge/registry:1.0
+    image: ${REGISTRY_IMG}
     hostPort: "${REGISTRY_PORT}"
     volumes:
       # Persist loaded images locally
@@ -37,7 +37,7 @@ registries:
           username: ${REGISTRY_USER}
           password: ${REGISTRY_SECRET}
         tls:
-          ca_file: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+          ca_file: ${CA_CERT_PATH}
 options:
   kubeconfig:
     updateDefaultKubeconfig: true

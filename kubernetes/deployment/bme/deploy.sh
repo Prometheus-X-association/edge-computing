@@ -15,11 +15,13 @@
 set -eou pipefail
 
 source ./bme-setup-config.sh
-source "${CFG_DIR}/.cred/bme-pdc-creds.sh"
 
 ########################################################################################################################
 
 function cleanup() {
+    echo
+    echo ">>>>>>>>> Invoke ${0}....."
+    echo
     kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
     k3d cluster delete --all || true
     rm -rf "${CFG_DIR}/.cache"
@@ -28,6 +30,9 @@ function cleanup() {
 }
 
 function build() {
+    echo
+    echo ">>>>>>>>> Invoke ${0}....."
+    echo
     for modul in ${PTX_EDGE_COMPONENTS}; do
         make -C "${PROJECT_ROOT}/src/${modul}" build
     done
@@ -39,6 +44,9 @@ function build() {
 }
 
 function setup() {
+    echo
+    echo ">>>>>>>>> Invoke ${0}....."
+    echo
     k3d cluster create --config="${CFG_DIR}/k3d-bme-cluster.yaml"
 	kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}"
 	for img in ${PTX_EDGE_COMPONENTS}; do
@@ -56,6 +64,9 @@ function setup() {
 }
 
 function deploy() {
+    echo
+    echo ">>>>>>>>> Invoke ${0}....."
+    echo
 	envsubst <"${CFG_DIR}/ptx-pdc-daemon.yaml" | kubectl apply -f=-
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	echo "Waiting for PDC to set up..."
@@ -65,6 +76,8 @@ function deploy() {
 }
 
 function status() {
+    echo
+    echo ">>>>>>>>> Deployment status:"
     echo
 	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
 }
