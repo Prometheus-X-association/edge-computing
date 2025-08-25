@@ -23,7 +23,7 @@ function cleanup() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster list "${CLUSTER}" || cluster_missing="$?"
-    if [ ! "${cluster_missing+0}" ]; then
+    if [ ! "${cluster_missing-0}" ]; then
         kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
     fi
     k3d cluster delete "${CLUSTER}" || true
