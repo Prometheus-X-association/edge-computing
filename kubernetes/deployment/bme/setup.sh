@@ -97,7 +97,9 @@ function status() {
     echo ">>>>>>>>> Cluster[${CLUSTER}] deployment status:"
     echo
 	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
+	echo
 	kubectl get events
+	echo
 	kubectl logs ds/pdc
 }
 

@@ -13,19 +13,19 @@
 # limitations under the License.
 
 deploy:
-	bash setup.sh
+	@bash setup.sh
 
 start:
-	bash setup.sh -d
+	@bash setup.sh -d
 
 stop:
-	bash setup.sh -r
+	@bash setup.sh -r
 
 status:
-	bash setup.sh -s
+	@bash setup.sh -s
 
 teardown:
-	bash setup.sh -c
+	@bash setup.sh -c
 
 .PHONY: deploy start stop status teardown
 .DEFAULT_GOAL := deploy
