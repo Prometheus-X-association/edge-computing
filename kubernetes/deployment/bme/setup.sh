@@ -22,6 +22,7 @@ function build() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
+    git pull
     for modul in ${PTX_EDGE_COMPONENTS}; do
         make -C "${PROJECT_ROOT}/src/${modul}" build
     done
