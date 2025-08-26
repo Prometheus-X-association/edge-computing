@@ -62,9 +62,9 @@ options:
       - label: privacy-zone.dataspace.ptx.org/zone-A=true
         nodeFilters:
           - agent:*
-      #- label: privacy-zone.dataspace.ptx.org/zone-B=true
-      #  nodeFilters:
-      #    - agent:*
+      - label: privacy-zone.dataspace.ptx.org/zone-B=true
+        nodeFilters:
+          - agent:*
       - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
           - agent:*

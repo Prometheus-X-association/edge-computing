@@ -13,11 +13,11 @@
 # limitations under the License.
 import os
 
-from app.datasource import collect_data_from_file, collect_data_from_url
+from app.datasource import collect_data_from_filesystem, collect_data_from_url
 
 
 def test_builder_datasource_file():
-    collect_data_from_file("file://app/util/helper.py", "file://./dst_file.txt")
+    collect_data_from_filesystem("file://app/util/helper.py", "file://./dst_file.txt")
     os.remove("./dst_file.txt")
 
 

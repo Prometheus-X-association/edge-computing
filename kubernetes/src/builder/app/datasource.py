@@ -27,7 +27,7 @@ from app.util.parsers import DataSourceAuth
 log = logging.getLogger(__name__)
 
 
-def collect_data_from_file(src: str, dst: str) -> pathlib.Path:
+def collect_data_from_filesystem(src: str, dst: str) -> pathlib.Path:
     """
     Collect data from file.
 
@@ -117,7 +117,7 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
                 tmp.write(data_content.encode(encoding=data.get("encoding", "utf-8")))
-                dst_path = collect_data_from_file(src=tmp.name, dst=dst)
+                dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'url':
             url, auth = data['url'], data.get('auth')
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth)
@@ -141,8 +141,8 @@ def get_data_resources() -> pathlib.Path:
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     match get_resource_scheme(data_src):
-        case 'file' | 'local':
-            data_path = collect_data_from_file(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
+        case 'file' | 'dir' | 'mount':
+            data_path = collect_data_from_filesystem(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
         case 'http' | 'https':
             auth = CONFIG.get('data.auth')
             data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
