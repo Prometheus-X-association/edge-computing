@@ -18,20 +18,6 @@ source ./bme-setup-config.sh
 
 ########################################################################################################################
 
-function cleanup() {
-    echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
-    echo
-    k3d cluster list "${CLUSTER}" || cluster_missing="$?"
-    if [ ! "${cluster_missing-0}" ]; then
-        kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
-    fi
-    k3d cluster delete "${CLUSTER}" || true
-    rm -rf "${CFG_DIR}/.cache"
-    docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
-	docker image prune -f
-}
-
 function build() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
@@ -46,7 +32,7 @@ function build() {
 	echo
 }
 
-function setup() {
+function init() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
@@ -70,26 +56,46 @@ function deploy() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
+    kubectl get ns "${NAMESPACE}" || (
+        kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
 	envsubst <"${CFG_DIR}/ptx-pdc-daemon.yaml" | kubectl apply -f=-
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
 	echo "Waiting for PDC to set up..."
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
-		( kubectl logs -f pod/"${pod}" -c ptx-connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
 }
+
+function remove() {
+    echo
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo
+    k3d cluster list "${CLUSTER}" || cluster_missing="$?"
+    if [ ! "${cluster_missing+0}" ]; then
+        kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
+    fi
+}
+
+
+function cleanup() {
+    remove
+    echo
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo
+    k3d cluster delete "${CLUSTER}" || true
+    rm -rf "${CFG_DIR}/.cache"
+    docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
+	docker image prune -f
+}
+
 
 function status() {
     echo
     echo ">>>>>>>>> Cluster[${CLUSTER}] deployment status:"
     echo
 	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
+	kubectl get events
 }
-
-########################################################################################################################
-
-echo
-echo "Start deployment of cluster: ${CLUSTER}"
-echo
 
 ########################################################################################################################
 
@@ -99,15 +105,42 @@ Usage: $0 [options]
 
 Options:
     -c  Only perform cleanup.
+    -b  Only perform build.
+    -i  Only perform init.
+    -d  Only perform deploy.
+    -r  Only perform remove.
+    -s  Only perform status.
     -t  Set global timeout parameter (def: ${TIMEOUT})
     -h  Display help.
 EOF
 }
 
-while getopts ":t:ch" flag; do
+while getopts ":t:hcbidrs" flag; do
 	case "${flag}" in
         c)
             cleanup
+            exit 0
+            ;;
+        b)
+            build
+            exit 0
+            ;;
+        i)
+            init
+            exit 0
+            ;;
+        d)
+            deploy
+            status
+            exit 0
+            ;;
+        r)
+            remove
+            status
+            exit 0
+            ;;
+        s)
+            status
             exit 0
             ;;
         t)
@@ -127,9 +160,15 @@ done
 
 ########################################################################################################################
 
+echo
+echo "Start deployment of cluster: ${CLUSTER}"
+echo
+
+########################################################################################################################
+
 cleanup
 build
-setup
+init
 deploy
 status
 

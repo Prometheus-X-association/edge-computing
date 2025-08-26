@@ -12,11 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+deploy:
+	bash setup.sh
+
 start:
-	bash deploy.sh
+	bash setup.sh -d
 
 stop:
-	bash deploy.sh -c
+	bash setup.sh -r
 
-.PHONY: start stop
-.DEFAULT_GOAL := setup
+status:
+	bash setup.sh -s
+
+teardown:
+	bash setup.sh -c
+
+.PHONY: deploy start stop status teardown
+.DEFAULT_GOAL := deploy
