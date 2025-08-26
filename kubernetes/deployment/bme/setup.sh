@@ -37,7 +37,9 @@ function init() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster create --config="${CFG_DIR}/k3d-bme-cluster.yaml"
-	kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}"
+	kubectl create namespace "${NAMESPACE}"
+	kubectl config set-context --current --namespace "${NAMESPACE}"
+	kubectl cluster-info
 	for img in ${PTX_EDGE_COMPONENTS}; do
         IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
         skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
@@ -95,6 +97,7 @@ function status() {
     echo
 	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
 	kubectl get events
+	kubectl logs ds/pdc
 }
 
 ########################################################################################################################

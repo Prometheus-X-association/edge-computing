@@ -16,7 +16,7 @@ set -o allexport
 CFG_DIR=$(readlink -f "$(dirname "$0")")
 PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
 
-TIMEOUT=60s
+TIMEOUT=120s
 
 ################################## Build parameters
 
