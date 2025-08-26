@@ -9,7 +9,7 @@ data:
     PORT=3000
     SESSION_SECRET=abc
     SESSION_COOKIE_EXPIRATION=24000
-    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
+    MONGO_URI=mongodb://127.0.0.1:27017/dataspace-connector
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
     JWT_BEARER_TOKEN_EXPIRATION=3h
