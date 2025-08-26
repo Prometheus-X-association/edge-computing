@@ -16,6 +16,8 @@ set -o allexport
 CFG_DIR=$(readlink -f "$(dirname "$0")")
 PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
 
+TIMEOUT=60s
+
 ################################## Build parameters
 
 PTX_EDGE_COMPONENTS="builder rest-api scheduler registry"
@@ -23,7 +25,7 @@ PDC_COMPONENTS="connector mongodb"
 
 ################################## Deploy parameters
 
-CLUSTER=bme
+CLUSTER="bme"
 
 REGISTRY="registry.k3d.local"
 REGISTRY_IMG="ptx-edge/registry:1.0"

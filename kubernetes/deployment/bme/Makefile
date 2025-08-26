@@ -16,7 +16,7 @@ start:
 	bash deploy.sh
 
 stop:
-	k3d cluster delete --all
+	bash deploy.sh -c
 
 .PHONY: start stop
 .DEFAULT_GOAL := setup

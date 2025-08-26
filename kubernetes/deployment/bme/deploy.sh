@@ -71,10 +71,10 @@ function deploy() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
 	envsubst <"${CFG_DIR}/ptx-pdc-daemon.yaml" | kubectl apply -f=-
-	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
+	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
 	echo "Waiting for PDC to set up..."
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
-		( kubectl logs -f pod/"${pod}" -c ptx-connector & ) | timeout 30 grep -m1 "Server running on"
+		( kubectl logs -f pod/"${pod}" -c ptx-connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
 }
 
@@ -87,8 +87,54 @@ function status() {
 
 ########################################################################################################################
 
+echo
+echo "Start deployment of cluster: ${CLUSTER}"
+echo
+
+########################################################################################################################
+
+function display_help() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+    -c  Only perform cleanup.
+    -t  Set global timeout parameter (def: ${TIMEOUT})
+    -h  Display help.
+EOF
+}
+
+while getopts ":t:ch" flag; do
+	case "${flag}" in
+        c)
+            cleanup
+            exit 0
+            ;;
+        t)
+            TIMEOUT=${OPTARG}
+            echo "Global timeout set to ${TIMEOUT}"
+            ;;
+        h)
+            display_help
+            exit 2
+            ;;
+        ?)
+            echo "Invalid parameter: -${OPTARG} !"
+            exit 1
+            ;;
+    esac
+done
+
+########################################################################################################################
+
 cleanup
 build
 setup
 deploy
 status
+
+########################################################################################################################
+
+echo
+echo "Cluster: ${CLUSTER} deployed."
+echo

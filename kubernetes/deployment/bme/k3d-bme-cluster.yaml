@@ -44,7 +44,7 @@ options:
     switchCurrentContext: true
   k3d:
     wait: true
-    timeout: 30s
+    timeout: ${TIMEOUT}
     disableLoadbalancer: false
     disableImageVolume: false
     disableRollback: false
