@@ -92,7 +92,7 @@ shell:
 
 run-catalog:
 	kubectl -n ptx-sandbox apply -f assets/ptx-sandbox-setup.yaml -l app=catalog
-	kubectl -n ptx-sandbox wait --for="condition=Ready" --timeout=20s pod/catalog
+	kubectl -n ptx-sandbox wait --for="condition=Ready" --timeout=30s pod/catalog
 	@echo
 	@kubectl -n ptx-sandbox get all -o wide
 	@echo
@@ -103,7 +103,7 @@ run-catalog:
 
 run-pdc-pod: run-catalog
 	kubectl apply -f assets/ptx-pdc-pod.yaml
-	kubectl wait --for="condition=Ready" --timeout=20s pod/pdc
+	kubectl wait --for="condition=Ready" --timeout=30s pod/pdc
 	@echo "Waiting for PDC to set up..."
 	( kubectl logs -f pod/pdc -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo
@@ -120,7 +120,7 @@ run-pdc-pod: run-catalog
 
 run-pdc-daemon: run-catalog
 	kubectl apply -f assets/ptx-pdc-daemon.yaml
-	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=20s daemonset/pdc
+	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
 		( kubectl logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
@@ -140,8 +140,8 @@ run-pdc-daemon: run-catalog
 
 run-api:
 	kubectl apply -f assets/ptx-rest-api-pod.yaml
-	kubectl wait --for="condition=Ready" --timeout=20s pod/rest-api
-	( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
+	kubectl wait --for="condition=Ready" --timeout=30s pod/rest-api
+	@#( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
 	@echo
 	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/v1/ui/"
 	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
@@ -149,7 +149,7 @@ run-api:
 
 run-builder:
 	envsubst <assets/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-
-	kubectl wait --for="condition=Ready" --timeout=20s pod/builder
+	kubectl wait --for="condition=Ready" --timeout=30s pod/builder
 	@echo
 	kubectl get all -o wide
 	@echo
@@ -159,7 +159,7 @@ run-builder:
 
 run-scheduler:
 	kubectl apply -f assets/ptx-scheduler-pod.yaml
-	kubectl wait --for="condition=Ready" --timeout=20s pod/scheduler
+	kubectl wait --for="condition=Ready" --timeout=30s pod/scheduler
 	@echo
 	kubectl get all -o wide
 	@echo
@@ -198,11 +198,11 @@ run-sample-gbc:
 
 run-test-job:
 	kubectl apply -f assets/ptx-test-worker-job.yaml
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
 	kubectl get all,pv,pvc -o wide
 	@echo
-	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
 	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-job builder
@@ -215,11 +215,11 @@ registry-ca:
 
 run-test-img: registry-ca
 	kubectl apply -f assets/ptx-test-worker-img.yaml
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
 	kubectl get all,pv,pvc,configmaps,secrets -o wide
 	@echo
-	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
 	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-img builder
@@ -233,11 +233,11 @@ endif
 
 run-test-secret:
 	envsubst <assets/ptx-test-worker-secret.yaml '$${DH_TOKEN}' | kubectl apply -f=-
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
 	kubectl get all,pv,pvc,configmaps,secrets -o wide
 	@echo
-	@# kubectl wait --for="condition=Complete" --timeout=20s job/consumer
+	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
 	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-secret builder

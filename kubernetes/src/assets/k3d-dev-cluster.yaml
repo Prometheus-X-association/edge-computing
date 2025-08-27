@@ -5,12 +5,12 @@ metadata:
 servers: 1
 agents: 1
 ports:
-  #- port: 8080:80
-  #  nodeFilters:
-  #    - loadbalancer
-  - port: 8888:30003
+  - port: 8888:80
     nodeFilters:
-      - agent:0
+      - loadbalancer
+  - port: 3000:30003
+    nodeFilters:
+      - agent:0:direct
 volumes:
   # Development purposes
   - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
