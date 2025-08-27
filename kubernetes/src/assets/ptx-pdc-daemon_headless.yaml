@@ -109,7 +109,7 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "-f" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "-f", "--type=headless", "--port=30003" ]
           #command: [ "/bin/sh", "-c", "sleep infinity" ]
           volumeMounts:
             - name: src
