@@ -18,6 +18,8 @@ import os
 import pathlib
 import pprint
 import sys
+import typing
+from email.policy import default
 
 from kubernetes import client
 from kubernetes.client import OpenApiException, ApiException
@@ -36,20 +38,42 @@ K8S_ENDPOINTSLICE_MGR = 'endpointslice.kubernetes.io/managed-by'
 PTX_CONNECTOR_ENABLED = 'connector.dataspace.ptx.org/enabled'
 PTX_PRIVACY_ZONE = 'privacy-zone.dataspace.ptx.org'
 
-DEF_PDC_PORT = 30003
+DEF_PDC_PORT = 3000
+DEF_PDC_NODEPORT = 30003
 DEF_NS = "ptx-edge"
 DEF_APP = "pdc"
 DEF_PORT_NAME = "pdc-port"
 
 CONFIG = {"ip": os.getenv("NODE_IP"),
-          "port": int(os.getenv("NODE_PORT", default=DEF_PDC_PORT)),
+          "port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
+          "pod": os.getenv("HOSTNAME"),
           "namespace": os.getenv("NAMESPACE", default=DEF_NS),
           "app": os.getenv("APP_NAME", default=DEF_APP)}
 
-REQUIRED_FIELDS = ("ip", "port", "namespace")
+REQUIRED_FIELDS = ("type", "ip", "namespace")
 
 
 ########################################################################################################################
+
+def dump_k8s_obj(o: dict) -> str:
+    def _deep_filter(data: object, keep: typing.Callable = bool) -> object:
+        """
+
+        :param data:
+        :param keep:
+        :return:
+        """
+        if isinstance(data, dict):
+            return dict(filter(lambda kv: bool(kv[1]), ((k, _deep_filter(v, keep)) for k, v in data.items())))
+        elif isinstance(data, (list, tuple, set)):
+            return type(data)(filter(bool, (_deep_filter(v, keep) for v in data)))
+        elif keep(data):
+            return data
+        else:
+            return None
+
+    return json.dumps(_deep_filter(o), indent=4, default=str)
+
 
 def _load_config(token: str = PROJECTED_TOKEN_FILE, cert: str = PROJECTED_CERT_FILE) -> InClusterConfigLoader:
     """
@@ -72,16 +96,17 @@ def _collect_privacy_zone_labels(node_ip: str) -> list:
     :param node_ip: 
     :return: 
     """
-    log.debug(f">>> Collect Privacy Zone labels...")
+    log.info(f">>> Collect Privacy Zone labels...")
     v1_node_list = client.CoreV1Api().list_node(label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
-    log.debug(f"Received nodes:\n{json.dumps(v1_node_list.to_dict(), indent=4, default=str)}")
+    log.debug(f"Received nodes:\n{dump_k8s_obj(v1_node_list.to_dict())}")
     labels = [node.metadata.labels for node in v1_node_list.items
               if len(node.status.addresses) > 0 and
               list(filter(lambda a: a.type == 'InternalIP' and a.address == node_ip, node.status.addresses))]
     log.debug(f"Extracted labels of node[{node_ip}]:\n{pprint.pformat(labels)}")
     if len(labels) > 0:
-        labels = list(filter(lambda l: l.startswith(PTX_PRIVACY_ZONE), labels.pop()))
-    log.debug(f"Extracted privacy zone labels: {labels}")
+        labels = [l for l, _ in filter(lambda lv: lv[0].startswith(PTX_PRIVACY_ZONE) and lv[1] == 'true',
+                                       (kv for kv in labels[0].items()))]
+    log.info(f"Extracted privacy zone labels: {labels}")
     return labels
 
 
@@ -104,15 +129,37 @@ def _create_headless_service(name: str, port: int, namespace: str, app: str = No
     :param app:
     :return:
     """
-    log.debug(f">>> Creating headless service with name: {name}")
+    log.info(f">>> Creating headless service with name: {name}")
     srv_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
                                                              labels={"app": app} if app else None),
                                 spec=client.V1ServiceSpec(type="ClusterIP",
                                                           cluster_ip="None",
+
                                                           ports=[client.V1ServicePort(name=DEF_PORT_NAME,
                                                                                       protocol="TCP",
                                                                                       port=port,
                                                                                       target_port=port)]))
+    return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body)
+
+
+def _create_cluster_service(name: str, port: int, namespace: str, selector: dict[str, str],
+                            app: str = None) -> client.V1Service:
+    """
+
+    :param name:
+    :param port:
+    :param namespace:
+    :param app:
+    :return:
+    """
+    log.info(f">>> Creating cluster service with name: {name}")
+    srv_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
+                                                             labels={"app": app} if app else None),
+                                spec=client.V1ServiceSpec(type="ClusterIP",
+                                                          selector=selector,
+                                                          ports=[client.V1ServicePort(name=DEF_PORT_NAME,
+                                                                                      protocol="TCP",
+                                                                                      port=port)]))
     return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body)
 
 
@@ -127,7 +174,7 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     :param app:
     :return:
     """
-    log.debug(f">>> Creating endpointslice for service: {service_name}...")
+    log.info(f">>> Creating endpointslice for service: {service_name}...")
     labels = {K8S_ENDPOINTSLICE_SRV_NAME: service_name,
               K8S_ENDPOINTSLICE_MGR: "controller.ptx-edge.org"}
     if app:
@@ -143,9 +190,18 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=eps_body)
 
 
+def _patch_pod_labels(pod: str, namespace: str, labels: dict[str, str]) -> client.V1Pod:
+    log.info(f">>> Patching pod[{pod}]...")
+    pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
+    log.debug(f"Created pod patch:\n{dump_k8s_obj(pod_patch.to_dict())}")
+    pod = client.CoreV1Api().patch_namespaced_pod(name=pod, namespace=namespace, body=pod_patch)
+    log.debug(f"Patched pod:\n{dump_k8s_obj(pod.to_dict())}")
+    return pod
+
+
 ########################################################################################################################
 
-def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, force: bool = False, **kwargs):
+def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = None, force: bool = False, **kwargs):
     """
 
     :param port:
@@ -156,8 +212,6 @@ def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, for
     :param kwargs:
     :return:
     """
-    _load_config()
-    log.info("Creating service(s) for PDC...")
     try:
         zones = _collect_privacy_zone_labels(node_ip=ip)
         if len(zones) == 0:
@@ -186,37 +240,88 @@ def create_pdc_services(port: int, ip: str, namespace: str, app: str = None, for
                     srv = _create_headless_service(name=srv_name, port=port, namespace=namespace, app=app)
                 else:
                     raise
-            log.debug(f"Created service:\n{json.dumps(srv.to_dict(), indent=4, default=str)}")
+            log.debug(f"Created service:\n{dump_k8s_obj(srv.to_dict())}")
             eps = _create_nodeport_endpointslice(service_name=srv_name, address=ip, target_port=port,
                                                  namespace=namespace, app=app)
-            log.debug(f"Created endpointslice:\n{json.dumps(eps.to_dict(), indent=4, default=str)}")
+            log.debug(f"Created endpointslice:\n{dump_k8s_obj(eps.to_dict())}")
     except OpenApiException as e:
         log.error(f"Received error:\n{e}")
         sys.exit(os.EX_IOERR)
 
 
+def create_clusterip_pdc_services(ip: str, pod: str, namespace: str, port: int, app: str = None, force: bool = False,
+                                  **kwargs):
+    try:
+        zones = _collect_privacy_zone_labels(node_ip=ip)
+        if len(zones) == 0:
+            log.warning("No privacy zone label detected! Skip patching...")
+        else:
+            _patch_pod_labels(pod=pod, namespace=namespace, labels=dict.fromkeys(zones, "true"))
+        if not force:
+            return
+        elif len(zones) < 1:
+            log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
+            zones.append(None)
+        elif len(zones) > 1:
+            log.warning(f"Multiple privacy zone label detected for one node[{ip}]!")
+            log.info("Forcing to create PDC service for each privacy zone...")
+        for zone in zones:
+            srv_name = f"{DEF_APP}-{zone.split('/')[-1]}".lower() if zone else DEF_APP
+            selector = {'app': app, zone: "true"} if zone else {'app': app}
+            try:
+                srv = _create_cluster_service(name=srv_name, port=port, namespace=namespace, app=app,
+                                              selector=selector)
+            except ApiException as e:
+                if e.reason == 'Conflict':
+                    log.warning(f"Service[{srv_name}] already exists. Recreate resources...")
+                    del_srv = _delete_service(name=srv_name, namespace=namespace)
+                    log.info(f"Service[{srv_name}] deleted with status: {del_srv.status}")
+                    srv = _create_cluster_service(name=srv_name, port=port, namespace=namespace, app=app,
+                                                  selector=selector)
+                else:
+                    raise
+            log.debug(f"Created service:\n{dump_k8s_obj(srv.to_dict())}")
+    except OpenApiException as e:
+        log.error(f"Received error:\n{e}")
+        sys.exit(os.EX_IOERR)
+
+
+########################################################################################################################
+
+
 def main():
-    parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="Service Creator")
-    parser.add_argument("-p", "--port", metavar="", type=int, help="Port bound on the node")
+    parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="PDC Service Creator")
+    parser.add_argument("-t", "--type", type=str, required=True, help="Service type [headless,clusterip]")
+    parser.add_argument("-p", "--port", type=int, help="Port bound on the node")
     parser.add_argument("-i", "--ip", type=str, help="Node IP address")
+    parser.add_argument("--pod", type=str, help="Own pod name")
     parser.add_argument("-n", "--namespace", type=str, help="Namespace name")
     parser.add_argument("-a", "--app", type=str, help="Application name")
     parser.add_argument("-f", "--force", action="store_true",
-                        help="Recreate resource even if it already exists")
+                        help="Force (re)creating service even if it exists")
     parser.add_argument("-v", "--verbose", action="store_true", help="Make logging verbose")
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     logging.getLogger('kubernetes.client.rest').setLevel(logging.INFO)
-    log.info(" Service Creator START ".center(80, '#'))
+    log.info(" PDC init START ".center(80, '#'))
     log.debug(f"Parsed CLI args: {args}")
     CONFIG.update(kv for kv in vars(args).items() if kv[1] is not None)
     if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
         log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")
         sys.exit(os.EX_CONFIG)
     log.debug(f"Configuration parameters: {CONFIG}")
-    create_pdc_services(**CONFIG)
-    log.info(" Service Creator END ".center(80, '#'))
+    _load_config()
+    log.info("Creating service(s) for PDC...")
+    match args.type.upper():
+        case "HEADLESS":
+            create_headless_pdc_services(**CONFIG)
+        case "CLUSTERIP":
+            create_clusterip_pdc_services(**CONFIG)
+        case _:
+            log.error(f"Unrecognized type: {args.type}")
+            sys.exit(os.EX_IOERR)
+    log.info(" PDC init END ".center(80, '#'))
 
 
 if __name__ == '__main__':
