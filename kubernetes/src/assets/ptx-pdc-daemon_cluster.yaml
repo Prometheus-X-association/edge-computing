@@ -109,7 +109,8 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "-f", "--type=clusterip", "--port=3000" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip", "--port=3000" ]
+          #command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--force", "--type=clusterip", "--port=3000" ]
           #command: [ "/bin/sh", "-c", "sleep infinity" ]
           volumeMounts:
             - name: src
@@ -183,31 +184,31 @@ spec:
                         apiVersion: v1
                         fieldPath: metadata.namespace
                       path: namespace
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: pdc-zone-a
-#  namespace: ptx-edge
-#spec:
-#  selector:
-#    app: pdc
-#    privacy-zone.dataspace.ptx.org/zone-A: "true"
-#  type: ClusterIP
-#  ports:
-#    - name: pdc-port
-#      port: 3000
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: pdc-zone-b
-#  namespace: ptx-edge
-#spec:
-#  selector:
-#    app: pdc
-#    privacy-zone.dataspace.ptx.org/zone-B: "true"
-#  type: ClusterIP
-#  ports:
-#    - name: pdc-port
-#      port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc-zone-a
+  namespace: ptx-edge
+spec:
+  selector:
+    app: pdc
+    privacy-zone.dataspace.ptx.org/zone-A: "true"
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc-zone-b
+  namespace: ptx-edge
+spec:
+  selector:
+    app: pdc
+    privacy-zone.dataspace.ptx.org/zone-B: "true"
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: 3000
