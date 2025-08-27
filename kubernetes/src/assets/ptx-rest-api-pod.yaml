@@ -36,3 +36,22 @@ spec:
     - name: api-port
       port: 8080
       targetPort: api-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rest-api
+  namespace: ptx-edge
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: rest-api
+                port:
+                  number: 8080
+            path: /ptx-edge/v1
+            pathType: Prefix
