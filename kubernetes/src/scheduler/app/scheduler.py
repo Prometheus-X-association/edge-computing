@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import json
 import logging
 import os
 import pathlib
@@ -27,6 +28,7 @@ from app.utils import setup_logging
 log = logging.getLogger(__name__)
 
 DEF_SCHEDULER_NAME = "ptx-edge-scheduler"
+DEF_SCHEDULER_METHOD = "random"
 NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 CONFIG = {
@@ -68,22 +70,25 @@ def serve_forever(scheduler: str, namespace: str, method: str, **kwargs):
     log.info(f"Scheduler[{scheduler}] is listening on namespace: {namespace}...")
     watcher = watch.Watch()
     try:
-        for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace):
+        pod_filter = f"spec.schedulerName={scheduler},status.phase=Pending"
+        for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace, field_selector=pod_filter):
             _type, _pod = event['type'], event['object']
-            _name, _phase, _node = _pod.metadata.name, _pod.status.phase, _pod.spec.node_name
-            log.debug(f"Received event: {_pod.kind}[{_pod.metadata.name}] {_type} --> {_phase} on node: {_node}")
-            if _pod.spec.scheduler_name == scheduler and _phase == "Pending" and _type == 'ADDED':
-                try:
-                    log.info(f"{_type} {_phase} pod[{_name}] in namespace[{namespace}] "
-                             f"with scheduler[{scheduler}] detected!")
-                    result = schedule_pod(pod_name=_name, namespace=namespace, method=method)
-                    log.debug(f"Received scheduling result: {result}")
-                except client.OpenApiException as e:
-                    log.error(f"API exception received:\n{e}")
+            _name = _pod.metadata.name
+            log.debug(f"Received event: {_pod.kind}[{_name}] {_type} --> "
+                      f"{_pod.status.phase} on node: {_pod.status.phase}")
+            if _type != 'ADDED':
+                continue
+            try:
+                log.info(f"{_type} pod[{_name}] in namespace[{namespace}] with scheduler[{scheduler}] detected!")
+                result = schedule_pod(pod_name=_name, namespace=namespace, method=method)
+                log.debug(f"Received scheduling result: {result}")
+            except client.OpenApiException as e:
+                log.error(f"API exception received:\n{e}")
     except KeyboardInterrupt:
         pass
     finally:
         watcher.stop()
+        log.info("Stop watching for pod scheduling events")
 
 
 def setup_config(params: dict[str, typing.Any]):
@@ -92,13 +97,16 @@ def setup_config(params: dict[str, typing.Any]):
     :param params:
     :return:
     """
+    log.info("Loading configuration...")
     CONFIG.update(kv for kv in params.items() if kv[1] is not None)
     if CONFIG.get('namespace') is None and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve(strict=True)).exists():
         CONFIG['namespace'] = kube_cfg_ns.read_text()
     if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
         log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")
         sys.exit(os.EX_CONFIG)
+    log.debug(f"Loaded configuration:\n{json.dumps(CONFIG, indent=4, default=str)}")
     try:
+        log.debug("Loading in-cluster K8s configuration....")
         config.load_incluster_config()
     except config.ConfigException as e:
         log.error(f"Error loading Kubernetes API config:\n{e}")
@@ -107,12 +115,12 @@ def setup_config(params: dict[str, typing.Any]):
 def main():
     ################# Parse parameters
     parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="PTX-edge custom scheduler")
-    parser.add_argument("-m", "--method", type=str, default='random',
-                        help=f"Applied scheduling method")
+    parser.add_argument("-m", "--method", type=str, default=DEF_SCHEDULER_METHOD,
+                        help=f"Applied scheduling method (def: {DEF_SCHEDULER_METHOD})")
     parser.add_argument("-n", "--namespace", type=str, required=False,
-                        help="Watched worker namespace")
+                        help="Watched worker namespace (def: from kube cfg/envvar)")
     parser.add_argument("-s", "--scheduler", type=str, required=False, default=DEF_SCHEDULER_NAME,
-                        help="Scheduler name referenced by worker pods")
+                        help=f"Scheduler name referenced by worker pods (def: {DEF_SCHEDULER_NAME})")
     parser.add_argument("-v", "--verbose", action='count', default=0, required=False,
                         help="Increase verbosity")
     parser.add_argument("-V", "--version", action='version', version=f"{parser.description} v{__version__}")

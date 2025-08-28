@@ -9,8 +9,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
-import pprint
 import typing
 
 from kubernetes import client
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def get_available_nodes() -> typing.Generator[client.V1Node, None, None]:
-    for node in client.CoreV1Api().list_node().items:
+    for node in client.CoreV1Api().list_node(field_selector="spec.unschedulable=false").items:
         for status in node.status.conditions:
             if status.status == "True" and status.type == "Ready":
                 yield node
@@ -33,7 +33,7 @@ def assign_pod_to_node(pod_name: str, node_name: str, namespace: str) -> bool | 
                                                                  namespace=namespace),
                                     target=client.V1ObjectReference(kind='Node',
                                                                     name=node_name))
-    log.debug(f"Created binding body:\n{pprint.pformat(deep_filter(binding_body.to_dict()), compact=False, indent=4)}")
+    log.debug(f"Created binding body:\n{json.dumps(deep_filter(binding_body.to_dict()), indent=4, default=str)}")
     try:
         # Disable automatic response deserialization to bypass issue: https://github.com/kubernetes-client/python/issues/825
         client.CoreV1Api().create_namespaced_binding(namespace=namespace, body=binding_body, _preload_content=False)

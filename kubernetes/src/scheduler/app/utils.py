@@ -12,12 +12,14 @@
 import logging
 import typing
 
+log = logging.getLogger(__name__)
 
 def setup_logging(verbosity: int):
     logging.basicConfig(level=logging.DEBUG if verbosity > 0 else logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     logging.getLogger('kubernetes.client.rest').setLevel(
         logging.DEBUG if verbosity > 1 else logging.INFO if verbosity == 1 else logging.WARNING)
+    log.debug(f"Log level: {logging.getLevelName(logging.getLogger().level)}")
 
 
 def deep_filter(data: object, keep: typing.Callable = bool) -> object:
