@@ -226,11 +226,11 @@ spec:
   routes:
     - match: PathPrefix(`/ptx-edge/zone-a/pdc`)
       kind: Rule
+      middlewares:
+        - name: pdc-zone-a-stripprefix
       services:
         - name: pdc-zone-a
           port: 3000
-      middlewares:
-        - name: pdc-zone-a-stripprefix
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -256,11 +256,11 @@ spec:
   routes:
     - match: PathPrefix(`/ptx-edge/zone-b/pdc`)
       kind: Rule
+      middlewares:
+        - name: pdc-zone-b-stripprefix
       services:
         - name: pdc-zone-b
           port: 3000
-      middlewares:
-        - name: pdc-zone-b-stripprefix
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

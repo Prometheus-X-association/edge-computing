@@ -16,9 +16,9 @@ import pathlib
 import fastapi
 from starlette import responses, status
 
-from app import __version__, ROUTE_PREFIX
+from app import __version__
 from app.model.versions import VersionsResponse
-
+from app.config import CFG
 app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
                                   "services exploiting an underlying distributed edge computing infrastructure.",
@@ -26,8 +26,8 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       license_info=dict(name="Apache 2.0",
                                         url="https://www.apache.org/licenses/LICENSE-2.0.html"),
                       version=__version__,
-                      root_path=ROUTE_PREFIX,
-                      servers=[dict(url=ROUTE_PREFIX,
+                      root_path=CFG.root_path,
+                      servers=[dict(url=CFG.root_path,
                                     description="PTX Edge Computing")],
                       openapi_tags=[dict(name="customerAPI",
                                          description="Customer-facing API (EdgeAPI)",
@@ -59,4 +59,5 @@ if __name__ == '__main__':
     # http://localhost:8080/docs | http://localhost:8080/redoc
     import uvicorn
 
-    uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=8080, reload=True, access_log=True)
+    uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=8080, reload=True, access_log=True,
+                log_level="debug")

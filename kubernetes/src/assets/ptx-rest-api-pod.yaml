@@ -10,7 +10,11 @@ spec:
     - name: rest-api
       image: registry.k3d.local:5000/ptx-edge/rest-api:1.0
       imagePullPolicy: IfNotPresent
-      command: [ "uvicorn", "app.main:app", "--port=8080", "--reload", "--reload-dir=app" ]
+      command: [ "uvicorn", "app.main:app", "--host=0.0.0.0", "--port=8080", "--workers=2",
+                 "--reload", "--reload-dir=app", "--access-log", "--log-level=debug" ]
+      env:
+        - name: ROOT_PATH
+          value: "/ptx-edge/api/v1"
       ports:
         - name: api-port
           containerPort: 8080
@@ -48,10 +52,10 @@ spec:
   rules:
     - http:
         paths:
-          - backend:
+          - path: /ptx-edge/api/v1
+            pathType: Prefix
+            backend:
               service:
                 name: rest-api
                 port:
                   number: 8080
-            path: /ptx-edge/v1
-            pathType: Prefix

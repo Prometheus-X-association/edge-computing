@@ -79,7 +79,8 @@ status:
 	@echo
 	@-kubectl -n ptx-sandbox get all --ignore-not-found -o wide
 	@echo
-	@-kubectl get all,endpointslices,secrets,configmaps,pv,pvc,ingress --ignore-not-found -o wide
+	@-kubectl get all,endpointslices,secrets,configmaps,pv,pvc,ingress,ingressroutes.traefik.io,middlewares.traefik.io \
+ 			--ignore-not-found -o wide
 	@echo
 	@-kubectl events
 	@echo
@@ -154,6 +155,8 @@ run-pdc-daemon-cluster: run-catalog
 								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
 									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
 								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:3000/ >/dev/null"
+	wget -T3 -qS http://localhost:8888/ptx-edge/zone-a/pdc/ >/dev/null
+	wget -T3 -qS http://localhost:8888/ptx-edge/zone-b/pdc/ >/dev/null
 	@#kubectl exec -ti ds/pdc --container builder -- sh
 
 run-api:
@@ -161,9 +164,10 @@ run-api:
 	kubectl wait --for="condition=Ready" --timeout=30s pod/rest-api
 	@#( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
 	@echo
-	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/v1/ui/"
-	@curl -I "http://localhost:8888/ptx-edge/v1/ui/"
-	curl -LSs "http://localhost:8888/ptx-edge/v1/versions" | python3 -m json.tool
+	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/api/v1/ui/"
+	@sleep 3
+	wget -T3 -qS http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
+	curl -LSs "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
 
 run-builder:
 	envsubst <assets/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-

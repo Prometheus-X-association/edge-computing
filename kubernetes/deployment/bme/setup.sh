@@ -96,7 +96,7 @@ function status() {
     echo
     echo ">>>>>>>>> Cluster[${CLUSTER}] deployment status:"
     echo
-	kubectl get all,endpointslices,configmaps,secrets,ingress -o wide
+	kubectl get all,endpointslices,configmaps,secrets,ingress,ingressroutes.traefik.io,middlewares.traefik.io -o wide
 	echo
 	kubectl get events
 	echo
