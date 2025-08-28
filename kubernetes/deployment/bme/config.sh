@@ -23,7 +23,7 @@ TIMEOUT=120s
 PTX_EDGE_COMPONENTS="builder rest-api scheduler registry"
 PDC_COMPONENTS="connector mongodb"
 
-################################## Deploy parameters
+################################## Cluster parameters
 
 CLUSTER="bme"
 

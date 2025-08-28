@@ -1,0 +1,79 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pdc-zone-a
+  namespace: ptx-edge
+  labels:
+    app: pdc
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/ptx-edge/zone-a/pdc`)
+      kind: Rule
+      middlewares:
+        - name: pdc-zone-a-stripprefix
+      services:
+        - name: pdc-zone-a
+          port: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: pdc-zone-a-stripprefix
+  labels:
+    app: pdc
+spec:
+  stripPrefix:
+    prefixes:
+      - /ptx-edge/zone-a/pdc
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pdc-zone-b
+  namespace: ptx-edge
+  labels:
+    app: pdc
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/ptx-edge/zone-b/pdc`)
+      kind: Rule
+      middlewares:
+        - name: pdc-zone-b-stripprefix
+      services:
+        - name: pdc-zone-b
+          port: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: pdc-zone-b-stripprefix
+  labels:
+    app: pdc
+spec:
+  stripPrefix:
+    prefixes:
+      - /ptx-edge/zone-b/pdc
+#---
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: pdc
+#  labels:
+#    app: pdc
+#  annotations:
+#    ingress.kubernetes.io/ssl-redirect: "false"
+#spec:
+#  rules:
+#  - http:
+#      paths:
+#      - path: /
+#        pathType: Prefix
+#        backend:
+#          service:
+#            name: pdc-zone-a
+#            port:
+#              number: 3000

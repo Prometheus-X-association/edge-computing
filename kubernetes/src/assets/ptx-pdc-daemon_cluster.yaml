@@ -38,12 +38,12 @@ automountServiceAccountToken: false
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: service-creator
+  name: pdc-init
   namespace: ptx-edge
 rules:
-  - apiGroups: [ "" ]
-    resources: [ "services" ]
-    verbs: [ "create", "delete" ]
+#  - apiGroups: [ "" ]
+  #    resources: [ "services" ]
+  #    verbs: [ "create", "delete" ]
   - apiGroups: [ "" ]
     resources: [ "pods" ]
     verbs: [ "patch" ]
@@ -51,7 +51,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: service-creator
+  name: pdc-init
   namespace: ptx-edge
 subjects:
   - kind: ServiceAccount
@@ -60,7 +60,7 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: service-creator
+  name: pdc-init
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -109,7 +109,7 @@ spec:
         - name: builder
           image: registry.k3d.local:5000/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip", "--port=3000" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip" ]
           #command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--force", "--type=clusterip", "--port=3000" ]
           #command: [ "/bin/sh", "-c", "sleep infinity" ]
           volumeMounts:
@@ -226,11 +226,11 @@ spec:
   routes:
     - match: PathPrefix(`/ptx-edge/zone-a/pdc`)
       kind: Rule
-      middlewares:
-        - name: pdc-zone-a-stripprefix
       services:
         - name: pdc-zone-a
           port: 3000
+      middlewares:
+        - name: pdc-zone-a-stripprefix
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -256,11 +256,11 @@ spec:
   routes:
     - match: PathPrefix(`/ptx-edge/zone-b/pdc`)
       kind: Rule
-      middlewares:
-        - name: pdc-zone-b-stripprefix
       services:
         - name: pdc-zone-b
           port: 3000
+      middlewares:
+        - name: pdc-zone-b-stripprefix
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

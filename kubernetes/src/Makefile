@@ -142,6 +142,7 @@ run-pdc-daemon-headless: run-catalog
 
 run-pdc-daemon-cluster: run-catalog
 	kubectl apply -f assets/ptx-pdc-daemon_cluster.yaml
+	kubectl apply -f assets/ptx-pdc-ingess.yaml
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
@@ -155,8 +156,8 @@ run-pdc-daemon-cluster: run-catalog
 								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
 									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
 								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:3000/ >/dev/null"
-	wget -T3 -qS http://localhost:8888/ptx-edge/zone-a/pdc/ >/dev/null
-	wget -T3 -qS http://localhost:8888/ptx-edge/zone-b/pdc/ >/dev/null
+	wget -T3 -O /dev/null -qS http://localhost:8888/ptx-edge/zone-a/pdc/
+	wget -T3 -O /dev/null -qS http://localhost:8888/ptx-edge/zone-b/pdc/
 	@#kubectl exec -ti ds/pdc --container builder -- sh
 
 run-api:
