@@ -16,10 +16,8 @@ import json
 import logging
 import os
 import pathlib
-import pprint
 import sys
 import typing
-from email.policy import default
 
 from kubernetes import client
 from kubernetes.client import OpenApiException, ApiException
@@ -44,13 +42,14 @@ DEF_NS = "ptx-edge"
 DEF_APP = "pdc"
 DEF_PORT_NAME = "pdc-port"
 
-CONFIG = {"ip": os.getenv("NODE_IP"),
-          "port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
+CONFIG = {"port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
           "pod": os.getenv("HOSTNAME"),
+          "ip": os.getenv("NODE_IP"),
+          "node": os.getenv("NODE_NAME"),
           "namespace": os.getenv("NAMESPACE", default=DEF_NS),
           "app": os.getenv("APP_NAME", default=DEF_APP)}
 
-REQUIRED_FIELDS = ("type", "ip", "namespace")
+REQUIRED_FIELDS = ("type", "namespace")
 
 
 ########################################################################################################################
@@ -90,22 +89,32 @@ def _load_config(token: str = PROJECTED_TOKEN_FILE, cert: str = PROJECTED_CERT_F
         sys.exit(os.EX_CONFIG)
 
 
-def _collect_privacy_zone_labels(node_ip: str) -> list:
+def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str | None]:
     """
-    
-    :param node_ip: 
-    :return: 
+
+    :param node:
+    :param ip:
+    :return:
     """
     log.info(f">>> Collect Privacy Zone labels...")
-    v1_node_list = client.CoreV1Api().list_node(label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
-    log.debug(f"Received nodes:\n{dump_k8s_obj(v1_node_list.to_dict())}")
-    labels = [node.metadata.labels for node in v1_node_list.items
-              if len(node.status.addresses) > 0 and
-              list(filter(lambda a: a.type == 'InternalIP' and a.address == node_ip, node.status.addresses))]
-    log.debug(f"Extracted labels of node[{node_ip}]:\n{pprint.pformat(labels)}")
-    if len(labels) > 0:
-        labels = [l for l, _ in filter(lambda lv: lv[0].startswith(PTX_PRIVACY_ZONE) and lv[1] == 'true',
-                                       (kv for kv in labels[0].items()))]
+    if node is not None:
+        v1_node_list = client.CoreV1Api().list_node(field_selector=f'metadata.name={node}',
+                                                    label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
+        if len(v1_node_list.items) < 1:
+            log.error(f"Node: {node} not found!")
+            return []
+        node_obj: client.V1Node = v1_node_list.items[0]
+    elif ip is not None:
+        v1_node_list = client.CoreV1Api().list_node(label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
+        log.debug(f"Received nodes:\n{dump_k8s_obj(v1_node_list.to_dict())}")
+        node_obj: client.V1Node = [n for n in v1_node_list.items if
+                                   list(filter(lambda a: a.type == 'InternalIP' and a.address == ip,
+                                               n.status.addresses))][0]
+    else:
+        log.error(f"Node[name: {node}, ip: {ip}] not found!")
+        return []
+    log.debug(f"Received node object: {json.dumps(node_obj.to_dict(), indent=4, default=str)}")
+    labels = [l for l, v in node_obj.metadata.labels.items() if l.startswith(PTX_PRIVACY_ZONE) and v == 'true']
     log.info(f"Extracted privacy zone labels: {labels}")
     return labels
 
@@ -213,7 +222,7 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
     :return:
     """
     try:
-        zones = _collect_privacy_zone_labels(node_ip=ip)
+        zones = _collect_privacy_zone_labels(ip=ip)
         if len(zones) == 0:
             log.warning("No privacy zone label detected!")
             if force:
@@ -249,10 +258,10 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
         sys.exit(os.EX_IOERR)
 
 
-def create_clusterip_pdc_services(ip: str, pod: str, namespace: str, port: int, app: str = None, force: bool = False,
+def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str = None, force: bool = False,
                                   **kwargs):
     try:
-        zones = _collect_privacy_zone_labels(node_ip=ip)
+        zones = _collect_privacy_zone_labels(node=node)
         if len(zones) == 0:
             log.warning("No privacy zone label detected! Skip patching...")
         else:
@@ -263,7 +272,7 @@ def create_clusterip_pdc_services(ip: str, pod: str, namespace: str, port: int, 
             log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
             zones.append(None)
         elif len(zones) > 1:
-            log.warning(f"Multiple privacy zone label detected for one node[{ip}]!")
+            log.warning(f"Multiple privacy zone label detected for one node[{node}]!")
             log.info("Forcing to create PDC service for each privacy zone...")
         for zone in zones:
             srv_name = f"{DEF_APP}-{zone.split('/')[-1]}".lower() if zone else DEF_APP
@@ -294,6 +303,7 @@ def main():
     parser.add_argument("-t", "--type", type=str, required=True, help="Service type [headless,clusterip]")
     parser.add_argument("-p", "--port", type=int, help="Port bound on the node")
     parser.add_argument("-i", "--ip", type=str, help="Node IP address")
+    parser.add_argument("--node", type=str, help="Assigned node name")
     parser.add_argument("--pod", type=str, help="Own pod name")
     parser.add_argument("-n", "--namespace", type=str, help="Namespace name")
     parser.add_argument("-a", "--app", type=str, help="Application name")
