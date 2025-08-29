@@ -11,9 +11,9 @@ ports:
     nodeFilters:
       - loadbalancer
   # Export PDC
-  - port: ${PDC_ENDPOINT_PORT}:${PDC_NODEPORT}
-    nodeFilters:
-      - agent:0:direct
+#  - port: ${PDC_ENDPOINT_PORT}:${PDC_NODEPORT}
+#    nodeFilters:
+#      - agent:0:direct
 volumes:
   # Add registry CA cert
   - volume: ${CA_DIR}/ca.crt:${CA_CERT_PATH}:ro

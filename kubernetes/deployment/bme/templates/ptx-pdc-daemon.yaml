@@ -14,16 +14,31 @@ data:
     WINSTON_LOGS_MAX_SIZE=20m
     JWT_BEARER_TOKEN_EXPIRATION=3h
     JWT_REFRESH_TOKEN_EXPIRATION=1d
-  config.json: |
+  config-template.json: |
     {
-      "endpoint": "http://${PDC_ENDPOINT_HOST}:${PDC_ENDPOINT_PORT}/",
+      "endpoint": "${PDC_ENDPOINT}",
       "serviceKey": "${PDC_SERVICE_KEY}",
       "secretKey": "${PDC_SECRET_KEY}",
-      "contractUri": "https://contract.visionstrust.com/",
-      "catalogUri": "https://api.visionstrust.com/v1/",
-      "consentUri": "https://consent.visionstrust.com/v1",
+      "contractUri": "${PTX_CONTRACT_URI}",
+      "catalogUri": "${PTX_CATALOG_URI}",
+      "consentUri": "${PTX_CONSENT_URI}",
       "expressLimitSize": "100mb"
     }
+  entrypoint.sh: |
+    #!/usr/bin/env sh
+    envsubst <dist/src/config.production.json.template >dist/src/config.production.json
+    exec "$@"
+immutable: true
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: pdc-secrets
+  namespace: ptx-edge
+data:
+  PDC_SERVICE_KEY: WkJmYnMwVnllX0swNGNrR2FYZUhuellpSHd0aUNsVXZ4RVBtTE16aklWMGVSNVNUOEh5cFN3ZGZEVE5DbTdIbDhlUFY2cWk3cjd4ZmwxVkhYeU5UamFESk9QVF94SndPZWJLUw==
+  PDC_SECRET_KEY: Tm1iYTJWeHg4ZmV1ZTlfMDVoeVBjZ3ZIQ09mZFJmSUlpUnVKcDJsNTBlVTFzTDVndWl2Y3dSZXQwZVpnb1ROVmFYSVBOVHVsd09KSHBuallwTTNFTHp5SHdySnJoNE02djFfOA==
 immutable: true
 ---
 apiVersion: v1
@@ -38,20 +53,17 @@ automountServiceAccountToken: false
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: service-creator
+  name: pdc-init
   namespace: ptx-edge
 rules:
   - apiGroups: [ "" ]
-    resources: [ "services" ]
-    verbs: [ "create", "delete" ]
-  - apiGroups: [ "discovery.k8s.io" ]
-    resources: [ "endpointslices" ]
-    verbs: [ "create", "delete" ]
+    resources: [ "pods" ]
+    verbs: [ "patch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: service-creator
+  name: pdc-init
   namespace: ptx-edge
 subjects:
   - kind: ServiceAccount
@@ -60,7 +72,7 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: service-creator
+  name: pdc-init
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -109,16 +121,16 @@ spec:
         - name: builder
           image: ${REGISTRY}:${REGISTRY_PORT}/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "-f" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip" ]
           volumeMounts:
             - name: kube-api-client-cfg
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
-            - name: NODE_IP
+            - name: NODE_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: status.hostIP
+                  fieldPath: spec.nodeName
         - name: mongodb
           image: ${REGISTRY}:${REGISTRY_PORT}/ptx/mongodb:8.0.5-slim
           imagePullPolicy: IfNotPresent
@@ -133,18 +145,24 @@ spec:
           ports:
             - name: pdc-port
               containerPort: 3000
-              protocol: TCP
-              hostPort: 30003
+          envFrom:
+            - secretRef:
+                name: pdc-secrets
           volumeMounts:
             - name: pdc-env
               mountPath: "/usr/src/app/.env.production"
               subPath: .env.production
               readOnly: true
-            - name: pdc-config
-              mountPath: "/usr/src/app/dist/src/config.production.json"
-              subPath: config.production.json
+            - name: pdc-config-template
+              mountPath: "/usr/src/app/dist/src/config.production.json.template"
+              subPath: config.production.json.template
               readOnly: true
-          command: [ "npm", "run", "start" ]
+            - name: pdc-entrypoint
+              mountPath: "/usr/src/app/docker/scripts/entrypoint.sh"
+              subPath: entrypoint.sh
+              readOnly: true
+          command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
+          args: [ "npm", "run", "start" ]
       volumes:
         - name: pdc-env
           configMap:
@@ -152,12 +170,18 @@ spec:
             items:
               - key: .env
                 path: .env.production
-        - name: pdc-config
+        - name: pdc-config-template
           configMap:
             name: pdc-config
             items:
-              - key: config.json
-                path: config.production.json
+              - key: config-template.json
+                path: config.production.json.template
+        - name: pdc-entrypoint
+          configMap:
+            name: pdc-config
+            items:
+              - key: entrypoint.sh
+                path: entrypoint.sh
         - name: kube-api-client-cfg
           projected:
             defaultMode: 420
@@ -176,3 +200,47 @@ spec:
                         apiVersion: v1
                         fieldPath: metadata.namespace
                       path: namespace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdc-zone-0
+  namespace: ptx-edge
+spec:
+  selector:
+    app: pdc
+    privacy-zone.dataspace.ptx.org/zone-0: "true"
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pdc-zone-0
+  namespace: ptx-edge
+  labels:
+    app: pdc
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/ptx-edge/zone-0/pdc`)
+      kind: Rule
+      middlewares:
+        - name: pdc-zone-0-stripprefix
+      services:
+        - name: pdc-zone-0
+          port: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: pdc-zone-0-stripprefix
+  labels:
+    app: pdc
+spec:
+  stripPrefix:
+    prefixes:
+      - /ptx-edge/zone-0/pdc

@@ -14,7 +14,10 @@
 # limitations under the License.
 set -eou pipefail
 
-source ./bme-setup-config.sh
+# Load configurations
+source ./config.sh
+
+PERSIST=true
 
 ########################################################################################################################
 
@@ -22,7 +25,7 @@ function build() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    git pull
+    git pull || true
     for modul in ${PTX_EDGE_COMPONENTS}; do
         make -C "${PROJECT_ROOT}/src/${modul}" build
     done
@@ -37,10 +40,16 @@ function init() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    k3d cluster create --config="${CFG_DIR}/k3d-bme-cluster.yaml"
+    k3d cluster create --config="${CFG_DIR}/templates/k3d-bme-cluster.yaml"
+    if [ "${PERSIST}" = true ]; then
+        mkdir -p ./manifests
+        k3d cluster list bme -o yaml >"${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
+    fi
 	kubectl create namespace "${NAMESPACE}"
 	kubectl config set-context --current --namespace "${NAMESPACE}"
 	kubectl cluster-info
+	echo
+	echo ">>> Upload images to local registry..."
 	for img in ${PTX_EDGE_COMPONENTS}; do
         IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
         skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
@@ -55,20 +64,6 @@ function init() {
 	echo
 }
 
-function deploy() {
-    echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
-    echo
-    kubectl get ns "${NAMESPACE}" || (
-        kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
-	envsubst <"${CFG_DIR}/ptx-pdc-daemon.yaml" | kubectl apply -f=-
-	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
-	echo "Waiting for PDC to set up..."
-	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
-		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
-	done
-}
-
 function remove() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
@@ -77,6 +72,7 @@ function remove() {
     if [ ! "${cluster_missing+0}" ]; then
         kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
     fi
+    rm -rf manifests/
 }
 
 
@@ -96,11 +92,39 @@ function status() {
     echo
     echo ">>>>>>>>> Cluster[${CLUSTER}] deployment status:"
     echo
-	kubectl get all,endpointslices,configmaps,secrets,ingress,ingressroutes.traefik.io,middlewares.traefik.io -o wide
+    k3d cluster list --no-headers | grep -q ^ # check for existing cluster
+	kubectl get --ignore-not-found \
+	    all,endpointslices,configmaps,secrets,ingress,ingressroutes.traefik.io,middlewares.traefik.io -o wide
 	echo
-	kubectl get events
+	kubectl get --ignore-not-found events
 	echo
-	kubectl logs ds/pdc
+	kubectl logs --ignore-errors ds/pdc
+}
+
+########################################################################################################################
+
+function deploy() {
+    echo
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo
+    kubectl get ns "${NAMESPACE}" || (
+        kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
+    if [ "${PERSIST}" = true ]; then
+        mkdir -p ./manifests
+        pushd templates >/dev/null
+        for file in *.yaml; do
+            echo "Reading ${file}..."
+            envsubst <"${CFG_DIR}/templates/${file}" >"${CFG_DIR}/manifests/${file}"
+            echo "Generated manifest: ${CFG_DIR}/manifests/${file}"
+        done
+        popd >/dev/null
+    fi
+    envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
+	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
+	echo "Waiting for PDC to set up..."
+	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
+		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+	done
 }
 
 ########################################################################################################################
@@ -116,13 +140,18 @@ Options:
     -d  Only perform deploy.
     -r  Only perform remove.
     -s  Only perform status.
+    -p  Persist generated manifests.
     -t  Set global timeout parameter (def: ${TIMEOUT})
     -h  Display help.
 EOF
 }
 
-while getopts ":t:hcbidrs" flag; do
+while getopts ":t:phcbidrs" flag; do
 	case "${flag}" in
+        p)
+            echo "[x] Manifests will be persisted."
+            PERSIST=true
+            ;;
         c)
             cleanup
             exit 0

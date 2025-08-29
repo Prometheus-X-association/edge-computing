@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy:
+setup:
 	@bash setup.sh
 
-start:
+deploy:
 	@bash setup.sh -d
 
-stop:
+remove:
 	@bash setup.sh -r
 
 status:
@@ -27,5 +27,5 @@ status:
 teardown:
 	@bash setup.sh -c
 
-.PHONY: deploy start stop status teardown
-.DEFAULT_GOAL := deploy
+.PHONY: setup deploy remove status teardown
+.DEFAULT_GOAL := setup

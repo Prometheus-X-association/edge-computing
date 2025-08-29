@@ -49,6 +49,15 @@ NAMESPACE="ptx-edge"
 ################################## PDC setup
 
 source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
-#PDC_ENDPOINT_HOST=
-#PDC_SERVICE_KEY=
-#PDC_SECRET_KEY=
+#HOST_IP=
+#SERVICE_KEY=
+#SECRET_KEY=
+PDC_ENDPOINT="http://${HOST_IP}:${LOADBALANCER_PORT}/ptx-edge/zone-0/pdc"
+PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64)
+PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64)
+PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'
+PDC_SECRET_KEY='${PDC_SECRET_KEY}'
+
+PTX_CONTRACT_URI="https://contract.visionstrust.com/"
+PTX_CATALOG_URI="https://api.visionstrust.com/v1/"
+PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
