@@ -27,24 +27,28 @@ PDC_COMPONENTS="connector mongodb"
 
 CLUSTER="bme"
 
-REGISTRY="registry.k3d.local"
-REGISTRY_IMG="ptx-edge/registry:1.0"
+REGISTRY_HOST="registry.k3d.local"
 REGISTRY_PORT=5000
+REGISTRY="${REGISTRY_HOST}:${REGISTRY_PORT}"
+
+REGISTRY_IMG="ptx-edge/registry:1.0"
+
 REGISTRY_USER="admin"
 REGISTRY_SECRET="admin"
+CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
-CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
 CA_CERT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 
 LOADBALANCER_PORT=8888
 PDC_NODEPORT=30003
-PDC_ENDPOINT_PORT=3000
+PDC_DEF_PORT=3000
 
 ################################## PTX-edge setup
 
 NAMESPACE="ptx-edge"
+DEF_ZONE="zone-0"
 
 ################################## PDC setup
 
@@ -53,10 +57,10 @@ source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
 #SERVICE_KEY=
 #SECRET_KEY=
 PDC_ENDPOINT="http://${HOST_IP}:${LOADBALANCER_PORT}/ptx-edge/zone-0/pdc"
-PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64)
-PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64)
-PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'
-PDC_SECRET_KEY='${PDC_SECRET_KEY}'
+PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
+PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
+PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
+PDC_SECRET_KEY='${PDC_SECRET_KEY}'      # Placeholder for substitution in endpoint.sh
 
 PTX_CONTRACT_URI="https://contract.visionstrust.com/"
 PTX_CATALOG_URI="https://api.visionstrust.com/v1/"

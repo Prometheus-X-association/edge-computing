@@ -11,7 +11,7 @@ ports:
     nodeFilters:
       - loadbalancer
   # Export PDC
-#  - port: ${PDC_ENDPOINT_PORT}:${PDC_NODEPORT}
+#  - port: ${PDC_DEF_PORT}:${PDC_NODEPORT}
 #    nodeFilters:
 #      - agent:0:direct
 volumes:
@@ -21,7 +21,7 @@ volumes:
       - all
 registries:
   create:
-    name: ${REGISTRY}
+    name: ${REGISTRY_HOST}
     image: ${REGISTRY_IMG}
     hostPort: "${REGISTRY_PORT}"
     volumes:
@@ -29,11 +29,11 @@ registries:
       - ${CFG_DIR}/.cache:/var/lib/registry
   config: |
     mirrors:
-      ${REGISTRY}:${REGISTRY_PORT}:
+      ${REGISTRY}:
         endpoint:
-          - https://${REGISTRY}:${REGISTRY_PORT}
+          - https://${REGISTRY}
     configs:
-      ${REGISTRY}:${REGISTRY_PORT}:
+      ${REGISTRY}:
         auth:
           username: ${REGISTRY_USER}
           password: ${REGISTRY_SECRET}
@@ -52,7 +52,7 @@ options:
   k3s:
     nodeLabels:
       # Put each agent node into Privacy Zone 0
-      - label: privacy-zone.dataspace.ptx.org/zone-0=true
+      - label: privacy-zone.dataspace.ptx.org/${DEF_ZONE}=true
         nodeFilters:
           - agent:*
       # Mark agent-0 as the zone leader

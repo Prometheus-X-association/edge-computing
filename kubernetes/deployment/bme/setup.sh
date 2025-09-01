@@ -109,16 +109,19 @@ function deploy() {
     echo
     kubectl get ns "${NAMESPACE}" || (
         kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
+    echo
     if [ "${PERSIST}" = true ]; then
         mkdir -p ./manifests
         pushd templates >/dev/null
-        for file in *.yaml; do
+        for file in ptx-*.yaml; do
             echo "Reading ${file}..."
             envsubst <"${CFG_DIR}/templates/${file}" >"${CFG_DIR}/manifests/${file}"
-            echo "Generated manifest: ${CFG_DIR}/manifests/${file}"
+            echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
         done
         popd >/dev/null
     fi
+    echo
+    echo ">>> Applying ${CFG_DIR}/templates/ptx-pdc-daemon.yaml"
     envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
 	echo "Waiting for PDC to set up..."
