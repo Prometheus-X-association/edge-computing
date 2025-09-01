@@ -111,6 +111,8 @@ function deploy() {
         kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
     echo
     if [ "${PERSIST}" = true ]; then
+        echo
+        echo ">>> Generate manifests...."
         mkdir -p ./manifests
         pushd templates >/dev/null
         for file in ptx-*.yaml; do
@@ -121,13 +123,28 @@ function deploy() {
         popd >/dev/null
     fi
     echo
-    echo ">>> Applying ${CFG_DIR}/templates/ptx-pdc-daemon.yaml"
-    envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
+    echo ">>> Applying ptx-pdc-daemon.yaml"
+    if [ "${PERSIST}" = true ]; then
+        kubectl apply -f="${CFG_DIR}/manifests/ptx-pdc-daemon.yaml"
+    else
+        envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
+    fi
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
+	kubectl wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s services -l app=pdc
 	echo "Waiting for PDC to set up..."
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
+    echo
+    echo ">>> Applying ptx-pdc-ingress.yaml"
+    if [ "${PERSIST}" = true ]; then
+        kubectl apply -f="${CFG_DIR}/manifests/ptx-pdc-ingress.yaml"
+    else
+        envsubst <"${CFG_DIR}/templates/ptx-pdc-ingress.yaml" | kubectl apply -f=-
+    fi
+    echo
+    echo "Check http://localhost:8888/ptx-edge/zone-0/pdc/..."
+    wget -T3 -O /dev/null -Sq http://localhost:8888/ptx-edge/zone-0/pdc/
 }
 
 ########################################################################################################################

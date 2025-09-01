@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: pdc-config
   namespace: ptx-edge
+  labels:
+    app: pdc
 data:
   .env: |
     NODE_ENV=production
@@ -36,6 +38,8 @@ type: Opaque
 metadata:
   name: pdc-secrets
   namespace: ptx-edge
+  labels:
+    app: pdc
 data:
   PDC_SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
   PDC_SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
@@ -55,6 +59,8 @@ kind: Role
 metadata:
   name: pdc-init
   namespace: ptx-edge
+  labels:
+    app: pdc
 rules:
   - apiGroups: [ "" ]
     resources: [ "pods" ]
@@ -65,6 +71,8 @@ kind: RoleBinding
 metadata:
   name: pdc-init
   namespace: ptx-edge
+  labels:
+    app: pdc
 subjects:
   - kind: ServiceAccount
     name: pdc
@@ -89,6 +97,8 @@ kind: ClusterRoleBinding
 metadata:
   name: node-lister
   namespace: ptx-edge
+  labels:
+    app: pdc
 subjects:
   - kind: ServiceAccount
     name: pdc
@@ -206,6 +216,8 @@ kind: Service
 metadata:
   name: pdc-${DEF_ZONE}
   namespace: ptx-edge
+  labels:
+    app: pdc
 spec:
   selector:
     app: pdc

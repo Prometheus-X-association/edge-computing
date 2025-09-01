@@ -13,3 +13,4 @@ kubernetes/src/.cache
 kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/bme/.creds/*
+kubernetes/deployment/*/manifests/*
