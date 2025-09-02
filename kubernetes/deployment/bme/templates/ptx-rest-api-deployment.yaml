@@ -46,22 +46,4 @@ spec:
     - name: ${API}-port
       port: ${API_PORT}
       targetPort: ${API}-port
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ${API}
-  namespace: ${DEF_NS}
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /${DEF_NS}/${API}/${API_VER}
-            pathType: Prefix
-            backend:
-              service:
-                name: ${API}
-                port:
-                  number: ${API_PORT}
+

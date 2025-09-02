@@ -148,6 +148,15 @@ function deploy() {
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
 	#######
+	echo
+	echo "Generate TLS..."
+	rm -rf "${CFG_DIR}"/.creds/api && mkdir -p "${CFG_DIR}"/.creds/api
+	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
+			-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
+			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
+			-keyout "${CFG_DIR}"/.creds/api/tls.key -out "${CFG_DIR}"/.creds/api/tls.cert
+	kubectl create secret tls api-tls --cert="${CFG_DIR}"/.creds/api/tls.cert --key="${CFG_DIR}"/.creds/api/tls.key
+	#######
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
     if [ "${PERSIST}" = true ]; then

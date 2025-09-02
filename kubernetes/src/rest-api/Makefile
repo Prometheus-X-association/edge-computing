@@ -24,6 +24,8 @@ build:
 run: build
 	docker run --rm --name ${NAME} -ti -p 8888:8080 ${IMG}
 
+########################################################################################################################
+
 dev:
 	docker run --rm --name ${NAME} -ti -p 8888:8080 -v ./app:/usr/src/api/app ${IMG} \
 				uvicorn app.main:app --port 8080 --reload --reload-dir app
@@ -50,11 +52,7 @@ else
 	$(MAKE) venv
 endif
 
-# Cleanup
-clean:
-	docker rmi -f ${IMG}
-	py3clean -v .
-	rm -rf .venv
+########################################################################################################################
 
 # Tests
 tests: venv
@@ -74,6 +72,28 @@ else
 	docker run --rm -ti ${TEST_IMG}
 endif
 
-.PHONY: build run dev venv dev-local openapi setup clean tests unit-tests docker-test-setup docker-unit-tests
+########################################################################################################################
+
+tls:
+	@echo "Generate self-signed TLS cert based on registry's CA..."
+	@echo
+	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs
+	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
+			-CA ${CURDIR}/../registry/.certs/ca/ca.crt -CAkey ${CURDIR}/../registry/.certs/ca.key \
+			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
+			-keyout ${CURDIR}/.certs/api-tls.key -out ${CURDIR}/.certs/api-tls.cert
+	kubectl create secret tls api-tls --cert=${CURDIR}/.certs/api-tls.cert --key=${CURDIR}/.certs/api-tls.key \
+			-o yaml --dry-run=client | tee api-tls-secret.yaml
+
+
+########################################################################################################################
+
+# Cleanup
+clean:
+	docker rmi -f ${IMG}
+	py3clean -v .
+	rm -rf .venv
+
+.PHONY: build run dev venv dev-local openapi setup clean tests unit-tests docker-test-setup docker-unit-tests tls
 .DEFAULT_GOAL := dev
 #.ONESHELL: dev-local openapi
