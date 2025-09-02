@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${API}
+  namespace: ${DEF_NS}
+  labels:
+    app: ${API}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${API}
+  template:
+    metadata:
+      labels:
+        app: ${API}
+    spec:
+      containers:
+        - name: ${API}
+          image: ${REGISTRY}/ptx-edge/rest-api:1.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - uvicorn
+            - app.main:app
+            - --host=0.0.0.0
+            - --port=${API_PORT}
+            - --workers=2
+            - --access-log
+            - --log-level=info
+          env:
+            - name: ROOT_PATH
+              value: /${DEF_NS}/${API}/${API_VER}
+          ports:
+            - name: ${API}-port
+              containerPort: ${API_PORT}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${API}
+  namespace: ${DEF_NS}
+spec:
+  selector:
+    app: ${API}
+  type: ClusterIP
+  ports:
+    - name: ${API}-port
+      port: ${API_PORT}
+      targetPort: ${API}-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${API}
+  namespace: ${DEF_NS}
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /${DEF_NS}/${API}/${API_VER}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${API}
+                port:
+                  number: ${API_PORT}

@@ -122,6 +122,11 @@ function deploy() {
         done
         popd >/dev/null
     fi
+	echo
+	echo "Waiting for traefik to be installed..."
+    kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik-crd
+    kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
+    kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -130,13 +135,11 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
     fi
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
-	kubectl wait --for=jsonpath='{.spec.clusterIP}' --timeout=20s services -l app=pdc
+	kubectl wait --for=jsonpath='{.spec.clusterIP}' --timeout="${TIMEOUT}" services -l app=pdc
 	echo "Waiting for PDC to set up..."
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
-	echo "Waiting for traefik crd to be installed..."
-    kubectl -n kube-system wait --for="condition=Complete" --timeout=20s job/helm-install-traefik-crd
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
     if [ "${PERSIST}" = true ]; then
