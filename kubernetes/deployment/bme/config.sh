@@ -47,21 +47,32 @@ PDC_DEF_PORT=3000
 
 ################################## PTX-edge setup
 
-NAMESPACE="ptx-edge"
+DEF_NS="ptx-edge"
 DEF_ZONE="zone-0"
 
 ################################## PDC setup
 
+PDC="pdc"
+
 source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
-#HOST_IP=
+#CLUSTER_GW=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="http://${HOST_IP}:${LOADBALANCER_PORT}/ptx-edge/zone-0/pdc"
+PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_PORT}/${DEF_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
 PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
 PDC_SECRET_KEY='${PDC_SECRET_KEY}'      # Placeholder for substitution in endpoint.sh
 
+#SESSION_SECRET=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
+SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)    # Autogenerate
+
 PTX_CONTRACT_URI="https://contract.visionstrust.com/"
 PTX_CATALOG_URI="https://api.visionstrust.com/v1/"
 PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
+
+################################## REST-API setup
+
+API="api"
+API_VER="v1"
+API_PORT=8080

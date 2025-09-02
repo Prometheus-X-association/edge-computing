@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pdc-config
-  namespace: ptx-edge
+  name: ${PDC}-config
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 data:
   .env: |
     NODE_ENV=production
     PORT=${PDC_DEF_PORT}
-    SESSION_SECRET=abc
+    SESSION_SECRET=${SESSION_SECRET}
     SESSION_COOKIE_EXPIRATION=24000
     MONGO_URI=mongodb://127.0.0.1:27017/dataspace-connector
     WINSTON_LOGS_MAX_FILES=14d
@@ -36,10 +36,10 @@ apiVersion: v1
 kind: Secret
 type: Opaque
 metadata:
-  name: pdc-secrets
-  namespace: ptx-edge
+  name: ${PDC}-secrets
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 data:
   PDC_SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
   PDC_SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
@@ -48,19 +48,19 @@ immutable: true
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: pdc
-  namespace: ptx-edge
+  name: ${PDC}
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: pdc-init
-  namespace: ptx-edge
+  name: ${PDC}-init
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 rules:
   - apiGroups: [ "" ]
     resources: [ "pods" ]
@@ -69,24 +69,24 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: pdc-init
-  namespace: ptx-edge
+  name: ${PDC}-init
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 subjects:
   - kind: ServiceAccount
-    name: pdc
-    namespace: ptx-edge
+    name: ${PDC}
+    namespace: ${DEF_NS}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: pdc-init
+  name: ${PDC}-init
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: node-lister
-  namespace: ptx-edge
+  namespace: ${DEF_NS}
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
@@ -96,13 +96,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: node-lister
-  namespace: ptx-edge
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 subjects:
   - kind: ServiceAccount
-    name: pdc
-    namespace: ptx-edge
+    name: ${PDC}
+    namespace: ${DEF_NS}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -111,27 +111,27 @@ roleRef:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: pdc
-  namespace: ptx-edge
+  name: ${PDC}
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 spec:
   selector:
     matchLabels:
-      app: pdc
+      app: ${PDC}
   template:
     metadata:
       labels:
-        app: pdc
+        app: ${PDC}
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
-      serviceAccountName: pdc
+      serviceAccountName: ${PDC}
       initContainers:
         - name: builder
           image: ${REGISTRY}/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "--type=clusterip", "-v" ]
           volumeMounts:
             - name: kube-api-client-cfg
               mountPath: /var/run/secrets/projected
@@ -153,42 +153,42 @@ spec:
           image: ${REGISTRY}/ptx/connector:1.9.5-slim
           imagePullPolicy: IfNotPresent
           ports:
-            - name: pdc-port
+            - name: ${PDC}-port
               containerPort: ${PDC_DEF_PORT}
           envFrom:
             - secretRef:
-                name: pdc-secrets
+                name: ${PDC}-secrets
           volumeMounts:
-            - name: pdc-env
+            - name: ${PDC}-env
               mountPath: "/usr/src/app/.env.production"
               subPath: .env.production
               readOnly: true
-            - name: pdc-config-template
+            - name: ${PDC}-config-template
               mountPath: "/usr/src/app/dist/src/config.production.json.template"
               subPath: config.production.json.template
               readOnly: true
-            - name: pdc-entrypoint
+            - name: ${PDC}-entrypoint
               mountPath: "/usr/src/app/docker/scripts/entrypoint.sh"
               subPath: entrypoint.sh
               readOnly: true
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
           args: [ "npm", "run", "start" ]
       volumes:
-        - name: pdc-env
+        - name: ${PDC}-env
           configMap:
-            name: pdc-config
+            name: ${PDC}-config
             items:
               - key: .env
                 path: .env.production
-        - name: pdc-config-template
+        - name: ${PDC}-config-template
           configMap:
-            name: pdc-config
+            name: ${PDC}-config
             items:
               - key: config-template.json
                 path: config.production.json.template
-        - name: pdc-entrypoint
+        - name: ${PDC}-entrypoint
           configMap:
-            name: pdc-config
+            name: ${PDC}-config
             items:
               - key: entrypoint.sh
                 path: entrypoint.sh
@@ -214,45 +214,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pdc-${DEF_ZONE}
-  namespace: ptx-edge
+  name: ${PDC}-${DEF_ZONE}
+  namespace: ${DEF_NS}
   labels:
-    app: pdc
+    app: ${PDC}
 spec:
   selector:
-    app: pdc
+    app: ${PDC}
     privacy-zone.dataspace.ptx.org/${DEF_ZONE}: "true"
   type: ClusterIP
   ports:
-    - name: pdc-port
+    - name: ${PDC}-port
       port: ${PDC_DEF_PORT}
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: pdc-${DEF_ZONE}
-  namespace: ptx-edge
-  labels:
-    app: pdc
-spec:
-  entryPoints:
-    - web
-  routes:
-    - match: PathPrefix(`/ptx-edge/${DEF_ZONE}/pdc`)
-      kind: Rule
-      middlewares:
-        - name: pdc-${DEF_ZONE}-stripprefix
-      services:
-        - name: pdc-${DEF_ZONE}
-          port: ${PDC_DEF_PORT}
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: pdc-${DEF_ZONE}-stripprefix
-  labels:
-    app: pdc
-spec:
-  stripPrefix:
-    prefixes:
-      - /ptx-edge/${DEF_ZONE}/pdc

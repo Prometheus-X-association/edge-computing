@@ -45,8 +45,8 @@ function init() {
         mkdir -p ./manifests
         k3d cluster list bme -o yaml >"${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
     fi
-	kubectl create namespace "${NAMESPACE}"
-	kubectl config set-context --current --namespace "${NAMESPACE}"
+	kubectl create namespace "${DEF_NS}"
+	kubectl config set-context --current --namespace "${DEF_NS}"
 	kubectl cluster-info
 	echo
 	echo ">>> Upload images to local registry..."
@@ -70,7 +70,7 @@ function remove() {
     echo
     k3d cluster list "${CLUSTER}" || cluster_missing="$?"
     if [ ! "${cluster_missing+0}" ]; then
-        kubectl delete namespace "${NAMESPACE}" --ignore-not-found --now || true
+            kubectl delete namespace "${DEF_NS}" --ignore-not-found --now || true
     fi
     rm -rf manifests/
 }
@@ -82,7 +82,7 @@ function cleanup() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster delete "${CLUSTER}" || true
-    rm -rf "${CFG_DIR}/.cache"
+    sudo rm -rf "${CFG_DIR}/.cache"
     docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
 	docker image prune -f
 }
@@ -107,8 +107,8 @@ function deploy() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    kubectl get ns "${NAMESPACE}" || (
-        kubectl create namespace "${NAMESPACE}" && kubectl config set-context --current --namespace "${NAMESPACE}")
+    kubectl get ns "${DEF_NS}" || (
+        kubectl create namespace "${DEF_NS}" && kubectl config set-context --current --namespace "${DEF_NS}")
     echo
     if [ "${PERSIST}" = true ]; then
         echo
@@ -135,6 +135,8 @@ function deploy() {
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
+	echo "Waiting for traefik crd to be installed..."
+    kubectl -n kube-system wait --for="condition=Complete" --timeout=20s job/helm-install-traefik-crd
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -144,7 +146,26 @@ function deploy() {
     fi
     echo
     echo "Check http://localhost:8888/ptx-edge/zone-0/pdc/..."
-    wget -T3 -O /dev/null -Sq http://localhost:8888/ptx-edge/zone-0/pdc/
+    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/zone-0/pdc/
+
+    echo
+    echo ">>> Applying ptx-rest-api-deployment.yaml"
+    if [ "${PERSIST}" = true ]; then
+        kubectl apply -f="${CFG_DIR}/manifests/ptx-rest-api-deployment.yaml"
+    else
+        envsubst <"${CFG_DIR}/templates/ptx-rest-api-deployment.yaml" | kubectl apply -f=-
+    fi
+    kubectl wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/api
+    echo
+    echo ">>> Applying ptx-rest-api-ingress.yaml"
+    if [ "${PERSIST}" = true ]; then
+        kubectl apply -f="${CFG_DIR}/manifests/ptx-rest-api-ingress.yaml"
+    else
+        envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
+    fi
+    echo
+    echo "Check http://localhost:8888/ptx-edge/api/v1/versions..."
+    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/api/v1/versions
 }
 
 ########################################################################################################################
