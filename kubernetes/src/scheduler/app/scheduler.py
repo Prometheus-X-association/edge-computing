@@ -32,11 +32,12 @@ DEF_SCHEDULER_METHOD = "random"
 NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 CONFIG = {
-    'namespace': os.getenv('NAMESPACE'),
-    'scheduler': os.getenv('SCHEDULER', DEF_SCHEDULER_NAME)
+    'method': os.getenv('METHOD', DEF_SCHEDULER_METHOD),
+    'scheduler': os.getenv('SCHEDULER', DEF_SCHEDULER_NAME),
+    'namespace': os.getenv('NAMESPACE')
 }
 
-REQUIRED_FIELDS = ('namespace', 'scheduler')
+REQUIRED_FIELDS = ('method', 'namespace', 'scheduler')
 
 
 def schedule_pod(pod_name: str, namespace: str, method: str) -> str:
