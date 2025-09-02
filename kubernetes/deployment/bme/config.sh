@@ -76,3 +76,9 @@ PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
 API="api"
 API_VER="v1"
 API_PORT=8080
+
+################################## Scheduler setup
+
+SCHEDULER="scheduler"
+SCHEDULER_METHOD="random"
+SCHEDULER_REF="${DEF_NS}-${SCHEDULER}"

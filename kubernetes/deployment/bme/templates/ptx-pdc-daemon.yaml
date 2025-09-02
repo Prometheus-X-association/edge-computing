@@ -131,7 +131,8 @@ spec:
         - name: builder
           image: ${REGISTRY}/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "--type=clusterip", "-v" ]
+          command: [ "python3", "-m", "app.tools.pdc-init", "--verbose" ]
+          args: [ "--type=clusterip" ]
           volumeMounts:
             - name: kube-api-client-cfg
               mountPath: /var/run/secrets/projected
@@ -160,15 +161,15 @@ spec:
                 name: ${PDC}-secrets
           volumeMounts:
             - name: ${PDC}-env
-              mountPath: "/usr/src/app/.env.production"
+              mountPath: /usr/src/app/.env.production
               subPath: .env.production
               readOnly: true
             - name: ${PDC}-config-template
-              mountPath: "/usr/src/app/dist/src/config.production.json.template"
+              mountPath: /usr/src/app/dist/src/config.production.json.template
               subPath: config.production.json.template
               readOnly: true
             - name: ${PDC}-entrypoint
-              mountPath: "/usr/src/app/docker/scripts/entrypoint.sh"
+              mountPath: /usr/src/app/docker/scripts/entrypoint.sh
               subPath: entrypoint.sh
               readOnly: true
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]

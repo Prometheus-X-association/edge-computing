@@ -40,14 +40,17 @@ function init() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
+    #######
     k3d cluster create --config="${CFG_DIR}/templates/k3d-bme-cluster.yaml"
     if [ "${PERSIST}" = true ]; then
         mkdir -p ./manifests
         k3d cluster list bme -o yaml >"${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
     fi
+    #######
 	kubectl create namespace "${DEF_NS}"
 	kubectl config set-context --current --namespace "${DEF_NS}"
 	kubectl cluster-info
+    #######
 	echo
 	echo ">>> Upload images to local registry..."
 	for img in ${PTX_EDGE_COMPONENTS}; do
@@ -58,6 +61,7 @@ function init() {
 		IMG=$(docker image ls -f reference="ptx/${img}*" --format='{{.Repository}}:{{.Tag}}')
 		skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
 	done
+	#######
     echo
 	echo ">>> Uploaded images:"
 	curl -Sskf --cacert "${CA_DIR}/ca.crt" -u "${CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
@@ -110,6 +114,7 @@ function deploy() {
     kubectl get ns "${DEF_NS}" || (
         kubectl create namespace "${DEF_NS}" && kubectl config set-context --current --namespace "${DEF_NS}")
     echo
+    #######
     if [ "${PERSIST}" = true ]; then
         echo
         echo ">>> Generate manifests...."
@@ -122,11 +127,13 @@ function deploy() {
         done
         popd >/dev/null
     fi
+    #######
 	echo
 	echo "Waiting for traefik to be installed..."
     kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik-crd
     kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
     kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
+    #######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -140,6 +147,7 @@ function deploy() {
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
+	#######
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -150,7 +158,7 @@ function deploy() {
     echo
     echo "Check http://localhost:8888/ptx-edge/zone-0/pdc/..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/zone-0/pdc/
-
+    #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -159,6 +167,7 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-deployment.yaml" | kubectl apply -f=-
     fi
     kubectl wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/api
+    #######
     echo
     echo ">>> Applying ptx-rest-api-ingress.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -169,6 +178,15 @@ function deploy() {
     echo
     echo "Check http://localhost:8888/ptx-edge/api/v1/versions..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/api/v1/versions
+    #######
+    echo
+    echo ">>> Applying ptx-scheduler-deployment.yaml"
+    if [ "${PERSIST}" = true ]; then
+        kubectl apply -f="${CFG_DIR}/manifests/ptx-scheduler-deployment.yaml"
+    else
+        envsubst <"${CFG_DIR}/templates/ptx-scheduler-deployment.yaml" | kubectl apply -f=-
+    fi
+    kubectl wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/"${SCHEDULER}"
 }
 
 ########################################################################################################################
