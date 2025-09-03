@@ -130,10 +130,18 @@ function deploy() {
     #######
 	echo
 	echo "Waiting for traefik to be installed..."
-    kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik-crd
     kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
     kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
     #######
+	echo
+	echo "Generate TLS..."
+	rm -rf "${CFG_DIR}"/.creds/api && mkdir -p "${CFG_DIR}"/.creds/api
+	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
+			-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
+			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
+			-keyout "${CFG_DIR}"/.creds/api/tls.key -out "${CFG_DIR}"/.creds/api/tls.cert
+	kubectl create secret tls api-tls --cert="${CFG_DIR}"/.creds/api/tls.cert --key="${CFG_DIR}"/.creds/api/tls.key
+	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
     if [ "${PERSIST}" = true ]; then
@@ -147,15 +155,6 @@ function deploy() {
 	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
-	#######
-	echo
-	echo "Generate TLS..."
-	rm -rf "${CFG_DIR}"/.creds/api && mkdir -p "${CFG_DIR}"/.creds/api
-	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
-			-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
-			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
-			-keyout "${CFG_DIR}"/.creds/api/tls.key -out "${CFG_DIR}"/.creds/api/tls.cert
-	kubectl create secret tls api-tls --cert="${CFG_DIR}"/.creds/api/tls.cert --key="${CFG_DIR}"/.creds/api/tls.key
 	#######
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
@@ -185,8 +184,9 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
     fi
     echo
-    echo "Check http://localhost:8888/ptx-edge/api/v1/versions..."
-    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/api/v1/versions
+    echo "Check https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions..."
+    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
+     -S https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"

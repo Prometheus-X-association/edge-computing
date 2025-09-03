@@ -7,7 +7,10 @@ servers: 1
 agents: 2
 ports:
   # Export loadbalancer
-  - port: ${LOADBALANCER_PORT}:80
+  - port: ${LOADBALANCER_WEB_PORT}:80
+    nodeFilters:
+      - loadbalancer
+  - port: ${LOADBALANCER_WEBSECURE_PORT}:443
     nodeFilters:
       - loadbalancer
   # Export PDC
@@ -19,6 +22,10 @@ volumes:
   - volume: ${CA_DIR}/ca.crt:${CA_CERT_PATH}:ro
     nodeFilters:
       - all
+  # Add additional traefik startup config
+  - volume: ${CFG_DIR}/templates/k3d-bme-traefik-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
+    nodeFilters:
+      - server:*
 registries:
   create:
     name: ${REGISTRY_HOST}

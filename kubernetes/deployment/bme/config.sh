@@ -41,7 +41,8 @@ K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
 CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
 CA_CERT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 
-LOADBALANCER_PORT=8888
+LOADBALANCER_WEB_PORT=8888
+LOADBALANCER_WEBSECURE_PORT=8443
 PDC_NODEPORT=30003
 PDC_DEF_PORT=3000
 
@@ -58,7 +59,7 @@ source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
 #CLUSTER_GW=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_PORT}/${DEF_NS}/${DEF_ZONE}/${PDC}"
+PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_WEB_PORT}/${DEF_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
 PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh

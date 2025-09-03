@@ -16,22 +16,23 @@
 #                name: ${API}
 #                port:
 #                  number: ${API_PORT}
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ${API}
-  namespace: ${DEF_NS}
-  labels:
-    app: ${API}
-spec:
-  entryPoints:
-    - web
-  routes:
-    - match: PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
-      kind: Rule
-      services:
-        - name: ${API}
-          port: ${API_PORT}
+#---
+#apiVersion: traefik.io/v1alpha1
+#kind: IngressRoute
+#metadata:
+#  name: ${API}
+#  namespace: ${DEF_NS}
+#  labels:
+#    app: ${API}
+#spec:
+#  entryPoints:
+#    - web
+#  routes:
+#    - match: PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
+#      kind: Rule
+#      services:
+#        - name: ${API}
+#          port: ${API_PORT}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
