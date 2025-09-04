@@ -14,6 +14,8 @@
 # limitations under the License.
 set -eou pipefail
 
+COMMENT_FILTER='/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//'
+
 # Load configurations
 source ./config.sh
 
@@ -122,7 +124,7 @@ function deploy() {
         pushd templates >/dev/null
         for file in ptx-*.yaml; do
             echo "Reading ${file}..."
-            envsubst <"${CFG_DIR}/templates/${file}" >"${CFG_DIR}/manifests/${file}"
+            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
             echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
         done
         popd >/dev/null
