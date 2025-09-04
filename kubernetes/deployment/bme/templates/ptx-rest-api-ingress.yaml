@@ -1,12 +1,4 @@
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: ${API}-tls-opt
-  namespace: ${DEF_NS}
-spec:
-  minVersion: VersionTLS13
----
 apiVersion: v1
 kind: Secret
 type: kubernetes.io/basic-auth
@@ -26,6 +18,28 @@ spec:
   basicAuth:
     secret: ${API}-auth-secret
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name:  ${API}-secure-headers
+  namespace: ${DEF_NS}
+spec:
+  headers:
+    frameDeny: true
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: ${API}-tls-opt
+  namespace: ${DEF_NS}
+spec:
+  minVersion: VersionTLS13
 #---
 #apiVersion: traefik.io/v1alpha1
 #kind: IngressRoute
@@ -38,7 +52,7 @@ spec:
 #  entryPoints:
 #    - websecure
 #  routes:
-#    - match: PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
+#    - match: Host(`${API_TLS_DOMAIN}`) && PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
 #      kind: Rule
 #      services:
 #        - name: ${API}
@@ -55,13 +69,14 @@ metadata:
     app: ${API}
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: ${DEF_NS}-${API}-basic-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${DEF_NS}-${API}-basic-auth@kubernetescrd,${DEF_NS}-${API}-secure-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.options: ${DEF_NS}-${API}-tls-opt@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - http:
+    - host: ${API_TLS_DOMAIN}
+      http:
         paths:
           - path: /${DEF_NS}/${API}/${API_VER}
             pathType: Prefix
