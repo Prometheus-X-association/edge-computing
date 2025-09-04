@@ -137,24 +137,24 @@ function deploy() {
     #######
 	echo
 	echo "Generate TLS..."
-	rm -rf "${CFG_DIR}"/.creds/api && mkdir -p "${CFG_DIR}"/.creds/api
+	rm -rf "${CFG_DIR}/.creds/${GW}" && mkdir -p "${CFG_DIR}/.creds/${GW}"
     ### Simple self-signed cert
- 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${API_TLS_DOMAIN}" \
-    #            -keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
+ 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
+    #            -keyout "${CFG_DIR}"/.creds/"${GW}"/tls.key -out "${CFG_DIR}"/.creds/"${GW}"/tls.cert
     ### Simple self-signed cert with specific CA
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
-	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${API_TLS_DOMAIN}" \
-	#		-keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
+	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
+	#		-keyout "${CFG_DIR}"/.creds/"${GW}"/tls.key -out "${CFG_DIR}"/.creds/"${GW}"/tls.cert
 	### Self-signed cert with CA and SAN
-    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key \
-            -out "${CFG_DIR}"/.creds/api/"${API}"-tls.csr \
+    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/${GW}/tls.key" \
+            -out "${CFG_DIR}/.creds/${GW}/tls.csr" \
 			-subj "/C=EU/O=PTX/OU=dataspace/CN=*.ptx-edge.prometheus-x.org"
-	printf "subjectAltName=DNS:%s" "${API_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
-			-in "${CFG_DIR}"/.creds/api/"${API}"-tls.csr -CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt \
-			-CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
-	kubectl create secret tls "${API}"-tls --cert="${CFG_DIR}"/.creds/api/"${API}"-tls.cert \
-	                                        --key="${CFG_DIR}"/.creds/api/"${API}"-tls.key
+	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
+			-in "${CFG_DIR}/.creds/${GW}/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
+			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/${GW}/tls.cert"
+	kubectl create secret tls "${GW}-tls" --cert="${CFG_DIR}/.creds/${GW}/tls.cert" \
+	                                        --key="${CFG_DIR}/.creds/${GW}/tls.key"
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
@@ -178,8 +178,9 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-pdc-ingress.yaml" | kubectl apply -f=-
     fi
     echo
-    echo "Check http://localhost:8888/ptx-edge/zone-0/pdc/..."
-    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null -S http://localhost:8888/ptx-edge/zone-0/pdc/
+    echo "Check https://${GW_TLS_DOMAIN}:8443/ptx-edge/zone-0/pdc/..."
+    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
+                "https://${GW_TLS_DOMAIN}:8443/ptx-edge/zone-0/pdc/"
     #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
@@ -198,10 +199,10 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
     fi
     echo
-    echo "Check https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions..."
-    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
+    echo "Check https:/${GW_TLS_DOMAIN}:8443/ptx-edge/api/v1/versions..."
+    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-            -S https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions
+            "https://${GW_TLS_DOMAIN}:8443/ptx-edge/api/v1/versions"
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"

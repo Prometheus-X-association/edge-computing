@@ -32,14 +32,6 @@ spec:
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
----
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: ${API}-tls-opt
-  namespace: ${DEF_NS}
-spec:
-  minVersion: VersionTLS13
 #---
 #apiVersion: traefik.io/v1alpha1
 #kind: IngressRoute
@@ -71,7 +63,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: ${DEF_NS}-${API}-basic-auth@kubernetescrd,${DEF_NS}-${API}-secure-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.options: ${DEF_NS}-${API}-tls-opt@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls.options: ${DEF_NS}-tls-opt@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -86,7 +78,7 @@ spec:
                 port:
                   number: ${API_PORT}
   tls:
-    - secretName: ${API}-tls
+    - secretName: ${GW}-tls
     - hosts:
-        - ${API_TLS_DOMAIN}
+        - ${GW_TLS_DOMAIN}
 ---

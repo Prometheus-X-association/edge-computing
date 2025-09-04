@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -o allexport
+set -u -o allexport
 
 CFG_DIR=$(readlink -f "$(dirname "$0")")
 PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
@@ -50,6 +50,8 @@ PDC_DEF_PORT=3000
 
 DEF_NS="ptx-edge"
 DEF_ZONE="zone-0"
+GW="gw"
+GW_TLS_DOMAIN="${GW}.ptx-edge.localhost"
 
 ################################## PDC setup
 
@@ -81,7 +83,6 @@ API_PORT=8080
 source "${CFG_DIR}"/.creds/bme-api-creds.sh
 #API_BASIC_USER=
 #API_BASIC_PASSWORD=
-API_TLS_DOMAIN="api.ptx-edge.localhost"
 
 ################################## Scheduler setup
 
