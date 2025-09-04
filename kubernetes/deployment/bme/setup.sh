@@ -78,7 +78,7 @@ function remove() {
     if [ ! "${cluster_missing+0}" ]; then
             kubectl delete namespace "${DEF_NS}" --ignore-not-found --now || true
     fi
-    rm -rf manifests/
+    rm -rf manifests/ .creds/api/
 }
 
 
@@ -138,11 +138,23 @@ function deploy() {
 	echo
 	echo "Generate TLS..."
 	rm -rf "${CFG_DIR}"/.creds/api && mkdir -p "${CFG_DIR}"/.creds/api
-	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
-			-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
-			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
-			-keyout "${CFG_DIR}"/.creds/api/tls.key -out "${CFG_DIR}"/.creds/api/tls.cert
-	kubectl create secret tls api-tls --cert="${CFG_DIR}"/.creds/api/tls.cert --key="${CFG_DIR}"/.creds/api/tls.key
+    ### Simple self-signed cert
+ 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${API_TLS_DOMAIN}" \
+    #            -keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
+    ### Simple self-signed cert with specific CA
+	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
+	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
+	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${API_TLS_DOMAIN}" \
+	#		-keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
+	### Self-signed cert with CA and SAN
+    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}"/.creds/api/"${API}"-tls.key \
+            -out "${CFG_DIR}"/.creds/api/"${API}"-tls.csr \
+			-subj "/C=EU/O=PTX/OU=dataspace/CN=*.ptx-edge.prometheus-x.org"
+	printf "subjectAltName=DNS:%s" "${API_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
+			-in "${CFG_DIR}"/.creds/api/"${API}"-tls.csr -CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt \
+			-CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key -out "${CFG_DIR}"/.creds/api/"${API}"-tls.cert
+	kubectl create secret tls "${API}"-tls --cert="${CFG_DIR}"/.creds/api/"${API}"-tls.cert \
+	                                        --key="${CFG_DIR}"/.creds/api/"${API}"-tls.key
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
@@ -188,7 +200,8 @@ function deploy() {
     echo
     echo "Check https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
-     -S https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions
+            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+            -S https://api.ptx-edge.localhost:8443/ptx-edge/api/v1/versions
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"

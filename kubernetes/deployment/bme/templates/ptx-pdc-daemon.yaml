@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -227,3 +228,4 @@ spec:
   ports:
     - name: ${PDC}-port
       port: ${PDC_DEF_PORT}
+---

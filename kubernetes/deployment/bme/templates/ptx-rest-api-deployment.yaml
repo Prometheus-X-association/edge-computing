@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,4 +47,4 @@ spec:
     - name: ${API}-port
       port: ${API_PORT}
       targetPort: ${API}-port
-
+---

@@ -55,7 +55,7 @@ DEF_ZONE="zone-0"
 
 PDC="pdc"
 
-source "${CFG_DIR}/.creds/bme-pdc-creds.sh"
+source "${CFG_DIR}"/.creds/bme-pdc-creds.sh
 #CLUSTER_GW=
 #SERVICE_KEY=
 #SECRET_KEY=
@@ -77,6 +77,11 @@ PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
 API="api"
 API_VER="v1"
 API_PORT=8080
+
+source "${CFG_DIR}"/.creds/bme-api-creds.sh
+#API_BASIC_USER=
+#API_BASIC_PASSWORD=
+API_TLS_DOMAIN="api.ptx-edge.localhost"
 
 ################################## Scheduler setup
 

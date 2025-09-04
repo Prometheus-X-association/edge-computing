@@ -1,54 +1,77 @@
-#apiVersion: networking.k8s.io/v1
-#kind: Ingress
-#metadata:
-#  name: ${API}
-#  namespace: ${DEF_NS}
-#  annotations:
-#    ingress.kubernetes.io/ssl-redirect: "false"
-#spec:
-#  rules:
-#    - http:
-#        paths:
-#          - path: /${DEF_NS}/${API}/${API_VER}
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: ${API}
-#                port:
-#                  number: ${API_PORT}
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: ${API}-tls-opt
+  namespace: ${DEF_NS}
+spec:
+  minVersion: VersionTLS13
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/basic-auth
+metadata:
+  name: ${API}-auth-secret
+  namespace: ${DEF_NS}
+stringData:
+  username: ${API_BASIC_USER}
+  password: ${API_BASIC_PASSWORD}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ${API}-basic-auth
+  namespace: ${DEF_NS}
+spec:
+  basicAuth:
+    secret: ${API}-auth-secret
+---
 #---
 #apiVersion: traefik.io/v1alpha1
 #kind: IngressRoute
 #metadata:
-#  name: ${API}
+#  name: ${API}-secure
 #  namespace: ${DEF_NS}
 #  labels:
 #    app: ${API}
 #spec:
 #  entryPoints:
-#    - web
+#    - websecure
 #  routes:
 #    - match: PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
 #      kind: Rule
 #      services:
 #        - name: ${API}
 #          port: ${API_PORT}
+#  tls:
+#    secretName: ${API}-tls
 ---
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: ${API}-secure
   namespace: ${DEF_NS}
   labels:
     app: ${API}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: ${DEF_NS}-${API}-basic-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.options: ${DEF_NS}-${API}-tls-opt@kubernetescrd
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
-      kind: Rule
-      services:
-        - name: ${API}
-          port: ${API_PORT}
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /${DEF_NS}/${API}/${API_VER}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${API}
+                port:
+                  number: ${API_PORT}
   tls:
-    secretName: api-tls
+    - secretName: ${API}-tls
+    - hosts:
+        - ${API_TLS_DOMAIN}
+---

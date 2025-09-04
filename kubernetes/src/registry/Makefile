@@ -28,9 +28,9 @@ cert:
 	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs/ca && mkdir -p ${CURDIR}/.certs/auth
 	openssl genrsa -out ${CURDIR}/.certs/ca.key 2048
 	openssl req -new -x509 -days 365 -key ${CURDIR}/.certs/ca.key -out ${CURDIR}/.certs/ca/ca.crt \
-			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
+			-subj "/C=EU/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
 	openssl req -newkey rsa:2048 -noenc -keyout ${CURDIR}/.certs/auth/server.key -out ${CURDIR}/.certs/server.csr \
-			-subj "/C=EU/ST=''/L=''/O=ptx-edge/OU=ptx-edge/CN=*ptx-edge.prometheus-x.org"
+			-subj "/C=EU/O=ptx-edge/OU=ptx-edge/CN=*.ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
 			-in ${CURDIR}/.certs/server.csr -CA ${CURDIR}/.certs/ca/ca.crt -CAkey ${CURDIR}/.certs/ca.key \
 			-out ${CURDIR}/.certs/auth/server.cert -extfile=- #-CAcreateserial
