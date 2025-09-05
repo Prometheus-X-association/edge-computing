@@ -34,6 +34,7 @@ spec:
 #      kind: Rule
 #      middlewares:
 #        - name: ${PDC}-${DEF_ZONE}-stripprefix
+#          namespace: ${DEF_NS}
 #      services:
 #        - name: ${PDC}-${DEF_ZONE}
 #          port: ${PDC_DEF_PORT}
@@ -53,7 +54,8 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - http:
+    - host: ${GW_TLS_DOMAIN}
+      http:
         paths:
           - path: /${DEF_NS}/${DEF_ZONE}/${PDC}
             pathType: Prefix

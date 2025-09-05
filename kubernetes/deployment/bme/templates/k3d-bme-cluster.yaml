@@ -14,18 +14,18 @@ ports:
     nodeFilters:
       - loadbalancer
   # Export PDC
-#  - port: ${PDC_DEF_PORT}:${PDC_NODEPORT}
-#    nodeFilters:
-#      - agent:0:direct
+  #- port: ${PDC_DEF_PORT}:${PDC_NODEPORT}
+  #  nodeFilters:
+  #    - agent:0:direct
 volumes:
   # Add registry CA cert
   - volume: ${CA_DIR}/ca.crt:${CA_CERT_PATH}:ro
     nodeFilters:
       - all
-  # Add additional traefik startup config
+  # Add traefik startup config
   - volume: ${CFG_DIR}/templates/k3d-bme-traefik-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
     nodeFilters:
-      - server:*
+      - server:0
 registries:
   create:
     name: ${REGISTRY_HOST}
@@ -45,6 +45,7 @@ registries:
           username: ${REGISTRY_USER}
           password: ${REGISTRY_SECRET}
         tls:
+          insecure_skip_verify: false
           ca_file: ${CA_CERT_PATH}
 options:
   kubeconfig:
@@ -54,7 +55,6 @@ options:
     wait: true
     timeout: ${TIMEOUT}
     disableLoadbalancer: false
-    disableImageVolume: false
     disableRollback: false
   k3s:
     nodeLabels:

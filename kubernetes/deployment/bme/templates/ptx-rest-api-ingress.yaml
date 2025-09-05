@@ -1,13 +1,16 @@
 ---
 apiVersion: v1
 kind: Secret
-type: kubernetes.io/basic-auth
+#type: kubernetes.io/basic-auth
+type: Opaque
 metadata:
   name: ${API}-auth-secret
   namespace: ${DEF_NS}
-stringData:
-  username: ${API_BASIC_USER}
-  password: ${API_BASIC_PASSWORD}
+#stringData:
+#  username: ${API_BASIC_USER}
+#  password: ${API_BASIC_PASSWORD}
+data:
+  users: ${API_CREDS_BASE64_ENCODED}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -26,9 +29,11 @@ metadata:
 spec:
   headers:
     frameDeny: true
-    sslRedirect: true
+    customFrameOptionsValue: SAMEORIGIN
+    sslRedirect: false
     browserXssFilter: true
     contentTypeNosniff: true
+    forceSTSHeader: true
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
@@ -44,8 +49,13 @@ spec:
 #  entryPoints:
 #    - websecure
 #  routes:
-#    - match: Host(`${API_TLS_DOMAIN}`) && PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
+#    - match: Host(`${GW_TLS_DOMAIN}`) && PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
 #      kind: Rule
+#      middlewares:
+#        - name: ${API}-basic-auth
+#          namespace: ${DEF_NS}
+#        - name: ${API}-secure-headers
+#          namespace: ${DEF_NS}
 #      services:
 #        - name: ${API}
 #          port: ${API_PORT}
@@ -67,7 +77,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: ${API_TLS_DOMAIN}
+    - host: ${GW_TLS_DOMAIN}
       http:
         paths:
           - path: /${DEF_NS}/${API}/${API_VER}

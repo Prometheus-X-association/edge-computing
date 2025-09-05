@@ -83,6 +83,7 @@ API_PORT=8080
 source "${CFG_DIR}"/.creds/bme-api-creds.sh
 #API_BASIC_USER=
 #API_BASIC_PASSWORD=
+API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}" | openssl base64 -A)
 
 ################################## Scheduler setup
 
