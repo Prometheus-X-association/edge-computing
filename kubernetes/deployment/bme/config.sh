@@ -66,10 +66,10 @@ GW_TLS_DOMAIN="${GW}.ptx-edge.localhost"
 PDC="pdc"
 
 # <- source "${CFG_DIR}"/.creds/bme-cluster-creds.sh
-#CLUSTER_GW=
+#PDC_CLUSTER_GW=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_WEB_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
+PDC_ENDPOINT="https://${PDC_CLUSTER_GW}:${LOADBALANCER_WEBSECURE_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
 PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
