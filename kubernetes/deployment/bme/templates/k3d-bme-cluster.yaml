@@ -1,4 +1,5 @@
 # nonk8s
+---
 kind: Simple
 apiVersion: k3d.io/v1alpha5
 metadata:
@@ -23,7 +24,7 @@ volumes:
     nodeFilters:
       - all
   # Add traefik startup config
-  - volume: ${CFG_DIR}/templates/k3d-bme-traefik-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
+  - volume: ${CFG_DIR}/manifests/k3d-bme-traefik-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
     nodeFilters:
       - server:0
 registries:
@@ -66,3 +67,4 @@ options:
       - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
           - agent:0
+---

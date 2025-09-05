@@ -23,16 +23,23 @@ TIMEOUT=120s
 PTX_EDGE_COMPONENTS="builder rest-api scheduler registry"
 PDC_COMPONENTS="connector mongodb"
 
+source "${CFG_DIR}"/.creds/bme-cluster-creds.sh
+
 ################################## Cluster parameters
 
 CLUSTER="bme"
 
+TRAEFIK="traefik"
+# <- source "${CFG_DIR}"/.creds/bme-cluster-creds.sh
+#TRAEFIK_DASHBOARD_USER=
+#TRAEFIK_DASHBOARD_PASSWORD=
+TRAEFIK_DASHBOARD_CREDS=$(htpasswd -Bnb "${TRAEFIK_DASHBOARD_USER}" "${TRAEFIK_DASHBOARD_PASSWORD}" | openssl base64 -A)
+TRAEFIK_DASHBOARD_DOMAIN="dashboard.traefik.localhost"
+
 REGISTRY_HOST="registry.k3d.local"
 REGISTRY_PORT=5000
 REGISTRY="${REGISTRY_HOST}:${REGISTRY_PORT}"
-
 REGISTRY_IMG="ptx-edge/registry:1.0"
-
 REGISTRY_USER="admin"
 REGISTRY_SECRET="admin"
 CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
@@ -43,12 +50,13 @@ CA_CERT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 
 LOADBALANCER_WEB_PORT=8888
 LOADBALANCER_WEBSECURE_PORT=8443
+
 PDC_NODEPORT=30003
 PDC_DEF_PORT=3000
 
 ################################## PTX-edge setup
 
-DEF_NS="ptx-edge"
+PTX_NS="ptx-edge"
 DEF_ZONE="zone-0"
 GW="gw"
 GW_TLS_DOMAIN="${GW}.ptx-edge.localhost"
@@ -57,11 +65,11 @@ GW_TLS_DOMAIN="${GW}.ptx-edge.localhost"
 
 PDC="pdc"
 
-source "${CFG_DIR}"/.creds/bme-pdc-creds.sh
+# <- source "${CFG_DIR}"/.creds/bme-cluster-creds.sh
 #CLUSTER_GW=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_WEB_PORT}/${DEF_NS}/${DEF_ZONE}/${PDC}"
+PDC_ENDPOINT="http://${CLUSTER_GW}:${LOADBALANCER_WEB_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
 PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
@@ -80,7 +88,7 @@ API="api"
 API_VER="v1"
 API_PORT=8080
 
-source "${CFG_DIR}"/.creds/bme-api-creds.sh
+# <- source "${CFG_DIR}"/.creds/bme-cluster-creds.sh
 #API_BASIC_USER=
 #API_BASIC_PASSWORD=
 API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}" | openssl base64 -A)
@@ -89,4 +97,4 @@ API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWO
 
 SCHEDULER="scheduler"
 SCHEDULER_METHOD="random"
-SCHEDULER_REF="${DEF_NS}-${SCHEDULER}"
+SCHEDULER_REF="${PTX_NS}-${SCHEDULER}"

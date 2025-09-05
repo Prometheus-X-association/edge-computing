@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ${API}
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${API}
 spec:
@@ -29,7 +29,7 @@ spec:
             - --log-level=info
           env:
             - name: ROOT_PATH
-              value: /${DEF_NS}/${API}/${API_VER}
+              value: /${PTX_NS}/${API}/${API_VER}
           ports:
             - name: ${API}-port
               containerPort: ${API_PORT}
@@ -38,7 +38,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${API}
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
 spec:
   selector:
     app: ${API}

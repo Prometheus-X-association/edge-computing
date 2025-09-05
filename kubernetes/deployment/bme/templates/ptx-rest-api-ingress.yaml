@@ -5,7 +5,7 @@ kind: Secret
 type: Opaque
 metadata:
   name: ${API}-auth-secret
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
 #stringData:
 #  username: ${API_BASIC_USER}
 #  password: ${API_BASIC_PASSWORD}
@@ -16,7 +16,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: ${API}-basic-auth
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
 spec:
   basicAuth:
     secret: ${API}-auth-secret
@@ -25,12 +25,12 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name:  ${API}-secure-headers
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
 spec:
   headers:
     frameDeny: true
     customFrameOptionsValue: SAMEORIGIN
-    sslRedirect: false
+    sslRedirect: true
     browserXssFilter: true
     contentTypeNosniff: true
     forceSTSHeader: true
@@ -42,20 +42,20 @@ spec:
 #kind: IngressRoute
 #metadata:
 #  name: ${API}-secure
-#  namespace: ${DEF_NS}
+#  namespace: ${PTX_NS}
 #  labels:
 #    app: ${API}
 #spec:
 #  entryPoints:
 #    - websecure
 #  routes:
-#    - match: Host(`${GW_TLS_DOMAIN}`) && PathPrefix(`/${DEF_NS}/${API}/${API_VER}`)
+#    - match: Host(`${GW_TLS_DOMAIN}`) && PathPrefix(`/${PTX_NS}/${API}/${API_VER}`)
 #      kind: Rule
 #      middlewares:
 #        - name: ${API}-basic-auth
-#          namespace: ${DEF_NS}
+#          namespace: ${PTX_NS}
 #        - name: ${API}-secure-headers
-#          namespace: ${DEF_NS}
+#          namespace: ${PTX_NS}
 #      services:
 #        - name: ${API}
 #          port: ${API_PORT}
@@ -66,21 +66,21 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ${API}-secure
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${API}
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: ${DEF_NS}-${API}-basic-auth@kubernetescrd,${DEF_NS}-${API}-secure-headers@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX_NS}-${API}-basic-auth@kubernetescrd,${PTX_NS}-${API}-secure-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.options: ${DEF_NS}-tls-opt@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls.options: ${PTX_NS}-tls-opt@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
     - host: ${GW_TLS_DOMAIN}
       http:
         paths:
-          - path: /${DEF_NS}/${API}/${API_VER}
+          - path: /${PTX_NS}/${API}/${API_VER}
             pathType: Prefix
             backend:
               service:

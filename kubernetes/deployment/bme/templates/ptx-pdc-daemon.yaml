@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ${PDC}-config
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 data:
@@ -38,7 +38,7 @@ kind: Secret
 type: Opaque
 metadata:
   name: ${PDC}-secrets
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 data:
@@ -50,7 +50,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ${PDC}
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 automountServiceAccountToken: false
@@ -59,7 +59,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ${PDC}-init
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 rules:
@@ -71,13 +71,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ${PDC}-init
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 subjects:
   - kind: ServiceAccount
     name: ${PDC}
-    namespace: ${DEF_NS}
+    namespace: ${PTX_NS}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -87,7 +87,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: node-lister
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
@@ -97,13 +97,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: node-lister
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 subjects:
   - kind: ServiceAccount
     name: ${PDC}
-    namespace: ${DEF_NS}
+    namespace: ${PTX_NS}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -113,7 +113,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: ${PDC}
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 spec:
@@ -217,7 +217,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${PDC}-${DEF_ZONE}
-  namespace: ${DEF_NS}
+  namespace: ${PTX_NS}
   labels:
     app: ${PDC}
 spec:

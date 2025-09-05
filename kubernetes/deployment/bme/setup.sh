@@ -43,14 +43,22 @@ function init() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     #######
-    k3d cluster create --config="${CFG_DIR}/templates/k3d-bme-cluster.yaml"
     if [ "${PERSIST}" = true ]; then
+        echo
+        echo ">>> Generate manifests...."
         mkdir -p ./manifests
-        k3d cluster list bme -o yaml >"${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
+        pushd templates >/dev/null
+        for file in k3d-*.yaml; do
+            echo "Reading ${file}..."
+            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
+            echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
+        done
+        popd >/dev/null
     fi
+    k3d cluster create --config="${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
     #######
-	kubectl create namespace "${DEF_NS}"
-	kubectl config set-context --current --namespace "${DEF_NS}"
+	kubectl create namespace "${PTX_NS}"
+	kubectl config set-context --current --namespace "${PTX_NS}"
 	kubectl cluster-info
     #######
 	echo
@@ -76,7 +84,7 @@ function remove() {
     echo
     k3d cluster list "${CLUSTER}" || cluster_missing="$?"
     if [ ! "${cluster_missing+0}" ]; then
-            kubectl delete namespace "${DEF_NS}" --ignore-not-found --now || true
+            kubectl delete namespace "${PTX_NS}" --ignore-not-found --now || true
     fi
     rm -rf manifests/ .creds/api/
 }
@@ -113,8 +121,8 @@ function deploy() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    kubectl get ns "${DEF_NS}" || (
-        kubectl create namespace "${DEF_NS}" && kubectl config set-context --current --namespace "${DEF_NS}")
+    kubectl get ns "${PTX_NS}" || (
+        kubectl create namespace "${PTX_NS}" && kubectl config set-context --current --namespace "${PTX_NS}")
     echo
     #######
     if [ "${PERSIST}" = true ]; then
