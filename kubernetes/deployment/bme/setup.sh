@@ -61,20 +61,20 @@ function init() {
 	kubectl config set-context --current --namespace "${PTX_NS}"
 	kubectl cluster-info
     #######
-	echo
-	echo ">>> Upload images to local registry..."
-	for img in ${PTX_EDGE_COMPONENTS}; do
-        IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
-        skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
-    done
-    for img in ${PDC_COMPONENTS}; do
-		IMG=$(docker image ls -f reference="ptx/${img}*" --format='{{.Repository}}:{{.Tag}}')
-		skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
-	done
+#	echo
+#	echo ">>> Upload images to local registry..."
+#	for img in ${PTX_EDGE_COMPONENTS}; do
+#        IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
+#        skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
+#    done
+#    for img in ${PDC_COMPONENTS}; do
+#		IMG=$(docker image ls -f reference="ptx/${img}*" --format='{{.Repository}}:{{.Tag}}')
+#		skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
+#	done
 	#######
     echo
 	echo ">>> Uploaded images:"
-	curl -Sskf --cacert "${CA_DIR}/ca.crt" -u "${CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
+	curl -Sskf --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 	echo
 }
 
@@ -96,8 +96,8 @@ function cleanup() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster delete "${CLUSTER}" || true
-    sudo rm -rf "${CFG_DIR}/.cache"
-    docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
+#    sudo rm -rf "${CFG_DIR}/.cache"
+#    docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
 	docker image prune -f
 }
 
@@ -158,11 +158,19 @@ function deploy() {
     openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/${GW}/tls.key" \
             -out "${CFG_DIR}/.creds/${GW}/tls.csr" \
 			-subj "/C=EU/O=PTX/OU=dataspace/CN=*.ptx-edge.prometheus-x.org"
-	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
+	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -CAcreateserial -extfile=- \
 			-in "${CFG_DIR}/.creds/${GW}/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
 			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/${GW}/tls.cert"
-	kubectl create secret tls "${GW}-tls" --cert="${CFG_DIR}/.creds/${GW}/tls.cert" \
-	                                        --key="${CFG_DIR}/.creds/${GW}/tls.key"
+	kubectl -n kube-system create secret tls "${GW}-tls" --cert="${CFG_DIR}/.creds/${GW}/tls.cert" \
+	                                                    --key="${CFG_DIR}/.creds/${GW}/tls.key"
+	#######
+#    echo
+#    echo ">>> Applying k3d-bme-traefik-ingressroute.yaml"
+#    if [ "${PERSIST}" = true ]; then
+#        kubectl apply -f="${CFG_DIR}/manifests/k3d-bme-traefik-ingressroute.yaml"
+#    else
+#        envsubst <"${CFG_DIR}/templates/k3d-bme-traefik-ingressroute.yaml" | kubectl apply -f=-
+#    fi
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
@@ -188,7 +196,7 @@ function deploy() {
     echo
     echo "Check https://${GW_TLS_DOMAIN}:8443/ptx-edge/zone-0/pdc/..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
-                "https://${GW_TLS_DOMAIN}:8443/ptx-edge/zone-0/pdc/"
+                "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/zone-0/pdc/"
     #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
@@ -210,7 +218,7 @@ function deploy() {
     echo "Check https:/${GW_TLS_DOMAIN}:8443/ptx-edge/api/v1/versions..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-            "https://${GW_TLS_DOMAIN}:8443/ptx-edge/api/v1/versions"
+            "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/api/v1/versions"
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"
@@ -297,7 +305,7 @@ echo
 ########################################################################################################################
 
 cleanup
-build
+#build
 init
 deploy
 status

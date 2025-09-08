@@ -8,10 +8,10 @@ servers: 1
 agents: 2
 ports:
   # Export loadbalancer
-  - port: ${LOADBALANCER_WEB_PORT}:80
+  - port: ${GW_WEB_PORT}:80
     nodeFilters:
       - loadbalancer
-  - port: ${LOADBALANCER_WEBSECURE_PORT}:443
+  - port: ${GW_WEBSECURE_PORT}:443
     nodeFilters:
       - loadbalancer
   # Export PDC

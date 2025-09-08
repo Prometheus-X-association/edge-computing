@@ -73,7 +73,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX_NS}-${API}-basic-auth@kubernetescrd,${PTX_NS}-${API}-secure-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.options: ${PTX_NS}-tls-opt@kubernetescrd
+    #traefik.ingress.kubernetes.io/router.tls.options: ${PTX_NS}-tls-opt@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_TLS_DOMAIN}
 spec:
   ingressClassName: traefik
   rules:
@@ -88,7 +90,7 @@ spec:
                 port:
                   number: ${API_PORT}
   tls:
-    - secretName: ${GW}-tls
+    #- secretName: ${GW}-tls
     - hosts:
         - ${GW_TLS_DOMAIN}
 ---

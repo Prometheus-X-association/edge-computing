@@ -33,7 +33,7 @@ cert:
 			-subj "/C=EU/O=ptx-edge/OU=ptx-edge/CN=*.ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
 			-in ${CURDIR}/.certs/server.csr -CA ${CURDIR}/.certs/ca/ca.crt -CAkey ${CURDIR}/.certs/ca.key \
-			-out ${CURDIR}/.certs/auth/server.cert -extfile=- #-CAcreateserial
+			-out ${CURDIR}/.certs/auth/server.cert -CAcreateserial -extfile=-
 	@#docker run --entrypoint htpasswd httpd:2 -Bbn admin admin > .certs/htpasswd
 	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > ${CURDIR}/.certs/auth/htpasswd
 	@#curl -k -u admin:admin https://localhost:5555/v2/_catalog

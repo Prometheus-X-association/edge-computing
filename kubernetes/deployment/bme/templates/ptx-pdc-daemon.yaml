@@ -20,8 +20,8 @@ data:
   config-template.json: |
     {
       "endpoint": "${PDC_ENDPOINT}",
-      "serviceKey": "${PDC_SERVICE_KEY}",
-      "secretKey": "${PDC_SECRET_KEY}",
+      "serviceKey": "${PDC_CFG_SERVICE_KEY}",
+      "secretKey": "${PDC_CFG_SECRET_KEY}",
       "contractUri": "${PTX_CONTRACT_URI}",
       "catalogUri": "${PTX_CATALOG_URI}",
       "consentUri": "${PTX_CONSENT_URI}",
@@ -42,8 +42,8 @@ metadata:
   labels:
     app: ${PDC}
 data:
-  PDC_SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
-  PDC_SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
+  PDC_CFG_SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
+  PDC_CFG_SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
 immutable: true
 ---
 apiVersion: v1
