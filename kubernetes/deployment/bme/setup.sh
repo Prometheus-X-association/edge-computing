@@ -148,19 +148,35 @@ function deploy() {
 	rm -rf "${CFG_DIR}/.creds/gw" && mkdir -p "${CFG_DIR}/.creds/gw"
     ### Simple self-signed cert
  	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-    #            -keyout "${CFG_DIR}"/.creds/"gw"/tls.key -out "${CFG_DIR}"/.creds/"gw"/tls.cert
+    #            -keyout "${CFG_DIR}"/.creds/gw/tls.key -out "${CFG_DIR}"/.creds/gw/tls.cert
     ### Simple self-signed cert with specific CA
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
 	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-	#		-keyout "${CFG_DIR}"/.creds/"gw"/tls.key -out "${CFG_DIR}"/.creds/"gw"/tls.cert
-	### Self-signed cert with CA and SAN
+	#		-keyout "${CFG_DIR}"/.creds/gw/tls.key -out "${CFG_DIR}"/.creds/gw/tls.cert
+	### Self-signed cert from .conf
+#    if [ "${PERSIST}" = true ]; then
+#        echo
+#        echo ">>> Generate manifests...."
+#        mkdir -p ./manifests
+#        pushd templates >/dev/null
+#        for file in *.conf; do
+#            echo "Reading ${file}..."
+#            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
+#            echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
+#        done
+#        popd >/dev/null
+#    fi
+#	openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" \
+#	        -keyout "${CFG_DIR}/.creds/gw/tls.key" -out "${CFG_DIR}/.creds/gw/tls.cert"
+	## Self-signed cert with CA and SAN
     openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/gw/tls.key" \
             -out "${CFG_DIR}/.creds/gw/tls.csr" \
-			-subj "/C=EU/O=PTX/OU=dataspace/CN=*.ptx-edge.prometheus-x.org"
+			-subj "/C=EU/O=PTX/OU=dataspace/CN=ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
 			-in "${CFG_DIR}/.creds/gw/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
 			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/gw/tls.cert"
+	#######
 	kubectl -n kube-system create secret tls gw-tls --cert="${CFG_DIR}/.creds/gw/tls.cert" \
 	                                        --key="${CFG_DIR}/.creds/gw/tls.key"
 	#######
