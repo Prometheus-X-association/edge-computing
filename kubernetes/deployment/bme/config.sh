@@ -68,10 +68,10 @@ GW="gw"
 PDC="pdc"
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
-#GW_TLS_DOMAIN=
+#PDC_DOMAIN=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
+PDC_ENDPOINT="https://${PDC_DOMAIN}:${GW_WEBSECURE_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${PDC_CFG_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
