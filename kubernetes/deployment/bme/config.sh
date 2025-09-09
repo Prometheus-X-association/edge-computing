@@ -72,13 +72,12 @@ PDC="pdc"
 #SERVICE_KEY=
 #SECRET_KEY=
 PDC_ENDPOINT="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
-PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${SERVICE_KEY}" | base64 -w0)
-PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${SECRET_KEY}" | base64 -w0)
+PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
+PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${PDC_CFG_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
 PDC_CFG_SECRET_KEY='${PDC_CFG_SECRET_KEY}'      # Placeholder for substitution in endpoint.sh
 
-#SESSION_SECRET=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
-SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)    # Autogenerate
+PDC_SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)    # Autogenerate
 
 PTX_CONTRACT_URI="https://contract.visionstrust.com/"
 PTX_CATALOG_URI="https://api.visionstrust.com/v1/"

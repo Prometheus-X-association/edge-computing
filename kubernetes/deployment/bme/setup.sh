@@ -145,32 +145,24 @@ function deploy() {
     #######
 	echo
 	echo "Generate TLS..."
-	rm -rf "${CFG_DIR}/.creds/${GW}" && mkdir -p "${CFG_DIR}/.creds/${GW}"
+	rm -rf "${CFG_DIR}/.creds/gw" && mkdir -p "${CFG_DIR}/.creds/gw"
     ### Simple self-signed cert
  	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-    #            -keyout "${CFG_DIR}"/.creds/"${GW}"/tls.key -out "${CFG_DIR}"/.creds/"${GW}"/tls.cert
+    #            -keyout "${CFG_DIR}"/.creds/"gw"/tls.key -out "${CFG_DIR}"/.creds/"gw"/tls.cert
     ### Simple self-signed cert with specific CA
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
 	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-	#		-keyout "${CFG_DIR}"/.creds/"${GW}"/tls.key -out "${CFG_DIR}"/.creds/"${GW}"/tls.cert
+	#		-keyout "${CFG_DIR}"/.creds/"gw"/tls.key -out "${CFG_DIR}"/.creds/"gw"/tls.cert
 	### Self-signed cert with CA and SAN
-    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/${GW}/tls.key" \
-            -out "${CFG_DIR}/.creds/${GW}/tls.csr" \
+    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/gw/tls.key" \
+            -out "${CFG_DIR}/.creds/gw/tls.csr" \
 			-subj "/C=EU/O=PTX/OU=dataspace/CN=*.ptx-edge.prometheus-x.org"
-	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -CAcreateserial -extfile=- \
-			-in "${CFG_DIR}/.creds/${GW}/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
-			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/${GW}/tls.cert"
-	kubectl -n kube-system create secret tls "${GW}-tls" --cert="${CFG_DIR}/.creds/${GW}/tls.cert" \
-	                                                    --key="${CFG_DIR}/.creds/${GW}/tls.key"
-	#######
-#    echo
-#    echo ">>> Applying k3d-bme-traefik-ingressroute.yaml"
-#    if [ "${PERSIST}" = true ]; then
-#        kubectl apply -f="${CFG_DIR}/manifests/k3d-bme-traefik-ingressroute.yaml"
-#    else
-#        envsubst <"${CFG_DIR}/templates/k3d-bme-traefik-ingressroute.yaml" | kubectl apply -f=-
-#    fi
+	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
+			-in "${CFG_DIR}/.creds/gw/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
+			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/gw/tls.cert"
+	kubectl -n kube-system create secret tls gw-tls --cert="${CFG_DIR}/.creds/gw/tls.cert" \
+	                                        --key="${CFG_DIR}/.creds/gw/tls.key"
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
@@ -194,7 +186,7 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-pdc-ingress.yaml" | kubectl apply -f=-
     fi
     echo
-    echo "Check https://${GW_TLS_DOMAIN}:8443/ptx-edge/zone-0/pdc/..."
+    echo "Check https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/zone-0/pdc/..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
                 "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/zone-0/pdc/"
     #######
@@ -215,7 +207,7 @@ function deploy() {
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
     fi
     echo
-    echo "Check https:/${GW_TLS_DOMAIN}:8443/ptx-edge/api/v1/versions..."
+    echo "Check https:/${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/api/v1/versions..."
     wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
             "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/api/v1/versions"

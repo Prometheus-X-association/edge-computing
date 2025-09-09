@@ -6,32 +6,40 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    ports:
+      web:
+        port: ${GW_WEB_PORT}
+      websecure:
+        port: ${GW_WEBSECURE_PORT}
+        tls:
+          enabled: true
     additionalArguments:
       - "--global.checknewversion=false"
       - "--global.sendanonymoususage=false"
       - "--log.level=DEBUG"
-      #- "--accesslog=true"
+      - "--accesslog=true"
       - "--providers.kubernetescrd=true"
       - "--providers.kubernetesingress=true"
       - "--providers.kubernetesgateway=true"
+      - "--experimental.kubernetesgateway"
       - "--api=true"
       - "--api.insecure=false"
       - "--api.disabledashboardad=true"
-      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.address=:${GW_WEB_PORT}"
       - "--entryPoints.web.http.redirections.entrypoint.to=websecure"
       - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
       - "--entryPoints.web.http.redirections.entrypoint.priority=42"
       - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
-      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.address=:${GW_WEBSECURE_PORT}"
       - "--entrypoints.websecure.http.tls=true"
       - "--entrypoints.websecure.http.tls.domains[0].main=${GW_TLS_DOMAIN}"
-      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
       - "--entrypoints.websecure.http.tls.options=kube-system-tls-opt@kubernetescrd"
-      - "--certificatesresolvers.letsencrypt.acme.email=czentye.janos@vik.bme.hu"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" #Testing
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      #- "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+      #- "--certificatesresolvers.letsencrypt.acme.email=czentye.janos@vik.bme.hu"
+      #- "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+      #- "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" #Testing
+      #- "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      #- "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     extraObjects:
       - apiVersion: traefik.io/v1alpha1
         kind: TLSOption
@@ -56,26 +64,39 @@ spec:
             - CurveP521
             - CurveP384
           sniStrict: false
-    #  - apiVersion: v1
-    #    kind: Secret
-    #    metadata:
-    #      name: dashboard-auth-secret
-    #    type: Opaque
-    #    data:
-    #      users: ${TRAEFIK_DASHBOARD_CREDS}
-    #  - apiVersion: traefik.io/v1alpha1
-    #    kind: Middleware
-    #    metadata:
-    #      name: dashboard-auth
-    #    spec:
-    #      basicAuth:
-    #        secret: dashboard-auth-secret
-    #ingressRoute:
-    #  dashboard:
-    #    enabled: true
-    #    matchRule: Host(`${TRAEFIK_DASHBOARD_DOMAIN}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
-    #    entryPoints:
-    #      - websecure
-    #    middlewares:
-    #      - name: dashboard-auth
+      - apiVersion: traefik.io/v1alpha1
+        kind: TLSStore
+        metadata:
+          name: default
+          namespace: kube-system
+        spec:
+          defaultCertificate:
+            secretName: gw-tls
+      - apiVersion: v1
+        kind: Secret
+        metadata:
+          name: dashboard-auth-secret
+        type: Opaque
+        data:
+          users: ${TRAEFIK_DASHBOARD_CREDS}
+      - apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: dashboard-auth
+        spec:
+          basicAuth:
+            secret: dashboard-auth-secret
+    ingressRoute:
+      dashboard:
+        enabled: true
+        matchRule: Host(`${TRAEFIK_DASHBOARD_DOMAIN}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+        entryPoints:
+          - websecure
+        middlewares:
+          - name: dashboard-auth
+    persistence:
+      enabled: true
+      name: data
+      size: 64Mi
+      storageClass: ""
 ---
