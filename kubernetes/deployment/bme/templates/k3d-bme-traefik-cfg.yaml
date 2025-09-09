@@ -91,12 +91,17 @@ spec:
         enabled: true
         matchRule: Host(`${TRAEFIK_DASHBOARD_DOMAIN}`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
         entryPoints:
+          #- traefik
           - websecure
         middlewares:
           - name: dashboard-auth
     persistence:
       enabled: true
       name: data
+      storageClass: local-path
+      annotations:
+        #volumeType: hostPath
+        volumeType: local
+      accessMode: ReadWriteOnce
       size: 64Mi
-      storageClass: ""
 ---

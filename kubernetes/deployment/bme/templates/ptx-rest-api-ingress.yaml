@@ -39,6 +39,14 @@ spec:
     stsSeconds: 31536000
 #---
 #apiVersion: traefik.io/v1alpha1
+#kind: TLSOption
+#metadata:
+#  name: tls-opt
+#  namespace: ${PTX_NS}
+#spec:
+#  minVersion: VersionTLS13
+#---
+#apiVersion: traefik.io/v1alpha1
 #kind: IngressRoute
 #metadata:
 #  name: ${API}-secure
@@ -60,7 +68,7 @@ spec:
 #        - name: ${API}
 #          port: ${API_PORT}
 #  tls:
-#    secretName: ${API}-tls
+#    secretName: gw-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -74,8 +82,8 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX_NS}-${API}-basic-auth@kubernetescrd,${PTX_NS}-${API}-secure-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
     #traefik.ingress.kubernetes.io/router.tls.options: ${PTX_NS}-tls-opt@kubernetescrd
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_TLS_DOMAIN}
+    #traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    #traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_TLS_DOMAIN}
 spec:
   ingressClassName: traefik
   rules:
@@ -90,7 +98,7 @@ spec:
                 port:
                   number: ${API_PORT}
   tls:
-    #- secretName: ${GW}-tls
+    #- secretName: gw-tls
     - hosts:
         - ${GW_TLS_DOMAIN}
 ---
