@@ -23,6 +23,8 @@ TIMEOUT=120s
 PTX_EDGE_COMPONENTS="builder rest-api scheduler registry"
 PDC_COMPONENTS="connector mongodb"
 
+################################## Deployment/cluster/component credentials
+
 source "${CFG_DIR}"/.creds/cluster-creds.sh
 
 ################################## Cluster parameters
@@ -46,16 +48,16 @@ REGISTRY_IMG="ptx-edge/registry:1.0"
 REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
-CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
-CA_CERT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
+REG_CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
+REG_CRT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 
-#GW_WEB_PORT=8888
+TIMEOUT=120s
+
+# <- source "${CFG_DIR}"/.creds/cluster-creds.sh
+#GW_TLS_DOMAIN=
+GW_TLS_DOMAIN="gw.ptx-edge.localhost"   # Uncomment in testing environment
 GW_WEB_PORT=80
-#GW_WEBSECURE_PORT=8443
 GW_WEBSECURE_PORT=443
-
-PDC_NODEPORT=30003
-PDC_DEF_PORT=3000
 
 ################################## PTX-edge setup
 
@@ -66,17 +68,20 @@ GW="gw"
 ################################## PDC setup
 
 PDC="pdc"
+PDC_NODEPORT=30003
+PDC_DEF_PORT=3000
+PDC_SUBPATH="${PTX_NS}/${DEF_ZONE}/${PDC}"
+#PDC_ENDPOINT="http://${PDC_DOMAIN}:${GW_WEB_PORT}/${PDC_SUBPATH}"
+PDC_ENDPOINT="https://${PDC_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}"
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
 #PDC_DOMAIN=
 #SERVICE_KEY=
 #SECRET_KEY=
-PDC_ENDPOINT="https://${PDC_DOMAIN}:${GW_WEBSECURE_PORT}/${PTX_NS}/${DEF_ZONE}/${PDC}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${PDC_CFG_SERVICE_KEY}'    # Placeholder for substitution in endpoint.sh
 PDC_CFG_SECRET_KEY='${PDC_CFG_SECRET_KEY}'      # Placeholder for substitution in endpoint.sh
-
 PDC_SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)    # Autogenerate
 
 PTX_CONTRACT_URI="https://contract.visionstrust.com/"
@@ -88,6 +93,7 @@ PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
 API="api"
 API_VER="v1"
 API_PORT=8080
+API_SUBPATH="${PTX_NS}/${API}/${API_VER}"
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
 #API_BASIC_USER=

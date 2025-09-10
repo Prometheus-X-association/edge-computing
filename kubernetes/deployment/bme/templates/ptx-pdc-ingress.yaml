@@ -9,7 +9,7 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /${PTX_NS}/${DEF_ZONE}/${PDC}
+      - /${PDC_SUBPATH}
 #---
 #apiVersion: traefik.io/v1alpha1
 #kind: TLSOption
@@ -30,7 +30,7 @@ spec:
 #  entryPoints:
 #    - web
 #  routes:
-#    - match: PathPrefix(`/${PTX_NS}/${DEF_ZONE}/${PDC}`)
+#    - match: PathPrefix(`/${PDC_SUBPATH}`)
 #      kind: Rule
 #      middlewares:
 #        - name: ${PDC}-${DEF_ZONE}-stripprefix
@@ -61,7 +61,7 @@ spec:
     - host: ${GW_TLS_DOMAIN}
       http:
         paths:
-          - path: /${PTX_NS}/${DEF_ZONE}/${PDC}
+          - path: /${PDC_SUBPATH}
             pathType: Prefix
             backend:
               service:

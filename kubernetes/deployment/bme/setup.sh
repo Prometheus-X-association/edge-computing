@@ -14,12 +14,17 @@
 # limitations under the License.
 set -eou pipefail
 
-COMMENT_FILTER='/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//'
+# shellcheck disable=SC2155
+export CFG_DIR=$(readlink -f "$(dirname "$0")")
+# shellcheck disable=SC2155
+export PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
 
 # Load configurations
-source ./config.sh
+source "${CFG_DIR}/config.sh"
+COMMENT_FILTER='/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//'
 
 PERSIST=true
+RESET=false
 
 ########################################################################################################################
 
@@ -27,15 +32,21 @@ function build() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    git pull || true
-    for modul in ${PTX_EDGE_COMPONENTS}; do
-        make -C "${PROJECT_ROOT}/src/${modul}" build
-    done
-	make -C "${PROJECT_ROOT}/src/ptx" build-pdc
-    echo
-    echo ">>> Created images:"
-	docker image ls -f "reference=ptx/*" -f "reference=ptx-edge/*"
-	echo
+    if [ "${RESET}" = "true" ]; then
+        git pull || true
+        for modul in ${PTX_EDGE_COMPONENTS}; do
+            make -C "${PROJECT_ROOT}/src/${modul}" build
+        done
+        make -C "${PROJECT_ROOT}/src/ptx" build-pdc
+        echo
+        echo ">>> Created images:"
+        docker image ls -f "reference=ptx/*" -f "reference=ptx-edge/*"
+        echo
+    else
+        echo
+        echo ">>> Skip image building [RESET=${RESET}]"
+        echo
+    fi
 }
 
 function init() {
@@ -43,11 +54,11 @@ function init() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     #######
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         echo
         echo ">>> Generate manifests...."
-        mkdir -p ./manifests
-        pushd templates >/dev/null
+        mkdir -pv "${CFG_DIR}/manifests"
+        pushd "${CFG_DIR}/templates" >/dev/null
         for file in k3d-*.yaml; do
             echo "Reading ${file}..."
             envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
@@ -55,26 +66,35 @@ function init() {
         done
         popd >/dev/null
     fi
+    #mkdir -pv "${CFG_DIR}/.cache/pvc"
     k3d cluster create --config="${CFG_DIR}/manifests/k3d-bme-cluster.yaml"
     #######
 	kubectl create namespace "${PTX_NS}"
 	kubectl config set-context --current --namespace "${PTX_NS}"
 	kubectl cluster-info
     #######
-#	echo
-#	echo ">>> Upload images to local registry..."
-#	for img in ${PTX_EDGE_COMPONENTS}; do
-#        IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
-#        skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
-#    done
-#    for img in ${PDC_COMPONENTS}; do
-#		IMG=$(docker image ls -f reference="ptx/${img}*" --format='{{.Repository}}:{{.Tag}}')
-#		skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
-#	done
+    if [ "${RESET}" = "true" ]; then
+        echo
+        echo ">>> Upload images to local registry..."
+        for img in ${PTX_EDGE_COMPONENTS}; do
+            IMG=$(docker image ls -f reference="ptx-edge/${img}*" --format='{{.Repository}}:{{.Tag}}')
+            skopeo copy --dest-cert-dir="${REG_CA_DIR}" --dest-creds="${REG_CREDS}" \
+                        "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
+        done
+        for img in ${PDC_COMPONENTS}; do
+            IMG=$(docker image ls -f reference="ptx/${img}*" --format='{{.Repository}}:{{.Tag}}')
+            skopeo copy --dest-cert-dir="${REG_CA_DIR}" --dest-creds="${REG_CREDS}" \
+                        "docker-daemon:${IMG}" "docker://${K3D_REG}/${IMG}"
+        done
+    else
+        echo
+        echo ">>> Skip image uploading [RESET=${RESET}]"
+        echo
+    fi
 	#######
     echo
 	echo ">>> Uploaded images:"
-	curl -Sskf --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
+	curl -Sskf --cacert "${REG_CA_DIR}/ca.crt" -u "${REG_CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 	echo
 }
 
@@ -86,7 +106,7 @@ function remove() {
     if [ ! "${cluster_missing+0}" ]; then
             kubectl delete namespace "${PTX_NS}" --ignore-not-found --now || true
     fi
-    rm -rf manifests/ .creds/api/
+    rm -rf "${CFG_DIR}/manifests/" "${CFG_DIR}/.creds/gw/"
 }
 
 
@@ -96,9 +116,15 @@ function cleanup() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
     k3d cluster delete "${CLUSTER}" || true
-#    sudo rm -rf "${CFG_DIR}/.cache"
-#    docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
-	docker image prune -f
+    if [ "${RESET}" = "true" ]; then
+        sudo rm -rf "${CFG_DIR}/.cache"
+        docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" | xargs -r docker rmi -f
+        docker image prune -f
+    else
+        echo
+        echo ">>> Skip image purge [RESET=${RESET}]"
+        echo
+    fi
 }
 
 
@@ -112,7 +138,7 @@ function status() {
 	echo
 	kubectl get --ignore-not-found events
 	echo
-	kubectl logs --ignore-errors ds/pdc
+	kubectl logs --ignore-errors ds/"${PDC}"
 }
 
 ########################################################################################################################
@@ -125,11 +151,11 @@ function deploy() {
         kubectl create namespace "${PTX_NS}" && kubectl config set-context --current --namespace "${PTX_NS}")
     echo
     #######
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         echo
         echo ">>> Generate manifests...."
-        mkdir -p ./manifests
-        pushd templates >/dev/null
+        mkdir -pv "${CFG_DIR}/manifests"
+        pushd "${CFG_DIR}/templates" >/dev/null
         for file in ptx-*.yaml; do
             echo "Reading ${file}..."
             envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
@@ -144,22 +170,21 @@ function deploy() {
     kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
     #######
 	echo
-	echo "Generate TLS..."
-	rm -rf "${CFG_DIR}/.creds/gw" && mkdir -p "${CFG_DIR}/.creds/gw"
+	echo ">>> Generate TLS..."
+	rm -rf "${CFG_DIR}/.creds/gw/" && mkdir -pv "${CFG_DIR}/.creds/gw/"
+    pushd "${CFG_DIR}/.creds/gw/" >/dev/null
     ### Simple self-signed cert
  	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-    #            -keyout "${CFG_DIR}"/.creds/gw/tls.key -out "${CFG_DIR}"/.creds/gw/tls.cert
+    #            -keyout tls.key -out tls.cert
     ### Simple self-signed cert with specific CA
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
-	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
-	#		-keyout "${CFG_DIR}"/.creds/gw/tls.key -out "${CFG_DIR}"/.creds/gw/tls.cert
+	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" -keyout tls.key -out tls.cert
 	### Self-signed cert from .conf
 #    if [ "${PERSIST}" = true ]; then
 #        echo
 #        echo ">>> Generate manifests...."
-#        mkdir -p ./manifests
-#        pushd templates >/dev/null
+#        pushd ${CFG_DIR}/templates >/dev/null
 #        for file in *.conf; do
 #            echo "Reading ${file}..."
 #            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
@@ -167,70 +192,68 @@ function deploy() {
 #        done
 #        popd >/dev/null
 #    fi
-#	openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" \
-#	        -keyout "${CFG_DIR}/.creds/gw/tls.key" -out "${CFG_DIR}/.creds/gw/tls.cert"
+#	openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" -keyout tls.key" -out tls.cert"
 	## Self-signed cert with CA and SAN
-    openssl req -newkey rsa:2048 -noenc -keyout "${CFG_DIR}/.creds/gw/tls.key" \
-            -out "${CFG_DIR}/.creds/gw/tls.csr" \
+    openssl req -newkey rsa:2048 -noenc -keyout tls.key -out tls.csr \
 			-subj "/C=EU/O=PTX/OU=dataspace/CN=ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
-			-in "${CFG_DIR}/.creds/gw/tls.csr" -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
-			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -out "${CFG_DIR}/.creds/gw/tls.cert"
+			-CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
+			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -in tls.csr -out tls.cert
 	#######
-	kubectl -n kube-system create secret tls gw-tls --cert="${CFG_DIR}/.creds/gw/tls.cert" \
-	                                        --key="${CFG_DIR}/.creds/gw/tls.key"
+	kubectl -n kube-system create secret tls gw-tls --cert=tls.cert --key=tls.key
+	popd >/dev/null
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         kubectl apply -f="${CFG_DIR}/manifests/ptx-pdc-daemon.yaml"
     else
         envsubst <"${CFG_DIR}/templates/ptx-pdc-daemon.yaml" | kubectl apply -f=-
     fi
-	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/pdc
-	kubectl wait --for=jsonpath='{.spec.clusterIP}' --timeout="${TIMEOUT}" services -l app=pdc
+	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout="${TIMEOUT}" daemonset/"${PDC}"
+	kubectl wait --for=jsonpath='{.spec.clusterIP}' --timeout="${TIMEOUT}" services -l app="${PDC}"
 	echo "Waiting for PDC to set up..."
-	for pod in $(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do
+	for pod in $(kubectl get pods -l app="${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
 		( kubectl logs -f pod/"${pod}" -c connector & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 	done
 	#######
     echo
     echo ">>> Applying ptx-pdc-ingress.yaml"
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         kubectl apply -f="${CFG_DIR}/manifests/ptx-pdc-ingress.yaml"
     else
         envsubst <"${CFG_DIR}/templates/ptx-pdc-ingress.yaml" | kubectl apply -f=-
     fi
+    CHECK_PDC_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
     echo
-    echo "Check https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/zone-0/pdc/..."
-    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
-                "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/zone-0/pdc/"
+    echo "Check ${CHECK_PDC_URL}..."
+    wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate "${CHECK_PDC_URL}"
     #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         kubectl apply -f="${CFG_DIR}/manifests/ptx-rest-api-deployment.yaml"
     else
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-deployment.yaml" | kubectl apply -f=-
     fi
-    kubectl wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/api
+    kubectl wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/"${API}"
     #######
     echo
     echo ">>> Applying ptx-rest-api-ingress.yaml"
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         kubectl apply -f="${CFG_DIR}/manifests/ptx-rest-api-ingress.yaml"
     else
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
     fi
+    CHECK_API_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
     echo
-    echo "Check https:/${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/api/v1/versions..."
-    wget -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate -S \
-            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-            "https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/ptx-edge/api/v1/versions"
+    echo "Check ${CHECK_API_URL}..."
+    wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
+            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"
-    if [ "${PERSIST}" = true ]; then
+    if [ "${PERSIST}" = "true" ]; then
         kubectl apply -f="${CFG_DIR}/manifests/ptx-scheduler-deployment.yaml"
     else
         envsubst <"${CFG_DIR}/templates/ptx-scheduler-deployment.yaml" | kubectl apply -f=-
@@ -252,17 +275,14 @@ Options:
     -r  Only perform remove.
     -s  Only perform status.
     -p  Persist generated manifests.
+    -x  Reset deployment.
     -t  Set global timeout parameter (def: ${TIMEOUT})
     -h  Display help.
 EOF
 }
 
-while getopts ":t:phcbidrs" flag; do
+while getopts ":t:hcbidrspx" flag; do
 	case "${flag}" in
-        p)
-            echo "[x] Manifests will be persisted."
-            PERSIST=true
-            ;;
         c)
             cleanup
             exit 0
@@ -289,6 +309,14 @@ while getopts ":t:phcbidrs" flag; do
             status
             exit 0
             ;;
+        p)
+            echo "[x] Manifests will be persisted."
+            PERSIST="true"
+            ;;
+        x)
+            echo "[x] Deployment will be reset."
+            RESET="true"
+            ;;
         t)
             TIMEOUT=${OPTARG}
             echo "Global timeout set to ${TIMEOUT}"
@@ -308,12 +336,13 @@ done
 
 echo
 echo "Start deployment of cluster: ${CLUSTER}"
-echo
+echo  " > PERSIST=${PERSIST}"
+echo  " > RESET=${RESET}"
 
 ########################################################################################################################
 
 cleanup
-#build
+build
 init
 deploy
 status

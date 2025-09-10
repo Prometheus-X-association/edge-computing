@@ -90,7 +90,7 @@ spec:
     - host: ${GW_TLS_DOMAIN}
       http:
         paths:
-          - path: /${PTX_NS}/${API}/${API_VER}
+          - path: /${API_SUBPATH}
             pathType: Prefix
             backend:
               service:

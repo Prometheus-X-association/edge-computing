@@ -27,5 +27,8 @@ status:
 teardown:
 	@bash setup.sh -c
 
-.PHONY: setup deploy remove status teardown
+reset:
+	@bash setup.sh -x
+
+.PHONY: setup deploy remove status teardown reset
 .DEFAULT_GOAL := setup

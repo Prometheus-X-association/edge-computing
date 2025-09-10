@@ -29,7 +29,7 @@ spec:
             - --log-level=info
           env:
             - name: ROOT_PATH
-              value: /${PTX_NS}/${API}/${API_VER}
+              value: /${API_SUBPATH}
           ports:
             - name: ${API}-port
               containerPort: ${API_PORT}
