@@ -21,7 +21,7 @@ import typing
 from kubernetes import client, config, watch
 
 from app import __version__
-from app.k8s import assign_pod_to_node
+from app.k8s import assign_pod_to_node, create_failed_scheduling_event
 from app.method.rand import do_random_pod_assignment
 from app.utils import setup_logging
 
@@ -40,23 +40,29 @@ CONFIG = {
 REQUIRED_FIELDS = ('method', 'namespace', 'scheduler')
 
 
-def schedule_pod(pod_name: str, namespace: str, method: str) -> str:
+def schedule_pod(pod_name: str, namespace: str, method: str, scheduler: str) -> str:
     """
 
     :param pod_name:
     :param namespace:
     :param method:
+    :param scheduler:
     :return:
     """
     log.info(f"Scheduling pod[{pod_name}] in namespace: {namespace} using method: {method}...")
+    node = None
     match method:
         case 'random':
             node = do_random_pod_assignment()
         case _:
             log.error(f"Unknown scheduler method: {method}")
             sys.exit(os.EX_USAGE)
-    ret = assign_pod_to_node(pod_name=pod_name, node_name=node, namespace=namespace) if node is not None else None
-    return "Success" if ret is not None else "Failed"
+    if node is not None:
+        ret = assign_pod_to_node(pod_name=pod_name, node_name=node, namespace=namespace, scheduler=scheduler)
+        return "Success" if ret is not None else "Failed"
+    else:
+        create_failed_scheduling_event(scheduler=scheduler, pod_name=pod_name, namespace=namespace)
+        return "Failed"
 
 
 def serve_forever(scheduler: str, namespace: str, method: str, **kwargs):
@@ -81,7 +87,7 @@ def serve_forever(scheduler: str, namespace: str, method: str, **kwargs):
                 continue
             try:
                 log.info(f"{_type} pod[{_name}] in namespace[{namespace}] with scheduler[{scheduler}] detected!")
-                result = schedule_pod(pod_name=_name, namespace=namespace, method=method)
+                result = schedule_pod(pod_name=_name, namespace=namespace, method=method, scheduler=scheduler)
                 log.debug(f"Received scheduling result: {result}")
             except client.OpenApiException as e:
                 log.error(f"API exception received:\n{e}")
