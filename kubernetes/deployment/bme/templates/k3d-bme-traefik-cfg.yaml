@@ -38,6 +38,7 @@ spec:
       #- "--certificatesresolvers.letsencrypt.acme.email=czentye.janos@vik.bme.hu"
       #- "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
       #- "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" #Testing
+      #- "--certificatesresolvers.le.acme.tlschallenge=true"
       #- "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       #- "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     extraObjects:

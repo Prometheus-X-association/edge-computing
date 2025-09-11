@@ -12,14 +12,6 @@ spec:
       - /${PDC_SUBPATH}
 #---
 #apiVersion: traefik.io/v1alpha1
-#kind: TLSOption
-#metadata:
-#  name: tls-opt
-#  namespace: ${PTX_NS}
-#spec:
-#  minVersion: VersionTLS13
-#---
-#apiVersion: traefik.io/v1alpha1
 #kind: IngressRoute
 #metadata:
 #  name: ${PDC}-${DEF_ZONE}
@@ -52,7 +44,6 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX_NS}-${PDC}-${DEF_ZONE}-stripprefix@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
-    #traefik.ingress.kubernetes.io/router.tls.options: ${PTX_NS}-tls-opt@kubernetescrd
     #traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     #traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_TLS_DOMAIN}
 spec:

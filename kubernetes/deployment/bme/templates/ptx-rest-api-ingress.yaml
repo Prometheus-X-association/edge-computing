@@ -68,7 +68,11 @@ spec:
 #        - name: ${API}
 #          port: ${API_PORT}
 #  tls:
-#    secretName: gw-tls
+#    certResolver: letsencrypt
+#    domains:
+#      - main: ${GW_TLS_DOMAIN}
+#        sans:
+#          - "*.${GW_TLS_DOMAIN}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -98,7 +102,6 @@ spec:
                 port:
                   number: ${API_PORT}
   tls:
-    #- secretName: gw-tls
     - hosts:
         - ${GW_TLS_DOMAIN}
 ---

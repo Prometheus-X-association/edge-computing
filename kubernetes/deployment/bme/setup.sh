@@ -23,8 +23,9 @@ export PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
 source "${CFG_DIR}/config.sh"
 COMMENT_FILTER='/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//'
 
+# Global settings
 PERSIST=true
-RESET=false
+RESET=true
 
 ########################################################################################################################
 
@@ -63,6 +64,7 @@ function init() {
             echo "Reading ${file}..."
             envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
             echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
+            echo
         done
         popd >/dev/null
     fi
@@ -160,6 +162,7 @@ function deploy() {
             echo "Reading ${file}..."
             envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
             echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
+            echo
         done
         popd >/dev/null
     fi
@@ -181,19 +184,19 @@ function deploy() {
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
 	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" -keyout tls.key -out tls.cert
 	### Self-signed cert from .conf
-#    if [ "${PERSIST}" = true ]; then
-#        echo
-#        echo ">>> Generate manifests...."
-#        pushd ${CFG_DIR}/templates >/dev/null
-#        for file in *.conf; do
-#            echo "Reading ${file}..."
-#            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
-#            echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
-#        done
-#        popd >/dev/null
-#    fi
-#	openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" -keyout tls.key" -out tls.cert"
-	## Self-signed cert with CA and SAN
+    #if [ "${PERSIST}" = true ]; then
+    #    echo
+    #    echo ">>> Generate manifests...."
+    #    pushd ${CFG_DIR}/templates >/dev/null
+    #    for file in *.conf; do
+    #        echo "Reading ${file}..."
+    #        envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
+    #        echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
+    #    done
+    #    popd >/dev/null
+    #fi
+    #openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" -keyout tls.key" -out tls.cert"
+	### Self-signed cert with CA and SAN
     openssl req -newkey rsa:2048 -noenc -keyout tls.key -out tls.csr \
 			-subj "/C=EU/O=PTX/OU=dataspace/CN=ptx-edge.prometheus-x.org"
 	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
@@ -228,6 +231,7 @@ function deploy() {
     echo
     echo "Check ${CHECK_PDC_URL}..."
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate "${CHECK_PDC_URL}"
+    curl -Ssfk "${CHECK_PDC_URL}" | grep "href"
     #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
@@ -250,6 +254,7 @@ function deploy() {
     echo "Check ${CHECK_API_URL}..."
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
+    curl -Ssfk -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}" | python3 -m json.tool
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"
@@ -274,8 +279,8 @@ Options:
     -d  Only perform deploy.
     -r  Only perform remove.
     -s  Only perform status.
-    -p  Persist generated manifests.
-    -x  Reset deployment.
+    -p  Do not persist generated manifests.
+    -x  Redeploy cluster without build/cleanup.
     -t  Set global timeout parameter (def: ${TIMEOUT})
     -h  Display help.
 EOF
@@ -310,12 +315,12 @@ while getopts ":t:hcbidrspx" flag; do
             exit 0
             ;;
         p)
-            echo "[x] Manifests will be persisted."
-            PERSIST="true"
+            echo "[x] Manifests will NOT be persisted."
+            PERSIST="false"
             ;;
         x)
-            echo "[x] Deployment will be reset."
-            RESET="true"
+            echo "[x] Image build/cleanup deactivated."
+            RESET="false"
             ;;
         t)
             TIMEOUT=${OPTARG}
