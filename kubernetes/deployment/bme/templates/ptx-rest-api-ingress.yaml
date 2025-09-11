@@ -57,7 +57,7 @@ spec:
 #  entryPoints:
 #    - websecure
 #  routes:
-#    - match: Host(`${GW_TLS_DOMAIN}`) && PathPrefix(`/${PTX_NS}/${API}/${API_VER}`)
+#    - match: (Host(`${GW_TLS_DOMAIN}`) || Host(`${GW_LOCAL_DOMAIN}`) ) && PathPrefix(`/${API_SUBPATH}`)
 #      kind: Rule
 #      middlewares:
 #        - name: ${API}-basic-auth

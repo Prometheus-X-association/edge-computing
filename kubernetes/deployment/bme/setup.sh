@@ -233,6 +233,11 @@ function deploy() {
     echo "Check ${CHECK_PDC_URL}..."
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate "${CHECK_PDC_URL}"
     curl -Ssfk "${CHECK_PDC_URL}" | grep "href"
+    ###
+    CHECK_PDC_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
+    echo
+    echo "Check ${CHECK_PDC_URL}..."
+    curl -Ssfk -I "${CHECK_PDC_URL}" || true
     #######
     echo
     echo ">>> Applying ptx-rest-api-deployment.yaml"
@@ -256,6 +261,11 @@ function deploy() {
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
     curl -Ssfk -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}" | python3 -m json.tool
+    ###
+    CHECK_API_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
+    echo
+    echo "Check ${CHECK_API_URL}..."
+    curl -Ssfk -I -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"

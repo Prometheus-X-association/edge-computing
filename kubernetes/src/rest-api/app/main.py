@@ -40,12 +40,14 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
 
 
 @app.get("/versions", status_code=status.HTTP_200_OK)
+@app.head("/versions", status_code=status.HTTP_200_OK)
 async def get_versions() -> VersionsResponse:
     """Versions of the REST-API component"""
     return VersionsResponse(api=__version__, framework=fastapi.__version__)
 
 
 @app.get("/health")
+@app.head("/health")
 async def health():
     """For health check purposes"""
     return responses.Response(status_code=status.HTTP_200_OK)

@@ -22,7 +22,7 @@ spec:
 #  entryPoints:
 #    - web
 #  routes:
-#    - match: PathPrefix(`/${PDC_SUBPATH}`)
+#    - match: (Host(`${GW_TLS_DOMAIN}`) || Host(`${GW_LOCAL_DOMAIN}`) ) && PathPrefix(`/${PDC_SUBPATH}`)
 #      kind: Rule
 #      middlewares:
 #        - name: ${PDC}-${DEF_ZONE}-stripprefix

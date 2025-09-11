@@ -9,7 +9,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2025-08-28T17:08:05'
+  x-creation-date: '2025-09-11T15:12:05'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -26,11 +26,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionsResponse'
+    head:
+      summary: Get Versions
+      description: Versions of the REST-API component
+      operationId: get_versions_versions_head
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionsResponse'
   /health:
     get:
       summary: Health
       description: For health check purposes
       operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+    head:
+      summary: Health
+      description: For health check purposes
+      operationId: health_health_head
       responses:
         '200':
           description: Successful Response
