@@ -59,6 +59,16 @@ spec:
                 name: ${PDC}-${DEF_ZONE}
                 port:
                   number: ${PDC_DEF_PORT}
+    - host: ${GW_LOCAL_DOMAIN}
+      http:
+        paths:
+          - path: /${PDC_SUBPATH}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${PDC}-${DEF_ZONE}
+                port:
+                  number: ${PDC_DEF_PORT}
   tls:
     #- secretName: gw-tls
     - hosts:

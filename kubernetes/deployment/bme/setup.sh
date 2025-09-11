@@ -183,25 +183,26 @@ function deploy() {
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
 	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" -keyout tls.key -out tls.cert
+    ### Self-signed cert with CA and SAN
+    #openssl req -newkey rsa:2048 -noenc -keyout tls.key -out tls.csr \
+    #        -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}"
+    #printf "subjectAltName=DNS:%s" "${GW_LOCAL_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
+    #        -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
+    #        -CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -in tls.csr -out tls.cert
 	### Self-signed cert from .conf
-    #if [ "${PERSIST}" = true ]; then
-    #    echo
-    #    echo ">>> Generate manifests...."
-    #    pushd ${CFG_DIR}/templates >/dev/null
-    #    for file in *.conf; do
-    #        echo "Reading ${file}..."
-    #        envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
-    #        echo "  -> Generated manifest: ${CFG_DIR}/manifests/${file}"
-    #    done
-    #    popd >/dev/null
-    #fi
-    #openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" -keyout tls.key" -out tls.cert"
-	### Self-signed cert with CA and SAN
-    openssl req -newkey rsa:2048 -noenc -keyout tls.key -out tls.csr \
-			-subj "/C=EU/O=PTX/OU=dataspace/CN=ptx-edge.prometheus-x.org"
-	printf "subjectAltName=DNS:%s" "${GW_TLS_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
-			-CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
-			-CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -in tls.csr -out tls.cert
+    if [ "${PERSIST}" = true ]; then
+        echo
+        echo ">>> Generate manifests...."
+        mkdir -pv "${CFG_DIR}/manifests"
+        pushd "${CFG_DIR}/templates" >/dev/null
+        for file in *.conf; do
+            echo "Reading ${file}..."
+            envsubst <"${CFG_DIR}/templates/${file}" | sed "${COMMENT_FILTER}" >"${CFG_DIR}/manifests/${file}"
+            echo "  -> Generated config: ${CFG_DIR}/manifests/${file}"
+        done
+        popd >/dev/null
+    fi
+    openssl req -new -x509 -noenc -days 365 -config "${CFG_DIR}/manifests/openssl.conf" -keyout tls.key -out tls.cert
 	#######
 	kubectl -n kube-system create secret tls gw-tls --cert=tls.cert --key=tls.key
 	popd >/dev/null
@@ -227,7 +228,7 @@ function deploy() {
     else
         envsubst <"${CFG_DIR}/templates/ptx-pdc-ingress.yaml" | kubectl apply -f=-
     fi
-    CHECK_PDC_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
+    CHECK_PDC_URL="https://${GW_LOCAL_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
     echo
     echo "Check ${CHECK_PDC_URL}..."
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate "${CHECK_PDC_URL}"
@@ -249,7 +250,7 @@ function deploy() {
     else
         envsubst <"${CFG_DIR}/templates/ptx-rest-api-ingress.yaml" | kubectl apply -f=-
     fi
-    CHECK_API_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
+    CHECK_API_URL="https://${GW_LOCAL_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
     echo
     echo "Check ${CHECK_API_URL}..."
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \

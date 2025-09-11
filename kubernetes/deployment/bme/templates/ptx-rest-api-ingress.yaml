@@ -101,6 +101,16 @@ spec:
                 name: ${API}
                 port:
                   number: ${API_PORT}
+    - host: ${GW_LOCAL_DOMAIN}
+      http:
+        paths:
+          - path: /${API_SUBPATH}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${API}
+                port:
+                  number: ${API_PORT}
   tls:
     - hosts:
         - ${GW_TLS_DOMAIN}
