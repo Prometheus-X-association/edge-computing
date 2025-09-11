@@ -55,7 +55,8 @@ TIMEOUT=120s
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
 #GW_TLS_DOMAIN=
-GW_TLS_DOMAIN="gw.ptx-edge.localhost"   # Uncomment in testing environment
+#GW_TLS_EMAIL=
+GW_TLS_DOMAIN="gw.ptx-edge.localhost"   # Comment out in production environment
 GW_WEB_PORT=80
 GW_WEBSECURE_PORT=443
 
