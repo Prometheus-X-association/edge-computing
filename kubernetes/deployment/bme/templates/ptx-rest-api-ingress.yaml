@@ -73,6 +73,7 @@ spec:
 #      - main: ${GW_TLS_DOMAIN}
 #        sans:
 #          - "*.${GW_TLS_DOMAIN}"
+#          - "*.${GW_LOCAL_DOMAIN}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
