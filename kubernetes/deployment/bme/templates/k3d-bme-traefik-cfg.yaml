@@ -33,11 +33,11 @@ spec:
       - "--entrypoints.websecure.http.tls=true"
       - "--entrypoints.websecure.http.tls.domains[0].main=${GW_TLS_DOMAIN}"
       - "--entrypoints.websecure.http.tls.options=kube-system-tls-opt@kubernetescrd"
-      #- "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
-      #- "--certificatesresolvers.letsencrypt.acme.email=${GW_TLS_EMAIL}"
-      #- "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-      #- "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" #Testing
-      #- "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+      - "--certificatesresolvers.letsencrypt.acme.email=${GW_TLS_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" #Testing
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       #- "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       #- "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     extraObjects:

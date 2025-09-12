@@ -207,6 +207,15 @@ function deploy() {
     kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
     kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
 	#######
+    CHECK_DASHBOARD_URL="https://${TRAEFIK_DASHBOARD_DOMAIN}:${GW_WEBSECURE_PORT}/dashboard/"
+    echo
+    echo "Check ${CHECK_DASHBOARD_URL}..."
+    wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate \
+            --user "${TRAEFIK_DASHBOARD_USER}" --password "${TRAEFIK_DASHBOARD_PASSWORD}" "${CHECK_DASHBOARD_URL}"
+    echo
+    echo ">>> Cert details [${TRAEFIK_DASHBOARD_DOMAIN}]:"
+    openssl s_client -showcerts -connect "${TRAEFIK_DASHBOARD_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
+	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
     if [ "${PERSIST}" = "true" ]; then
@@ -265,7 +274,14 @@ function deploy() {
     CHECK_API_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
     echo
     echo "Check ${CHECK_API_URL}..."
-    curl -Ssfk -I -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
+    curl -Ssfk -I -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}" || true
+    #######
+    echo
+    echo ">>> Cert details [${GW_LOCAL_DOMAIN}]:"
+    openssl s_client -showcerts -connect "${GW_LOCAL_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
+    echo
+    echo ">>> Cert details [${GW_TLS_DOMAIN}]:"
+    openssl s_client -showcerts -connect "${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"
