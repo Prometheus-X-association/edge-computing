@@ -21,7 +21,6 @@ spec:
       - "--providers.kubernetescrd=true"
       - "--providers.kubernetesingress=true"
       - "--providers.kubernetesgateway=true"
-      - "--experimental.kubernetesgateway"
       - "--api=true"
       - "--api.insecure=false"
       - "--api.disabledashboardad=true"

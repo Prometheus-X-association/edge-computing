@@ -168,11 +168,6 @@ function deploy() {
     fi
     #######
 	echo
-	echo "Waiting for traefik to be installed..."
-    kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
-    kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
-    #######
-	echo
 	echo ">>> Generate TLS..."
 	rm -rf "${CFG_DIR}/.creds/gw/" && mkdir -pv "${CFG_DIR}/.creds/gw/"
     pushd "${CFG_DIR}/.creds/gw/" >/dev/null
@@ -206,6 +201,11 @@ function deploy() {
 	#######
 	kubectl -n kube-system create secret tls gw-tls --cert=tls.cert --key=tls.key
 	popd >/dev/null
+    #######
+	echo
+	echo "Waiting for traefik to be installed..."
+    kubectl -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}" job/helm-install-traefik
+    kubectl -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}" deployment/traefik
 	#######
     echo
     echo ">>> Applying ptx-pdc-daemon.yaml"
