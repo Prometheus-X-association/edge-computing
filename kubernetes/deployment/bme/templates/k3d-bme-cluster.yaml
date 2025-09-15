@@ -7,7 +7,7 @@ metadata:
 servers: 1
 agents: 2
 ports:
-  # Export loadbalancer
+  # Export loadbalancer/traefik
   - port: ${GW_WEB_PORT}:${GW_WEB_PORT}
     nodeFilters:
       - loadbalancer

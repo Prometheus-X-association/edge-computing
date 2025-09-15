@@ -152,7 +152,7 @@ spec:
           restartPolicy: Always # Native sidecar container
       containers:
         - name: connector
-          image: ${REGISTRY}/ptx/connector:1.9.5-slim
+          image: ${REGISTRY}/ptx/connector:${PDC_VER}-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: ${PDC}-port

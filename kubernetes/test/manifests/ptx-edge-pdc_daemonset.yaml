@@ -4,7 +4,7 @@ metadata:
   name: pdc
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "1.9.7"
     app.kubernetes.io/component: connector
     app.kubernetes.io/part-of: ptx-edge
     #app.kubernetes.io/managed-by: controller.ptx-edge.org
@@ -17,7 +17,7 @@ spec:
       labels:
         app: pdc
         app.kubernetes.io/name: pdc
-        app.kubernetes.io/version: "1.9.5"
+        app.kubernetes.io/version: "1.9.7"
         app.kubernetes.io/component: connector
         app.kubernetes.io/part-of: ptx-edge
     spec:
@@ -42,7 +42,7 @@ spec:
             periodSeconds: 5
       containers:
         - name: ptx-connector
-          image: ptx/connector:1.9.5-slim
+          image: ptx/connector:1.9.7-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: pdc-port
