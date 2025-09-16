@@ -33,6 +33,7 @@ spec:
           ports:
             - name: ${API}-port
               containerPort: ${API_PORT}
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service

@@ -87,4 +87,5 @@ spec:
               value: ${SCHEDULER_METHOD}
             - name: SCHEDULER
               value: ${SCHEDULER_REF}
+      restartPolicy: Always
 ---
