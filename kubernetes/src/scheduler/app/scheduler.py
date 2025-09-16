@@ -77,12 +77,12 @@ def serve_forever(scheduler: str, namespace: str, method: str, **kwargs):
     log.info(f"Scheduler[{scheduler}] is listening on namespace: {namespace}...")
     watcher = watch.Watch()
     try:
-        pod_filter = f"spec.schedulerName={scheduler},status.phase=Pending"
-        for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace, field_selector=pod_filter):
+        for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace=namespace,
+                                    field_selector=f"spec.schedulerName={scheduler},status.phase=Pending"):
             _type, _pod = event['type'], event['object']
             _name = _pod.metadata.name
             log.debug(f"Received event: {_pod.kind}[{_name}] {_type} --> "
-                      f"{_pod.status.phase} on node: {_pod.status.phase}")
+                      f"{_pod.status.phase} on node: {_pod.spec.node_name}")
             if _type != 'ADDED':
                 continue
             try:
