@@ -52,6 +52,8 @@ rules and where processing functions can and should be deployed on demand.
 
 See the comprehensive design document [here](docs/design-document.md).
 
+See the developer/technical document [here](kubernetes/design/README.md).
+
 Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes** (K8s)
 container orchestration platform (realistically spanning multiple providers' domains/clouds),
 its value-added services are implemented as standalone software containers, operated in a
