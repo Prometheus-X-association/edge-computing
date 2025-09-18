@@ -18,7 +18,7 @@ with respect to the actual execution of data processing components. The BB is fu
 integrated with the PTX dataspace, while introducing a high-level privacy concept of geographically-distributed
 (edge-cloud) dataspaces, incorporating multiple **Privacy Zones** and a dedicated data provider role of 
 **Function Providers**. For the detailed concept, goals, and benefits of Edge Computing BB, see the accompanied
-[Design Document](docs/design-document.md).
+[Design Document](../../docs/design-document.md).
 
 
 ## Design Principles
@@ -36,7 +36,7 @@ not just in multi-cloud edge environments, but also in a single-node hosted serv
 (e.g., [k3s](https://k3s.io/) deployed on a single VM) or in a (multi-node) emulated K8s environment
 configured on a single laptop (e.g., using docker with [k3d](https://k3d.io/stable/) or kind).
 Accordingly, the installation steps is unified for all K8s-based environments by relying on [containerized
-BB components](kubernetes/src) built and assembled during installation time and common K8s manifest files
+BB components](../src) built and assembled during installation time and common K8s manifest files
 and [Helm charts](https://helm.sh/).
 Since the Edge Computing BB's component do not build on external tools and APIs other than the basic
 features of the vanilla Kubernetes (>=v1.33), it provides high-levels of flexibility and portability.
@@ -133,7 +133,7 @@ using command line parameters or environment variables.
 The implemented K8s-based components of the Edge computing BB fully covers the high-level concepts and
 building block of the designs document, which are summarized in following schematic diagram:
 
-![Kubernetes_ref_architecture.png](kubernetes/design/Kubernetes_ref_architecture.png)
+![Kubernetes_ref_architecture.png](Kubernetes_ref_architecture.png)
 
 This description is meant for providing a deep-dive system-level perspective about the actual implementation
 of these BB components as well as giving a comprehensive view of how these components work and what are their 
@@ -165,20 +165,20 @@ This is currently the only deployment-specific part of the BB, as PDC does not s
 
 ## Edge Computing Components
 
-### [deployment](kubernetes/deployment)
+### [deployment](../deployment)
 
-### [builder](kubernetes/src/builder)
+### [builder](../src/builder)
 
-### [operator](kubernetes/src/operator)
+### [operator](../src/operator)
 
-### [ptx](kubernetes/src/ptx)
+### [ptx](../src/ptx)
 
-### [registry](kubernetes/src/registry)
+### [registry](../src/registry)
 
-### [rest-api](kubernetes/src/rest-api)
+### [rest-api](../src/rest-api)
 
-### [scheduler](kubernetes/src/scheduler)
+### [scheduler](../src/scheduler)
 
-### [samples](kubernetes/src/samples)
+### [samples](../src/samples)
 
-### [test](kubernetes/test)
+### [test](../test)
