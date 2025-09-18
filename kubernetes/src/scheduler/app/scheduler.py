@@ -117,6 +117,7 @@ def setup_config(params: dict[str, typing.Any]):
         config.load_incluster_config()
     except config.ConfigException as e:
         log.error(f"Error loading Kubernetes API config:\n{e}")
+        sys.exit(os.EX_CONFIG)
 
 
 def main():
