@@ -41,8 +41,35 @@ and [Helm charts](https://helm.sh/).
 Since the Edge Computing BB's component do not build on external tools and APIs other than the basic
 features of the vanilla Kubernetes (>=v1.33), it provides high-levels of flexibility and portability.
 
+In contrast to plain docker-compose based deplyoment setups, Kubernetes, as a mature, continously developed, 
+and widely used container orchestration platform implicitly provide advantages for running worker tasks and 
+components both from compute and privacy perspectives, such as
+ - compute resource quotas,
+ - load balancing and parallelization.
+ - role-based access control (RBAC),
+ - inbound/outbound network policies, 
+ - implicit TLS termination proxy, etc.
+
+In addition, the Edge Computing BB offers native integration with the 
+[PTX Dataspace Controller](https://github.com/Prometheus-X-association/dataspace-connector) (PDC) to communicate
+with dataspace core components and manage sensitive data exchange.
+The BB uses a slim variant of the connector, for which the dependencies are prebuilt in its base container image,
+and its configuration, including the endpoint url, session secrets, credentials, port number, etc., can be set
+during initialization time using environment variables. 
+The PDC instance also associated with a dedicated Mongo database (in one pod) for storing intermediate data
+and configuration values.
+It can communicate with the outside world through the cluster's single gateway, where each instance is
+differentiated by their privacy zone, whereas the PDC's main API is also exposed on the hosted cluster node
+for direct communication.
+Thus, a PDC deployment is absolutly independent of other PDCs running in the same cluster, which ensures that
+each privacy zone has a dedicated interface for the PTX dataspace, through which every communication steps, 
+private data exchange, and network traffic occur only either between the PTX core and PDC components or in
+the permitted privacy zone.
+
 
 ### Cluster Topology
+
+#### Privacy Zone
 
 In practice, the _Privacy Zone_ (PZ) is represented as a specific label assigned to compute nodes that belong
 to the corresponding privacy zone. The following rules apply to the PZ configuration of a K8s cluster.
@@ -111,10 +138,8 @@ The Edge Computing BB expects the configurations of two external resources for t
 The Edge Computing BB is designed to understand, collect, and prepare the execution of worker task from
 different sources. See the options in detail in the description of
 [Edge Computing Components](#edge-computing-components).
-It also uses the latest version of 
-[PTX Dataspace Controller](https://github.com/Prometheus-X-association/dataspace-connector) (PDC) for 
-collecting datasource/worker configuration (e.g., credentials of repositories storing the raw data)
-via the PTX dataspace.
+It also uses the latest version of PDC for collecting datasource/worker configuration (e.g., credentials
+of repositories storing the raw data) via the PTX dataspace.
 
 By design, the worker logic, as a standard ETL task, is assumed to be a standalone stateless software
 or component that can be executed in a container that expects the private data as a local file(s),
