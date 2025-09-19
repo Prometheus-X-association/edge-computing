@@ -39,9 +39,9 @@ Accordingly, the installation steps is unified for all K8s-based environments by
 BB components](../src) built and assembled during installation time and common K8s manifest files
 and [Helm charts](https://helm.sh/).
 Since the Edge Computing BB's component do not build on external tools and APIs other than the basic
-features of the vanilla Kubernetes (>=v1.33), it provides high-levels of flexibility and portability.
+features of the vanilla Kubernetes (>=v1.31), it provides high-levels of flexibility and portability.
 
-In contrast to plain docker-compose based deplyoment setups, Kubernetes, as a mature, continously developed, 
+In contrast to plain docker-compose based deployment setups, Kubernetes, as a mature, continuously developed, 
 and widely used container orchestration platform implicitly provide advantages for running worker tasks and 
 components both from compute and privacy perspectives, such as
  - compute resource quotas,
@@ -61,7 +61,7 @@ and configuration values.
 It can communicate with the outside world through the cluster's single gateway, where each instance is
 differentiated by their privacy zone, whereas the PDC's main API is also exposed on the hosted cluster node
 for direct communication.
-Thus, a PDC deployment is absolutly independent of other PDCs running in the same cluster, which ensures that
+Thus, a PDC deployment is absolutely independent of other PDCs running in the same cluster, which ensures that
 each privacy zone has a dedicated interface for the PTX dataspace, through which every communication steps, 
 private data exchange, and network traffic occur only either between the PTX core and PDC components or in
 the permitted privacy zone.
@@ -185,18 +185,47 @@ than traefik for the underlying load balancer / application proxy, more precisel
 for the PDC instances and the BB's REST-API.
 
 This is currently the only deployment-specific part of the BB, as PDC does not support subpath handling
-(although it can allow to configure subpath in its endpoint setting) and the standart K8s Ingress 
+(although it can allow to configure subpath in its endpoint setting) and the standard K8s Ingress 
 
 
-## Edge Computing Components
+## Edge Computing BB Components
 
 ### [deployment](../deployment)
+
+The deployment section contains the specific deployment automatization and configuration scripts for the
+different platforms.
+
+Basically, it uses the `config.sh` to define environment variables (envvar) as config parameters, while
+the `setup.sh` defines the basic installation steps, specifically the 
+ - cleanup, 
+ - image building,
+ - environment creation using k3d, 
+ - default certificate generation,
+ - cluster configuration, 
+ - copying images inside the cluster,
+ - and component installation steps.
+
+The setup script uses the `envsubst` tool to read manually created manifest templates from the `templates`
+folder and substitute the configuration variables for deployment.
+
+The sensitive parameters, such as usernames, passwords, public IPs, secrets and keys are defined in a 
+separate file `cluster-creds.sh` under the folder `.creds`. It also defined a `Makefile` for convenience.
 
 ### [builder](../src/builder)
 
 ### [operator](../src/operator)
 
 ### [ptx](../src/ptx)
+
+The `ptx` folder contains the container image description files (e.g., Dockerfile) and test materials
+along with inline Makefile commands to build and assemble low-footprint, K8s-conformant PDC and sandbox
+components that have 
+ - prebuilt dependencies for faster container startup times,
+ - altered base image types and dependencies for lower image sizes, and 
+ - tailored entrypoint scripts to realize init-time configuration capabilities using envvars.
+
+Variables in the provided [Makefile](../src/ptx/Makefile) define the considered connector components
+and the applied PDC and MongoDB versions.
 
 ### [registry](../src/registry)
 
