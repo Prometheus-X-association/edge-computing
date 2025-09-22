@@ -75,27 +75,34 @@ def serve_forever(scheduler: str, namespace: str, method: str, **kwargs):
     :return:
     """
     log.info(f"Scheduler[{scheduler}] is listening on namespace: {namespace}...")
-    watcher = watch.Watch()
-    try:
-        for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace=namespace,
-                                    field_selector=f"spec.schedulerName={scheduler},status.phase=Pending"):
-            _type, _pod = event['type'], event['object']
-            _name = _pod.metadata.name
-            log.debug(f"Received event: {_pod.kind}[{_name}] {_type} --> "
-                      f"{_pod.status.phase} on node: {_pod.spec.node_name}")
-            if _type != 'ADDED':
-                continue
-            try:
+    while True:
+        watcher = watch.Watch()
+        log.debug("Waiting for events...")
+        try:
+            for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace=namespace,
+                                        field_selector=f"spec.schedulerName={scheduler},status.phase=Pending"):
+                _type, _pod = event['type'], event['object']
+                _name = _pod.metadata.name
+                log.debug(f"Received event: {_pod.kind}[{_name}] {_type} --> "
+                          f"{_pod.status.phase} on node: {_pod.spec.node_name}")
+                if _type != 'ADDED':
+                    continue
                 log.info(f"{_type} pod[{_name}] in namespace[{namespace}] with scheduler[{scheduler}] detected!")
                 result = schedule_pod(pod_name=_name, namespace=namespace, method=method, scheduler=scheduler)
                 log.debug(f"Received scheduling result: {result}")
-            except client.OpenApiException as e:
-                log.error(f"API exception received:\n{e}")
-    except KeyboardInterrupt:
-        pass
-    finally:
-        watcher.stop()
-        log.info("Stop watching for pod scheduling events")
+        except KeyboardInterrupt:
+            log.info("KeyboardInterrupt received. Stopping scheduler...")
+            break
+        except client.ApiException as e:
+            log.debug(f"API exception received:\n{e}")
+            if e.status == 410:
+                log.debug("Restart watcher....")
+                continue
+            else:
+                break
+        finally:
+            watcher.stop()
+            log.debug("Stop watching for pod scheduling events")
 
 
 def setup_config(params: dict[str, typing.Any]):
