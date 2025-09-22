@@ -258,7 +258,7 @@ default, while the registry authentication configs are defined for the underlyin
 in the cluster description manifest. For performance reasons, the uploaded container images caches
 are hosted on the host platform by pre-mount folder (`/var/lib/registry`).
 
-**[Future work]**
+**[Future Work]**
 
 In other cases, the assembled registry can be used as an internal cluster service initiated as a
 pod in the cluster itself, or as an external service managed by other partner(s).
@@ -267,6 +267,27 @@ However, these options require other configuration steps.
 ### [rest-api](../src/rest-api)
 
 ### [scheduler](../src/scheduler)
+
+The custom scheduler component is meant for advanced pod assigment to cluster nodes based on the
+PTX dataspace configurations, such as number of privacy zones, the location of zone leaders, or
+the compute and network level metrics.
+
+The default K8s scheduler is capable of considering privacy zone and leader node labels for node
+selection using its node selector and affinity/anti-affinity features. Although, it cannot take
+dataspace-specific metrics into account.
+
+The default custom scheduler behavior (`random`) is a very rudimentary approach mainly for testing
+purposes. It simply chooses a randon node from the available nodes without compute resource quotas.
+This is only a valid options in emulated cluster environments, where cluster nodes has full access
+to the underlying host resources and the number of worker tasks are reasonably limited.
+
+It builds on the standard K8s ways for defining custom schedulers using a dedicated service account
+for fine-granular RBAC control.
+
+**[In Development]**
+
+The dataspace-related scheduling algorithm is meant for incorporating the dataspace concept into
+the scheduling decisions.
 
 ### [samples](../src/samples)
 
