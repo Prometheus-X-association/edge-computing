@@ -227,7 +227,42 @@ components that have
 Variables in the provided [Makefile](../src/ptx/Makefile) define the considered connector components
 and the applied PDC and MongoDB versions.
 
+The schematic steps of the build process is the following.
+ - Clone the PDC source from the official
+    [GitHub repository](https://github.com/Prometheus-X-association/dataspace-connector)
+    into a temporary folder
+ - Switch to the specific branch denoted by the defined PDC version, e.g., `PDC_VER := 1.9.7`
+ - Build the connector, mongodb, and sandbox components using the tailored Docker files
+ - Delete the temporary folder
+
+These Dockerfiles are typically based on alpine-linux images and incorporate dependencies, pre-assembled
+resources, and materials to make the container more or less self-contained regarding the necessary config
+steps, define and fix component versions, and reduce container startup times as low as possible.
+
 ### [registry](../src/registry)
+
+This repo contains the construction steps for creating an image registry for the used K8s cluster.
+Initially, it creates (self-signed) certificate, including a top-level CA certificate, an intermediate
+certificate signing request, and an X.509 certificate with alternative DNS names, for secure TLS-based 
+communication between cluster nodes and the registry.
+The registry is meant for storing the component container images of the Edge computing BB.
+Each cluster node is configured to know the authentication credentials for pulling the component 
+images seamlessly when the BB is deployed in the cluster.
+
+The registry builds on the docker's standard [registry image](https://hub.docker.com/_/registry)
+(v3) that also configured to use the generated certificates and a predefined username/password
+using the tool `htpasswd`.
+
+In the locally emulated `k3d`, the self-managed registry functionality is provided and managed by 
+default, while the registry authentication configs are defined for the underlying `k3s` Kubernetes
+in the cluster description manifest. For performance reasons, the uploaded container images caches
+are hosted on the host platform by pre-mount folder (`/var/lib/registry`).
+
+**[Future work]**
+
+In other cases, the assembled registry can be used as an internal cluster service initiated as a
+pod in the cluster itself, or as an external service managed by other partner(s).
+However, these options require other configuration steps.
 
 ### [rest-api](../src/rest-api)
 
