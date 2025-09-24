@@ -26,26 +26,28 @@ rules and where processing functions can and should be deployed on demand.
 ## Table of Contents
 
 <!-- TOC -->
+
 * [Edge computing — AI processing BB](#edge-computing--ai-processing-bb)
-  * [Table of Contents](#table-of-contents)
-  * [Design Document](#design-document)
-  * [Building Instructions](#building-instructions)
-    * [Production](#production)
-    * [Development & Testing](#development--testing)
-  * [Running Instructions](#running-instructions)
-  * [Example Usage](#example-usage)
-      * [REST-API](#rest-api)
-      * [Testing](#testing)
-      * [Examples](#examples)
-  * [Test Definitions](#test-definitions)
-  * [Unit Testing](#unit-testing)
-    * [Setup Test Environment](#setup-test-environment)
-    * [Run Tests](#run-tests)
-    * [Expected Results](#expected-results)
-  * [Component-Level Testing](#component-level-testing)
-    * [Setup Test Environment](#setup-test-environment-1)
-    * [Run Tests](#run-tests-1)
-    * [Expected Results](#expected-results-1)
+    * [Table of Contents](#table-of-contents)
+    * [Design Document](#design-document)
+    * [Building Instructions](#building-instructions)
+        * [Production](#production)
+        * [Development & Testing](#development--testing)
+    * [Running Instructions](#running-instructions)
+    * [Example Usage](#example-usage)
+        * [REST-API](#rest-api)
+        * [Testing](#testing)
+        * [Examples](#examples)
+    * [Test Definitions](#test-definitions)
+    * [Unit Testing](#unit-testing)
+        * [Setup Test Environment](#setup-test-environment)
+        * [Run Tests](#run-tests)
+        * [Expected Results](#expected-results)
+    * [Component-Level Testing](#component-level-testing)
+        * [Setup Test Environment](#setup-test-environment-1)
+        * [Run Tests](#run-tests-1)
+        * [Expected Results](#expected-results-1)
+
 <!-- TOC -->
 
 ## Design Document

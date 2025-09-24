@@ -354,12 +354,17 @@ The two example project is the following:
 
 #### [ConvNet](../src/samples/convnet)
 
-The application uses the [Keras](https://keras.io/) python framework to train a deep convolutional neural network (CNN)
-model based on Keras' [MNIST digits classification dataset](https://keras.io/api/datasets/mnist/).
+The application uses the [Keras](https://keras.io/) python framework to train a _deep convolutional neural network_ (CNN)
+model based on `Keras`' [MNIST digits classification dataset](https://keras.io/api/datasets/mnist/).
 
 #### [GBC](../src/samples/gbc)
 
-The application uses the [scikit-learn](https://scikit-learn.org/stable/) python package to train a Gradient Boosting Classifier (GBC) machine learning
-model based on sklearn's [Olivetti faces dataset](https://scikit-learn.org/stable/datasets/real_world.html#the-olivetti-faces-dataset).
+The application uses the [scikit-learn](https://scikit-learn.org/stable/) python package to train a _Gradient Boosting Classifier_ (GBC) machine learning
+model based on `sklearn`'s [Olivetti faces dataset](https://scikit-learn.org/stable/datasets/real_world.html#the-olivetti-faces-dataset).
 
 ### [test](../test)
+
+The `test` folder contains all the required resources, materials, test manifests, and scripts for unit and
+integration testing.
+
+See the detailed description in [test/README.md](../test/README.md)
