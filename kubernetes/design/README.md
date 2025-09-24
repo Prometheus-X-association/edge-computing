@@ -271,12 +271,13 @@ components that have
 Variables in the provided [Makefile](../src/ptx/Makefile) define the considered connector components
 and the applied PDC and MongoDB versions.
 
-The schematic steps of the build process is the following.
+The schematic steps of the PTX build processes are the following.
  - Clone the PDC source from the official
     [GitHub repository](https://github.com/Prometheus-X-association/dataspace-connector)
     into a temporary folder
  - Switch to the specific branch denoted by the defined PDC version, e.g., `PDC_VER := 1.9.7`
- - Build the connector, mongodb, and sandbox components using the tailored Docker files
+ - Copy the altered resource materials into the cloned git repository
+ - Build the connector, mongodb, and sandbox components using the tailored Dockerfiles
  - Delete the temporary folder
 
 These Dockerfiles are typically based on alpine-linux images and incorporate dependencies, pre-assembled
@@ -306,7 +307,12 @@ are hosted on the host platform by pre-mount folder (`/var/lib/registry`).
 
 In other cases, the assembled registry can be used as an internal cluster service initiated as a
 pod in the cluster itself, or as an external service managed by other partner(s).
-However, these options require other configuration steps.
+Since the registry can be run in standalone mode without any modification in its basic configuration,
+the provisioning of the internal registry can be supported by a single K8s deployment manifest or
+docker compose file, along with their configuration options.
+However, these options require network and application-level configuration steps (e.g., bridged docker
+network and proper DNS entries) as (the kubelet process on the) cluster nodes must have access to the
+internally/externally managed registry container/pod. 
 
 ### [rest-api](../src/rest-api)
 
@@ -334,5 +340,26 @@ The dataspace-related scheduling algorithm is meant for incorporating the datasp
 the scheduling decisions.
 
 ### [samples](../src/samples)
+
+The `samples` folder contains two similar, deployable example jobs that use the `ptx-edge` k8s package
+and its dynamic builder/worker approach to collect raw data from a remote location and train a specific
+machine learning model on them.
+The compressed evaluation test datasets can be found in a separate subfolder [datasets](../src/samples/datasets).
+
+The container images are given with Dockerfiles that rely on standard python base images, copy
+the training source code, and install the dependencies of the applied ML model and framework.
+The container images should be pre-built locally before testing. 
+
+The two example project is the following:
+
+#### [ConvNet](../src/samples/convnet)
+
+The application uses the [Keras](https://keras.io/) python framework to train a deep convolutional neural network (CNN)
+model based on Keras' [MNIST digits classification dataset](https://keras.io/api/datasets/mnist/).
+
+#### [GBC](../src/samples/gbc)
+
+The application uses the [scikit-learn](https://scikit-learn.org/stable/) python package to train a Gradient Boosting Classifier (GBC) machine learning
+model based on sklearn's [Olivetti faces dataset](https://scikit-learn.org/stable/datasets/real_world.html#the-olivetti-faces-dataset).
 
 ### [test](../test)
