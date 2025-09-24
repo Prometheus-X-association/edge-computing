@@ -316,6 +316,20 @@ internally/externally managed registry container/pod.
 
 ### [rest-api](../src/rest-api)
 
+The rest-api contains the [FastAPI](https://fastapi.tiangolo.com/)-based server for hosting the RESTful
+interface of the Edge Computing BB for other partners to 
+
+- initiate dynamically assembled jobs
+- acquire the status of the worker processes
+- obtain the result of the worker
+
+**[In Development]**
+
+Since the development of the BB follows a bottom-up development approach, thus the current focus is on
+the fundamental deployment features of the builder/worker concept.
+Thus, the high-level features of the BB's public interface will be implemented as the last step of the
+development process.
+
 ### [scheduler](../src/scheduler)
 
 The custom scheduler component is meant for advanced pod assigment to cluster nodes based on the
