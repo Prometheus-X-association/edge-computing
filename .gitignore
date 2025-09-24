@@ -14,3 +14,4 @@ kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/bme/.creds/*
 kubernetes/deployment/*/manifests/*
+kubernetes/src/samples/datasets/*.npz
