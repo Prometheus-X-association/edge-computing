@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: contract-wiremock
-      image: registry.k3d.local:5000/ptx-sandbox/contract:1.9.7-slim
+      image: registry.k3d.local:5000/ptx-sandbox/contract:1.9.8-slim
       imagePullPolicy: IfNotPresent
       ports:
         - name: contract-port
@@ -41,7 +41,7 @@ metadata:
 spec:
   containers:
     - name: catalog-wiremock
-      image: registry.k3d.local:5000/ptx-sandbox/catalog:1.9.7-slim
+      image: registry.k3d.local:5000/ptx-sandbox/catalog:1.9.8-slim
       imagePullPolicy: IfNotPresent
       ports:
         - name: catalog-port
@@ -74,7 +74,7 @@ metadata:
 spec:
   containers:
     - name: consent-wiremock
-      image: registry.k3d.local:5000/ptx-sandbox/consent:1.9.7-slim
+      image: registry.k3d.local:5000/ptx-sandbox/consent:1.9.8-slim
       imagePullPolicy: IfNotPresent
       ports:
         - name: consent-port

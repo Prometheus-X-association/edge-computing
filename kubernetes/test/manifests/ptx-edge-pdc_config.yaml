@@ -5,7 +5,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/version: "1.9.7"
+    app.kubernetes.io/version: "1.9.8"
     app.kubernetes.io/component: cfg-files
     app.kubernetes.io/part-of: ptx-edge
 data:
@@ -44,7 +44,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/version: "1.9.7"
+    app.kubernetes.io/version: "1.9.8"
     app.kubernetes.io/component: cfg-ingress
     app.kubernetes.io/part-of: ptx-edge
 data:
@@ -65,7 +65,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/version: "1.9.7"
+    app.kubernetes.io/version: "1.9.8"
     app.kubernetes.io/component: cfg-nodeport
     app.kubernetes.io/part-of: ptx-edge
 data:
@@ -91,7 +91,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app.kubernetes.io/name: pdc
-    app.kubernetes.io/version: "1.9.7"
+    app.kubernetes.io/version: "1.9.8"
     app.kubernetes.io/component: cfg-secrets
     app.kubernetes.io/part-of: ptx-edge
 data:

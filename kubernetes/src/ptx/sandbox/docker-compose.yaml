@@ -16,7 +16,7 @@ services:
       - mocked
   mongo-seed:
     container_name: "mongodb-seed"
-    image: ptx-sandbox/mongo-seed:1.9.7-slim
+    image: ptx-sandbox/mongo-seed:1.9.8-slim
     depends_on:
       mongodb-sandbox:
         condition: service_healthy
@@ -27,7 +27,7 @@ services:
   ######################################################################################################################
   provider:
     container_name: "provider-pdc"
-    image: ptx/connector:1.9.7-slim
+    image: ptx/connector:1.9.8-slim
     restart: no
     volumes:
       - './rsc/provider.config.json:/usr/src/app/dist/src/config.production.json'
@@ -48,7 +48,7 @@ services:
       - mocked
   consumer:
     container_name: "consumer-pdc"
-    image: ptx/connector:1.9.7-slim
+    image: ptx/connector:1.9.8-slim
     restart: no
     volumes:
       - './rsc/consumer.config.json:/usr/src/app/dist/src/config.production.json'
@@ -70,7 +70,7 @@ services:
   ######################################################################################################################
   contract:
     container_name: "ptx-contract"
-    image: ptx-sandbox/contract:1.9.7-slim
+    image: ptx-sandbox/contract:1.9.8-slim
     restart: no
     ports:
       - "3001:8081"
@@ -80,7 +80,7 @@ services:
       - core
   catalog:
     container_name: "ptx-catalog"
-    image: ptx-sandbox/catalog:1.9.7-slim
+    image: ptx-sandbox/catalog:1.9.8-slim
     restart: no
     ports:
       - "3002:8082"
@@ -90,7 +90,7 @@ services:
       - core
   consent:
     container_name: "ptx-consent"
-    image: ptx-sandbox/consent:1.9.7-slim
+    image: ptx-sandbox/consent:1.9.8-slim
     restart: no
     ports:
       - "3003:8083"

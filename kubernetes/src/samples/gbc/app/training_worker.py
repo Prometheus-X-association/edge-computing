@@ -33,7 +33,7 @@ def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:
     return data["x_train"], data["y_train"]
 
 
-def create_svm_model() -> GradientBoostingClassifier:
+def create_gbc_model() -> GradientBoostingClassifier:
     print("\n@@@ Creating GradientBoostingClassifier model...")
     model = GradientBoostingClassifier(n_estimators=TRAIN_ESTIMATORS, learning_rate=TRAIN_RATE, max_depth=TRAIN_DEPTH,
                                        verbose=2)
@@ -55,7 +55,7 @@ def store_model(model: GradientBoostingClassifier, dst_path: pathlib.Path | str)
 
 def execute():
     x_train, y_train = load_data(TASK_DATA_SRC)
-    model = create_svm_model()
+    model = create_gbc_model()
     model = train_model(model, x_train, y_train)
     store_model(model, dst_path=TASK_DATA_DST)
 
