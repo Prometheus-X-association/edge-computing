@@ -190,13 +190,22 @@ This is currently the only deployment-specific part of the BB, as PDC does not s
 
 ## Edge Computing BB Components
 
+Following the cloud native/microservices 
+
 ### [deployment](../deployment)
 
 The deployment section contains the specific deployment automatization and configuration scripts for the
 different platforms.
+The deployment steps of the building block components require the following high-level steps:
+ - (Compile), Assemble, and build the components' container images locally as currently there is no dedicated
+repository for the component images.
+ - Configure the K8s cluster access method and rights, or create an emulated K8s cluster locally(, which
+usually configure the cluster access by default.)
+ - Deploy and configure the components within the cluster, such as namespace/volume creation, deployment/service
+initiation, RBAC role definition and binding, ingress route configuration, etc.
 
-Basically, it uses the `config.sh` to define environment variables (envvar) as config parameters, while
-the `setup.sh` defines the basic installation steps, specifically the 
+Basically, the whole deployment process uses the `config.sh` to define environment variables (envvar) as
+config parameters, while the `setup.sh` defines the basic installation steps, specifically the 
  - cleanup, 
  - image building,
  - environment creation using k3d, 
@@ -210,6 +219,41 @@ folder and substitute the configuration variables for deployment.
 
 The sensitive parameters, such as usernames, passwords, public IPs, secrets and keys are defined in a 
 separate file `cluster-creds.sh` under the folder `.creds`. It also defined a `Makefile` for convenience.
+
+**[In Development]**
+
+Instead of manually-written and maintained shell scripts, the components' installation and configuration
+can be implemented using **[Helm charts](https://helm.sh/)**, which is the de facto approach of K3s application
+packaging and distribution.
+This also requires the use of the specific go-templating in the base manifests and the definition of config
+parameters in different `values.yaml` files.
+
+Although the underlying _traefik_ application proxy, which is used by the k3s, provides a simple and 
+convenient way for enabling dynamic TLS certificate generation and renewal based on Letsencrypt/ACME,
+this is inherently tied to the traefik's implementation and reduces the portability of the Edge Computing
+BB between different K8s clusters.
+One more general way for handling certificate independent of the ingress controller's implementation is using
+a dedicated certificate management service, such as **[cert-manager](https://cert-manager.io/)**.
+`cert-manager` provides a common approach for cloud native certificate management, where TLS certificates is
+stored in K8s Secrets that can be given for direct application in the ingress routing configuration using
+(multiple) K8s manifests.
+Implicitly, in this case, the TLS configuration is moved from the low-level application proxy/ingress controller
+(k3d cluster configuration) on a higher level (k8s service configuration).
+
+**[Future Work]**
+
+Since the development of [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+is stopped in favor of the more general and versatile features
+of **[Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/)**.
+Although Gateway API features provides a more flexible approach, its applicability requires further
+considerations due to its more complex configuration and still relatively early stage of development in
+contrast to the widely supported and mature feature of K8s Ingress.
+Important to note that the TLS-based, secure HTTP route configuration with K8s Gateway API typically requires
+external certificate management configuration (at least in case of the traefik proxy),
+e.g., based on the _cert-manager_ package.
+
+Thus, the support of K8s Gateway API requires the support of cert-manager as a prerequisite.
+
 
 ### [builder](../src/builder)
 
