@@ -220,6 +220,69 @@ folder and substitute the configuration variables for deployment.
 The sensitive parameters, such as usernames, passwords, public IPs, secrets and keys are defined in a 
 separate file `cluster-creds.sh` under the folder `.creds`. It also defined a `Makefile` for convenience.
 
+
+#### PTX Dataspace Connector (PDC)
+
+Basically, the PDC is deployed as a _K8s Daemonset_ with a specific node filter on the zone leader nodes. 
+The PDC controller is configured using a _K8s ConfigMap_ that defines 
+
+ - a config file template for storing production configuration values in _JSON format_, 
+ - non-sensitive configuration values, such as the catalog's URI, etc., that are provided for the connector as envvars,
+ - and an inline `entypoint.sh` init script that generates the actual config file `config.production.json`
+ using the tool `envsubst`.
+
+The sensitive configuration values, such as the secret key, is provided as a _K8s Secret_.
+The PDC pod consists of two containers, one for the actual connector tool and a _[MongoDB](https://www.mongodb.com/)_
+database with pinpointed version.
+These configuration options are automatically mounted in the connector's own container.
+
+The PDC deployment also extended with an **init container**, implemented as a standalone feature of the 
+builder component, in order to prepare and set up the PDC's environment and accessibility.
+It uses the Kubernetes main API to list, create, and patch K8s objects dynamically. 
+For security reasons, a specific service account is created for the PDC instances, though which the automatic
+mount of the K8s API credentials are disabled, whilst the API token and other config parameters as a manually
+prepared **projected volume** are explicitly mounted only into the init container to realize restricted access to K8s
+services.
+Fundamentally, the init script support two approach to separate and make the PDC instances available within the 
+cluster as well as from outside the cluster, while circumvent the limitations of K8s deployments, e.g.,
+differentiating deployed pods within a daemonset or duplicating node labels in pod metadata.
+
+In the **headless** approach, the init script collects the internal node IP addresses to create _K8s Services_ 
+dynamically for each privacy zone/PDC instance, which have no dedicated virtual IP valid within the cluster,
+but directly point to the connectors' ports allocated on the assigned cluster nodes.
+This requires the lowest level of K8s API privileges for creating PDC services per privacy zones, which build on a
+single entry point (port) to access to the connector without knowing the hosting node's IP address.
+Unfortunately, these setup is incapable of publishing these PDC services through the ingress controllers configuration
+as K8s Ingress does not support proxying traffic through the ingress port to services without virtual cluster IPs.
+
+Therefore, the **clusterip**-based approach is designed to dynamically check and collect privacy zone labels of the
+node the daemonset's pod is scheduled on and create PDC instance services for nodes using the unique zone labels as
+selectors. Although this service creation approach fit the best to the cloud native principles of Kubernetes, 
+it requires a wider range of access rights and the on-the-fly patching of the daemonset's main pod in which
+the init container is executed.
+
+#### Ingress 
+
+The implicit **K8s Ingress** controller is basically configured to use TLS-based secure tunnelling for the HTTPS
+communications and follows the standard approach of binding specific endpoints to dedicated services in front of
+the deployed Edge Computing BB.
+By design, the REST-API and each deployed PDC instances are configured to use different URL paths for traffic
+separation using the HTTP prefixes `<PTX namespace>/api/v1` and `<PTX namespace>/<privacy zone ID>/pdc`, respectively.
+
+Since the PDC's configuration only allows for defining subpaths for the PTX-related `endpoint`, but not for the
+PDC API itself, the PDC ingress routes are extended with additional _subpath stripping_ configuration options.
+Unfortunately, this kind of path manipulation features are not natively available in K8s specification, but are
+usually supported by the underlying application proxy modules, such as in the case of
+[traefik](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/stripprefix/) 
+or [Nginx](https://github.com/kubernetes/ingress-nginx/blob/main/docs/examples/rewrite/README.md).
+Thus, these configuration option represents the only implementation/platform dependents settings of the
+Edge Computing BB.
+
+#### TLS Termination Proxy
+
+The TLS-related configuration along with the exposed cluster ports are defined in an auxiliary manifest
+that is automatically processed by K3s at initialization time.
+
 **[In Development]**
 
 Instead of manually-written and maintained shell scripts, the components' installation and configuration
@@ -257,7 +320,45 @@ Thus, the support of K8s Gateway API requires the support of cert-manager as a p
 
 ### [builder](../src/builder)
 
+The builder implements one of the core (dynamicity) feature of the Edge Computing BB.
+Similar to the PDC's init container approach, it is executed before the main container of the worker task job
+and is responsible for 
+ - collecting the private/raw `data`, typically as a compressed file(s), from different locations and protocols,
+ - collecting the `worker` environment as a container image,
+ - and configure its own deployment config, including pod/job description, on the fly.
+
+The builder uses a base configuration file and envvars to merge the configuration options into a global object,
+based on which the resource collection methods are initiated.
+In most configuration options, the data/worker source designates the actual source and collection method/protocol
+of the given resource, while additional config options define the configurations of the access method, such as
+username/password pairs and credentials.
+
+#### Data Resource
+
+The following private data source options are supported:
+ 
+- `file://`: The given file mounted in the container or originally available in the builder container image is 
+    simply copied into the data destination (dst) that is accessible from the worker container.
+- `http://` and `https://`: Collect data files via HTTP from a remote server.
+  Use other config options to consider authentication schemes and username/password pairs, etc. 
+- `ptx://`: Collect data source configuration from the PTX dataspace.
+    Use other config options to define PTX offer IDs and can parse received data for inline source configuration
+    and forward the data collection workflow with other aforementioned methods.
+
+The following worker source options are supported:
+
+- `docker://`: Configure the worker container image to use an internal image which is collected from a remote
+    docker registry and pushed into the local registry with a predefined name.
+    Use other config options to consider authentication username/password pairs.
+- `secret://`: Configure the worker container image to use a _K8s Image Pull Secret_, for which the credentials
+    are given in other config options.
+- `ptx://`: Collect worker configuration from the PTX dataspace.
+    Use other config options to define PTX offer IDs and can parse received data for inline source configuration
+    and forward the data collection workflow with other aforementioned methods.
+
 ### [operator](../src/operator)
+
+TBD
 
 ### [ptx](../src/ptx)
 
