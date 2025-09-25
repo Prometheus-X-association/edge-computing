@@ -358,7 +358,17 @@ The following worker source options are supported:
 
 ### [operator](../src/operator)
 
-TBD
+Fundamentally, the **K8s Operator** design patters provides a simplified method to initiate and
+configure edge worker tasks. It consists of 2 subcomponents:
+ - A dedicated _K8s CustomResourceDefinition_ (CRD) that gives an abstracted object description of a deployed
+    worker task and implicitly defines the configuration format using the implicit _OpenAPI specification_.
+ - A _controller program_ that continuously watches for created/modified edge worker CRDs, creates the deployments 
+    and related K8s manifests according to the CRD's simple config values, and optionally adjust edge worker tasks.
+
+The edge worker CRD is ment for the top-level configuration entity that should be used by either a K8s cluster admin
+via CLI or a PTX dataspace partner via the exposed REST-API.
+
+TDB...
 
 ### [ptx](../src/ptx)
 
