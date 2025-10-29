@@ -54,7 +54,7 @@ function install_docker() {
 
 function install_k3d() {
 	echo -e "\n>>> Install k3d binary[${K3D_VER}]...\n"
-	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
+	curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
 }
 
 function install_helm() {
@@ -74,6 +74,7 @@ function setup_k3d_bash_completion() {
     k3d completion bash | sudo tee /etc/bash_completion.d/k3d > /dev/null
     sudo chmod a+r /etc/bash_completion.d/k3d
     source ~/.bashrc
+    echo "Finished."
 }
 
 function install_kubectl() {
@@ -88,6 +89,7 @@ function setup_kubectl_bash_completion() {
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
     source ~/.bashrc
+    echo "Finished."
 }
 
 function setup_helm_bash_completion() {
@@ -96,6 +98,7 @@ function setup_helm_bash_completion() {
     helm completion bash | sudo tee /etc/bash_completion.d/helm > /dev/null
     sudo chmod a+r /etc/bash_completion.d/helm
     source ~/.bashrc
+    echo "Finished."
 }
 
 # Test actions --------------------------------------------------------------------------------
@@ -175,7 +178,7 @@ function cleanup_test_cluster() {
 
 function display_help() {
     cat <<EOF
-Usage: $0 [options]
+Usage: ${0} [OPTIONS]
 
 Options:
     -c  Perform initial cleanup.
@@ -202,11 +205,10 @@ while getopts ":xsuch" flag; do
             UPDATE=true;;
         h)
             display_help
-            exit
-            ;;
+            exit;;
         ?)
-            echo "Invalid parameter: -${OPTARG} !"
-            exit 1;;
+            echo "${0##*/}: invalid option -- '${OPTARG}'"
+            echo "Try '${0} -h' for more information."
     esac
 done
 
@@ -216,12 +218,13 @@ done
 install_deps
 
 ### Docker
-if ! command -v docker >/dev/null 2>&1; then
+DOCKER_PRE_INSTALLED=$(command -v docker)
+if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     # Binaries
 	install_docker
     # Privileged Docker
     sudo usermod -aG docker "${USER}"
-    if [ ${NO_CHECK} = false ]; then
+    if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
         echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
         # New shell with docker group privilege
         exec sg docker "$0" "$@"
