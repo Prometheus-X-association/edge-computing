@@ -41,7 +41,7 @@ dev-local: venv
 	( . .venv/bin/activate && fastapi dev --port 8080 --reload app/main.py )
 
 setup:
-ifeq ($(shell [ `command -v ${PY} >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)
+ifeq ($(shell [ `command -v ${PY} >/dev/null 2>&1` -a `command -v pip3.14 >/dev/null 2>&1` ] || echo 1), 1)
 	$(error "Missing required environment: ${PY} + pip")
 else
 	$(MAKE) venv

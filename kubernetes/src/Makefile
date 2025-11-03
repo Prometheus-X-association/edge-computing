@@ -200,7 +200,7 @@ run-scheduler:
 
 run-sample-convnet:
 	kubectl apply -f assets/ptx-samples-convnet-job.yaml
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
 	kubectl get all,pv,pvc -o wide
 	@echo
@@ -212,7 +212,7 @@ run-sample-convnet:
 
 run-sample-gbc:
 	kubectl apply -f assets/ptx-samples-gbc-job.yaml
-	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/worker-pvc
+	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
 	kubectl get all,pv,pvc -o wide
 	@echo
@@ -233,9 +233,9 @@ run-test-job:
 	@echo
 	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
-	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=20s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-job builder
-	kubectl wait --for="condition=ContainersReady" --timeout=10s pods -l app=consumer
+	kubectl wait --for="condition=ContainersReady" --timeout=20s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-job worker
 
 
@@ -250,9 +250,9 @@ run-test-img: registry-ca
 	@echo
 	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
-	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=20s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-img builder
-	kubectl wait --for="condition=ContainersReady" pods --timeout=10s -l app=consumer
+	kubectl wait --for="condition=ContainersReady" pods --timeout=20s -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-img worker
 
 ifneq (,$(wildcard ./.creds/dockerhub.token))
@@ -268,9 +268,9 @@ run-test-secret:
 	@echo
 	@# kubectl wait --for="condition=Complete" --timeout=30s job/consumer
 	@# kubectl logs job/consumer builder && kubectl logs job/consumer worker
-	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=10s pods -l app=consumer
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=20s pods -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-secret builder
-	kubectl wait --for="condition=ContainersReady" pods --timeout=10s -l app=consumer
+	kubectl wait --for="condition=ContainersReady" pods --timeout=20s -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-secret worker
 
 ########################################################################################################################

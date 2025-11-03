@@ -1,4 +1,4 @@
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 LABEL maintainer="czentye@tmit.bme.hu"
 WORKDIR /usr/src/api
 ENV PYTHONUNBUFFERED=1

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PY_VERSION=python3.13
+PY_VERSION=python3.14
 
 if ! command -v ${PY_VERSION} >/dev/null 2>&1; then
     sudo apt install -y software-properties-common make

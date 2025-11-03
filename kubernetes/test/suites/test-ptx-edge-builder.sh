@@ -82,10 +82,10 @@ testPTXEdgeStaticVolumeClaim() {
 	#
 	startSkipping
 	    log "Waiting for PVC binding..."
-        kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=10s pvc/"${WORKER}"-pvc
+        kubectl -n ${PTX} wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/"${WORKER}"-pvc
         assertTrue "PVC binding failed!" "$?"
         log "Waiting for PV acquisition..."
-        kubectl -n ${PTX} wait --for="condition=Ready" --timeout=10s pod/"${POD}"
+        kubectl -n ${PTX} wait --for="condition=Ready" --timeout=20s pod/"${POD}"
         assertTrue "PV acquisition failed!" "$?"
 	endSkipping
 }

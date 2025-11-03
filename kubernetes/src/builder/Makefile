@@ -26,18 +26,18 @@ run: build
 
 dev:
 	docker run --rm --name ${NAME} -ti -v ./app:/usr/src/builder/app ${IMG} \
-				python3.13 -m app -v
+				python3.14 -m app -v
 
 venv:
 	test -d .venv || (\
-		python3.13 -m pip install -U virtualenv && \
-		python3.13 -m venv --upgrade-deps .venv && \
+		python3.14 -m pip install -U virtualenv && \
+		python3.14 -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		python3.13 -m pip install -U -r requirements.txt -r requirements-dev.txt \
+		python3.14 -m pip install -U -r requirements.txt -r requirements-dev.txt \
 		)
 
 setup:
-ifeq ($(shell [ `command -v python3.13 >/dev/null 2>&1` -a `command -v pip3.13 >/dev/null 2>&1` ] || echo 1), 1)
+ifeq ($(shell [ `command -v python3.14 >/dev/null 2>&1` -a `command -v pip3.14 >/dev/null 2>&1` ] || echo 1), 1)
 	$(error "Missing required environment: Python3.13 + pip")
 else
 	$(MAKE) venv
