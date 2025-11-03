@@ -132,7 +132,10 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
     conn_timeout, conn_retry = CONFIG.get('connection.timeout', default=30), CONFIG.get('connection.retry', default=3)
     log.debug(f"Check worker setup in configuration...")
     worker_src = CONFIG.get('worker.src')
-    if worker_src is None or worker_src.upper() in ('INLINE', 'DATASOURCE'):
+    if worker_src is None:
+        log.warning("Worker source configuration is missing! Skipping...")
+        CONFIG['worker.src'] = "skip"
+    elif worker_src.upper() in ('INLINE', 'DATASOURCE'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
             worker_cfg = json.load(f)
@@ -140,6 +143,8 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
     worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     match get_resource_scheme(worker_src):
+        case 'skip':
+            result_id = "skipped"
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':
