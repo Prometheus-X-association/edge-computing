@@ -6,6 +6,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: ptx-edge
 data:
   .env: |
     NODE_ENV=production
@@ -41,6 +45,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: ptx-edge
 data:
   PDC_CFG_SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
   PDC_CFG_SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
@@ -53,6 +61,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -62,6 +74,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 rules:
   - apiGroups: [ "" ]
     resources: [ "pods" ]
@@ -74,6 +90,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 subjects:
   - kind: ServiceAccount
     name: ${PDC}
@@ -88,6 +108,12 @@ kind: ClusterRole
 metadata:
   name: node-lister
   namespace: ${PTX_NS}
+  labels:
+    app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
@@ -100,6 +126,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 subjects:
   - kind: ServiceAccount
     name: ${PDC}
@@ -116,6 +146,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 spec:
   selector:
     matchLabels:
@@ -124,6 +158,10 @@ spec:
     metadata:
       labels:
         app: ${PDC}
+        app.kubernetes.io/name: ${PDC}
+        app.kubernetes.io/version: ${PDC_VER}
+        app.kubernetes.io/component: connector
+        app.kubernetes.io/part-of: ptx-edge
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
@@ -220,6 +258,10 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
+    app.kubernetes.io/name: ${PDC}
+    app.kubernetes.io/version: ${PDC_VER}
+    app.kubernetes.io/component: connector
+    app.kubernetes.io/part-of: ptx-edge
 spec:
   selector:
     app: ${PDC}

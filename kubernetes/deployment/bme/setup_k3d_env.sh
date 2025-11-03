@@ -29,10 +29,6 @@ CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
-# busybox ~4.2MB
-#TEST_IMG='busybox:latest'
-#TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
-# pause ~240kB
 TEST_IMG='k8s.gcr.io/pause'
 TEST_CMD=''
 TEST_OK='Running'

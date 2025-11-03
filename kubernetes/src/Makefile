@@ -21,7 +21,7 @@ K3D_REG := registry.k3d.localhost:5000
 REG_CREDS := ${REGISTRY_USER}:${REGISTRY_SECRET}
 CA_DIR := ${PROJECT_ROOT}/registry/.certs/ca
 
-COMPONENTS := builder rest-api scheduler registry
+COMPONENTS := builder operator registry rest-api scheduler
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
 SAMPLES := convnet gbc
@@ -31,6 +31,7 @@ build:
 	for mod in ${COMPONENTS}; do ${MAKE} -C $${mod} build; done
 	${MAKE} -C ptx build
 	${MAKE} -C samples build-all
+	docker images
 
 rebuild: | purge build
 
@@ -39,21 +40,25 @@ setup:
 	kubectl create namespace ptx-edge && kubectl config set-context --current --namespace ptx-edge
 	kubectl create namespace ptx-sandbox
 	for img in ${COMPONENTS}; do \
-		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
+		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
+		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${PTX_CORE}; do \
-		IMG=$$(docker image ls -f reference="ptx-sandbox/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
+		IMG=$$(docker image ls -f reference="ptx-sandbox/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${CONNECTOR}; do \
-		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
+		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${SAMPLES}; do \
-		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
+		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${EXTRA}; do \
@@ -61,7 +66,8 @@ setup:
 		# IMG=$$(docker image ls -f reference="$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
-		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} "docker://$${img}" "docker://${K3D_REG}/$${img}"; \
+		echo "$${img} --> ${K3D_REG}/$${img}"; \
+		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker://$${img} docker://${K3D_REG}/$${img}; \
 	done
 	@echo
 	kubectl create configmap registry-root-ca.crt --from-file=ca.crt=registry/.certs/ca/ca.crt
@@ -269,7 +275,7 @@ run-test-secret:
 
 ########################################################################################################################
 
-launch: | rebuild setup run-pdc run-builder
+launch: | rebuild setup run-pdc-pod run-builder
 
 log-pdc:
 	-kubectl logs --prefix --ignore-errors -f pdc ptx-connector

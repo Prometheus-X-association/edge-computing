@@ -2,7 +2,7 @@ name: pdc
 services:
   connector:
     container_name: pdc-connector
-    image: ptx/connector:1.9.8-slim
+    image: ptx/connector:1.9.10-slim
     restart: unless-stopped
     volumes:
       - './config.production.json:/usr/src/app/dist/src/config.production.json'
@@ -35,7 +35,7 @@ services:
       start_interval: 3s
   catalog:
     container_name: ptx-catalog
-    image: ptx-sandbox/catalog:1.9.8-slim
+    image: ptx-sandbox/catalog:1.9.10-slim
     ports:
       - "3002:8082"
     extra_hosts:

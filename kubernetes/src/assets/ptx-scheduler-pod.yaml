@@ -71,8 +71,8 @@ spec:
     - name: scheduler
       image: registry.k3d.local:5000/ptx-edge/scheduler:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "python3", "-m", "app", "-v"]
-      command: [ "/bin/sh", "-c", "sleep infinity" ]
+      command: [ "python3", "-m", "app", "-v"]
+      #command: [ "/bin/sh", "-c", "sleep infinity" ]
       volumeMounts:
         - name: src
           mountPath: /usr/src/scheduler/app

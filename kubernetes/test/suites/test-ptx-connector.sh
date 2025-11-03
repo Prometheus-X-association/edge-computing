@@ -22,9 +22,9 @@ CLUSTER_CFG="${ROOT_DIR}"/test/manifests/k3d-test_cluster_multi.yaml
 PTX=ptx-edge
 SANDBOX=ptx-sandbox
 
-CATALOG_IMG="ptx-sandbox/catalog:1.9.8-slim"
+CATALOG_IMG="ptx-sandbox/catalog:1.9.10-slim"
 CATALOG=catalog
-PDC_IMG="ptx/connector:1.9.8-slim"
+PDC_IMG="ptx/connector:1.9.10-slim"
 MONGODB_IMG="ptx/mongodb:8.0.5-slim"
 PDC=pdc
 PDC_PORT=3000

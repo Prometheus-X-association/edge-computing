@@ -1,6 +1,6 @@
 # Development
 virtualenv~=20.33.1
-fastapi[standard]~=0.116.1     # For the fastapi shell command
+fastapi[standard]~=0.120.4     # For the fastapi shell command
 fastapi-code-generator~=0.5.4
 # Testing
 pytest~=8.4.1
