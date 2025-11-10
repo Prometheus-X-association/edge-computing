@@ -48,9 +48,9 @@ ${KCOLOR} label "node/k3d-${NODE_AB}-0" \
                 "privacy-zone.dataspace.ptx.org/${PZ_B}=true"
 
 log "Build PTX-edge components..."
-make -C ../../src/rest-api build
-make -C ../../src/builder build
-make -C ../../src/ptx build
+make -C "${ROOT_DIR}/src/rest-api" build
+make -C "${ROOT_DIR}/src/builder" build
+make -C "${ROOT_DIR}/src/ptx" build
 
 log "Load PTX-edge component images"
 docker pull "${WORKER_IMG}"

@@ -10,8 +10,10 @@ spec:
     - name: rest-api
       image: registry.k3d.local:5000/ptx-edge/rest-api:1.0
       imagePullPolicy: IfNotPresent
-      command: [ "uvicorn", "app.main:app", "--host=0.0.0.0", "--port=8080", "--workers=2",
-                 "--reload", "--reload-dir=app", "--access-log", "--log-level=debug" ]
+      command: [ "uvicorn", "app.main:app", "--workers=2",
+                 "--host=0.0.0.0", "--port=8080",
+                 "--reload", "--reload-dir=app",
+                 "--access-log", "--log-level=debug" ]
       env:
         - name: ROOT_PATH
           value: "/ptx-edge/api/v1"

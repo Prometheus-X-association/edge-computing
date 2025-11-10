@@ -16,8 +16,8 @@ set -o allexport    # Also export all variables for envsubst
 
 # Logging
 SCRIPTS_DIR=$(readlink -f "$(dirname "$0")")
-ROOT_DIR=$(readlink -f "$(dirname "$0")/../..")
-source "${SCRIPTS_DIR}/../scripts/helper.sh"
+ROOT_DIR=$(readlink -f "$(dirname "$0")/../../..")
+source "${ROOT_DIR}/test/scripts/helper.sh"
 if command -v kubecolor >/dev/null 2>&1; then
     KUBECOLOR_FORCE_COLORS=auto
     KUBECOLOR_PRESET="dark"
