@@ -72,6 +72,7 @@ PDC="pdc"
 PDC_VER="1.9.10"
 PDC_NODEPORT=30003
 PDC_DEF_PORT=3000
+PDC_ID="pdc-${DEF_ZONE}"
 PDC_SUBPATH="${PTX_NS}/${DEF_ZONE}/${PDC}"
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh

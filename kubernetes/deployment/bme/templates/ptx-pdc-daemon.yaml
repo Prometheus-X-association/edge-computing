@@ -21,7 +21,7 @@ data:
     WINSTON_LOGS_MAX_SIZE=20m
     JWT_BEARER_TOKEN_EXPIRATION=3h
     JWT_REFRESH_TOKEN_EXPIRATION=1d
-  config-template.json: |
+  config.json: |
     {
       "endpoint": "${PDC_ENDPOINT}",
       "serviceKey": "${PDC_CFG_SERVICE_KEY}",
@@ -33,7 +33,7 @@ data:
     }
   entrypoint.sh: |
     #!/usr/bin/env sh
-    envsubst <dist/src/config.production.json.template >dist/src/config.production.json
+    envsubst <dist/src/config.json.tmp >dist/src/config.production.json
     exec "$@"
 immutable: true
 ---
@@ -170,7 +170,7 @@ spec:
         - name: builder
           image: ${REGISTRY}/ptx-edge/builder:1.0
           imagePullPolicy: IfNotPresent
-          command: [ "python3", "-m", "app.tools.pdc-init", "--verbose" ]
+          command: [ "python3", "-m", "app.tools.pdc-init" ]
           args: [ "--type=clusterip" ]
           volumeMounts:
             - name: kube-api-client-cfg
@@ -193,42 +193,42 @@ spec:
           image: ${REGISTRY}/ptx/connector:${PDC_VER}-slim
           imagePullPolicy: IfNotPresent
           ports:
-            - name: ${PDC}-port
+            - name: pdc-port
               containerPort: ${PDC_DEF_PORT}
           envFrom:
             - secretRef:
                 name: ${PDC}-secrets
           volumeMounts:
-            - name: ${PDC}-env
+            - name: env
               mountPath: /usr/src/app/.env.production
               subPath: .env.production
               readOnly: true
-            - name: ${PDC}-config-template
-              mountPath: /usr/src/app/dist/src/config.production.json.template
-              subPath: config.production.json.template
+            - name: config-template
+              mountPath: /usr/src/app/dist/src/config.json.tmp
+              subPath: config.json.tmp
               readOnly: true
-            - name: ${PDC}-entrypoint
+            - name: entrypoint
               mountPath: /usr/src/app/docker/scripts/entrypoint.sh
               subPath: entrypoint.sh
               readOnly: true
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
           args: [ "npm", "run", "start" ]
       volumes:
-        - name: ${PDC}-env
+        - name: env
           configMap:
-            name: ${PDC}-config
+            name: pdc-config
             items:
               - key: .env
                 path: .env.production
-        - name: ${PDC}-config-template
+        - name: config-template
           configMap:
-            name: ${PDC}-config
+            name: pdc-config
             items:
-              - key: config-template.json
-                path: config.production.json.template
-        - name: ${PDC}-entrypoint
+              - key: config.json
+                path: config.json.tmp
+        - name: entrypoint
           configMap:
-            name: ${PDC}-config
+            name: pdc-config
             items:
               - key: entrypoint.sh
                 path: entrypoint.sh
@@ -254,7 +254,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${PDC}-${DEF_ZONE}
+  name: ${PDC_ID}
   namespace: ${PTX_NS}
   labels:
     app: ${PDC}
@@ -265,9 +265,9 @@ metadata:
 spec:
   selector:
     app: ${PDC}
-    privacy-zone.dataspace.ptx.org/${DEF_ZONE}: "true"
+    connector.dataspace.ptx.org/id: ${PDC_ID}
   type: ClusterIP
   ports:
-    - name: ${PDC}-port
+    - name: pdc-port
       port: ${PDC_DEF_PORT}
 ---

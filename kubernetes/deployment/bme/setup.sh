@@ -96,7 +96,7 @@ function init() {
 	#######
     echo
 	echo ">>> Uploaded images:"
-	curl -Sskf --cacert "${REG_CA_DIR}/ca.crt" -u "${REG_CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
+	curl -Sskf --cacert "${REG_CA_DIR}/ca.crt" -u "${REG_CREDS}" "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 	echo
 }
 

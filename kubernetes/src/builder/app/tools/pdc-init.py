@@ -213,7 +213,7 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
             log.warning(f"Multiple privacy zone labels detected for pod[{pod}]! "
                         f"Selecting the first zone ID as default...")
         def_zone_id = sorted(map(lambda _l: _l.split('/')[-1].lower(), zones))[0]
-    log.debug(f"Selected default privacy zone: {def_zone_id}")
+    log.info(f"Selected default privacy zone: {def_zone_id}")
     labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = def_zone_id
     labels[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{def_zone_id}"
     pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
