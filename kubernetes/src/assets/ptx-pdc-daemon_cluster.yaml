@@ -16,7 +16,7 @@ data:
     JWT_REFRESH_TOKEN_EXPIRATION=1d
   config.json: |
     {
-      "endpoint": "http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/",
+      "endpoint": "http://${PDC_ID}.ptx-edge.svc.cluster.local:3000/",
       "serviceKey": "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV",
       "secretKey": "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x",
       "contractUri": "http://contract.ptx-sandbox.svc.cluster.local:3001/",
@@ -24,6 +24,10 @@ data:
       "consentUri": "http://consent.ptx-sandbox.svc.cluster.local:3003/v1/",
       "expressLimitSize": "100mb"
     }
+  entrypoint.sh: |
+    #!/usr/bin/env sh
+    envsubst <dist/src/config.json.tmp >dist/src/config.production.json
+    exec "$@"
 immutable: true
 ---
 apiVersion: v1
@@ -123,7 +127,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-        - name: pdc-mongodb
+        - name: mongodb
           image: registry.k3d.local:5000/ptx/mongodb:8.0.5-slim
           imagePullPolicy: IfNotPresent
           ports:
@@ -131,7 +135,7 @@ spec:
               containerPort: 27017
           restartPolicy: Always # Native sidecar container
       containers:
-        - name: ptx-connector
+        - name: connector
           image: registry.k3d.local:5000/ptx/connector:1.9.10-slim
           imagePullPolicy: IfNotPresent
           ports:
@@ -145,10 +149,20 @@ spec:
               subPath: .env.production
               readOnly: true
             - name: pdc-config
-              mountPath: "/usr/src/app/dist/src/config.production.json"
-              subPath: config.production.json
+              mountPath: "/usr/src/app/dist/src/config.json.tmp"
+              subPath: config.json.tmp
               readOnly: true
-          command: [ "npm", "run", "start" ]
+            - name: pdc-entrypoint
+              mountPath: /usr/src/app/docker/scripts/entrypoint.sh
+              subPath: entrypoint.sh
+              readOnly: true
+          env:
+            - name: PDC_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['connector.dataspace.ptx.org/id']
+          command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
+          args: [ "npm", "run", "start" ]
       volumes:
         - name: pdc-env
           configMap:
@@ -161,7 +175,13 @@ spec:
             name: pdc-config
             items:
               - key: config.json
-                path: config.production.json
+                path: config.json.tmp
+        - name: pdc-entrypoint
+          configMap:
+            name: pdc-config
+            items:
+              - key: entrypoint.sh
+                path: entrypoint.sh
         - name: src
           hostPath:
             path: /usr/local/share/builder/app
@@ -193,7 +213,7 @@ metadata:
 spec:
   selector:
     app: pdc
-    privacy-zone.dataspace.ptx.org/zone-A: "true"
+    connector.dataspace.ptx.org/id: "pdc-zone-a"
   type: ClusterIP
   ports:
     - name: pdc-port

@@ -35,7 +35,7 @@ metadata:
     app: pdc
 spec:
   initContainers:
-    - name: pdc-mongodb
+    - name: mongodb
       image: registry.k3d.local:5000/ptx/mongodb:8.0.5-slim
       imagePullPolicy: IfNotPresent
       ports:
@@ -43,7 +43,7 @@ spec:
           containerPort: 27017
       restartPolicy: Always # Native sidecar container
   containers:
-    - name: ptx-connector
+    - name: connector
       image: registry.k3d.local:5000/ptx/connector:1.9.10-slim
       imagePullPolicy: IfNotPresent
       ports:

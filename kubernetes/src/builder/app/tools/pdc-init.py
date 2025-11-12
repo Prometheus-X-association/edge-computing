@@ -30,23 +30,26 @@ PROJECTED_TOKEN_FILE = "/var/run/secrets/projected/token"
 PROJECTED_CERT_FILE = "/var/run/secrets/projected/ca.crt"
 PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
-K8S_ENDPOINTSLICE_SRV_NAME = 'kubernetes.io/service-name'
-K8S_ENDPOINTSLICE_MGR = 'endpointslice.kubernetes.io/managed-by'
+LABEL_K8S_ENDPOINTSLICE_SRV_NAME = 'kubernetes.io/service-name'
+LABEL_K8S_ENDPOINTSLICE_MGR = 'endpointslice.kubernetes.io/managed-by'
 
-PTX_CONNECTOR_ENABLED = 'connector.dataspace.ptx.org/enabled'
-PTX_PRIVACY_ZONE = 'privacy-zone.dataspace.ptx.org'
+LABEL_PTX_CONNECTOR = 'connector.dataspace.ptx.org'
+LABEL_PTX_CONNECTOR_ENABLED = f'{LABEL_PTX_CONNECTOR}/enabled'
+LABEL_PTX_PRIVACY_ZONE = 'privacy-zone.dataspace.ptx.org'
 
 DEF_PDC_PORT = 3000
 DEF_PDC_NODEPORT = 30003
 DEF_NS = "ptx-edge"
 DEF_APP = "pdc"
 DEF_PORT_NAME = "pdc-port"
+DEF_ZONE_ID = "zone-0"
 
 CONFIG = {"port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
           "pod": os.getenv("HOSTNAME"),
           "ip": os.getenv("NODE_IP"),
           "node": os.getenv("NODE_NAME"),
           "namespace": os.getenv("NAMESPACE", default=DEF_NS),
+          "def_zone": os.getenv("DEF_ZONE", default=DEF_ZONE_ID),
           "app": os.getenv("APP_NAME", default=DEF_APP)}
 
 REQUIRED_FIELDS = ("type", "namespace")
@@ -99,13 +102,13 @@ def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str |
     log.info(f">>> Collect Privacy Zone labels...")
     if node is not None:
         v1_node_list = client.CoreV1Api().list_node(field_selector=f'metadata.name={node}',
-                                                    label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
+                                                    label_selector=f'{LABEL_PTX_CONNECTOR_ENABLED}=true')
         if len(v1_node_list.items) < 1:
             log.error(f"Node: {node} not found!")
             return []
         node_obj: client.V1Node = v1_node_list.items[0]
     elif ip is not None:
-        v1_node_list = client.CoreV1Api().list_node(label_selector=f'{PTX_CONNECTOR_ENABLED}=true')
+        v1_node_list = client.CoreV1Api().list_node(label_selector=f'{LABEL_PTX_CONNECTOR_ENABLED}=true')
         log.debug(f"Received nodes:\n{dump_k8s_obj(v1_node_list.to_dict())}")
         node_obj: client.V1Node = [n for n in v1_node_list.items if
                                    list(filter(lambda a: a.type == 'InternalIP' and a.address == ip,
@@ -114,7 +117,7 @@ def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str |
         log.error(f"Node[name: {node}, ip: {ip}] not found!")
         return []
     log.debug(f"Received node object: {json.dumps(node_obj.to_dict(), indent=4, default=str)}")
-    labels = [l for l, v in node_obj.metadata.labels.items() if l.startswith(PTX_PRIVACY_ZONE) and v == 'true']
+    labels = [l for l, v in node_obj.metadata.labels.items() if l.startswith(LABEL_PTX_PRIVACY_ZONE) and v == 'true']
     log.info(f"Extracted privacy zone labels: {labels}")
     return labels
 
@@ -184,8 +187,8 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     :return:
     """
     log.info(f">>> Creating endpointslice for service: {service_name}...")
-    labels = {K8S_ENDPOINTSLICE_SRV_NAME: service_name,
-              K8S_ENDPOINTSLICE_MGR: "controller.ptx-edge.org"}
+    labels = {LABEL_K8S_ENDPOINTSLICE_SRV_NAME: service_name,
+              LABEL_K8S_ENDPOINTSLICE_MGR: "controller.ptx-edge.org"}
     if app:
         labels["app"] = app
     eps_body = client.V1EndpointSlice(metadata=client.V1ObjectMeta(name=service_name,
@@ -199,8 +202,20 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=eps_body)
 
 
-def _patch_pod_labels(pod: str, namespace: str, labels: dict[str, str]) -> client.V1Pod:
+def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Pod:
     log.info(f">>> Patching pod[{pod}]...")
+    labels = dict.fromkeys(zones, "true")
+    if len(zones) == 0:
+        log.debug(f"No privacy zone label detected for pod[{pod}]! Using default zone ID: {CONFIG['def_zone']}")
+        def_zone_id = CONFIG['def_zone']
+    else:
+        if len(zones) > 1:
+            log.warning(f"Multiple privacy zone labels detected for pod[{pod}]! "
+                        f"Selecting the first zone ID as default...")
+        def_zone_id = sorted(map(lambda _l: _l.split('/')[-1].lower(), zones))[0]
+    log.debug(f"Selected default privacy zone: {def_zone_id}")
+    labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = def_zone_id
+    labels[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{def_zone_id}"
     pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
     log.debug(f"Created pod patch:\n{dump_k8s_obj(pod_patch.to_dict())}")
     pod = client.CoreV1Api().patch_namespaced_pod(name=pod, namespace=namespace, body=pod_patch)
@@ -259,13 +274,13 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
 
 
 def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str = None, force: bool = False,
-                                  **kwargs):
+                                  def_zone: str = None, **kwargs):
     try:
         zones = _collect_privacy_zone_labels(node=node)
-        if len(zones) == 0:
+        if len(zones) == 0 and not force:
             log.warning("No privacy zone label detected! Skip patching...")
         else:
-            _patch_pod_labels(pod=pod, namespace=namespace, labels=dict.fromkeys(zones, "true"))
+            _patch_pod_labels(pod=pod, namespace=namespace, zones=zones)
         if not force:
             return
         elif len(zones) < 1:
@@ -307,8 +322,9 @@ def main():
     parser.add_argument("--pod", type=str, help="Own pod name")
     parser.add_argument("-n", "--namespace", type=str, help="Namespace name")
     parser.add_argument("-a", "--app", type=str, help="Application name")
+    parser.add_argument("-z", "--def_zone", type=str, help="Default privacy zone ID")
     parser.add_argument("-f", "--force", action="store_true",
-                        help="Force (re)creating service even if it exists")
+                        help="Force (re)creating services even if existed")
     parser.add_argument("-v", "--verbose", action="store_true", help="Make logging verbose")
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,

@@ -106,20 +106,20 @@ run-catalog:
 	@echo ">>> Catalog is exposed as 'catalog.ptx-sandbox.svc.cluster.local'"
 	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
-								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health"
+								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health; echo"
 
 run-pdc-pod: run-catalog
 	kubectl apply -f assets/ptx-pdc-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/pdc
 	@echo "Waiting for PDC to set up..."
-	( kubectl logs -f pod/pdc -c ptx-connector & ) | timeout 60 grep -m1 "Server running on"
+	( kubectl logs -f pod/pdc -c connector & ) | timeout 60 grep -m1 "Server running on"
 	@echo
 	@kubectl get all -o wide
 	@echo
 	@echo ">>> PDC is exposed as 'pdc.ptx-edge.svc.cluster.local'"
 	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc.ptx-edge.svc.cluster.local; \
-								 	   wget -T3 -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null"
+								 	   wget -T3 -qS http://pdc.ptx-edge.svc.cluster.local:3000/ >/dev/null; echo"
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
@@ -130,7 +130,7 @@ run-pdc-daemon-headless: run-catalog
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
-		( kubectl logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
+		( kubectl logs -f pods/$${pod} -c connector & ) | timeout 90 grep -m1 "Server running on"; \
 	done
 	@echo
 	@kubectl get all -o wide
@@ -139,7 +139,7 @@ run-pdc-daemon-headless: run-catalog
 	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
 									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
-								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/ >/dev/null"
+								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:30003/ >/dev/null; echo"
 	@echo
 	$(eval NODE_IP = `kubectl get pod -l app=pdc -o jsonpath='{.items[].status.hostIP}'`)
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
@@ -152,7 +152,7 @@ run-pdc-daemon-cluster: run-catalog
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
-		( kubectl logs -f pods/$${pod} -c ptx-connector & ) | timeout 90 grep -m1 "Server running on"; \
+		( kubectl logs -f pods/$${pod} -c connector & ) | timeout 90 grep -m1 "Server running on"; \
 	done
 	@echo
 	@kubectl get all -o wide
@@ -161,10 +161,10 @@ run-pdc-daemon-cluster: run-catalog
 	-kubectl run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
 								sh -c "nslookup pdc-zone-a.ptx-edge.svc.cluster.local; \
 									   nslookup pdc-zone-b.ptx-edge.svc.cluster.local; \
-								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:3000/ >/dev/null"
+								 	   wget -T3 -qS http://pdc-zone-a.ptx-edge.svc.cluster.local:3000/ >/dev/null; echo"
 	wget -T3 -O /dev/null -qS http://localhost:8888/ptx-edge/zone-a/pdc/
 	wget -T3 -O /dev/null -qS http://localhost:8888/ptx-edge/zone-b/pdc/
-	@#kubectl exec -ti ds/pdc --container builder -- sh
+	@curl -Ssf "http://localhost:8888/ptx-edge/zone-a/pdc/" | grep "href"
 
 run-api:
 	kubectl apply -f assets/ptx-rest-api-pod.yaml
@@ -278,7 +278,7 @@ run-test-secret:
 launch: | rebuild setup run-pdc-pod run-builder
 
 log-pdc:
-	-kubectl logs --prefix --ignore-errors -f pdc ptx-connector
+	-kubectl logs --prefix --ignore-errors -f pdc connector
 
 log-catalog:
 	-kubectl -n ptx-sandbox logs --prefix --ignore-errors -f pods/catalog catalog-wiremock
