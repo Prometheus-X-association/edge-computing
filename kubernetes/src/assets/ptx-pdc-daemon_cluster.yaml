@@ -144,15 +144,15 @@ spec:
               protocol: TCP
               hostPort: 30003
           volumeMounts:
-            - name: pdc-env
+            - name: env
               mountPath: "/usr/src/app/.env.production"
               subPath: .env.production
               readOnly: true
-            - name: pdc-config
+            - name: config
               mountPath: "/usr/src/app/dist/src/config.json.tmp"
               subPath: config.json.tmp
               readOnly: true
-            - name: pdc-entrypoint
+            - name: entrypoint
               mountPath: /usr/src/app/docker/scripts/entrypoint.sh
               subPath: entrypoint.sh
               readOnly: true
@@ -164,19 +164,19 @@ spec:
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
           args: [ "npm", "run", "start" ]
       volumes:
-        - name: pdc-env
+        - name: env
           configMap:
             name: pdc-config
             items:
               - key: .env
                 path: .env.production
-        - name: pdc-config
+        - name: config
           configMap:
             name: pdc-config
             items:
               - key: config.json
                 path: config.json.tmp
-        - name: pdc-entrypoint
+        - name: entrypoint
           configMap:
             name: pdc-config
             items:

@@ -12,14 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 set -eou pipefail
 
 # Config --------------------------------------------------------------------------------
 
+# Dependencies
+DEPS=(docker k3d kubectl helm)
+
+DOCKER_VER=28.5.2
 K3D_VER=v5.8.3
 KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
+HELM_VER=v3.19.2
 
+PKG_FREEZE=false
 NO_CHECK=false
 SLIM_SETUP=false
 UPDATE=false
@@ -29,6 +34,10 @@ CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
+# busybox ~4.2MB
+#TEST_IMG='busybox:latest'
+#TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
+# pause ~240kB
 TEST_IMG='k8s.gcr.io/pause'
 TEST_CMD=''
 TEST_OK='Running'
@@ -40,28 +49,57 @@ RET_VAL=0
 
 function install_deps() {
 	echo -e "\n>>> Install dependencies...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates curl wget gettext make bash-completion apache2-utils
+	sudo apt-get update && sudo apt-get install -y ca-certificates curl make bash-completion apache2-utils
 }
 
 function install_docker() {
-	echo -e "\n>>> Install Docker[latest]...\n"
-	curl -fsSL https://get.docker.com/ | sh
+    if command -v docker >/dev/null 2>&1 && [ ${UPDATE} = true ]; then
+        printf "\n>>> Remove previous %s...\n" "$(docker -v)"
+        sudo systemctl stop docker
+        sudo apt-mark unhold docker-ce docker-ce-cli docker-ce-rootless-extras
+        sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras \
+                            docker-buildx-plugin docker-model-plugin
+    fi
+	echo -e "\n>>> Install Docker[${DOCKER_VER}]...\n"
+	curl -fsSL https://get.docker.com/ | VERSION=${DOCKER_VER} sh
+	if [ ${PKG_FREEZE} = true ]; then
+	    echo -e "\n>>> Freeze Docker[${DOCKER_VER}]...\n"
+	    sudo apt-mark hold docker-ce docker-ce-cli docker-ce-rootless-extras
+    fi
+    # Privileged Docker
+    sudo usermod -aG docker "${USER}"
+	echo
+	(set -x; docker --version)
 }
 
 function install_k3d() {
 	echo -e "\n>>> Install k3d binary[${K3D_VER}]...\n"
-	curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
+	curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
+	echo
+	(set -x; k3d version)
+}
+
+function install_kubectl() {
+	echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
+	curl -fsSL -O "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl" && \
+	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+	echo
+	(set -x; kubectl version --client)
 }
 
 function install_helm() {
-	echo -e "\n>>> Install Helm binary[latest]...\n"
-	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+	echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
+	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
+	echo
+	(set -x; helm version)
 }
 
 function install_tools() {
 	echo -e "\n>>> Install skopeo binary...\n"
 	sudo apt-get update && sudo apt-get install -y skopeo
 	# TODO - install latest (from source?)
+    echo
+    (set -x; skopeo --version)
 }
 
 function setup_k3d_bash_completion() {
@@ -70,12 +108,7 @@ function setup_k3d_bash_completion() {
     k3d completion bash | sudo tee /etc/bash_completion.d/k3d > /dev/null
     sudo chmod a+r /etc/bash_completion.d/k3d
     source ~/.bashrc
-}
-
-function install_kubectl() {
-	echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
-	curl -LO "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
-	sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+    echo "Finished."
 }
 
 function setup_kubectl_bash_completion() {
@@ -84,6 +117,7 @@ function setup_kubectl_bash_completion() {
     kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
     sudo chmod a+r /etc/bash_completion.d/kubectl
     source ~/.bashrc
+    echo "Finished."
 }
 
 function setup_helm_bash_completion() {
@@ -92,6 +126,7 @@ function setup_helm_bash_completion() {
     helm completion bash | sudo tee /etc/bash_completion.d/helm > /dev/null
     sudo chmod a+r /etc/bash_completion.d/helm
     source ~/.bashrc
+    echo "Finished."
 }
 
 # Test actions --------------------------------------------------------------------------------
@@ -163,17 +198,26 @@ function cleanup_test_cluster() {
 	echo -e "\n>>> Cleanup...\n"
 	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
 	k3d cluster delete ${TEST_K8S}
-	docker image ls -q -f "reference=ghcr.io/k3d-io/*" -f "reference=rancher/*" \
-	                            -f "reference=${TEST_IMG}" | xargs -r docker rmi -f "${TEST_IMG}"
+	docker rmi -f "${TEST_IMG}"
+}
+
+function post_install() {
+    echo -e "\n>>> Installed dependencies\n"
+    docker --version
+    k3d version
+    kubectl version
+    helm version --template='Helm: {{.Version}} {{.GoVersion}}' && echo
+    skopeo --version
 }
 
 # Parameters --------------------------------------------------------------------------------
 
 function display_help() {
     cat <<EOF
-Usage: $0 [options]
+Usage: ${0} [OPTIONS]
 
 Options:
+    -f  Freeze dependency versions.
     -c  Perform initial cleanup.
     -s  Only install minimum required binaries.
     -u  Update/overwrite dependencies.
@@ -182,8 +226,11 @@ Options:
 EOF
 }
 
-while getopts ":xsuch" flag; do
+while getopts ":xfsuch" flag; do
 	case "${flag}" in
+        f)
+            echo "[x] Freeze dependency versions."
+            PKG_FREEZE=true;;
         c)
             echo "[x] Initial cleanup configured."
             INIT_CLEANUP=true;;
@@ -198,26 +245,30 @@ while getopts ":xsuch" flag; do
             UPDATE=true;;
         h)
             display_help
-            exit
-            ;;
+            exit;;
         ?)
-            echo "Invalid parameter: -${OPTARG} !"
-            exit 1;;
+            echo "${0##*/}: invalid option -- '${OPTARG}'"
+            echo "Try '${0} -h' for more information."
     esac
 done
 
 # Main --------------------------------------------------------------------------------
 
+# Check for existence of ANY dependencies
+if command -v "${DEPS[@]}" >/dev/null 2>&1 && [ "${UPDATE}" = false ]; then
+    printf "\nSome of required dependencies are already installed, but the update flag (-u) is not set!\n\n"
+    read -rp "Press ENTER to continue anyway or CTRL+C to abort..."
+fi
+
 ### Basic dependencies
 install_deps
 
 ### Docker
-if ! command -v docker >/dev/null 2>&1; then
+if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     # Binaries
 	install_docker
-    # Privileged Docker
-    sudo usermod -aG docker "${USER}"
-    if [ ${NO_CHECK} = false ]; then
+	DOCKER_PRE_INSTALLED=$(command -pv docker)
+    if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
         echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
         # New shell with docker group privilege
         exec sg docker "$0" "$@"
@@ -230,7 +281,6 @@ if ! command -v docker >/dev/null 2>&1; then
     fi
 fi
 
-
 ### K3d
 if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
 	# Binary
@@ -239,31 +289,6 @@ if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
         # Bash completion
         setup_k3d_bash_completion
     fi
-    # Validation
-	echo
-	(set -x; k3d version)
-fi
-
-### Helm
-if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_helm
-    if [ ${SLIM_SETUP} = false ]; then
-        # Bash completion
-        setup_helm_bash_completion
-    fi
-    # Validation
-	echo
-	(set -x; helm version)
-fi
-
-
-### Tools and utils [skopeo,...]
-
-if ! command -v skopeo >/dev/null 2>&1; then
-    install_tools
-    echo
-    (set -x; skopeo --version)
 fi
 
 ### Kubectl
@@ -274,9 +299,22 @@ if ! command -v kubectl >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
         # Bash completion
         setup_kubectl_bash_completion
     fi
-    # Validation
-	echo
-	(set -x; kubectl version --client)
+fi
+
+### Helm
+if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+	# Binary
+	install_helm
+    if [ ${SLIM_SETUP} = false ]; then
+        # Bash completion
+        setup_helm_bash_completion
+    fi
+fi
+
+### Tools and utils [skopeo,...]
+
+if ! command -v skopeo >/dev/null 2>&1; then
+    install_tools
 fi
 
 # Register cleanup
@@ -294,6 +332,8 @@ if [ ${NO_CHECK} = false ]; then
     # Cleanup
     cleanup_test_cluster
 fi
+
+post_install
 
 if [ ${NO_CHECK} = false ]; then
     cat <<EOF
