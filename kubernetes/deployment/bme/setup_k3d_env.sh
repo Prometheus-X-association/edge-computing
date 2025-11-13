@@ -23,6 +23,7 @@ DOCKER_VER=28.5.2
 K3D_VER=v5.8.3
 KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
 HELM_VER=v3.19.2
+SKOPEO_VER=v1.20.0
 
 PKG_FREEZE=false
 NO_CHECK=false
@@ -94,10 +95,19 @@ function install_helm() {
 	(set -x; helm version)
 }
 
-function install_tools() {
-	echo -e "\n>>> Install skopeo binary...\n"
-	sudo apt-get update && sudo apt-get install -y skopeo
-	# TODO - install latest (from source?)
+function install_skopeo() {
+	echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
+    # sudo apt-get update && sudo apt-get install -y skopeo   # skopeo version 1.13.3
+	sudo add-apt-repository ppa:longsleep/golang-backports
+    sudo apt-get satisfy "golang (>=1.23)" go-md2man
+	TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
+	    git clone git@github.com:containers/skopeo.git && cd skopeo
+	    git switch --detach ${SKOPEO_VER}
+	    make bin/skopeo docs
+	    sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
+	    sudo install -m 644 docs/*.1 /usr/local/share/man/man1
+    popd
+    rm -rf "${TMP_DIR}"
     echo
     (set -x; skopeo --version)
 }
@@ -125,6 +135,15 @@ function setup_helm_bash_completion() {
     mkdir -p /etc/bash_completion.d
     helm completion bash | sudo tee /etc/bash_completion.d/helm > /dev/null
     sudo chmod a+r /etc/bash_completion.d/helm
+    source ~/.bashrc
+    echo "Finished."
+}
+
+function setup_skopeo_bash_completion() {
+    echo -e "\n>>> Install Skopeo bash completion...\n"
+    mkdir -p /etc/bash_completion.d
+    skopeo completion bash | sudo tee /etc/bash_completion.d/skopeo > /dev/null
+    sudo chmod a+r /etc/bash_completion.d/skopeo
     source ~/.bashrc
     echo "Finished."
 }
@@ -311,10 +330,14 @@ if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     fi
 fi
 
-### Tools and utils [skopeo,...]
-
-if ! command -v skopeo >/dev/null 2>&1; then
-    install_tools
+### Skopeo
+if ! command -v skopeo >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+	# Binary
+	install_skopeo
+    if [ ${SLIM_SETUP} = false ]; then
+        # Bash completion
+        setup_skopeo_bash_completion
+    fi
 fi
 
 # Register cleanup
