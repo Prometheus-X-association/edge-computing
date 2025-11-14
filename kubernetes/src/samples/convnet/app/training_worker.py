@@ -19,10 +19,13 @@ import keras
 import numpy as np
 
 # os.environ["KERAS_BACKEND"] = "jax"
-TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', "./mnist_train_data.npz")).resolve()
+TASK_INPUT_DIR = pathlib.Path(os.environ.get('TASK_INPUT_DIR', ".")).resolve()
+TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', f"{TASK_INPUT_DIR}/mnist_train_data.npz")).resolve()
+TASK_OUTPUT_DIR = pathlib.Path(os.environ.get('TASK_OUTPUT_DIR', ".")).resolve()
+TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', f"{TASK_OUTPUT_DIR}/convnet_model.keras")).resolve()
+###
 TRAIN_BATCH_SIZE = int(os.environ.get('TRAIN_BATCH_SIZE', 128))
 TRAIN_EPOCHS = int(os.environ.get('TRAIN_EPOCHS', 30))
-TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', "./convnet_model.keras")).resolve()
 
 
 def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:

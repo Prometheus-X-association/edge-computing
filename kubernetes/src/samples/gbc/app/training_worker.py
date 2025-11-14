@@ -19,11 +19,14 @@ import joblib
 import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
-TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', "./olivetti_train_data.npz")).resolve()
+TASK_INPUT_DIR = pathlib.Path(os.environ.get('TASK_INPUT_DIR', ".")).resolve()
+TASK_DATA_SRC = pathlib.Path(os.environ.get('TASK_DATA_SRC', f"{TASK_INPUT_DIR}/olivetti_train_data.npz")).resolve()
+TASK_OUTPUT_DIR = pathlib.Path(os.environ.get('TASK_OUTPUT_DIR', ".")).resolve()
+TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', f"{TASK_OUTPUT_DIR}/gbc_model.pkl")).resolve()
+###
 TRAIN_ESTIMATORS = int(os.environ.get('TRAIN_ESTIMATOR', 30))
 TRAIN_RATE = float(os.environ.get('TRAIN_RATE', 0.2))
 TRAIN_DEPTH = int(os.environ.get('TRAIN_DEPTH', 2))
-TASK_DATA_DST = pathlib.Path(os.environ.get('TASK_DATA_DST', "./gbc_model.pkl")).resolve()
 
 
 def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:
