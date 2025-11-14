@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${PDC}-config
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+data:
+  .env: |
+    NODE_ENV=production
+    PORT=${PDC_PORT}
+    SESSION_SECRET=abc
+    SESSION_COOKIE_EXPIRATION=24000
+    MONGO_URI=mongodb://pdc.localhost:27017/dataspace-connector
+    WINSTON_LOGS_MAX_FILES=14d
+    WINSTON_LOGS_MAX_SIZE=20m
+    JWT_BEARER_TOKEN_EXPIRATION=3h
+    JWT_REFRESH_TOKEN_EXPIRATION=1d
+  config.json: |
+    {
+      "endpoint": "http://${PDC_ID}.${PTX}.svc.cluster.local:${PDC_PORT}/",
+      "serviceKey": "${PDC_SERVICE_KEY}",
+      "secretKey": "${PDC_SECRET_KEY}",
+      "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
+      "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
+      "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
+      "expressLimitSize": "10mb"
+    }
+  entrypoint.sh: |
+    #!/usr/bin/env sh
+    envsubst <dist/src/config.json.tmp >dist/src/config.production.json
+    exec "$@"
+immutable: true
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: ${PDC}-secrets-env
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+data:
+  PDC_SERVICE_KEY: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
+  PDC_SECRET_KEY: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==
+immutable: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${PDC}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${PDC}-init
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "patch" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${PDC}-init
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+subjects:
+  - kind: ServiceAccount
+    name: ${PDC}
+    namespace: ${PTX}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${PDC}-init
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-lister
+  namespace: ${PTX}
+  labels:
+    env: demo
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "list" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-lister
+  namespace: ${PTX}
+  labels:
+    env: demo
+subjects:
+  - kind: ServiceAccount
+    name: ${PDC}
+    namespace: ${PTX}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: node-lister
+---
