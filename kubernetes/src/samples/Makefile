@@ -15,6 +15,8 @@ SAMPLES_PREFIX := samples
 CONVNET_IMG := ${SAMPLES_PREFIX}/convnet-worker:0.1
 GBC_IMG := ${SAMPLES_PREFIX}/gbc-worker:0.1
 
+DOCKER_REPO := docker.io/czentye
+
 # Docker commands
 build-convnet:
 	docker build -t ${CONVNET_IMG} -f ./convnet/Dockerfile convnet/
@@ -31,6 +33,15 @@ run-gbc: build-gbc
 	docker run --rm --name gbc -ti ${GBC_IMG}
 
 build-all: build-convnet build-gbc
+
+publish-all:
+	docker login
+	docker tag ${CONVNET_IMG} ${DOCKER_REPO}/convnet-worker:latest
+	docker tag ${GBC_IMG} ${DOCKER_REPO}/gbc-worker:latest
+	docker push ${DOCKER_REPO}/convnet-worker:latest
+	docker push ${DOCKER_REPO}/gbc-worker:latest
+	docker rmi ${DOCKER_REPO}/convnet-worker:latest
+	docker rmi ${DOCKER_REPO}/gbc-worker:latest
 
 # Cleanup
 clean:

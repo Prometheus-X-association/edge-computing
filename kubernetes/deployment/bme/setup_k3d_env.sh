@@ -58,8 +58,8 @@ function install_docker() {
         printf "\n>>> Remove previous %s...\n" "$(docker -v)"
         sudo systemctl stop docker
         sudo apt-mark unhold docker-ce docker-ce-cli docker-ce-rootless-extras
-        sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras \
-                            docker-buildx-plugin docker-model-plugin
+        sudo apt-get remove -y --allow-change-held-packages docker-ce docker-ce-cli containerd.io \
+                            docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin docker-model-plugin
     fi
 	echo -e "\n>>> Install Docker[${DOCKER_VER}]...\n"
 	curl -fsSL https://get.docker.com/ | VERSION=${DOCKER_VER} sh
@@ -98,7 +98,7 @@ function install_helm() {
 function install_skopeo() {
 	echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
     # sudo apt-get update && sudo apt-get install -y skopeo   # skopeo version 1.13.3
-	sudo add-apt-repository ppa:longsleep/golang-backports
+	sudo add-apt-repository -y ppa:longsleep/golang-backports
     sudo apt-get satisfy "golang (>=1.23)" go-md2man
 	TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
 	    git clone git@github.com:containers/skopeo.git && cd skopeo
@@ -224,7 +224,7 @@ function post_install() {
     echo -e "\n>>> Installed dependencies\n"
     docker --version
     k3d version
-    kubectl version
+    kubectl version --client
     helm version --template='Helm: {{.Version}} {{.GoVersion}}' && echo
     skopeo --version
 }

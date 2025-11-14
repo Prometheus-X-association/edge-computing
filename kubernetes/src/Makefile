@@ -130,7 +130,7 @@ run-pdc-daemon-headless: run-catalog
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
-		( kubectl logs -f pods/$${pod} -c connector & ) | timeout 90 grep -m1 "Server running on"; \
+		( kubectl logs -f pods/$${pod} -c connector --prefix & ) | timeout 90 grep -m1 "Server running on"; \
 	done
 	@echo
 	@kubectl get all -o wide
@@ -152,7 +152,7 @@ run-pdc-daemon-cluster: run-catalog
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
 	for pod in $$(kubectl get pods -l app=pdc -o jsonpath='{.items[*].metadata.name}'); do \
-		( kubectl logs -f pods/$${pod} -c connector & ) | timeout 90 grep -m1 "Server running on"; \
+		( kubectl logs -f pods/$${pod} -c connector --prefix & ) | timeout 90 grep -m1 "Server running on"; \
 	done
 	@echo
 	@kubectl get all -o wide

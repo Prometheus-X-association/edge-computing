@@ -58,8 +58,8 @@ function install_docker() {
         printf "\n>>> Remove previous %s...\n" "$(docker -v)"
         sudo systemctl stop docker
         sudo apt-mark unhold docker-ce docker-ce-cli docker-ce-rootless-extras
-        sudo apt-get remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras \
-                            docker-buildx-plugin docker-model-plugin
+        sudo apt-get remove -y --allow-change-held-packages docker-ce docker-ce-cli containerd.io \
+                            docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin docker-model-plugin
     fi
 	echo -e "\n>>> Install Docker[${DOCKER_VER}]...\n"
 	curl -fsSL https://get.docker.com/ | VERSION=${DOCKER_VER} sh
@@ -224,7 +224,7 @@ function post_install() {
     echo -e "\n>>> Installed dependencies\n"
     docker --version
     k3d version
-    kubectl version
+    kubectl version --client
     helm version --template='Helm: {{.Version}} {{.GoVersion}}' && echo
     skopeo --version
 }
