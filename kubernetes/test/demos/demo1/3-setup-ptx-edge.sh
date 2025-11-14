@@ -48,7 +48,7 @@ ${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clust
 
 log "Deploy per-zone PDCs"
 envsubst <"${SCRIPT_DIR}/rsc/pdc-daemon-cluster.yaml" | ${KCTL} apply -f=-
-${KCTL} wait --for=jsonpath='.status.numberReady'=2 "daemonset/${PDC}"
+${KCTL} wait --for=jsonpath='.status.numberReady'=2 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
 echo
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
 

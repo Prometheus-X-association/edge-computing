@@ -30,7 +30,6 @@ log "Build PTX-core sandbox components..."
 make -C "${ROOT_DIR}/src/ptx" build
 
 LOG "Creating demo environment..."
-#k3d --wait --timeout="${TIMEOUT}s" cluster create "${CLUSTER}" --port 8080:80@loadbalancer --servers=1 --agents=0
 envsubst <"${SCRIPT_DIR}/rsc/k3d-demo-cluster.yaml" | k3d cluster create --config=-
 ${KCTL} cluster-info
 

@@ -8,9 +8,11 @@ metadata:
     app.kubernetes.io/name: ${CATALOG}
     env: sandbox
 spec:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
   containers:
     - name: catalog-wiremock
-      image:  ${REGISTRY}:${REGISTRY_PORT}/${CATALOG_IMG}
+      image: ${REGISTRY}:${REGISTRY_PORT}/${CATALOG_IMG}
       imagePullPolicy: IfNotPresent
       ports:
         - name: catalog-port

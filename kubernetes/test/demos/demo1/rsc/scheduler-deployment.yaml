@@ -90,6 +90,8 @@ spec:
         env: demo
     spec:
       serviceAccountName: ${SCHEDULER}
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       containers:
         - name: ${SCHEDULER}
           image: ${REGISTRY}:${REGISTRY_PORT}/${SCHED_IMG}
