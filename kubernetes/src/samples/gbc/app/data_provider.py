@@ -44,7 +44,7 @@ def preprocess_dataset(data: tuple[np.ndarray, np.ndarray], trim_ratio: int = 1)
 
 def store_data(data: tuple[np.ndarray, np.ndarray], dst_path: pathlib.Path | str):
     print(f"\n@@@ Saving data to {dst_path}...\n")
-    np.savez(dst_path, x_train=data[0], y_train=data[1])
+    np.savez(dst_path, x_train=data[0], y_train=data[1], allow_pickle=False)
 
 
 def prepare_training_data():
