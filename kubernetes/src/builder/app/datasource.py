@@ -137,7 +137,7 @@ def get_data_resources() -> pathlib.Path:
     :return:
     """
     log.info("Obtaining input data...")
-    conn_timeout, conn_retry = CONFIG.get('connection.timeout', default=30), CONFIG.get('connection.retry', default=3)
+    conn_timeout, conn_retry = int(CONFIG.get('connection.timeout', default=30)), int(CONFIG.get('connection.retry', default=3))
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     match get_resource_scheme(data_src):

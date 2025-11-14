@@ -76,7 +76,7 @@ def load_configuration(base: dict = None, cfg_file: pathlib.Path = None, from_en
     if from_env:
         prefix = cfg.get('env', {}).get(CFG_ENV_PREFIX)
         log.debug(f"Loading configuration from envvars[{prefix}*]...")
-        envvars = [(k, v) for k, v in os.environ.items() if k.startswith(prefix)]
+        envvars = [(k, int(v)) if v.isnumeric() else (k, v) for k, v in os.environ.items() if k.startswith(prefix)]
         log.debug(f"Envvars found:\n{pprint.pformat(sorted(envvars))}")
         loaded_cfg = benedict.from_toml("\n".join(f'{k.removeprefix(prefix).replace('_', '.').lower()}="{v}"'
                                                   for k, v in envvars))

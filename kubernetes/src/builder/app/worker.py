@@ -129,7 +129,7 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
     :return:
     """
     log.info("Obtaining worker configuration...")
-    conn_timeout, conn_retry = CONFIG.get('connection.timeout', default=30), CONFIG.get('connection.retry', default=3)
+    conn_timeout, conn_retry = int(CONFIG.get('connection.timeout', default=30)), int(CONFIG.get('connection.retry', default=3))
     log.debug(f"Check worker setup in configuration...")
     worker_src = CONFIG.get('worker.src')
     if worker_src is None:
