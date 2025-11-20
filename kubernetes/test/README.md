@@ -32,7 +32,7 @@ on different levels described as follows.
   where REST-API entrypoints are served by a standalone API component.
 
 - **Level 6**: Create test Kubernetes setup where the API endpoints are served by an internal
-  component connected to the designed PTX K8s controller based on the same
+  component connected to the designed PTX K8s operator based on the same
   OpenAPI specification.
 
 > [!IMPORTANT]

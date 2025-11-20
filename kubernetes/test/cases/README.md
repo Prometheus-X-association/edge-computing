@@ -17,7 +17,7 @@ The high-level test specification of `ptx-edge` is provided in the
 > [!IMPORTANT]
 >
 > Since the _Edge computing - AI processing BB_ (`ptx-edge`) is still
-> **under development**, the defined test cases only cover the implemented
+> under development, the defined test cases only cover the implemented
 > parts of `ptx-edge`'s planned capabilities.
 > Further test cases are expected to be added continuously.
 
@@ -27,8 +27,8 @@ The high-level test specification of `ptx-edge` is provided in the
 
 #### Setup
 
-Use the **level3** [Makefile](../levels/level3/Makefile)
-or the main [Makefile](../../../Makefile) in case its internal `TEST_LEVEL` variable points to `level3`.
+Use the **level4** [Makefile](../levels/level4/Makefile)
+or the main [Makefile](../../../Makefile) in case its internal `TEST_LEVEL` variable points to `level4`.
 
 > [!TIP]
 >
@@ -36,9 +36,9 @@ or the main [Makefile](../../../Makefile) in case its internal `TEST_LEVEL` vari
 > by setting an environment variable with the same name (TEST_LEVEL).
 
 ```bash
-$ cd kubernetes/test/levels/level3 && make setup run
+$ cd kubernetes/test/levels/level4 && make setup run
 # or
-$ make TEST_LEVEL=level3 setup run
+$ make TEST_LEVEL=level4 setup run
 ```
 
 To tear down the test environment, use
@@ -55,12 +55,8 @@ service for the co-deployed `nginx`-based ingress controller.
 To validate the environment setup, use the following commands:
 
 ```bash
-# containers: kindest/node, cloud-controller-manager, and envoyproxy are up and running
-$ docker ps | grep kind
 # rest-api deployment is ready with all pods completed/running 
 $ kubectl -n ptx-edge get all
-# ingress-nginx deployment is ready with all pods completed/running 
-$ kubectl -n ingress-nginx get all
 # ingress is configured with bound address
 $ kubectl -n ptx-edge get ingress
 ```

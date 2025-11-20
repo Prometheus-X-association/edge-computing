@@ -6,22 +6,33 @@ by Cloud Providers).
 
 These services target two main high-level goals:
 
-- **Privacy-preserving**, where data is kept close to the user, more exactly within a pre-defined
-  privacy zone.
-- **Efficient near-data processing**, with optimized performance and resource utilization.
+- **Privacy-preserving**, where data is kept close(r) to the user, more exactly within a
+  pre-defined domain, called a _privacy zone_, that is eligible to process the private data.
+- **Efficient near-data processing**, with optimized computation performance, resource
+  utilization, and data privacy.
 
-In general, the main goal is to move (AI) processing functions close to the data source
-and execute them on-site. If the execution capability is available on-site, that is, in the
-virtual/physical node storing the data, the data-consuming software function (as a FaaS-based
-operation) or container (as a CaaS based operation) is launched there (e.g., by a
+In general, the main goal is to move (AI-related) data processing capabilities close to the
+data source and execute them on-site. If the execution capability is available on-site, that
+is, in the virtual/physical node storing the data, the data-consuming software function (as a
+FaaS-based operation) or container (as a CaaS based operation) is launched there (e.g., by a
 Kubernetes-based orchestration framework). Thus, we can avoid the transmission of a large
 number of data and address privacy challenges designated by geographical or provider-related
-rules and demands.
+rules, regulations, or demands.
 
-As a more realistic scenario, the data can also be moved for processing but only within a
-pre-defined **privacy zone**. This privacy zone primarily encompasses a set of worker nodes
-(using the Kubernetes terminology), that are suitable in the sense of pre-defined privacy
-rules and where processing functions can and should be deployed on demand.
+As a more realistic scenario, the data and the function can also be moved for processing but
+only within a pre-defined **privacy zone**. This privacy zone primarily encompasses a set of
+worker nodes (using the Kubernetes terminology), that are suitable in the sense of pre-defined
+privacy rules and where processing functions can and should be deployed on demand.
+
+From the viewpoint of data processing capabilities, a processing function (deployed within an
+eligible privacy zone) can perform simple data preprocessing, filtering, or manipulation
+actions on the private data, or more complex tasks, such as federated AI model learning steps.
+This is uniformly enabled by advanced containerization technologies, such as _docker_, where
+the data processing piece of code is bundled with its dependencies and software resources in a
+standalone deployable package, in a lightweight and portable way.Nevertheless
+This container-based approach also opens new possibilities to support the execution of
+standalone and portable components of other building blocks provided these block parts can be
+seamlessly operated in a cloud-native or serverless execution environments.
 
 ## Table of Contents
 
@@ -31,7 +42,11 @@ rules and where processing functions can and should be deployed on demand.
     * [Table of Contents](#table-of-contents)
     * [Design Document](#design-document)
     * [Building Instructions](#building-instructions)
-        * [Production](#production)
+        * [Kubernetes Setup](#kubernetes-setup)
+        * [Installation](#installation)
+            * [Default Setup](#default-setup)
+            * [Dedicated Deployment Configurations](#dedicated-deployment-configurations)
+            * [Example Demo Setups](#example-demo-setups)
         * [Development & Testing](#development--testing)
     * [Running Instructions](#running-instructions)
     * [Example Usage](#example-usage)
@@ -52,80 +67,147 @@ rules and where processing functions can and should be deployed on demand.
 
 ## Design Document
 
-See the comprehensive design document [here](docs/design-document.md).
+> [!IMPORTANT]
+>
+> See the comprehensive design document of the Edge Computing building block [here](docs/design-document.md).
 
-See the developer/technical document [here](kubernetes/design/README.md).
+> [!IMPORTANT]
+>
+> See the developer/technical document of the building block components [here](kubernetes/design/README.md).
 
 Since the functionalities of the Edge Computing BB fundamentally rely on the **Kubernetes** (K8s)
 container orchestration platform (realistically spanning multiple providers' domains/clouds),
 its value-added services are implemented as standalone software containers, operated in a
-dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes framework itself.
+dedicated Kubernetes namespace, and several PTX-tailored extensions of the Kubernetes
+framework itself.
 
-The elements of the BB-02's main functionality cover the following:
+The elements of BB-02's main functionalities cover the following:
 
-- Provide a _generic runtime environment_ for data-processing functions.
+- Provide a _generic runtime environment_ for data processing functions.
 - Provide the ability to deploy _pre-built containers with privacy-preserving_ options.
-- Provide the capability of managing and orchestrating by _privacy-zone_ labels.
+- Provide the capability of orchestrating data processing by _privacy-zone_ metadata.
 - Use the _PTX Connector_ to interact with PTX core elements.
 - Implement and control the process of getting data for _data consumer functions/software_.
 - Implement a separate _REST-API interface_ for the integration with PTX dataspace.
+- Implement a dedicated scheduler for managing compute resources efficiently and in a
+  privacy-preserving manner.
 
-See the detailed Kubernetes-based architecture and their component binding to the main
-design document in
-[kubernetes/design](kubernetes/design) folder.
+See the main technical document in [kubernetes/design](kubernetes/design), which describes
+in detail how the building block components are realized and bound to the Kubernetes'
+architecture features.
 
-![](kubernetes/design/Kubernetes_ref_architecture.png)
+![Schematic architecture of BB02](kubernetes/design/Kubernetes_ref_architecture.png)
 
-*Binding of BB-02 components to K8s features.*
+*Schematic design architecture of binding BB-02's functional components to K8s internal
+objects.*
 
 ## Building Instructions
 
-### Production
+### Kubernetes Setup
 
-Since BB-02 is basically a set of extensions to the Kubernetes framework, instead of
-standalone containerized software modules, its installation and setup require different
+Since BB-02 primarily consists of extension modules to the widespread Kubernetes framework,
+instead of a (set of) standalone software, its installation and setup require different
 steps, and most of all, an operating **vanilla Kubernetes cluster** as a prerequisite.
 
+The fundamental Kubernetes features, on which the designed extension modules rely, are
+specifically chosen to support a wide variety of Kubernetes versions (e.g., preferring
+Ingress routes instead of the newer API Gateway entries).
+
+Nevertheless, currently Kubernetes version **1.31.5** and above are preferred and tested.
+
 There are many methods and tools for setting up a production-grade Kubernetes cluster on
-a local machine, see, for example, the Kubernetes'
-[official documentation](https://kubernetes.io/docs/setup/), or pick any of the numerous
-[certified platforms](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/)
-or managed cloud services available online.
+a local machine. For example,
+
+- consult with the Kubernetes'
+  [official documentation](https://kubernetes.io/docs/setup/),
+- pick any of the numerous
+  [certified platform solutions](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/), or
+- choose one of the managed Kubernetes services available online at
+  top-tier [cloud provider](https://kubernetes.io/docs/setup/production-environment/turnkey-solutions/)
+  or in the [EU](https://european-alternatives.eu/category/managed-kubernetes-services).
+
+### Installation
+
+Since the BB-02 building block is not a standalone data processing service per se, but an
+over-the-top platform for executing or operating other data processing functionalities
+in a native cloud environment.
+Thus, BB-02's installation steps highly rely on the actual setup of the underlying
+Kubernetes orchestration framework.
+Nevertheless, except minor platform-specific configurations, e.g., routing with K8s
+deployment's application gateway or using built-in certificate management services,
+the installation process can be considered system-independent assuming the configuration
+profile and context to the underlying Kubernetes cluster is available and set by default.
 
 The installation and configuration steps are grouped together into separate helper scripts
-with a dedicated [Makefile](Makefile), which is intended to use Kubernetes packages
-called [Helm charts](https://helm.sh/) internally.
+with a dedicated [Makefile](Makefile), that are intended to
 
-To install the dependencies and the **ptx-edge extension** assuming a default `kubectl`
-profile for a running Kubernetes cluster, use the following instruction:
+- download and install required software and system dependencies,
+- assemble a specific version of the PTX Connector component (PDC) tailored for K8s,
+- compile dedicated containers of building block components,
+- install and configure the building block over the default kKubernetes cluster
+  using either command line tools and/or the Kubernetes' package manager,
+  called [Helm](https://helm.sh/) internally.
+
+#### Default Setup
+
+The easiest and straightforward way to set up BB-02's **ptx-edge K8s extension**,
+(assuming a valid default `kubectl` profile for a running Kubernetes cluster),
+use the following command issued in the project's root folder:
 
 ```bash
 $ make setup
 ```
 
-> [!IMPORTANT]
->
-> Since BB-02 is still <ins>**under development**</ins>, Makefile targets
-> (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest
-> test level's Makefile in `kubernetes/test/levels`!
-
 > [!NOTE]
 >
+> Since BB-02's additional features are still under development, Makefile targets currently
+> (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest tested readiness
+> level's Makefile in `kubernetes/test/levels`, that assumes a default locally emulated
+> Kubernetes cluster!
+
+> [!TIP]
+>
 > The configured level based on the `ptx-edge`-internal
-> [definitions](kubernetes/test/README.md#overview) is **Level 4**.
+> [definitions](kubernetes/test/README.md#overview) is **Level 5**.
 
-Helper scripts can be executed directly:
+Current development of BB-02 addresses additional features to ease the development and usage 
+of the building block feature for human users in order to fulfill the goals of final Level 6. 
 
-```bash
-$ # TBD
-```
+#### Dedicated Deployment Configurations
 
-while necessary resources/dependencies and `ptx-edge` Helm charts can be
-installed manually as well:
+Furthermore, there are dedicated deployment scenarios for BB02's intended application scenarios
+in [kubernetes/deployment](kubernetes/deployment), e.g., the latest deployment configuration
+of building block BB-02 operated at the BME side.
 
-```bash
-$ # TBD
-```
+These deployment configurations are not designed for general applicability, but for specific
+cloud environments and use case scenarios. These deployment setups encompass comprehensive
+configuration options for a given use case scenario, including
+
+- domain/server information,
+- certificate management,
+- additional security hardening,
+- Kubernetes-related extra metadata,
+- and more.
+
+Nevertheless, these can be used as a starting point by advanced users to create similar
+deployment configurations for other use cases.
+
+Usually, these configurations require only minor modifications, e.g., changing public domain
+DNS, load balancer IP, etc., to adjust them to deployment scenarios of the same kind.
+For the available configuration options, consult with the
+`config.sh` files and `templates` folders.
+
+#### Example Demo Setups
+
+There are several deployment setups in [kubernetes/test/demos](kubernetes/test/demos) for
+demonstrating `ptx-edge` capabilities over a local emulated Kubernetes cluster.
+Although, these configuration setups are designed for executing test workflows, it contains
+useful examples how the building block component can be precompiled, defined, set up,
+and configured to use them in different scenarios.
+
+For the configuration and deployment options, consult with the related `Makefile`,
+`install.sh`, `"*-topo.sh`, and `setup-*.sh` helper scripts, as well as the K8s manifest
+template files under the local `./rsc` folders.
 
 ### Development & Testing
 
@@ -133,7 +215,7 @@ $ # TBD
 >
 > The BB-02 module is unique in that sense that it cannot be seamlessly run by a
 > container framework, such as Docker or Podman, as it is inherently based on container
-> orchestration features of a higher architecture level, namely the **Kubernetes** framework.
+> orchestration features of a higher architecture level.
 
 However, for development and testing purposes, full-fledged but lightweight clusters of
 different Kubernetes distributions can be set up on the fly even in a single virtual machine.
@@ -156,10 +238,10 @@ on specially built docker images, which
 See a detailed description of these tools, their installation and configuration on an
 Ubuntu 22.04/24.04 VM in [kubernetes/test](kubernetes/test/README.md).
 
-Nevertheless, the `ptx-edge` extension's *customer-facing API* can also be separately run
-in a single container as a mockup for integration test cases.
+However, the `ptx-edge` extension's *customer-facing API* can also be separately run in
+a single container as a mockup for automated integration test cases.
 
-See further about Docker-based testing
+See further details about Docker-based testing
 
 - in the *Level 1* testing setup [here](kubernetes/test/levels/level1/Makefile)
   with the related [README.md](kubernetes/test/README.md#level-1-testing-mock-api-in-single-docker-image)
@@ -168,13 +250,13 @@ See further about Docker-based testing
 
 ## Running Instructions
 
-To start `ptx-edge` components, run
+To start `ptx-edge` components deployed in the local K8s cluster, run
 
 ```bash
 make run
 ```
 
-while tearing down the components, execute
+while for tearing down components, run
 
 ```bash
 make cleanup
@@ -182,42 +264,36 @@ make cleanup
 
 > [!IMPORTANT]
 >
-> Since BB-02 is still <ins>**under development**</ins>, Makefile targets
+> Since BB-02 is still under development, Makefile targets currently
 > (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest
-> test level's Makefile in `kubernetes/test/levels`!
+> readiness level's Makefile in `kubernetes/test/levels`!
 
-The installed _Helm chart_ launches the included `ptx-edge` services automatically,
+These targets launch the deployed `ptx-edge` core services in K8s automatically,
 but it does not wait until all the resources are running before it exits!
 
-To check the current status of the installed chart's components, use the following
+To check the current status of the installed components, use the following
 command:
 
 ```bash
-$ # TBD
-```
-
-To keep track of a release's state, or to re-read configuration information, you can
-use
-
-```bash
-$ # TBD
+$ make status
 ```
 
 ## Example Usage
 
 The `ptx-edge` K8s extension provides a separate _REST-API_ in
 [kubernetes/src/rest-api](kubernetes/src/rest-api)
-to integrate its features with the PTX core components.
+to integrate its features with the PTX core components and to ease the use of
+building block services by external APIs or users.
 
 The API uses the [FastAPI](https://fastapi.tiangolo.com/) Python package to implement
-its endpoints and also define the related OpenAPI3.1 specification directly from the
+its endpoints and also define the related OpenAPI 3 specification directly from the
 Python software code.
 
 #### REST-API
 
-- The REST-API uses the following base URL: ``http://<service_name>:8080/ptx-edge/v1/``.
-- The interactive API interface (**Swagger UI**) lives here: ``http://<service_name>:8080/ptx-edge/v1/ui/``
-- The OpenAPI specification is available at ``http://<service_name>:8080/ptx-edge/v1/openapi.json``
+- The REST-API uses the following base URL: ``http://<service_name>:8080/ptx-edge/api/v1/``.
+- The interactive API interface (**Swagger UI**) lives here: ``http://<service_name>:8080/ptx-edge/api/v1/ui/``
+- The OpenAPI specification is available at ``http://<service_name>:8080/ptx-edge/api/v1/openapi.json``
 
 Additionally, the latest OpenAPI specification is auto-generated and updated at every commit
 and can be found [here](kubernetes/src/rest-api/spec/openapi.yaml).
@@ -225,7 +301,7 @@ and can be found [here](kubernetes/src/rest-api/spec/openapi.yaml).
 #### Testing
 
 For testing purposes, a mock-API is generated based on the BB-02's predefined
-[OpenAPI specification](kubernetes/test/mock-api/swagger_server/swagger/swagger.yaml).
+[OpenAPI specification](kubernetes/test/mock-api/spec/openapi_design.json).
 
 The detailed description of the mock-API and its internal test cases can be found
 in the related [Readme](kubernetes/test/mock-api/README.md).
@@ -239,10 +315,10 @@ The REST-API endpoints can be easily tested in the following two approaches:
 ```bash
 $ curl -sX 'GET' \
        -H 'accept: application/json' \
-       'http://localhost:8080/ptx-edge/v1/version' | python3 -m json.tool
+       'http://localhost:8080/ptx-edge/api/v1/version' | python3 -m json.tool
 {
     "api": "0.1",
-    "framework": "1.1.4"
+    "framework": "0.112.1"
 }
 ```
 
@@ -251,18 +327,18 @@ $ curl -sX 'GET' \
 
 ![](docs/swagger_ui_testing.png)
 
-> [!IMPORTANT]
+> [!WARNING]
 >
 > The different `ptx-edge` setups along with the included REST-API service
 > may be exposed on different port(s) (e.g., **80**, **8080**, **443**) according
 > to the applied (test/dev/prod) K8s setup, used (cloud) load balancer,
 > or test VM configuration!
-> Refer to the exposed port number in the related documentation!
+> Refer to the exposed port number in the related part of the documentation!
 
 To execute all module and component tests prepared in the
 `kubernetes/test` folder, including all unit tests defined for
 each submodule in `kubernetes/src` and explicit component-level
-tests, use the helper target in the main [Makefile](Makefile):
+tests, use the joint Makefile target `tests` in the main [Makefile](Makefile):
 
 ```bash
 $ make tests
@@ -273,11 +349,10 @@ $ make tests
 The following table contains example API calls with successful results.
 
 Further test cases for incorrect input data and other failures are collected in the
-mock-APIs unit tests in
-[kubernetes/test/mock-api/swagger_server/test/](kubernetes/test/mock-api/swagger_server/test).
+mock-APIs unit tests in [kubernetes/test/mock-api/tests](kubernetes/test/mock-api/tests).
 
 To validate the endpoints, send the following requests to the main REST-API using the URL:
-``http://<service_name>:8080/ptx-edge/v1/<endpoint>``.
+``http://<service_name>:8080/ptx-edge/api/v1/<endpoint>``.
 
 | Endpoint                | HTTP verb | Example input (JSON)                                                                                                                                                                                                                                                                                              | Response Code | Example output (JSON)                                                                                                                                                                            |
 |-------------------------|:---------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -302,8 +377,6 @@ Since multiple modules use and expose APIs, defined unit tests also contain API 
 These test cases usually use specific test methods/dependencies/tools recommended to module's main
 framework.
 
-Language and framework-independent [Karate](https://www.karatelabs.io/)-based tests are added later.
-
 ### Setup Test Environment
 
 For installing test dependencies of a given submodule in `kubernetes/src`, refer to the related README file.
@@ -312,15 +385,14 @@ Each subproject defines a **Makefile** to unify the development/test environment
 Accordingly, test environment configuration (and execution) is implicitly managed by
 external tools and third-party libraries, such as
 [virtualenv](https://virtualenv.pypa.io/en/latest/),
-[pytest](https://docs.pytest.org/en/stable/),
-[nosetests](https://nose.readthedocs.io/en/latest/index.html), and
+[pytest](https://docs.pytest.org/en/stable/), and
 [tox](https://tox.wiki/en/4.24.1/), within these Makefiles.
 
 Therefore, in general, there is no need for explicit environment setup as it is
 automatically configured and managed by wrapper tools/scripts.
 
 However, to explicitly set up the test/dev environment for a `<module>` locally
-(without Docker), the following command can be used:
+(without Docker), usually the following command can be used:
 
 ```bash
 $ cd kubernetes/src/<module> && make setup
@@ -550,6 +622,6 @@ cases were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this UNIX behavior as well.
 
 > [!NOTE]
->
+
 > Detailed test execution summary can be found in
 > [kubernetes/test/units/README.md](kubernetes/test/units/README.md#test-execution-summary).

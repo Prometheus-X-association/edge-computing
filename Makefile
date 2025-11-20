@@ -11,16 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-TEST_LEVEL := level4
+TEST_LEVEL := level5
+#MK_PATH := kubernetes/test/levels/${TEST_LEVEL}
+MK_PATH := kubernetes/src
 
 setup:
-	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} setup
+	${MAKE} -C ${MK_PATH} setup
 
 run:
-	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} run
+	${MAKE} -C ${MK_PATH} run
+
+status:
+	${MAKE} -C ${MK_PATH} status
 
 cleanup:
-	${MAKE} -C kubernetes/test/levels/${TEST_LEVEL} tear-down
+	${MAKE} -C ${MK_PATH} tear-down
 
 tests:
 	cd kubernetes/test/units && ./runall.sh -d -o ./results
