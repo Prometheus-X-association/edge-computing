@@ -194,9 +194,9 @@ run-scheduler:
 	@echo
 	kubectl get all -o wide
 	@echo
-	-kubectl exec -ti pod/scheduler -- sh || true
-	kubectl delete pods/scheduler --now --wait
-	kubectl delete pods -l app=worker
+	#-kubectl exec -ti pod/scheduler -- sh || true
+	#kubectl delete pods/scheduler --now --wait
+	#kubectl delete pods -l app=worker
 
 ########################################################################################################################
 
@@ -277,7 +277,7 @@ run-test-secret:
 
 ########################################################################################################################
 
-run: | run-pdc-daemon-cluster run-api run-scheduler
+run: | registry-ca run-pdc-daemon-cluster run-api run-scheduler
 
 launch: | rebuild setup run-pdc-pod run-builder
 

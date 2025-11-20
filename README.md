@@ -165,7 +165,7 @@ $ make setup
 > level's Makefile in `kubernetes/test/levels`, that assumes a default locally emulated
 > Kubernetes cluster!
 
-> [!TIP]
+> [!NOTE]
 >
 > The configured level based on the `ptx-edge`-internal
 > [definitions](kubernetes/test/README.md#overview) is **Level 5**.
@@ -262,7 +262,7 @@ while for tearing down components, run
 make cleanup
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 >
 > Since BB-02 is still under development, Makefile targets currently
 > (_setup_ / _run_ / _cleanup_) point directly to the targets of the latest
@@ -327,7 +327,7 @@ $ curl -sX 'GET' \
 
 ![](docs/swagger_ui_testing.png)
 
-> [!WARNING]
+> [!CAUTION]
 >
 > The different `ptx-edge` setups along with the included REST-API service
 > may be exposed on different port(s) (e.g., **80**, **8080**, **443**) according
@@ -405,7 +405,7 @@ explicitly by executing the dedicated _Makefile_ target as follows:
 $ cd kubernetes/src/<module> && make docker-test-setup # Preferred way
 ```
 
-> [!NOTE]
+> [!TIP]
 >
 > Unit test dependencies are the same as for its main submodules.
 
@@ -438,7 +438,7 @@ execute the dedicated _Makefile target_ within the `<module>` folder, e.g.,
 $ cd kubernetes/src/<module> && make unit-tests
 ```
 
-> [!TIP]
+> [!NOTE]
 >
 > Subprojects may define different dependencies and test parameters
 > wrapped by Makefiles. The preferred way for testing is the preconfigured
@@ -523,7 +523,7 @@ Programmatically, each Makefile returns the value `0` in case all executed tests
 `unit-tests` were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this "UNIX" behavior as well.
 
-> [!NOTE]
+> [!IMPORTANT]
 >
 > Detailed test execution summary can be found in
 > [kubernetes/test/suites/README.md](kubernetes/test/suites/README.md#test-execution-summary).
@@ -622,6 +622,6 @@ cases were successful, and a non-zero value otherwise.
 The helper script `runall.sh` follows this UNIX behavior as well.
 
 > [!NOTE]
-
+>
 > Detailed test execution summary can be found in
 > [kubernetes/test/units/README.md](kubernetes/test/units/README.md#test-execution-summary).
