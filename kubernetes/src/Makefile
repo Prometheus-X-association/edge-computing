@@ -194,8 +194,8 @@ run-scheduler:
 	@echo
 	kubectl get all -o wide
 	@echo
-	#-kubectl exec -ti pod/scheduler -- sh || true
-	#kubectl delete pods/scheduler --now --wait
+	-kubectl exec -ti pod/scheduler -- sh || true
+	kubectl delete pods/scheduler --now --wait
 	#kubectl delete pods -l app=worker
 
 ########################################################################################################################
@@ -274,6 +274,13 @@ run-test-secret:
 	kubectl logs -f --prefix job/consumer-test-secret builder
 	kubectl wait --for="condition=ContainersReady" pods --timeout=20s -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-secret worker
+
+run-test-pod:
+	kubectl apply -f "${ASSETS}/ptx-test-worker-pod.yaml"
+	${MAKE} status
+	kubectl wait --for="condition=ContainersReady" pod/test
+	kubectl logs -f pod/test || true
+	#kubectl delete pods -l app=worker
 
 ########################################################################################################################
 

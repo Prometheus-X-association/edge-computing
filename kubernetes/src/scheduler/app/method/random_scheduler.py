@@ -12,16 +12,12 @@
 import logging
 import random
 
-from app.k8s import get_available_nodes
+import networkx as nx
 
 log = logging.getLogger(__name__)
 
 
-def do_random_pod_assignment() -> str:
-    log.info("Initiate RANDOM node selection")
-    node_list = [n.metadata.name for n in get_available_nodes()]
+def random_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
+    node_list = list(topo.nodes())
     log.debug(f"Available nodes: {node_list}")
-    log.info("Apply random node selection...")
-    selected_node = random.choice(node_list)
-    log.info(f"Selected node: {selected_node}")
-    return selected_node
+    return random.choice(node_list)

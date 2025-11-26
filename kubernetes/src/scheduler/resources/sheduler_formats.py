@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
+
+import networkx as nx  # python3 -m pip install networkx
 
 # Since we want dataspace-related scheduling (originally planned to be situated in edge-cloud environments),
 # I think modeling the topology as an undirected graph will be useful. Initially, I propose the following formats:
@@ -71,8 +74,6 @@
 # provided, others are optional and filled with default values. Thus, it is important to note that the scheduler should
 # work properly and be designed to fall back to a basic behavior in case any of the optional parameters has unique
 # values. For example, this means it must handle the zero value as a requested pod resource, etc.
-
-import networkx as nx  # python3 -m pip install networkx
 
 ### Define input graph
 topo = nx.Graph(name='topology')
@@ -198,7 +199,13 @@ topo.add_node("node-a", **node_a)
 topo.add_node("node-b", **node_b)
 topo.add_edge("node-a", "node-b", **edge_ab)
 
+print(json.dumps(dict(topo.nodes()), indent=4, sort_keys=False))
+print(json.dumps(dict(topo.adjacency()), indent=4, sort_keys=False))
+
 pod.add_node("pod", **pod_j)
+
+print(json.dumps(dict(pod.nodes()), indent=4, sort_keys=False))
+print(json.dumps(dict(pod.adjacency()), indent=4, sort_keys=False))
 
 ################ Serialize input/output
 
