@@ -16,45 +16,17 @@ import os
 import pathlib
 import sys
 
-import networkx as nx
 from kubernetes import client, watch
 
 from app import __version__
 from app.config import setup_config, CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME
-from app.k8s import assign_pod_to_node, create_failed_scheduling_event, get_available_nodes
+from app.convert import convert_topo_to_nx, convert_pod_to_nx
+from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
 from app.method.ga_scheduler import ga_schedule
 from app.method.random_scheduler import random_schedule
 from app.utils import setup_logging, nx_graph_to_str
 
 log = logging.getLogger(__name__)
-
-LABEL_PDC_ENABLED = 'connector.dataspace.ptx.org/enabled'
-LABEL_PZ_PREFIX = 'privacy-zone.dataspace.ptx.org'
-LABEL_DISK_PREFIX = "disktype"
-LABEL_GPU_ENABLED = "accelerator/gpu"
-
-
-def create_topology_description() -> nx.Graph:
-    topo_obj = nx.Graph(name='topology')
-    for i, node in enumerate(get_available_nodes(), start=1):
-        node_data = {
-            'metadata': {
-                'name': node.metadata.name,
-                'architecture': node.status.node_info.architecture,
-                'os': node.status.node_info.operating_system,
-                'kernel': node.status.node_info.kernel_version,
-                'ip': ",".join(a.address for a in node.status.addresses if a.type == 'InternalIP')
-            },
-
-        }
-        topo_obj.add_node(f"node_{i}", **node_data)
-    return topo_obj
-
-
-def create_pod_description(pod: client.V1Pod) -> nx.Graph:
-    pod_obj = nx.Graph(name='pod')
-    pod_obj.add_node(pod.metadata.name, metadata={'name': pod.metadata.name})
-    return pod_obj
 
 
 def schedule_pod(pod: client.V1Pod) -> str:
@@ -65,35 +37,44 @@ def schedule_pod(pod: client.V1Pod) -> str:
     """
     pod_name = pod.metadata.name
     log.info(f"Scheduling pod[{pod_name}] in namespace: {CONFIG['namespace']} using method: {CONFIG['method']}...")
-    topo = create_topology_description()
+    topo = convert_topo_to_nx(ns=pod.metadata.namespace)
     log.info(f"Collected topology info: {topo}")
-    log.debug(nx_graph_to_str(topo))
-    pod = create_pod_description(pod=pod)
+    log.debug(f"{topo.name}:\n{nx_graph_to_str(topo)}")
+    pod = convert_pod_to_nx(pod=pod)
     log.info(f"Collected Pod info: {pod}")
-    log.debug(nx_graph_to_str(pod))
+    log.debug(f"{pod.name}:\n{nx_graph_to_str(pod)}")
     node_id = None
     match CONFIG['method']:
         case 'random':
-            log.info("Initiate RANDOM node selection")
+            log.info("Initiate <RANDOM> node selection")
             log.debug("Apply random node selection...")
             node_id = random_schedule(topo=topo, pod=pod)
             log.debug(f"Chosen node ID: {node_id}")
         case 'genetic':
-            log.info("Initiate GA node selection")
+            log.info("Initiate <GA> node selection")
             log.debug("Execute ga_schedule algorithm...")
             node_id = ga_schedule(topology=topo, pod=pod)
             log.debug(f"Best fit node ID: {node_id}")
+        case 'linear':
+            raise NotImplementedError
         case _:
             log.error(f"Unknown scheduler method: {CONFIG['method']}")
             sys.exit(os.EX_USAGE)
     if node_id is not None:
         selected_node = str(topo.nodes[node_id]["metadata"]["name"])
         log.info(f"Selected node name: {selected_node}")
-        ret = assign_pod_to_node(pod_name=pod_name, node_name=selected_node)
+        ret = assign_pod_to_node(pod=pod_name,
+                                 ns=CONFIG['namespace'],
+                                 node=selected_node,
+                                 scheduler=CONFIG['scheduler'],
+                                 method=CONFIG['method'])
         return "Success" if ret is not None else "Failed"
     else:
         log.error("Missing selected node!")
-        create_failed_scheduling_event(pod_name=pod_name)
+        raise_failed_k8s_scheduling_event(pod=pod_name,
+                                          ns=CONFIG['namespace'],
+                                          scheduler=CONFIG['scheduler'],
+                                          method=CONFIG['method'])
         return "Failed"
 
 
@@ -108,7 +89,8 @@ def serve_forever(**kwargs):
         watcher = watch.Watch()
         log.debug("Waiting for events...")
         try:
-            for event in watcher.stream(client.CoreV1Api().list_namespaced_pod, namespace=CONFIG['namespace'],
+            for event in watcher.stream(client.CoreV1Api().list_namespaced_pod,
+                                        namespace=CONFIG['namespace'],
                                         field_selector=f"spec.schedulerName={CONFIG['scheduler']},"
                                                        f"status.phase=Pending"):
                 _type, _pod = event['type'], event['object']

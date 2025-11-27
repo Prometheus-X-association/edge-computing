@@ -13,10 +13,10 @@ metadata:
   name: scheduler-rbac
   namespace: ptx-edge
 rules:
-  - apiGroups: [ "", ]
+  - apiGroups: [ "" ]
     resources: [ "pods" ]
-    verbs: [ "watch" ]
-  - apiGroups: [ "", ]
+    verbs: [ "watch", "list" ]
+  - apiGroups: [ "" ]
     resources: [ "bindings", "events" ]
     verbs: [ "create" ]
 ---

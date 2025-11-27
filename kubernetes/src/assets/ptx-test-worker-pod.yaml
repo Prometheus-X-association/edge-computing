@@ -8,8 +8,18 @@ metadata:
 spec:
   schedulerName: ptx-edge-scheduler
   terminationGracePeriodSeconds: 1
+  nodeSelector:
+    privacy-zone.dataspace.ptx.org/zone-A: "true"
+    connector.dataspace.ptx.org/enabled: "true"
   containers:
     - name: test
       image: registry.k3d.local:5000/busybox:latest
       imagePullPolicy: Always
       command: [ "sh", "-c", "sleep infinity" ]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 90Mi
+        limits:
+          cpu: 500m
+          memory: 310Mi

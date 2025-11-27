@@ -13,6 +13,7 @@ import json
 import logging
 import typing
 
+import bitmath
 import networkx as nx
 
 log = logging.getLogger(__name__)
@@ -48,5 +49,20 @@ def nx_graph_to_str(obj: nx.Graph) -> str:
             f"{json.dumps(dict(obj.adjacency()), indent=4, sort_keys=False) if obj.edges() else ''}")
 
 
-def to_bool(s: str | bool) -> bool:
+def str2bool(s: str | bool) -> bool:
     return str(s).lower() in ('true', 'yes', 'on', '1')
+
+
+def cpu2int(s: str) -> int:
+    if s.isnumeric():
+        return int(s)
+    elif '.' in s:
+        return int(float(s) * 1e3)
+    elif s.endswith('m'):
+        return int(s.removesuffix('m'))
+    else:
+        raise ValueError(f"Invalid cpu format: {s}")
+
+
+def bits2int(s: str) -> int:
+    return round(bitmath.parse_string(f"{s}B").to_KiB().value)
