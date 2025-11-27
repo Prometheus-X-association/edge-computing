@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import logging
 
 import networkx as nx
@@ -57,7 +58,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'created': pod.metadata.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
             'scheduler': pod.spec.scheduler_name,
             'status': pod.status.phase,
-            'labels': pod.metadata.labels.copy(),
+            'labels': copy.deepcopy(pod.metadata.labels)
         }
     }
     # TODO - check PZ in affinity rules
@@ -79,9 +80,9 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 'memory': bits2int(node.status.allocatable.get('memory', 0)),
                 'storage': bits2int(node.status.allocatable.get('ephemeral-storage', 0))
             },
-            'zones': dict.fromkeys((DEF_PZ, *(l.removeprefix(LABEL_PZ_PREFIX)
-                                              for l, v in node.metadata.labels.items()
-                                              if l.startswith(LABEL_PZ_PREFIX) and str2bool(v))), True),
+            'zones': dict(((DEF_PZ, True),
+                           *((l.removeprefix(LABEL_PZ_PREFIX), str2bool(v))
+                             for l, v in node.metadata.labels.items() if l.startswith(LABEL_PZ_PREFIX)))),
             'pdc': str2bool(node.metadata.labels.get(LABEL_PDC_ENABLED)),
             'capability': {
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',
