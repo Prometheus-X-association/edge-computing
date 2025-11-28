@@ -11,13 +11,54 @@
 # limitations under the License.
 import logging
 import random
+import typing
+from itertools import chain, starmap
+from operator import le
 
 import networkx as nx
 
 log = logging.getLogger(__name__)
 
+RESOURCES = ('cpu', 'memory', 'storage')
+CAPABILITIES = ('ssd', 'gpu')
+
+
+def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, None]:
+    """
+
+    :param topo:
+    :param pod:
+    :return:
+    """
+    log.debug(f"Calculated pod[{pod.name}] info:")
+    pod_zones = set(chain.from_iterable(pod.nodes[_c]['zone'].split(',') for _c in pod))
+    log.debug(f"\t- zones: {pod_zones}")
+    pod_res = list(map(sum, (map(lambda c: pod.nodes[c]['demand'][_r], pod.nodes) for _r in RESOURCES)))
+    log.debug(f"\t- resources: {dict(zip(RESOURCES, pod_res))}")
+    pod_cap = list(map(all, (map(lambda c: pod.nodes[c]['demand'][_c], pod.nodes) for _c in CAPABILITIES)))
+    log.debug(f"\t- capabilities: {dict(zip(CAPABILITIES, pod_cap))}")
+    log.info(f"Filtering nodes from {topo.name}...")
+    for node, ndata in topo.nodes(data=True):
+        log.debug(f"Collected node[{node}] info:")
+        node_zone = set(z for z, v in ndata['zones'].items() if bool(v) is True)
+        log.debug(f"\t- zones: {node_zone}")
+        log.debug(f"\t- resources: {ndata['resource']}")
+        log.debug(f"\t- capabilities: {ndata['capability']}")
+        if (pod_zones & node_zone
+                and all(starmap(le, zip(pod_res, (ndata['resource'][_r] for _r in RESOURCES))))
+                and all(starmap(le, zip(pod_cap, (ndata['capability'][_r] for _r in CAPABILITIES))))):
+            log.info(f">>> Feasible node found: {node}")
+            yield node
+
 
 def random_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
-    node_list = list(topo.nodes())
-    log.debug(f"Available nodes: {node_list}")
-    return random.choice(node_list)
+    """
+
+    :param topo:
+    :param pod:
+    :return:
+    """
+    filtered_node_list = list(_filter_nodes(topo=topo, pod=pod))
+    log.debug(f"Filtered nodes: {filtered_node_list}")
+    log.debug("Apply random node selection...")
+    return random.choice(filtered_node_list)

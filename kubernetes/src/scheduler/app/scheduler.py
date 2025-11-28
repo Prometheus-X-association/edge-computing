@@ -36,7 +36,7 @@ def schedule_pod(pod: client.V1Pod) -> str:
     :return:
     """
     pod_name = pod.metadata.name
-    log.info(f"Scheduling pod[{pod_name}] in namespace: {CONFIG['namespace']} using method: {CONFIG['method']}...")
+    log.info(f"Scheduling pod[{pod_name}] in namespace: {CONFIG['namespace']} using method: {CONFIG['method']}")
     topo = convert_topo_to_nx(ns=pod.metadata.namespace)
     log.info(f"Collected topology info: {topo}")
     log.debug(f"{topo.name}:\n{nx_graph_to_str(topo)}")
@@ -47,7 +47,6 @@ def schedule_pod(pod: client.V1Pod) -> str:
     match CONFIG['method']:
         case 'random':
             log.info("Initiate <RANDOM> node selection")
-            log.debug("Apply random node selection...")
             node_id = random_schedule(topo=topo, pod=pod)
             log.debug(f"Chosen node ID: {node_id}")
         case 'genetic':
@@ -84,7 +83,7 @@ def serve_forever(**kwargs):
     :param kwargs:
     :return:
     """
-    log.info(f"Scheduler[{CONFIG['scheduler']}] is listening on namespace: {CONFIG['namespace']}...")
+    log.info(f"Scheduler[{CONFIG['scheduler']}] is listening on namespace: {CONFIG['namespace']}")
     while True:
         watcher = watch.Watch()
         log.debug("Waiting for events...")
