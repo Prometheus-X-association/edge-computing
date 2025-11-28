@@ -24,12 +24,17 @@ log = logging.getLogger(__name__)
 
 LABEL_PDC_ENABLED = 'connector.dataspace.ptx.org/enabled'
 LABEL_PZ_PREFIX = 'privacy-zone.dataspace.ptx.org/'
-LABEL_DISK_PREFIX = "disktype"
+LABEL_DISK_PREFIX = "hardware/disktype"
 LABEL_GPU_SUPPORT = "accelerator/gpu"
 DEF_PZ = "default"
 
 
 def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
+    """
+
+    :param pod:
+    :return:
+    """
     pod_data = {
         'priority': int(pod.spec.priority),
         'demand': {
@@ -50,8 +55,9 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'ssd': pod.metadata.annotations.get(LABEL_DISK_PREFIX) == 'ssd' if pod.metadata.annotations else False,
             'gpu': str2bool(pod.metadata.annotations.get(LABEL_GPU_SUPPORT) if pod.metadata.annotations else False)
         },
-        'zone': ",".join(s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items()
-                         if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else DEF_PZ,
+        'zone': dict.fromkeys((s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items() if
+                               s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [DEF_PZ],
+                              True),
         'collocated': str2bool(pod.spec.node_selector.get(LABEL_PDC_ENABLED)) if pod.spec.node_selector else False,
         'metadata': {
             'name': pod.metadata.name,
@@ -67,12 +73,22 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
 
 
 def convert_pod_to_nx(pod: client.V1Pod) -> nx.Graph:
+    """
+
+    :param pod:
+    :return:
+    """
     pod_obj = nx.Graph(name='Pod')
     pod_obj.add_node(pod.metadata.name, **__create_pod_data(pod=pod))
     return pod_obj
 
 
 def __post_process_topo(topo_obj: nx.Graph) -> nx.Graph:
+    """
+
+    :param topo_obj:
+    :return:
+    """
     for node in topo_obj:
         nres = copy.deepcopy(topo_obj.nodes[node]['capacity'])
         for pod, pdata in topo_obj.nodes[node]['pod'].items():
@@ -83,6 +99,11 @@ def __post_process_topo(topo_obj: nx.Graph) -> nx.Graph:
 
 
 def convert_topo_to_nx(ns: str) -> nx.Graph:
+    """
+
+    :param ns:
+    :return:
+    """
     topo_obj = nx.Graph(name='Topology')
     for i, node in enumerate(get_available_nodes(), start=1):
         node_data = {
@@ -92,9 +113,9 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 'memory': bits2int(node.status.allocatable.get('memory', 0)),
                 'storage': bits2int(node.status.allocatable.get('ephemeral-storage', 0))
             },
-            'zones': dict(((DEF_PZ, True),
-                           *((l.removeprefix(LABEL_PZ_PREFIX), str2bool(v))
-                             for l, v in node.metadata.labels.items() if l.startswith(LABEL_PZ_PREFIX)))),
+            'zone': dict(((DEF_PZ, True),
+                          *((l.removeprefix(LABEL_PZ_PREFIX), str2bool(v))
+                            for l, v in node.metadata.labels.items() if l.startswith(LABEL_PZ_PREFIX)))),
             'pdc': str2bool(node.metadata.labels.get(LABEL_PDC_ENABLED)),
             'capability': {
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',

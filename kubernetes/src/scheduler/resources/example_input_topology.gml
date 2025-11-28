@@ -4,11 +4,17 @@ graph [
     id 0
     label "node-a"
     resource [
-      cpu 32
-      memory 8192
-      storage 1000
+      cpu 30000
+      memory 7992000
+      storage 990000
     ]
-    zones [
+    capacity [
+      cpu 32000
+      memory 8192000
+      storage 1000000
+    ]
+    zone [
+      default 1
       Zone_X 1
       Zone_Y 0
     ]
@@ -17,23 +23,26 @@ graph [
       ssd 0
       gpu 0
     ]
-    pods [
+    pod [
       Pod_1 [
         demand [
-          cpu 1
-          memory 100
-          storage 10
+          cpu 1000
+          memory 100000
+          storage 10000
           ssd 0
           gpu 0
         ]
         prefer [
-          cpu 2
-          memory 200
-          storage 10
+          cpu 2000
+          memory 200000
+          storage 10000
           ssd 1
           gpu 0
         ]
-        zone "Zone_X"
+        zone [
+          default 1
+          Zone_X 1
+        ]
         collocated 1
         metadata [
           name "Pod_1"
@@ -51,11 +60,17 @@ graph [
     id 1
     label "node-b"
     resource [
-      cpu 64
-      memory 10240
-      storage 1000
+      cpu 64000
+      memory 10240000
+      storage 1000000
     ]
-    zones [
+    capacity [
+      cpu 64000
+      memory 10240000
+      storage 1000000
+    ]
+    zone [
+      default 1
       Zone_X 1
       Zone_Y 1
     ]
@@ -64,7 +79,7 @@ graph [
       ssd 1
       gpu 1
     ]
-    pods [
+    pod [
     ]
     metadata [
       name "Node_B"

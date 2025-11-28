@@ -7,9 +7,12 @@
 # Requirements:
 #    pip install networkx
 #
+import logging
 import random
 
 import networkx as nx
+
+log = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------
@@ -34,9 +37,9 @@ def get_node_name(node_attr):
 # -------------------------------------------------------------
 def satisfies_hard_constraints(pod, node):
     demand = pod["demand"]
-    zone = pod["zone"]
+    zone = set(pod["zone"])
 
-    if zone not in node["zones"] or node["zones"][zone] != 1:
+    if not zone.intersection(z for z, v in node["zone"].items() if v is True):
         return False
     if pod["collocated"] and node["pdc"] != 1:
         return False
@@ -122,12 +125,28 @@ def ga_schedule(topology, pod, population_size=10, generations=20):
 
 
 # -------------------------------------------------------------
+#  K8s Custom scheduler Wrapper
+# -------------------------------------------------------------
+def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
+    """
+
+    :param topo:
+    :param pod:
+    :return:
+    """
+    log.debug("Extract topo/pod info...")
+    def_container = pod.nodes[list(pod.nodes).pop()]
+    log.debug("Execute ga_schedule algorithm...")
+    best_node_id = ga_schedule(topology=topo, pod=def_container)
+    return best_node_id
+
+
+# -------------------------------------------------------------
 #  Main
 # -------------------------------------------------------------
 if __name__ == "__main__":
-    topo = read_topology("../../resources/input_topology.gml")
-    pod = read_pod("../../resources/input_pod.gml")
-
+    topo = read_topology("../../resources/example_input_topology.gml")
+    pod = read_pod("../../resources/example_input_pod.gml")
     best_node = ga_schedule(topo, pod)
 
     node_name = topo.nodes[best_node]["metadata"]["name"]

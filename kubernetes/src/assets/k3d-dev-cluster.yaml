@@ -69,3 +69,9 @@ options:
       - label: connector.dataspace.ptx.org/enabled=true
         nodeFilters:
           - agent:*
+      - label: hardware/disktype=ssd
+        nodeFilters:
+          - server:*
+      - label: accelerator/gpu=true
+        nodeFilters:
+          - agent:*

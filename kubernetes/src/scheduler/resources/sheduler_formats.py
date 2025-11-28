@@ -79,6 +79,7 @@ import networkx as nx  # python3 -m pip install networkx
 topo = nx.Graph(name='topology')
 pod = nx.Graph(name='pod')
 
+DEF_PRIVACY_ZONE = "default"
 PRIVACY_ZONE_X = "Zone_X"
 PRIVACY_ZONE_Y = "Zone_Y"
 
@@ -89,22 +90,25 @@ NODE_B = "Node_B"
 
 # Modest-demanding pod with near-data processing and SSD preference
 pod_i = {
-    "demand": {  # Defaults: 0
-        "cpu": 1,
-        "memory": 100,
-        "storage": 10,
-        "ssd": False,
-        "gpu": False
+    "demand": {  # Default: 0
+        "cpu": 1000,  # Default: 0
+        "memory": 100000,  # Default: 0
+        "storage": 10000,  # Default: 0
+        "ssd": False,  # Default: False
+        "gpu": False  # Default: False
     },
-    "prefer": {  # Defaults: 0
-        "cpu": 2,
-        "memory": 200,
-        "storage": 10,
+    "prefer": {
+        "cpu": 2000,
+        "memory": 200000,
+        "storage": 10000,
         "ssd": True,
         "gpu": False
     },
-    "zone": PRIVACY_ZONE_X,  # Mandatory
-    "collocated": True,  # Mandatory
+    "zone": {
+        DEF_PRIVACY_ZONE: True,  # Mandatory | default zone: 'default'
+        PRIVACY_ZONE_X: True
+    },
+    "collocated": True,  # Mandatory | default: False
     "metadata": {  # metadata should ignored by scheduler
         "name": "Pod_1"
     }
@@ -112,23 +116,25 @@ pod_i = {
 
 # High-demanding pod with GPU acceleration requirement and no storage constraint
 pod_j = {
-    "demand": {  # Defaults: 0
-        "cpu": 4,
-        "memory": 200,
+    "demand": {
+        "cpu": 4000,
+        "memory": 200000,
         "storage": 0,
         "ssd": False,
         "gpu": True
     },
-    "prefer": {  # Defaults: 0
-        "cpu": 8,
-        "memory": 1000,
+    "prefer": {
+        "cpu": 8000,
+        "memory": 1000000,
         "storage": 0,
         "ssd": True,
         "gpu": True
     },
-    "zone": PRIVACY_ZONE_Y,  # Mandatory
-    "collocated": False,  # Mandatory
-    "metadata": {  # metadata should ignored by scheduler
+    "zone": {  # List of eligible zones | Mandatory | default: default
+        PRIVACY_ZONE_Y: True
+    },
+    "collocated": False,
+    "metadata": {
         "name": "Pod_2"
     }
 }
@@ -137,12 +143,18 @@ pod_j = {
 
 # Low-resource node
 node_a = {
-    "resource": {  # Mandatory
-        "cpu": 32,
-        "memory": 8192,
-        "storage": 1000
+    "resource": {  # Available resources = [capacity] - [pod resources] | Mandatory
+        "cpu": 32000 - pod_i["prefer"]["cpu"],
+        "memory": 8192000 - pod_i["prefer"]["memory"],
+        "storage": 1000000 - pod_i["prefer"]["storage"]
     },
-    "zones": {  # Mandatory
+    "capacity": {  # All node resources | Mandatory
+        "cpu": 32000,  # milliCPU (K8s min unit)
+        "memory": 8192000,  # KiB (K8s min unit)
+        "storage": 1000000  # KiB (K8s min unit)
+    },
+    "zone": {  # Mandatory
+        DEF_PRIVACY_ZONE: True,
         PRIVACY_ZONE_X: True,
         PRIVACY_ZONE_Y: False  # Optional - zones not belonging to the node can be omitted
     },
@@ -151,7 +163,7 @@ node_a = {
         "ssd": False,
         "gpu": False
     },
-    "pods": {  # Default: "empty"
+    "pod": {  # Default: "empty"
         pod_i['metadata']['name']: pod_i
     },
     "metadata": {  # metadata should ignored by scheduler
@@ -164,20 +176,26 @@ node_a = {
 
 # High-resource node
 node_b = {
-    "resource": {  # Mandatory
-        "cpu": 64,  # cores
-        "memory": 10240,  # Mi
-        "storage": 1000
+    "resource": {
+        "cpu": 64000,
+        "memory": 10240000,
+        "storage": 1000000
     },
-    "zones": {  # Mandatory
+    "capacity": {
+        "cpu": 64000,
+        "memory": 10240000,
+        "storage": 1000000
+    },
+    "zone": {  # Mandatory
+        DEF_PRIVACY_ZONE: True,
         PRIVACY_ZONE_X: True,
         PRIVACY_ZONE_Y: True
     },
     "pdc": False,  # Mandatory
-    "capability": {  # Defaults: 0
+    "capability": {  # Defaults: False
         "ssd": True,
         "gpu": True},
-    "pods": {},  # Default: "empty"
+    "pod": {},  # Default: "empty"
     "metadata": {  # metadata should ignored by scheduler
         "name": NODE_B,
         "ip": "192.168.0.2",
@@ -210,8 +228,8 @@ print(json.dumps(dict(pod.adjacency()), indent=4, sort_keys=False))
 ################ Serialize input/output
 
 if __name__ == '__main__':
-    nx.write_gml(topo, "input_topology.gml")
-    nx.write_gml(pod, "input_pod.gml")
+    nx.write_gml(topo, "example_input_topology.gml")
+    nx.write_gml(pod, "example_input_pod.gml")
 
     with open("output.txt", 'w') as f:
         f.write(NODE_B)

@@ -22,8 +22,8 @@ from app import __version__
 from app.config import setup_config, CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME
 from app.convert import convert_topo_to_nx, convert_pod_to_nx
 from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
-from app.method.ga_scheduler import ga_schedule
-from app.method.random_scheduler import random_schedule
+from app.method.ga_scheduler import do_ga_pod_schedule
+from app.method.random_scheduler import do_random_pod_schedule
 from app.utils import setup_logging, nx_graph_to_str
 
 log = logging.getLogger(__name__)
@@ -47,12 +47,12 @@ def schedule_pod(pod: client.V1Pod) -> str:
     match CONFIG['method']:
         case 'random':
             log.info("Initiate <RANDOM> node selection")
-            node_id = random_schedule(topo=topo, pod=pod)
+            node_id = do_random_pod_schedule(topo=topo, pod=pod)
             log.debug(f"Chosen node ID: {node_id}")
         case 'genetic':
             log.info("Initiate <GA> node selection")
             log.debug("Execute ga_schedule algorithm...")
-            node_id = ga_schedule(topology=topo, pod=pod)
+            node_id = do_ga_pod_schedule(topo=topo, pod=pod)
             log.debug(f"Best fit node ID: {node_id}")
         case 'linear':
             raise NotImplementedError

@@ -276,11 +276,10 @@ run-test-secret:
 	kubectl logs -f --prefix job/consumer-test-secret worker
 
 run-test-pod:
+	kubectl delete -f "${ASSETS}/ptx-test-worker-pod.yaml" || true
 	kubectl apply -f "${ASSETS}/ptx-test-worker-pod.yaml"
 	${MAKE} status
 	kubectl wait --for="condition=ContainersReady" pod/test
-	kubectl logs -f pod/test || true
-	#kubectl delete pods -l app=worker
 
 ########################################################################################################################
 
