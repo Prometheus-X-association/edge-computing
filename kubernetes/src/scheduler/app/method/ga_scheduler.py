@@ -19,13 +19,23 @@ log = logging.getLogger(__name__)
 #  Helpers
 # -------------------------------------------------------------
 def read_topology(filename="input_topology.gml"):
-    return nx.read_gml(filename)
+    topo = nx.read_gml(filename)
+    for node in topo:
+        topo.nodes[node]["pdc"] = bool(topo.nodes[node]["pdc"])
+        for attr in ('zone', 'capability'):
+            for k, v in topo.nodes[node][attr].items():
+                topo.nodes[node][attr][k] = bool(v)
+    return topo
 
 
 def read_pod(filename="input_pod.gml"):
     g = nx.read_gml(filename)
-    node_id = list(g.nodes)[0]
-    return g.nodes[node_id]
+    pod = g.nodes[list(g.nodes)[0]]
+    pod['collocated'] = bool(pod['collocated'])
+    for attr in ('demand', 'prefer', 'zone'):
+        for k, v in pod[attr].items():
+            pod[attr][k] = bool(v)
+    return pod
 
 
 def get_node_name(node_attr):
