@@ -17,6 +17,7 @@ import networkx as nx
 from kubernetes import client
 
 from app.k8s import get_available_nodes, get_pods_by_node
+from app.method.random_scheduler import RESOURCES
 from app.utils import str2bool, cpu2int, bits2int
 
 log = logging.getLogger(__name__)
@@ -71,11 +72,22 @@ def convert_pod_to_nx(pod: client.V1Pod) -> nx.Graph:
     return pod_obj
 
 
+def __post_process_topo(topo_obj: nx.Graph) -> nx.Graph:
+    for node in topo_obj:
+        nres = copy.deepcopy(topo_obj.nodes[node]['capacity'])
+        for pod, pdata in topo_obj.nodes[node]['pod'].items():
+            for r in RESOURCES:
+                nres[r] = max(0, nres.get(r, 0) - max(pdata['demand'].get(r, 0), pdata['prefer'].get(r, 0)))
+        topo_obj.nodes[node]['resource'] = nres
+    return topo_obj
+
+
 def convert_topo_to_nx(ns: str) -> nx.Graph:
     topo_obj = nx.Graph(name='Topology')
     for i, node in enumerate(get_available_nodes(), start=1):
         node_data = {
-            'resources': {
+            'resource': {},  # Placeholder for calculating available resources in post process
+            'capacity': {
                 'cpu': int(cpu2int(node.status.allocatable['cpu']) * 1e3),
                 'memory': bits2int(node.status.allocatable.get('memory', 0)),
                 'storage': bits2int(node.status.allocatable.get('ephemeral-storage', 0))
@@ -88,8 +100,8 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',
                 "gpu": str2bool(node.metadata.labels.get(LABEL_GPU_SUPPORT)),
             },
-            'pods': {p.metadata.name: convert_pod_to_nx(p).nodes[p.metadata.name]
-                     for p in get_pods_by_node(node=node.metadata.name, ns=ns)},
+            'pod': {p.metadata.name: convert_pod_to_nx(p).nodes[p.metadata.name]
+                    for p in get_pods_by_node(node=node.metadata.name, ns=ns)},
             'metadata': {
                 'name': node.metadata.name,
                 'architecture': node.status.node_info.architecture,
@@ -99,4 +111,5 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
             }
         }
         topo_obj.add_node(node.metadata.name, **node_data)
+    __post_process_topo(topo_obj)
     return topo_obj
