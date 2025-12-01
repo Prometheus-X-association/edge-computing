@@ -60,7 +60,7 @@ def random_schedule(nodes: list[str]) -> str:
     return random.choice(nodes)
 
 
-def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
+def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
     """
 
     :param topo:
@@ -70,5 +70,7 @@ def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
     filtered_node_list = list(_filter_nodes(topo=topo, pod=pod))
     log.debug(f"Filtered nodes: {filtered_node_list}")
     log.debug("Apply random node selection...")
+    if 'seed' in params:
+        random.seed(params['seed'])
     selected_node = random_schedule(nodes=filtered_node_list)
     return selected_node
