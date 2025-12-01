@@ -80,6 +80,8 @@ spec:
             - name: TASK_OUTPUT_DIR
               value: /var/cache/result
       restartPolicy: OnFailure
+      nodeSelector:
+        privacy-zone.dataspace.ptx.org/${PZ_A}: "true"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
