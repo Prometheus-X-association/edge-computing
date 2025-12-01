@@ -180,15 +180,23 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
 
 
 # -------------------------------------------------------------
-#  Main
+#  Test
 # -------------------------------------------------------------
-if __name__ == "__main__":
-    topo_data = read_topology("../../resources/example_input_topology.gml")
-    pod_data = read_pod("../../resources/example_input_pod.gml")
+def test_ga_offline(topo_file: str, pod_file: str):
+    topo_data = read_topology(topo_file)
+    pod_data = read_pod(pod_file)
     best_node = ga_schedule(topo_data, pod_data)
 
     node_name = topo_data.nodes[best_node]["metadata"]["name"]
     print("Selected node:", node_name)
 
-    with open("../../resources/output.txt", "w") as f:
-        f.write(node_name)
+    # with open("../../resources/output.txt", "w") as f:
+    #     f.write(node_name)
+
+
+# -------------------------------------------------------------
+#  Main
+# -------------------------------------------------------------
+if __name__ == "__main__":
+    test_ga_offline("../../resources/example_input_topology.gml", "../../resources/example_input_pod.gml")
+    test_ga_offline("../../resources/example_k3s_topology.gml", "../../resources/example_k3s_pod.gml")

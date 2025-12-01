@@ -16,6 +16,7 @@ import os
 import pathlib
 import sys
 
+import networkx as nx
 from kubernetes import client, watch
 
 from app import __version__

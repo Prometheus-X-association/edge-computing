@@ -233,3 +233,135 @@ if __name__ == '__main__':
 
     with open("output.txt", 'w') as f:
         f.write(NODE_B)
+
+################ K3s test topology
+
+k3s_topo = {
+    "k3d-dev-agent-0": {
+        "resource": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "capacity": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "zone": {
+            "default": True,
+            "zone-A": True,
+            "zone-B": True
+        },
+        "pdc": True,
+        "capability": {
+            "ssd": False,
+            "gpu": True
+        },
+        "pod": {
+            "scheduler": {
+                "priority": 0,
+                "demand": {
+                    "cpu": 0,
+                    "memory": 0,
+                    "storage": 0,
+                    "ssd": False,
+                    "gpu": False
+                },
+                "prefer": {
+                    "cpu": 0,
+                    "memory": 0,
+                    "storage": 0,
+                    "ssd": False,
+                    "gpu": False
+                },
+                "zone": {
+                    "default": True
+                },
+                "collocated": False,
+                "metadata": {
+                    "name": "scheduler",
+                    "namespace": "ptx-edge",
+                    "created": "2025-12-01T13:40:20Z",
+                    "scheduler": "default-scheduler",
+                    "status": "Running",
+                    "labels": {
+                        "app": "scheduler"
+                    }
+                }
+            }
+        },
+        "metadata": {
+            "name": "k3d-dev-agent-0",
+            "architecture": "amd64",
+            "os": "linux",
+            "kernel": "6.8.0-87-generic",
+            "ip": "172.21.0.3"
+        }
+    },
+    "k3d-dev-server-0": {
+        "resource": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "capacity": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "zone": {
+            "default": True
+        },
+        "pdc": False,
+        "capability": {
+            "ssd": True,
+            "gpu": False
+        },
+        "pod": {},
+        "metadata": {
+            "name": "k3d-dev-server-0",
+            "architecture": "amd64",
+            "os": "linux",
+            "kernel": "6.8.0-87-generic",
+            "ip": "172.21.0.2"
+        }
+    }
+}
+
+k3s_pod = {
+    "test": {
+        "priority": 0,
+        "demand": {
+            "cpu": 100,
+            "memory": 92160,
+            "storage": 0,
+            "ssd": False,
+            "gpu": False
+        },
+        "prefer": {
+            "cpu": 500,
+            "memory": 317440,
+            "storage": 0,
+            "ssd": False,
+            "gpu": False
+        },
+        "zone": {
+            "zone-A": True
+        },
+        "collocated": True,
+        "metadata": {
+            "name": "test",
+            "namespace": "ptx-edge",
+            "created": "2025-12-01T14:34:36Z",
+            "scheduler": "ptx-edge-scheduler",
+            "status": "Pending",
+            "labels": {
+                "app": "worker"
+            }
+        }
+    }
+}
+
+nx.write_gml(topo, "example_k3s_topology.gml")
+nx.write_gml(pod, "example_k3s_pod.gml")
