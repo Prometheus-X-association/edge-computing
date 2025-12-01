@@ -51,16 +51,19 @@ def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, 
             yield node
 
 
-def random_schedule(nodes: list[str]) -> str:
+def random_schedule(nodes: list[str]) -> str | None:
     """
 
     :param nodes:
     :return:
     """
-    return random.choice(nodes)
+    try:
+        return random.choice(nodes)
+    except IndexError:
+        return None
 
 
-def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
+def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str | None:
     """
 
     :param topo:
