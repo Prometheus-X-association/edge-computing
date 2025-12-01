@@ -19,7 +19,7 @@ import sys
 from kubernetes import client, watch
 
 from app import __version__
-from app.config import setup_config, CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME
+from app.config import CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME, setup_config, param_parser
 from app.convert import convert_topo_to_nx, convert_pod_to_nx
 from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
 from app.method.ga_scheduler import do_ga_pod_schedule
@@ -29,10 +29,11 @@ from app.utils import setup_logging, nx_graph_to_str
 log = logging.getLogger(__name__)
 
 
-def schedule_pod(pod: client.V1Pod) -> str:
+def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
     """
 
     :param pod:
+    :param params:
     :return:
     """
     pod_name = pod.metadata.name
@@ -47,12 +48,12 @@ def schedule_pod(pod: client.V1Pod) -> str:
     match CONFIG['method']:
         case 'random':
             log.info("Initiate <RANDOM> node selection")
-            node_id = do_random_pod_schedule(topo=topo, pod=pod)
+            node_id = do_random_pod_schedule(topo=topo, pod=pod, **params)
             log.debug(f"Chosen node ID: {node_id}")
         case 'genetic':
             log.info("Initiate <GA> node selection")
             log.debug("Execute ga_schedule algorithm...")
-            node_id = do_ga_pod_schedule(topo=topo, pod=pod)
+            node_id = do_ga_pod_schedule(topo=topo, pod=pod, **params)
             log.debug(f"Best fit node ID: {node_id}")
         case 'linear':
             raise NotImplementedError
@@ -77,10 +78,10 @@ def schedule_pod(pod: client.V1Pod) -> str:
         return "Failed"
 
 
-def serve_forever(**kwargs):
+def serve_forever(params: dict[str, ...]):
     """
 
-    :param kwargs:
+    :param params:
     :return:
     """
     log.info(f"Scheduler[{CONFIG['scheduler']}] is listening on namespace: {CONFIG['namespace']}")
@@ -100,7 +101,7 @@ def serve_forever(**kwargs):
                     continue
                 log.info(f"{_type} pod[{_name}] in namespace[{CONFIG['namespace']}] "
                          f"with scheduler[{CONFIG['scheduler']}] detected!")
-                result = schedule_pod(pod=_pod)
+                result = schedule_pod(pod=_pod, params=params)
                 log.debug(f"Received scheduling result: {result}")
         except KeyboardInterrupt:
             log.info("KeyboardInterrupt received. Stopping scheduler...")
@@ -126,6 +127,8 @@ def main():
                         help="Watched worker namespace (def: from kube cfg/envvar)")
     parser.add_argument("-s", "--scheduler", type=str, required=False, default=DEF_SCHEDULER_NAME,
                         help=f"Scheduler name referenced by worker pods (def: {DEF_SCHEDULER_NAME})")
+    parser.add_argument("-p", "--parameters", type=str, required=False,
+                        help="Comma-separated additional parameters for scheduling algorithm")
     parser.add_argument("-v", "--verbose", action='count', default=0, required=False,
                         help="Increase verbosity")
     parser.add_argument("-V", "--version", action='version', version=f"{parser.description} v{__version__}")
@@ -133,9 +136,10 @@ def main():
     ################# Setup configuration
     setup_logging(verbosity=args.verbose)
     setup_config(params=vars(args))
+    params = param_parser(params=args.parameters)
     ################# Handle scheduling events
     try:
-        serve_forever(**CONFIG)
+        serve_forever(params=params)
     except Exception as e:
         log.error(f"Unexpected error received:\n{e}")
         log.exception(e)

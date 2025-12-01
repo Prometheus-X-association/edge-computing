@@ -54,3 +54,24 @@ def setup_config(params: dict[str, typing.Any]):
     except config.ConfigException as e:
         log.error(f"Error loading Kubernetes API config:\n{e}")
         sys.exit(os.EX_CONFIG)
+
+
+def param_parser(params: str = None) -> dict:
+    """
+
+    :param params:
+    :return:
+    """
+    kv_dict = {}
+    if params:
+        for p in params.split(","):
+            if len(kv := p.split('=', maxsplit=1)) == 2:
+                k, v = kv
+                try:
+                    v = int(v) if v.isnumeric() else float(v) if '.' in v else v
+                except ValueError:
+                    pass
+                kv_dict[k] = v
+            else:
+                log.warning(f"Invalid parameter format: {p}")
+    return kv_dict

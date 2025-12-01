@@ -7,7 +7,11 @@
 # Requirements:
 #    pip install networkx
 #
+import functools
+import itertools
 import logging
+import math
+import operator
 import random
 
 import networkx as nx
@@ -18,7 +22,12 @@ log = logging.getLogger(__name__)
 # -------------------------------------------------------------
 #  Helpers
 # -------------------------------------------------------------
-def read_topology(filename="input_topology.gml"):
+def read_topology(filename: str = "input_topology.gml") -> nx.Graph:
+    """
+
+    :param filename:
+    :return:
+    """
     topo = nx.read_gml(filename)
     for node in topo:
         topo.nodes[node]["pdc"] = bool(topo.nodes[node]["pdc"])
@@ -28,7 +37,12 @@ def read_topology(filename="input_topology.gml"):
     return topo
 
 
-def read_pod(filename="input_pod.gml"):
+def read_pod(filename: str = "input_pod.gml") -> dict[str, ...]:
+    """
+
+    :param filename:
+    :return:
+    """
     g = nx.read_gml(filename)
     pod = g.nodes[list(g.nodes)[0]]
     pod['collocated'] = bool(pod['collocated'])
@@ -38,47 +52,45 @@ def read_pod(filename="input_pod.gml"):
     return pod
 
 
-def get_node_name(node_attr):
-    return node_attr["metadata"]["name"]
-
-
 # -------------------------------------------------------------
 #  Constraint checks
 # -------------------------------------------------------------
-def satisfies_hard_constraints(pod, node):
-    demand = pod["demand"]
-    zone = set(pod["zone"])
+def satisfies_hard_constraints(pod: dict[str, ...], node_attr: dict[str, ...]) -> bool:
+    """
 
-    if not zone.intersection(z for z, v in node["zone"].items() if v is True):
+    :param pod:
+    :param node_attr:
+    :return:
+    """
+    if (not set(pod["zone"]).intersection(z for z, v in node_attr["zone"].items() if v is True)
+            or (pod["collocated"] and not node_attr["pdc"])
+            or node_attr["resource"]["cpu"] < pod["demand"]["cpu"]
+            or node_attr["resource"]["memory"] < pod["demand"]["memory"]
+            or node_attr["resource"]["storage"] < pod["demand"]["storage"]
+            or (pod["demand"]["gpu"] and not node_attr["capability"]["gpu"])
+            or (pod["demand"]["ssd"] and not node_attr["capability"]["ssd"])):
         return False
-    if pod["collocated"] and node["pdc"] != 1:
-        return False
-    if node["resource"]["cpu"] < demand["cpu"]:
-        return False
-    if node["resource"]["memory"] < demand["memory"]:
-        return False
-    if node["resource"]["storage"] < demand["storage"]:
-        return False
-    if demand["gpu"] and not node["capability"]["gpu"]:
-        return False
-    if demand["ssd"] and not node["capability"]["ssd"]:
-        return False
-    return True
+    else:
+        return True
 
 
 # -------------------------------------------------------------
 #  Fitness
 # -------------------------------------------------------------
-def fitness(node_attr, pod):
-    prefer = pod["prefer"]
-    demand = pod["demand"]
+def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
+    """
+
+    :param node_attr:
+    :param pod:
+    :return:
+    """
     fit = 0.0
-    fit += (node_attr["resource"]["cpu"] - demand["cpu"]) / 10
-    fit += (node_attr["resource"]["memory"] - demand["memory"]) / 100
-    fit += (node_attr["resource"]["storage"] - demand["storage"]) / 100
-    if prefer["gpu"] and node_attr["capability"]["gpu"]:
+    fit += (node_attr["resource"]["cpu"] - pod["demand"]["cpu"]) / 10
+    fit += (node_attr["resource"]["memory"] - pod["demand"]["memory"]) / 100
+    fit += (node_attr["resource"]["storage"] - pod["demand"]["storage"]) / 100
+    if pod["prefer"]["gpu"] and node_attr["capability"]["gpu"]:
         fit += 5
-    if prefer["ssd"] and node_attr["capability"]["ssd"]:
+    if pod["prefer"]["ssd"] and node_attr["capability"]["ssd"]:
         fit += 3
     if not pod["collocated"] and node_attr["pdc"]:
         fit += 1
@@ -88,48 +100,64 @@ def fitness(node_attr, pod):
 # -------------------------------------------------------------
 #  GA
 # -------------------------------------------------------------
-def ga_schedule(topology, pod, population_size=10, generations=20):
-    nodes = list(topology.nodes)
+def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 10, generations: int = 20) -> str:
+    """
 
-    population = [random.choice(nodes) for _ in range(population_size)]
+    :param topology:
+    :param pod:
+    :param population_size:
+    :param generations:
+    :return:
+    """
+    nodes = tuple(topology.nodes)
 
-    def mutate(candidate):
+    def evaluate(candidate: str) -> float:
+        if candidate is not None and satisfies_hard_constraints(pod, topology.nodes[candidate]):
+            return fitness(pod, topology.nodes[candidate])
+        else:
+            return -math.inf
+
+    def selection(_population: list[str]) -> list[str]:
+        # scored = []
+        # for n in population:
+        #     node_attr = topology.nodes[n]
+        #     if not satisfies_hard_constraints(pod, node_attr):
+        #         scored.append((n, -math.inf))
+        #     else:
+        #         scored.append((n, fitness(node_attr, pod)))
+        # scored.sort(lambda x: x[1], reverse=True)
+        scored = sorted([(n, evaluate(n)) for n in _population], key=operator.itemgetter(1), reverse=True)
+        # population = [scored[i % len(scored)][0] for i in range(population_size)]
+        return [next(itertools.cycle(scored))[0] for _ in range(population_size)]
+
+    def mutate(candidate: str) -> str:
         return random.choice(nodes) if random.random() < 0.3 else candidate
 
-    def crossover(a, b):
-        return a if random.random() < 0.5 else b
+    def crossover(_candidate1: str, _candidate2: str) -> str:
+        return _candidate1 if random.random() < 0.5 else _candidate2
+
+    # population = [random.choice(nodes) for _ in range(population_size)]
+    population = random.choices(nodes, k=population_size)
 
     for _ in range(generations):
-        scored = []
-        for n in population:
-            node_attr = topology.nodes[n]
-            if not satisfies_hard_constraints(pod, node_attr):
-                scored.append((n, -9999))
-            else:
-                scored.append((n, fitness(node_attr, pod)))
-        scored.sort(key=lambda x: x[1], reverse=True)
-        population = [scored[i % len(scored)][0] for i in range(population_size)]
+        population = selection(population)
+        # new_pop = []
+        # for i in range(population_size):
+        #     p1 = random.choice(population)
+        #     p2 = random.choice(population)
+        #     child = crossover(p1, p2)
+        #     child = mutate(child)
+        #     new_pop.append(child)
+        # population = new_pop
+        population = [mutate(crossover(*random.choices(population, k=2))) for _ in range(population_size)]
 
-        new_pop = []
-        for i in range(population_size):
-            p1 = random.choice(population)
-            p2 = random.choice(population)
-            child = crossover(p1, p2)
-            child = mutate(child)
-            new_pop.append(child)
-        population = new_pop
-
-    best = None
-    best_score = -1e9
-    for n in population:
-        node_attr = topology.nodes[n]
-        if satisfies_hard_constraints(pod, node_attr):
-            s = fitness(node_attr, pod)
-        else:
-            s = -9999
-        if s > best_score:
-            best_score = s
-            best = n
+    # best, best_score = None, -math.inf
+    # for n in population:
+    #     node_attr = topology.nodes[n]
+    #     s = fitness(node_attr, pod) if satisfies_hard_constraints(pod, node_attr) else -math.inf
+    #     if s > best_score:
+    #         best, best_score = n, s
+    best = functools.reduce(functools.partial(max, key=evaluate), population, initial=None)
 
     return best
 
@@ -137,7 +165,7 @@ def ga_schedule(topology, pod, population_size=10, generations=20):
 # -------------------------------------------------------------
 #  K8s Custom scheduler Wrapper
 # -------------------------------------------------------------
-def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
+def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
     """
 
     :param topo:
@@ -147,7 +175,7 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
     log.debug("Extract topo/pod info...")
     def_container = pod.nodes[list(pod.nodes).pop()]
     log.debug("Execute ga_schedule algorithm...")
-    best_node_id = ga_schedule(topology=topo, pod=def_container)
+    best_node_id = ga_schedule(topology=topo, pod=def_container, **params)
     return best_node_id
 
 
@@ -155,12 +183,12 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph) -> str:
 #  Main
 # -------------------------------------------------------------
 if __name__ == "__main__":
-    topo = read_topology("../../resources/example_input_topology.gml")
-    pod = read_pod("../../resources/example_input_pod.gml")
-    best_node = ga_schedule(topo, pod)
+    topo_data = read_topology("../../resources/example_input_topology.gml")
+    pod_data = read_pod("../../resources/example_input_pod.gml")
+    best_node = ga_schedule(topo_data, pod_data)
 
-    node_name = topo.nodes[best_node]["metadata"]["name"]
+    node_name = topo_data.nodes[best_node]["metadata"]["name"]
     print("Selected node:", node_name)
 
-    # with open("output.txt", "w") as f:
-    #     f.write(node_name)
+    with open("../../resources/output.txt", "w") as f:
+        f.write(node_name)
