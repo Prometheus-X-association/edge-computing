@@ -76,4 +76,5 @@ def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str | Non
     if 'seed' in params:
         random.seed(params['seed'])
     selected_node = random_schedule(nodes=filtered_node_list)
+    log.debug(f"Selected node ID: {selected_node}")
     return selected_node

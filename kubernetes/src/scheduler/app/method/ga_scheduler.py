@@ -7,7 +7,6 @@
 # Requirements:
 #    pip install networkx
 #
-import functools
 import itertools
 import logging
 import math
@@ -100,7 +99,8 @@ def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
 # -------------------------------------------------------------
 #  GA
 # -------------------------------------------------------------
-def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 10, generations: int = 20) -> str:
+def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 10,
+                generations: int = 20) -> str | None:
     """
 
     :param topology:
@@ -126,9 +126,9 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         #     else:
         #         scored.append((n, fitness(node_attr, pod)))
         # scored.sort(lambda x: x[1], reverse=True)
-        scored = sorted([(n, evaluate(n)) for n in _population], key=operator.itemgetter(1), reverse=True)
+        scored = sorted([(evaluate(n), n) for n in _population], reverse=True)
         # population = [scored[i % len(scored)][0] for i in range(population_size)]
-        return [next(itertools.cycle(scored))[0] for _ in range(population_size)]
+        return list(map(operator.itemgetter(1), itertools.islice(itertools.cycle(scored), population_size)))
 
     def mutate(candidate: str) -> str:
         return random.choice(nodes) if random.random() < 0.3 else candidate
@@ -136,11 +136,11 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
     def crossover(_candidate1: str, _candidate2: str) -> str:
         return _candidate1 if random.random() < 0.5 else _candidate2
 
+    log.debug("Start iterating generations...")
     # population = [random.choice(nodes) for _ in range(population_size)]
-    population = random.choices(nodes, k=population_size)
+    fittest, population = (-math.inf, None), random.choices(nodes, k=population_size)
 
-    for _ in range(generations):
-        population = selection(population)
+    for i in range(generations):
         # new_pop = []
         # for i in range(population_size):
         #     p1 = random.choice(population)
@@ -149,17 +149,20 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         #     child = mutate(child)
         #     new_pop.append(child)
         # population = new_pop
-        population = [mutate(crossover(*random.choices(population, k=2))) for _ in range(population_size)]
+        population = [mutate(crossover(*random.choices(selection(population), k=2))) for _ in range(population_size)]
+        # best, best_score = None, -math.inf
+        # for n in population:
+        #     node_attr = topology.nodes[n]
+        #     s = fitness(node_attr, pod) if satisfies_hard_constraints(pod, node_attr) else -math.inf
+        #     if s > best_score:
+        #         best, best_score = n, s
+        # best = functools.reduce(functools.partial(max, key=evaluate), population, initial=None)
+        best = max(zip(map(evaluate, population), population))
+        if best[0] > fittest[0]:
+            log.debug(f"New best candidate found in generation {i}: {best[1]}")
+            fittest = best
 
-    # best, best_score = None, -math.inf
-    # for n in population:
-    #     node_attr = topology.nodes[n]
-    #     s = fitness(node_attr, pod) if satisfies_hard_constraints(pod, node_attr) else -math.inf
-    #     if s > best_score:
-    #         best, best_score = n, s
-    best = functools.reduce(functools.partial(max, key=evaluate), population, initial=None)
-
-    return best
+    return fittest[1]
 
 
 # -------------------------------------------------------------
@@ -176,6 +179,7 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
     def_container = pod.nodes[list(pod.nodes).pop()]
     log.debug("Execute ga_schedule algorithm...")
     best_node_id = ga_schedule(topology=topo, pod=def_container, **params)
+    log.debug(f"Best fit node ID: {best_node_id}")
     return best_node_id
 
 
@@ -198,5 +202,6 @@ def test_ga_offline(topo_file: str, pod_file: str):
 #  Main
 # -------------------------------------------------------------
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     test_ga_offline("../../resources/example_input_topology.gml", "../../resources/example_input_pod.gml")
     test_ga_offline("../../resources/example_k3s_topology.gml", "../../resources/example_k3s_pod.gml")

@@ -16,7 +16,6 @@ import os
 import pathlib
 import sys
 
-import networkx as nx
 from kubernetes import client, watch
 
 from app import __version__
@@ -50,12 +49,9 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
         case 'random':
             log.info("Initiate <RANDOM> node selection")
             node_id = do_random_pod_schedule(topo=topo, pod=pod, **params)
-            log.debug(f"Chosen node ID: {node_id}")
         case 'genetic':
             log.info("Initiate <GA> node selection")
-            log.debug("Execute ga_schedule algorithm...")
             node_id = do_ga_pod_schedule(topo=topo, pod=pod, **params)
-            log.debug(f"Best fit node ID: {node_id}")
         case 'linear':
             raise NotImplementedError
         case _:
