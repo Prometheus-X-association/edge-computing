@@ -99,13 +99,13 @@ def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
 # -------------------------------------------------------------
 #  GA
 # -------------------------------------------------------------
-def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 10,
+def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_coeff: float = 3.0,
                 generations: int = 20) -> str | None:
     """
 
     :param topology:
     :param pod:
-    :param population_size:
+    :param population_coeff:
     :param generations:
     :return:
     """
@@ -128,7 +128,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         # scored.sort(lambda x: x[1], reverse=True)
         scored = sorted([(evaluate(n), n) for n in _population], reverse=True)
         # population = [scored[i % len(scored)][0] for i in range(population_size)]
-        return list(map(operator.itemgetter(1), itertools.islice(itertools.cycle(scored), population_size)))
+        return list(map(operator.itemgetter(1), itertools.islice(itertools.cycle(scored), len(_population))))
 
     def mutate(candidate: str) -> str:
         return random.choice(nodes) if random.random() < 0.3 else candidate
@@ -138,7 +138,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
 
     log.debug("Start iterating generations...")
     # population = [random.choice(nodes) for _ in range(population_size)]
-    fittest, population = (-math.inf, None), random.choices(nodes, k=population_size)
+    fittest, population = (-math.inf, None), random.choices(nodes, k=round(population_coeff * len(nodes)))
 
     for i in range(generations):
         # new_pop = []
@@ -149,7 +149,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         #     child = mutate(child)
         #     new_pop.append(child)
         # population = new_pop
-        population = [mutate(crossover(*random.choices(selection(population), k=2))) for _ in range(population_size)]
+        population = [mutate(crossover(*random.choices(selection(population), k=2))) for _ in range(len(population))]
         # best, best_score = None, -math.inf
         # for n in population:
         #     node_attr = topology.nodes[n]
@@ -159,7 +159,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         # best = functools.reduce(functools.partial(max, key=evaluate), population, initial=None)
         best = max(zip(map(evaluate, population), population))
         if best[0] > fittest[0]:
-            log.debug(f"New best candidate found in generation {i}: {best[1]}")
+            log.debug(f"New best candidate found in generation {i}/{generations}: {best[1]}")
             fittest = best
 
     return fittest[1]
