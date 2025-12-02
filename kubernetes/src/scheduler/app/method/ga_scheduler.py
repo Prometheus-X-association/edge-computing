@@ -15,40 +15,9 @@ import random
 
 import networkx as nx
 
+from app.convert import read_topo_from_file, read_pod_from_file
+
 log = logging.getLogger(__name__)
-
-
-# -------------------------------------------------------------
-#  Helpers
-# -------------------------------------------------------------
-def read_topology(filename: str = "input_topology.gml") -> nx.Graph:
-    """
-
-    :param filename:
-    :return:
-    """
-    topo = nx.read_gml(filename)
-    for node in topo:
-        topo.nodes[node]["pdc"] = bool(topo.nodes[node]["pdc"])
-        for attr in ('zone', 'capability'):
-            for k, v in topo.nodes[node][attr].items():
-                topo.nodes[node][attr][k] = bool(v)
-    return topo
-
-
-def read_pod(filename: str = "input_pod.gml") -> dict[str, ...]:
-    """
-
-    :param filename:
-    :return:
-    """
-    g = nx.read_gml(filename)
-    pod = g.nodes[list(g.nodes)[0]]
-    pod['collocated'] = bool(pod['collocated'])
-    for attr in ('demand', 'prefer', 'zone'):
-        for k, v in pod[attr].items():
-            pod[attr][k] = bool(v)
-    return pod
 
 
 # -------------------------------------------------------------
@@ -61,7 +30,7 @@ def satisfies_hard_constraints(pod: dict[str, ...], node_attr: dict[str, ...]) -
     :param node_attr:
     :return:
     """
-    if (not set(pod["zone"]).intersection(z for z, v in node_attr["zone"].items() if v is True)
+    if (not set(pod["zone"]).intersection(node_attr["zone"])
             or (pod["collocated"] and not node_attr["pdc"])
             or node_attr["resource"]["cpu"] < pod["demand"]["cpu"]
             or node_attr["resource"]["memory"] < pod["demand"]["memory"]
@@ -187,8 +156,9 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str:
 #  Test
 # -------------------------------------------------------------
 def test_ga_offline(topo_file: str, pod_file: str):
-    topo_data = read_topology(topo_file)
-    pod_data = read_pod(pod_file)
+    topo_data = read_topo_from_file(topo_file)
+    pod = read_pod_from_file(pod_file)
+    pod_data = pod.nodes[list(pod.nodes)[0]]
     best_node = ga_schedule(topo_data, pod_data)
 
     node_name = topo_data.nodes[best_node]["metadata"]["name"]

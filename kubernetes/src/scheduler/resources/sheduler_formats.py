@@ -101,10 +101,10 @@ pod_i = {
         "ssd": True,
         "gpu": False
     },
-    "zone": {
-        DEF_PRIVACY_ZONE: True,  # Mandatory | default zone: 'default'
-        PRIVACY_ZONE_X: True
-    },
+    "zone": [
+        DEF_PRIVACY_ZONE,  # Mandatory | default zone: 'default'
+        PRIVACY_ZONE_X
+    ],
     "collocated": True,  # Mandatory | default: False
     "metadata": {  # metadata should ignored by scheduler
         "name": "Pod_1"
@@ -127,9 +127,9 @@ pod_j = {
         "ssd": True,
         "gpu": True
     },
-    "zone": {  # List of eligible zones | Mandatory | default: default
-        PRIVACY_ZONE_Y: True
-    },
+    "zone": [  # List of eligible zones | Mandatory | default: default
+        PRIVACY_ZONE_Y
+    ],
     "collocated": False,
     "metadata": {
         "name": "Pod_2"
@@ -150,11 +150,11 @@ node_a = {
         "memory": 8192000,  # KiB (K8s min unit)
         "storage": 1000000  # KiB (K8s min unit)
     },
-    "zone": {  # Mandatory
-        DEF_PRIVACY_ZONE: True,
-        PRIVACY_ZONE_X: True,
-        PRIVACY_ZONE_Y: False  # Optional - zones not belonging to the node can be omitted
-    },
+    "zone": [  # Mandatory
+        DEF_PRIVACY_ZONE,
+        PRIVACY_ZONE_X,
+        PRIVACY_ZONE_Y  # Optional - zones not belonging to the node can be omitted
+    ],
     "pdc": True,  # Mandatory
     "capability": {  # Defaults: 0
         "ssd": False,
@@ -183,15 +183,16 @@ node_b = {
         "memory": 10240000,
         "storage": 1000000
     },
-    "zone": {  # Mandatory
-        DEF_PRIVACY_ZONE: True,
-        PRIVACY_ZONE_X: True,
-        PRIVACY_ZONE_Y: True
-    },
+    "zone": [  # Mandatory
+        DEF_PRIVACY_ZONE,
+        PRIVACY_ZONE_X,
+        PRIVACY_ZONE_Y
+    ],
     "pdc": False,  # Mandatory
     "capability": {  # Defaults: False
         "ssd": True,
-        "gpu": True},
+        "gpu": True
+    },
     "pod": {},  # Default: "empty"
     "metadata": {  # metadata should ignored by scheduler
         "name": NODE_B,
@@ -222,11 +223,11 @@ k3s_topo_data = {
             "memory": 5035316,
             "storage": 95904111
         },
-        "zone": {
-            "default": True,
-            "zone_A": True,
-            "zone_B": True
-        },
+        "zone": [
+            "default",
+            "zone-A",
+            "zone-B"
+        ],
         "pdc": True,
         "capability": {
             "ssd": False,
@@ -249,9 +250,9 @@ k3s_topo_data = {
                     "ssd": False,
                     "gpu": False
                 },
-                "zone": {
-                    "default": True
-                },
+                "zone": [
+                    "default"
+                ],
                 "collocated": False,
                 "metadata": {
                     "name": "scheduler",
@@ -284,9 +285,9 @@ k3s_topo_data = {
             "memory": 5035316,
             "storage": 95904111
         },
-        "zone": {
-            "default": True
-        },
+        "zone": [
+            "default"
+        ],
         "pdc": False,
         "capability": {
             "ssd": True,
@@ -320,9 +321,9 @@ k3s_pod_data = {
             "ssd": False,
             "gpu": False
         },
-        "zone": {
-            "zone_A": True
-        },
+        "zone": [
+            "zone-A"
+        ],
         "collocated": True,
         "metadata": {
             "name": "test",

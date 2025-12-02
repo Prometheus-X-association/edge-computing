@@ -13,11 +13,9 @@ graph [
       memory 5035316
       storage 95904111
     ]
-    zone [
-      default 1
-      zone_A 1
-      zone_B 1
-    ]
+    zone "default"
+    zone "zone-A"
+    zone "zone-B"
     pdc 1
     capability [
       ssd 0
@@ -40,9 +38,8 @@ graph [
           ssd 0
           gpu 0
         ]
-        zone [
-          default 1
-        ]
+        zone "_networkx_list_start"
+        zone "default"
         collocated 0
         metadata [
           name "scheduler"
@@ -77,9 +74,8 @@ graph [
       memory 5035316
       storage 95904111
     ]
-    zone [
-      default 1
-    ]
+    zone "_networkx_list_start"
+    zone "default"
     pdc 0
     capability [
       ssd 1

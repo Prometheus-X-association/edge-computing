@@ -13,11 +13,9 @@ graph [
       memory 8192000
       storage 1000000
     ]
-    zone [
-      default 1
-      Zone_X 1
-      Zone_Y 0
-    ]
+    zone "default"
+    zone "Zone_X"
+    zone "Zone_Y"
     pdc 1
     capability [
       ssd 0
@@ -39,10 +37,8 @@ graph [
           ssd 1
           gpu 0
         ]
-        zone [
-          default 1
-          Zone_X 1
-        ]
+        zone "default"
+        zone "Zone_X"
         collocated 1
         metadata [
           name "Pod_1"
@@ -69,11 +65,9 @@ graph [
       memory 10240000
       storage 1000000
     ]
-    zone [
-      default 1
-      Zone_X 1
-      Zone_Y 1
-    ]
+    zone "default"
+    zone "Zone_X"
+    zone "Zone_Y"
     pdc 0
     capability [
       ssd 1

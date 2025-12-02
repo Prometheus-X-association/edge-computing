@@ -12,12 +12,12 @@
 # limitations under the License.
 import copy
 import logging
+import pathlib
 
 import networkx as nx
 from kubernetes import client
 
 from app.k8s import get_available_nodes, get_pods_by_node
-from app.method.random_scheduler import RESOURCES
 from app.utils import str2bool, cpu2int, bits2int
 
 log = logging.getLogger(__name__)
@@ -27,6 +27,9 @@ LABEL_PZ_PREFIX = 'privacy-zone.dataspace.ptx.org/'
 LABEL_DISK_PREFIX = "hardware/disktype"
 LABEL_GPU_SUPPORT = "accelerator/gpu"
 DEF_PZ = "default"
+
+RESOURCES = ('cpu', 'memory', 'storage')
+CAPABILITIES = ('ssd', 'gpu')
 
 
 def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
@@ -55,9 +58,8 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'ssd': pod.metadata.annotations.get(LABEL_DISK_PREFIX) == 'ssd' if pod.metadata.annotations else False,
             'gpu': str2bool(pod.metadata.annotations.get(LABEL_GPU_SUPPORT) if pod.metadata.annotations else False)
         },
-        'zone': dict.fromkeys((s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items() if
-                               s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [DEF_PZ],
-                              True),
+        'zone': list(s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items()
+                     if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [DEF_PZ],
         'collocated': str2bool(pod.spec.node_selector.get(LABEL_PDC_ENABLED)) if pod.spec.node_selector else False,
         'metadata': {
             'name': pod.metadata.name,
@@ -113,9 +115,8 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 'memory': bits2int(node.status.allocatable.get('memory', 0)),
                 'storage': bits2int(node.status.allocatable.get('ephemeral-storage', 0))
             },
-            'zone': dict(((DEF_PZ, True),
-                          *((l.removeprefix(LABEL_PZ_PREFIX), str2bool(v))
-                            for l, v in node.metadata.labels.items() if l.startswith(LABEL_PZ_PREFIX)))),
+            'zone': [DEF_PZ, *(l.removeprefix(LABEL_PZ_PREFIX) for l, v in node.metadata.labels.items()
+                               if l.startswith(LABEL_PZ_PREFIX))],
             'pdc': str2bool(node.metadata.labels.get(LABEL_PDC_ENABLED)),
             'capability': {
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',
@@ -134,3 +135,42 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
         topo_obj.add_node(node.metadata.name, **node_data)
     __post_process_topo(topo_obj)
     return topo_obj
+
+
+def __parse_pod_data(pod_data: dict[str, ...]) -> dict[str, ...]:
+    pod_data['collocated'] = bool(pod_data['collocated'])
+    for const in ('demand', 'prefer'):
+        for attr in ('ssd', 'gpu'):
+            pod_data[const][attr] = bool(pod_data[const][attr])
+    return pod_data
+
+
+def read_pod_from_file(filename: str | pathlib.Path) -> nx.Graph:
+    """
+
+    :param filename:
+    :return:
+    """
+    g = nx.read_gml(filename)
+    for _, pod_data in g.nodes.data():
+        __parse_pod_data(pod_data)
+    return g
+
+
+def read_topo_from_file(filename: str | pathlib.Path) -> nx.Graph:
+    """
+
+    :param filename:
+    :return:
+    """
+    topo = nx.read_gml(filename)
+    for node in topo:
+        topo.nodes[node]["pdc"] = bool(topo.nodes[node]["pdc"])
+        for k, v in topo.nodes[node]['capability'].items():
+            topo.nodes[node]['capability'][k] = bool(v)
+        for pod in topo.nodes[node]['pod'].values():
+            pod['collocated'] = bool(pod['collocated'])
+            for const in ('demand', 'prefer'):
+                for attr in ('ssd', 'gpu'):
+                    pod[const][attr] = bool(pod[const][attr])
+    return topo

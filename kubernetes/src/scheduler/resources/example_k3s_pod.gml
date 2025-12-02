@@ -18,9 +18,8 @@ graph [
       ssd 0
       gpu 0
     ]
-    zone [
-      zone_A 1
-    ]
+    zone "_networkx_list_start"
+    zone "zone-A"
     collocated 1
     metadata [
       name "test"

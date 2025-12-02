@@ -17,9 +17,8 @@ graph [
       ssd 1
       gpu 1
     ]
-    zone [
-      Zone_Y 1
-    ]
+    zone "_networkx_list_start"
+    zone "Zone_Y"
     collocated 0
     metadata [
       name "Pod_2"

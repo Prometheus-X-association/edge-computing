@@ -17,10 +17,9 @@ from operator import le
 
 import networkx as nx
 
-log = logging.getLogger(__name__)
+from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
 
-RESOURCES = ('cpu', 'memory', 'storage')
-CAPABILITIES = ('ssd', 'gpu')
+log = logging.getLogger(__name__)
 
 
 def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, None]:
@@ -31,7 +30,7 @@ def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, 
     :return:
     """
     log.debug(f"Calculated pod[{pod.name}] info:")
-    pod_zones = set(z for _c in pod for z, v in pod.nodes[_c]['zone'].items() if v)
+    pod_zones = set(z for _c in pod for z in pod.nodes[_c]['zone'])
     log.debug(f"\t- zones: {pod_zones}")
     pod_res = list(map(sum, (map(lambda c: pod.nodes[c]['demand'][_r], pod.nodes) for _r in RESOURCES)))
     log.debug(f"\t- resources: {dict(zip(RESOURCES, pod_res))}")
@@ -40,7 +39,7 @@ def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, 
     log.info(f"Filtering nodes from {topo.name}...")
     for node, ndata in topo.nodes(data=True):
         log.debug(f"Collected node[{node}] info:")
-        node_zone = set(z for z, v in ndata['zone'].items() if v)
+        node_zone = set(ndata['zone'])
         log.debug(f"\t- zones: {node_zone}")
         log.debug(f"\t- resources: {ndata['resource']}")
         log.debug(f"\t- capabilities: {ndata['capability']}")
@@ -78,3 +77,20 @@ def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str | Non
     selected_node = random_schedule(nodes=filtered_node_list)
     log.debug(f"Selected node ID: {selected_node}")
     return selected_node
+
+
+########################################################################################################################
+
+def test_random_offline(topo_file: str, pod_file: str):
+    topo_data = read_topo_from_file(topo_file)
+    pod_data = read_pod_from_file(pod_file)
+    best_node = do_random_pod_schedule(topo_data, pod_data)
+
+    node_name = topo_data.nodes[best_node]["metadata"]["name"]
+    print("Selected node:", node_name)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    test_random_offline("../../resources/example_input_topology.gml", "../../resources/example_input_pod.gml")
+    test_random_offline("../../resources/example_k3s_topology.gml", "../../resources/example_k3s_pod.gml")
