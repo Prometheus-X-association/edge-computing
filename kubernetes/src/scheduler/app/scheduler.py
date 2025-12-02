@@ -57,7 +57,15 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
         case _:
             log.error(f"Unknown scheduler method: {CONFIG['method']}")
             sys.exit(os.EX_USAGE)
-    if node_id is not None:
+    if node_id is None:
+        log.error(f"No feasible node is found by strategy: {CONFIG['method']}!")
+        raise_failed_k8s_scheduling_event(pod=pod_name,
+                                          ns=CONFIG['namespace'],
+                                          scheduler=CONFIG['scheduler'],
+                                          method=CONFIG['method'],
+                                          reason=f"0/{len(topo)} nodes match Pod's node affinity/selector.")
+        return "Failed"
+    else:
         selected_node = str(topo.nodes[node_id]["metadata"]["name"])
         log.info(f"Selected node name: {selected_node}")
         ret = assign_pod_to_node(pod=pod_name,
@@ -66,13 +74,6 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
                                  scheduler=CONFIG['scheduler'],
                                  method=CONFIG['method'])
         return "Success" if ret is not None else "Failed"
-    else:
-        log.error("Missing selected node!")
-        raise_failed_k8s_scheduling_event(pod=pod_name,
-                                          ns=CONFIG['namespace'],
-                                          scheduler=CONFIG['scheduler'],
-                                          method=CONFIG['method'])
-        return "Failed"
 
 
 def serve_forever(params: dict[str, ...]):
