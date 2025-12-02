@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 
 import networkx as nx  # python3 -m pip install networkx
 
@@ -76,8 +75,6 @@ import networkx as nx  # python3 -m pip install networkx
 # values. For example, this means it must handle the zero value as a requested pod resource, etc.
 
 ### Define input graph
-topo = nx.Graph(name='topology')
-pod = nx.Graph(name='pod')
 
 DEF_PRIVACY_ZONE = "default"
 PRIVACY_ZONE_X = "Zone_X"
@@ -211,32 +208,9 @@ edge_ab = {  # Defaults: 0 / inf
     "bw": 100  # Mbps
 }
 
-################ Assemble graph
-
-topo.add_node("node-a", **node_a)
-topo.add_node("node-b", **node_b)
-topo.add_edge("node-a", "node-b", **edge_ab)
-
-print(json.dumps(dict(topo.nodes()), indent=4, sort_keys=False))
-print(json.dumps(dict(topo.adjacency()), indent=4, sort_keys=False))
-
-pod.add_node("pod", **pod_j)
-
-print(json.dumps(dict(pod.nodes()), indent=4, sort_keys=False))
-print(json.dumps(dict(pod.adjacency()), indent=4, sort_keys=False))
-
-################ Serialize input/output
-
-if __name__ == '__main__':
-    nx.write_gml(topo, "example_input_topology.gml")
-    nx.write_gml(pod, "example_input_pod.gml")
-
-    with open("output.txt", 'w') as f:
-        f.write(NODE_B)
-
 ################ K3s test topology
 
-k3s_topo = {
+k3s_topo_data = {
     "k3d-dev-agent-0": {
         "resource": {
             "cpu": 4000,
@@ -250,8 +224,8 @@ k3s_topo = {
         },
         "zone": {
             "default": True,
-            "zone-A": True,
-            "zone-B": True
+            "zone_A": True,
+            "zone_B": True
         },
         "pdc": True,
         "capability": {
@@ -329,7 +303,7 @@ k3s_topo = {
     }
 }
 
-k3s_pod = {
+k3s_pod_data = {
     "test": {
         "priority": 0,
         "demand": {
@@ -347,7 +321,7 @@ k3s_pod = {
             "gpu": False
         },
         "zone": {
-            "zone-A": True
+            "zone_A": True
         },
         "collocated": True,
         "metadata": {
@@ -363,5 +337,39 @@ k3s_pod = {
     }
 }
 
-nx.write_gml(topo, "example_k3s_topology.gml")
-nx.write_gml(pod, "example_k3s_pod.gml")
+################ Serialize input/output
+
+if __name__ == '__main__':
+    topo = nx.Graph(name='topology')
+    pod = nx.Graph(name='pod')
+    topo.add_node("node-a", **node_a)
+    topo.add_node("node-b", **node_b)
+    topo.add_edge("node-a", "node-b", **edge_ab)
+
+    # print(json.dumps(dict(topo.nodes()), indent=4, sort_keys=False))
+    # print(json.dumps(dict(topo.adjacency()), indent=4, sort_keys=False))
+
+    pod.add_node("pod", **pod_j)
+
+    # print(json.dumps(dict(pod.nodes()), indent=4, sort_keys=False))
+    # print(json.dumps(dict(pod.adjacency()), indent=4, sort_keys=False))
+
+    nx.write_gml(topo, "example_input_topology.gml")
+    nx.write_gml(pod, "example_input_pod.gml")
+
+    with open("output.txt", 'w') as f:
+        f.write(NODE_B)
+
+    #####################################################################
+
+    k3s_topo = nx.Graph(name='topology')
+    k3s_pod = nx.Graph(name='pod')
+
+    for n, d in k3s_topo_data.items():
+        k3s_topo.add_node(n, **d)
+
+    for n, d in k3s_pod_data.items():
+        k3s_pod.add_node(n, **d)
+
+    nx.write_gml(k3s_topo, "example_k3s_topology.gml")
+    nx.write_gml(k3s_pod, "example_k3s_pod.gml")

@@ -2,96 +2,97 @@ graph [
   name "topology"
   node [
     id 0
-    label "node-a"
+    label "k3d-dev-agent-0"
     resource [
-      cpu 30000
-      memory 7992000
-      storage 990000
+      cpu 4000
+      memory 5035316
+      storage 95904111
     ]
     capacity [
-      cpu 32000
-      memory 8192000
-      storage 1000000
+      cpu 4000
+      memory 5035316
+      storage 95904111
     ]
     zone [
       default 1
-      Zone_X 1
-      Zone_Y 0
+      zone_A 1
+      zone_B 1
     ]
     pdc 1
     capability [
       ssd 0
-      gpu 0
+      gpu 1
     ]
     pod [
-      Pod_1 [
+      scheduler [
+        priority 0
         demand [
-          cpu 1000
-          memory 100000
-          storage 10000
+          cpu 0
+          memory 0
+          storage 0
           ssd 0
           gpu 0
         ]
         prefer [
-          cpu 2000
-          memory 200000
-          storage 10000
-          ssd 1
+          cpu 0
+          memory 0
+          storage 0
+          ssd 0
           gpu 0
         ]
         zone [
           default 1
-          Zone_X 1
         ]
-        collocated 1
+        collocated 0
         metadata [
-          name "Pod_1"
+          name "scheduler"
+          namespace "ptx-edge"
+          created "2025-12-01T13:40:20Z"
+          scheduler "default-scheduler"
+          status "Running"
+          labels [
+            app "scheduler"
+          ]
         ]
       ]
     ]
     metadata [
-      name "Node_A"
-      ip "192.168.0.1"
+      name "k3d-dev-agent-0"
       architecture "amd64"
-      os "Linux"
+      os "linux"
+      kernel "6.8.0-87-generic"
+      ip "172.21.0.3"
     ]
   ]
   node [
     id 1
-    label "node-b"
+    label "k3d-dev-server-0"
     resource [
-      cpu 64000
-      memory 10240000
-      storage 1000000
+      cpu 4000
+      memory 5035316
+      storage 95904111
     ]
     capacity [
-      cpu 64000
-      memory 10240000
-      storage 1000000
+      cpu 4000
+      memory 5035316
+      storage 95904111
     ]
     zone [
       default 1
-      Zone_X 1
-      Zone_Y 1
     ]
     pdc 0
     capability [
       ssd 1
-      gpu 1
+      gpu 0
     ]
     pod [
     ]
     metadata [
-      name "Node_B"
-      ip "192.168.0.2"
+      name "k3d-dev-server-0"
       architecture "amd64"
-      os "Linux"
+      os "linux"
+      kernel "6.8.0-87-generic"
+      ip "172.21.0.2"
     ]
-  ]
-  edge [
-    source 0
-    target 1
-    delay 10
-    bw 100
   ]
 ]

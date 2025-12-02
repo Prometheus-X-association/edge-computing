@@ -2,27 +2,35 @@ graph [
   name "pod"
   node [
     id 0
-    label "pod"
+    label "test"
+    priority 0
     demand [
-      cpu 4000
-      memory 200000
+      cpu 100
+      memory 92160
       storage 0
       ssd 0
-      gpu 1
+      gpu 0
     ]
     prefer [
-      cpu 8000
-      memory 1000000
+      cpu 500
+      memory 317440
       storage 0
-      ssd 1
-      gpu 1
+      ssd 0
+      gpu 0
     ]
     zone [
-      Zone_Y 1
+      zone_A 1
     ]
-    collocated 0
+    collocated 1
     metadata [
-      name "Pod_2"
+      name "test"
+      namespace "ptx-edge"
+      created "2025-12-01T14:34:36Z"
+      scheduler "ptx-edge-scheduler"
+      status "Pending"
+      labels [
+        app "worker"
+      ]
     ]
   ]
 ]
