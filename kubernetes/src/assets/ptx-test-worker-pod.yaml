@@ -1,3 +1,69 @@
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: test-pvc
+#  namespace: ptx-edge
+#  annotations:
+#    volumeType: local
+#  labels:
+#    app.kubernetes.io/name: test
+#    env: demo
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  storageClassName: local-path
+#  resources:
+#    requests:
+#      storage: 50Mi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: test-pv
+  namespace: ptx-edge
+  labels:
+    app: worker
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 10Mi
+  accessModes:
+    - ReadWriteOncePod
+  persistentVolumeReclaimPolicy: Delete
+  hostPath:
+    path: "/mnt/data"
+  volumeMode: Filesystem
+  claimRef: # Bind pv -> pvc directly, preventing others to bind
+    name: test-pvc
+    namespace: ptx-edge
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: privacy-zone.dataspace.ptx.org/zone-A
+              operator: In
+              values:
+                - "true"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+  namespace: ptx-edge
+spec:
+  storageClassName: ""  # "" Disable dynamic provisioning explicitly
+  accessModes:
+    - ReadWriteOncePod
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Mi
+  selector:
+    matchLabels:
+      app: worker # Filter potential pv
+  volumeName: test-pv  # Bind pvc -> pv directly
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,3 +89,11 @@ spec:
         limits:
           cpu: 500m
           memory: 310Mi
+      volumeMounts:
+        - mountPath: "/data"  # Mounts the volume at the "/data" directory inside the container
+          name: result-dir
+  volumes:
+    - name: result-dir
+      persistentVolumeClaim:
+        claimName: test-pvc
+---
