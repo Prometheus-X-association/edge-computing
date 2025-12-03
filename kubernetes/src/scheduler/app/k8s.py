@@ -43,33 +43,40 @@ def get_pods_by_node(node: str, ns: str) -> typing.Generator[client.V1Pod, None,
             yield pod
 
 
-def assign_pod_to_node(pod: str, ns: str, node: str, scheduler: str, method: str) -> bool | None:
+def assign_pod_to_node(pod: client.V1Pod, ns: str, node_meta: dict[str, ...], scheduler: str,
+                       method: str) -> bool | None:
     """
     
-    :param pod: 
-    :param ns: 
-    :param node: 
-    :param scheduler: 
+    :param pod:
+    :param ns:
+    :param node_meta:
+    :param scheduler:
     :param method: 
     :return: 
     """
-    log.info(f"Assigning pod[{pod}] to node[{node}]...")
-    binding_body = client.V1Binding(metadata=client.V1ObjectMeta(name=pod,
+    log.info(f"Assigning pod[{pod.metadata.name}] to node[{node_meta["name"]}]...")
+    binding_body = client.V1Binding(metadata=client.V1ObjectMeta(name=pod.metadata.name,
                                                                  namespace=ns),
-                                    target=client.V1ObjectReference(kind='Node',
-                                                                    name=node))
+                                    target=client.V1ObjectReference(api_version=node_meta['api_version'],
+                                                                    kind=node_meta['kind'],
+                                                                    name=node_meta['name'],
+                                                                    namespace=None,
+                                                                    resource_version=node_meta['resource_version'],
+                                                                    uid=node_meta['uid']))
     log.debug(f"Created binding body:\n{json.dumps(deep_filter(binding_body.to_dict()), indent=4, default=str)}")
     try:
         # Disable automatic response deserialization to bypass issue: https://github.com/kubernetes-client/python/issues/825
         client.CoreV1Api().create_namespaced_binding(namespace=ns, body=binding_body, _preload_content=False)
-        raise_successful_k8s_scheduling_event(pod=pod, ns=ns, node=node, scheduler=scheduler, method=method)
+        raise_successful_k8s_scheduling_event(pod=pod, ns=ns, node=node_meta["name"], scheduler=scheduler,
+                                              method=method)
         return True
     except client.ApiException as e:
         log.error(f"Error received:\n{e}")
         raise_failed_k8s_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, method=method, reason=e.reason)
 
 
-def create_scheduling_event(pod: str, ns: str, scheduler: str, level: str, result: str, msg: str) -> client.CoreV1Event:
+def create_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str,
+                            level: str, result: str, msg: str) -> client.CoreV1Event:
     """
 
     :param pod:
@@ -80,26 +87,30 @@ def create_scheduling_event(pod: str, ns: str, scheduler: str, level: str, resul
     :param msg:
     :return:
     """
-    log.info(f"Create scheduling event for pod[{pod}]...")
-    timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    log.info(f"Create scheduling event for pod[{pod.metadata.name}]...")
+    timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     event_body = client.CoreV1Event(metadata=client.V1ObjectMeta(namespace=ns,
-                                                                 name=f"{pod}.{time.time()}",
+                                                                 name=f"{pod.metadata.name}.{time.time()}",
                                                                  creation_timestamp=timestamp),
                                     type=level,
                                     action="Binding",
                                     reason=result,
                                     message=msg,
-                                    involved_object=client.V1ObjectReference(kind="Pod",
-                                                                             name=pod,
-                                                                             namespace=ns),
-                                    reporting_component=scheduler,
-                                    first_timestamp=timestamp,
-                                    last_timestamp=timestamp)
+                                    involved_object=client.V1ObjectReference(
+                                        api_version=pod.api_version,
+                                        kind=pod.kind,
+                                        name=pod.metadata.name,
+                                        namespace=pod.metadata.namespace,
+                                        resource_version=pod.metadata.resource_version,
+                                        uid=pod.metadata.uid),
+                                    reporting_component="default-scheduler",
+                                    reporting_instance="default-scheduler",
+                                    event_time=timestamp)
     log.debug(f"Created event body:\n{json.dumps(deep_filter(event_body.to_dict()), indent=4, default=str)}")
     return event_body
 
 
-def raise_successful_k8s_scheduling_event(pod: str, ns: str, node: str, scheduler: str, method: str):
+def raise_successful_k8s_scheduling_event(pod: client.V1Pod, ns: str, node: str, scheduler: str, method: str):
     """
     
     :param pod: 
@@ -110,7 +121,7 @@ def raise_successful_k8s_scheduling_event(pod: str, ns: str, node: str, schedule
     :return: 
     """
     event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Normal", result="Scheduled",
-                                         msg=f"Successfully assigned {ns}/{pod} to {node} "
+                                         msg=f"Successfully assigned {ns}/{pod.metadata.name} to {node} "
                                              f"by scheduler: {scheduler}[{method}]")
     try:
         client.CoreV1Api().create_namespaced_event(namespace=ns, body=event_body)
@@ -118,7 +129,8 @@ def raise_successful_k8s_scheduling_event(pod: str, ns: str, node: str, schedule
         log.error(f"Error received:\n{e}")
 
 
-def raise_failed_k8s_scheduling_event(pod: str, ns: str, scheduler: str, method: str, reason: str = "Unexpected error"):
+def raise_failed_k8s_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str, method: str,
+                                      reason: str = "Unexpected error"):
     """
 
     :param pod:
@@ -129,7 +141,7 @@ def raise_failed_k8s_scheduling_event(pod: str, ns: str, scheduler: str, method:
     :return:
     """
     event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Warning", result="Failed",
-                                         msg=f"Failed to assign {ns}/{pod} to a node "
+                                         msg=f"Failed to assign {ns}/{pod.metadata.name} to a node "
                                              f"by scheduler: {scheduler}[{method}]. "
                                              f"Reason: {reason}")
     try:

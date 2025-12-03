@@ -62,12 +62,20 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
                      if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [DEF_PZ],
         'collocated': str2bool(pod.spec.node_selector.get(LABEL_PDC_ENABLED)) if pod.spec.node_selector else False,
         'metadata': {
+            'api_version': "v1",
+            'kind': "Pod",
             'name': pod.metadata.name,
             'namespace': pod.metadata.namespace,
-            'created': pod.metadata.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            'scheduler': pod.spec.scheduler_name,
-            'status': pod.status.phase,
-            'labels': copy.deepcopy(pod.metadata.labels)
+            'resource_version': pod.metadata.resource_version,
+            'uid': pod.metadata.uid,
+            'labels': copy.deepcopy(pod.metadata.labels),
+            'info': {
+                'creation_timestamp': pod.metadata.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'node': pod.spec.node_name,
+                'scheduler': pod.spec.scheduler_name,
+                'status': pod.status.phase,
+                'ip': pod.status.pod_ip
+            }
         }
     }
     # TODO - check PZ in affinity rules
@@ -125,11 +133,17 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
             'pod': {p.metadata.name: convert_pod_to_nx(p).nodes[p.metadata.name]
                     for p in get_pods_by_node(node=node.metadata.name, ns=ns)},
             'metadata': {
+                'api_version': "v1",
+                'kind': "Node",
                 'name': node.metadata.name,
-                'architecture': node.status.node_info.architecture,
-                'os': node.status.node_info.operating_system,
-                'kernel': node.status.node_info.kernel_version,
-                'ip': ",".join(a.address for a in node.status.addresses if a.type == 'InternalIP')
+                'resource_version': node.metadata.resource_version,
+                'uid': node.metadata.uid,
+                'info': {
+                    'architecture': node.status.node_info.architecture,
+                    'os': node.status.node_info.operating_system,
+                    'kernel': node.status.node_info.kernel_version,
+                    'ip': ",".join(a.address for a in node.status.addresses if a.type == 'InternalIP')
+                }
             }
         }
         topo_obj.add_node(node.metadata.name, **node_data)

@@ -277,6 +277,7 @@ run-test-secret:
 
 run-test-pod:
 	kubectl delete -f "${ASSETS}/ptx-test-worker-pod.yaml" || true
+	kubectl delete event --all || true
 	kubectl apply -f "${ASSETS}/ptx-test-worker-pod.yaml"
 	${MAKE} status
 	kubectl wait --for="condition=ContainersReady" pod/test

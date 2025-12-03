@@ -36,22 +36,21 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
     :param params:
     :return:
     """
-    pod_name = pod.metadata.name
-    log.info(f"Scheduling pod[{pod_name}] in namespace: {CONFIG['namespace']} using method: {CONFIG['method']}")
-    topo = convert_topo_to_nx(ns=pod.metadata.namespace)
-    log.info(f"Collected topology info: {topo}")
-    log.debug(f"{topo.name}:\n{nx_graph_to_str(topo)}")
-    pod = convert_pod_to_nx(pod=pod)
-    log.info(f"Collected Pod info: {pod}")
-    log.debug(f"{pod.name}:\n{nx_graph_to_str(pod)}")
+    log.info(f"Scheduling pod[{pod.metadata.name}] in namespace: {CONFIG['namespace']} with method: {CONFIG['method']}")
+    topo_nx = convert_topo_to_nx(ns=pod.metadata.namespace)
+    log.info(f"Collected topology info: {topo_nx}")
+    log.debug(f"{topo_nx.name}:\n{nx_graph_to_str(topo_nx)}")
+    pod_nx = convert_pod_to_nx(pod=pod)
+    log.info(f"Collected Pod info: {pod_nx}")
+    log.debug(f"{pod_nx.name}:\n{nx_graph_to_str(pod_nx)}")
     node_id = None
     match CONFIG['method']:
         case 'random':
             log.info("Initiate <RANDOM> node selection")
-            node_id = do_random_pod_schedule(topo=topo, pod=pod, **params)
+            node_id = do_random_pod_schedule(topo=topo_nx, pod=pod_nx, **params)
         case 'genetic':
             log.info("Initiate <GA> node selection")
-            node_id = do_ga_pod_schedule(topo=topo, pod=pod, **params)
+            node_id = do_ga_pod_schedule(topo=topo_nx, pod=pod_nx, **params)
         case 'linear':
             raise NotImplementedError
         case _:
@@ -59,18 +58,18 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
             sys.exit(os.EX_USAGE)
     if node_id is None:
         log.error(f"No feasible node is found by strategy: {CONFIG['method']}!")
-        raise_failed_k8s_scheduling_event(pod=pod_name,
+        raise_failed_k8s_scheduling_event(pod=pod,
                                           ns=CONFIG['namespace'],
                                           scheduler=CONFIG['scheduler'],
                                           method=CONFIG['method'],
-                                          reason=f"0/{len(topo)} nodes match Pod's node affinity/selector.")
+                                          reason=f"0/{len(topo_nx)} nodes match Pod's node affinity/selector.")
         return "Failed"
     else:
-        selected_node = str(topo.nodes[node_id]["metadata"]["name"])
-        log.info(f"Selected node name: {selected_node}")
-        ret = assign_pod_to_node(pod=pod_name,
+        selected_node_name = str(topo_nx.nodes[node_id]["metadata"]["name"])
+        log.info(f"Selected node name: {selected_node_name}")
+        ret = assign_pod_to_node(pod=pod,
                                  ns=CONFIG['namespace'],
-                                 node=selected_node,
+                                 node_meta=topo_nx.nodes[node_id]['metadata'],
                                  scheduler=CONFIG['scheduler'],
                                  method=CONFIG['method'])
         return "Success" if ret is not None else "Failed"
