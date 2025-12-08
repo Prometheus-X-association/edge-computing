@@ -39,12 +39,7 @@
 
 status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
-	@-kubectl -n ptx-sandbox get all --ignore-not-found
-	@echo
-	@-kubectl get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress \
- 			--ignore-not-found
-	@echo
-	@-kubectl events
+	bash 0-status.sh
 
 clear:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done

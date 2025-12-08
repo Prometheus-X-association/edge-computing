@@ -20,7 +20,7 @@ metadata:
 rules:
   - apiGroups: [ "", ]
     resources: [ "pods" ]
-    verbs: [ "watch" ]
+    verbs: [ "watch", "list" ]
   - apiGroups: [ "", ]
     resources: [ "bindings", "events" ]
     verbs: [ "create" ]

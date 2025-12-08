@@ -36,7 +36,7 @@ ${KCTL} cluster-info
 log "Create Zone A"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_A}" --cluster="${CLUSTER}" --replicas=2 --role=agent
 ${KCTL} label "node/k3d-${NODE_A}-0" "node/k3d-${NODE_A}-1" \
-                "disktype=hdd" \
+                "hardware/disktype=hdd" \
                 "node-role.kubernetes.io/worker=true" \
                 "privacy-zone.dataspace.ptx.org/${PZ_A}=true"
 ${KCTL} label "node/k3d-${NODE_A}-0" \
@@ -45,7 +45,7 @@ ${KCTL} label "node/k3d-${NODE_A}-0" \
 log "Create Zone B"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_B}" --cluster="${CLUSTER}" --replicas=2 --role=agent
 ${KCTL} label "node/k3d-${NODE_B}-0" "node/k3d-${NODE_B}-1" \
-                "disktype=ssd" \
+                "hardware/disktype=ssd" \
                 "node-role.kubernetes.io/worker=true" \
                 "privacy-zone.dataspace.ptx.org/${PZ_B}=true"
 ${KCTL} label "node/k3d-${NODE_B}-0" \
@@ -54,10 +54,13 @@ ${KCTL} label "node/k3d-${NODE_B}-0" \
 log "Add multi-zone node"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_AB}" --cluster="${CLUSTER}" --replicas=1 --role=agent
 ${KCTL} label "node/k3d-${NODE_AB}-0" \
-                "disktype=hdd" \
+                "hardware/disktype=hdd" \
                 "node-role.kubernetes.io/worker=true" \
                 "privacy-zone.dataspace.ptx.org/${PZ_A}=true" \
                 "privacy-zone.dataspace.ptx.org/${PZ_B}=true"
+
+log "Reserve mount points for persistent volumes..."
+docker container ls -qf "name=k3d-node-" -f "name=k3d-demo-server-" | xargs -rI {} docker exec {} sh -c 'mkdir -pv /var/cache/storage'
 
 LOG "Load components into registry: ${K3D_REG}"
 for img in ${PDC_IMG} ${MONGODB_IMG} ${BUILDER_IMG} ${API_IMG} ${SCHED_IMG} ${CATALOG_IMG}; do

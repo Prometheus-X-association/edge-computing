@@ -4,8 +4,9 @@
 #metadata:
 #  name: test-pvc
 #  namespace: ptx-edge
-#  annotations:
-#    volumeType: local
+##  annotations:
+##    volumeType: local
+##    volume.kubernetes.io/selected-node: k3d-dev-agent-0
 #  labels:
 #    app.kubernetes.io/name: test
 #    env: demo
@@ -17,6 +18,18 @@
 #    requests:
 #      storage: 50Mi
 ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ptx-edge-local
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+reclaimPolicy: Delete
+allowVolumeExpansion: false
+provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
+#volumeBindingMode: WaitForFirstConsumer
+volumeBindingMode: Immediate
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -25,14 +38,16 @@ metadata:
   labels:
     app: worker
 spec:
-  storageClassName: ""
+  #  storageClassName: "" # Disable dynamic provisioning explicitly
+  storageClassName: ptx-edge-local
   capacity:
     storage: 10Mi
   accessModes:
-    - ReadWriteOncePod
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
-  hostPath:
-    path: "/mnt/data"
+  #hostPath:
+  local:
+    path: "/var/lib/rancher/k3s/storage"
   volumeMode: Filesystem
   claimRef: # Bind pv -> pvc directly, preventing others to bind
     name: test-pvc
@@ -52,16 +67,17 @@ metadata:
   name: test-pvc
   namespace: ptx-edge
 spec:
-  storageClassName: ""  # "" Disable dynamic provisioning explicitly
+  #  storageClassName: ""  # Disable dynamic provisioning explicitly
+  storageClassName: ptx-edge-local
   accessModes:
-    - ReadWriteOncePod
+    - ReadWriteOnce
   volumeMode: Filesystem
   resources:
     requests:
       storage: 10Mi
   selector:
     matchLabels:
-      app: worker # Filter potential pv
+      app: worker # Filter potential pv in case of no direct binding
   volumeName: test-pv  # Bind pvc -> pv directly
 ---
 apiVersion: v1
