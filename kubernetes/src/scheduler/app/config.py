@@ -22,16 +22,19 @@ from kubernetes import config
 log = logging.getLogger(__name__)
 
 DEF_SCHEDULER_NAME = "ptx-edge-scheduler"
-DEF_SCHEDULER_METHOD = "random"
+DEF_WATCHED_NAMESPACE = "ptx-edge"
+DEF_SCHEDULER_METHOD = "genetic"
+DEF_FALLBACK_METHOD = "random"
 NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 CONFIG = {
-    'method': os.getenv('METHOD', DEF_SCHEDULER_METHOD),
     'scheduler': os.getenv('SCHEDULER', DEF_SCHEDULER_NAME),
-    'namespace': os.getenv('NAMESPACE')
+    'namespace': os.getenv('NAMESPACE', DEF_WATCHED_NAMESPACE),
+    'method': os.getenv('METHOD', DEF_SCHEDULER_METHOD),
+    'fallback': os.getenv('FALLBACK', DEF_FALLBACK_METHOD)
 }
 
-REQUIRED_FIELDS = ('method', 'namespace', 'scheduler')
+REQUIRED_FIELDS = ('method', 'fallback', 'namespace', 'scheduler')
 
 
 def setup_config(params: dict[str, typing.Any]):
@@ -42,7 +45,7 @@ def setup_config(params: dict[str, typing.Any]):
     """
     log.info("Loading configuration...")
     CONFIG.update(kv for kv in params.items() if kv[1] is not None)
-    if CONFIG.get('namespace') is None and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve(strict=True)).exists():
+    if bool(CONFIG['namespace']) and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve(strict=False)).exists():
         CONFIG['namespace'] = kube_cfg_ns.read_text()
     if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
         log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")

@@ -46,6 +46,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'memory': sum(bits2int(c.resources.requests.get('memory', 0))
                           for c in pod.spec.containers if c.resources and c.resources.requests),
             'storage': 0,  # Not supported directly in K8s
+            # TODO - EmptyDir(default) counts from ephemeral storage, EmptyDir("Memory") allocates memory (tmpfs)
             'ssd': pod.spec.node_selector.get(LABEL_DISK_PREFIX) == 'ssd' if pod.spec.node_selector else False,
             'gpu': str2bool(pod.spec.node_selector.get(LABEL_GPU_SUPPORT) if pod.spec.node_selector else False)
         },
@@ -79,6 +80,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
         }
     }
     # TODO - check PZ in affinity rules
+    # TODO - add links and link metrics
     return pod_data
 
 

@@ -58,6 +58,7 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
             sys.exit(os.EX_USAGE)
     if node_id is None:
         log.error(f"No feasible node is found by strategy: {CONFIG['method']}!")
+        # TODO - add fallback strategy in case the primary fails
         raise_failed_k8s_scheduling_event(pod=pod,
                                           ns=CONFIG['namespace'],
                                           scheduler=CONFIG['scheduler'],
