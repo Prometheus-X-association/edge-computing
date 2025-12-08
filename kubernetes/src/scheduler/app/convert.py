@@ -80,7 +80,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
         }
     }
     # TODO - check PZ in affinity rules
-    # TODO - add links and link metrics
+    # TODO - also consider affinity rules in pod's PVC node affinity
     return pod_data
 
 
@@ -149,6 +149,7 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
             }
         }
         topo_obj.add_node(node.metadata.name, **node_data)
+    # TODO - add links (full mesh?) and link metrics
     __post_process_topo(topo_obj)
     return topo_obj
 
