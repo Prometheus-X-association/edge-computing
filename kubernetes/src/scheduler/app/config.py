@@ -31,7 +31,16 @@ CONFIG = {
     'scheduler': os.getenv('SCHEDULER', DEF_SCHEDULER_NAME),
     'namespace': os.getenv('NAMESPACE', DEF_WATCHED_NAMESPACE),
     'method': os.getenv('METHOD', DEF_SCHEDULER_METHOD),
-    'fallback': os.getenv('FALLBACK', DEF_FALLBACK_METHOD)
+    'fallback': os.getenv('FALLBACK', DEF_FALLBACK_METHOD),
+    'params': {
+        'genetic': {
+            'tournament_ratio': 1.0,
+            'pheno_groups': 2
+        },
+        'random': {
+            'seed': 42
+        }
+    }
 }
 
 REQUIRED_FIELDS = ('method', 'fallback', 'namespace', 'scheduler')
@@ -59,13 +68,14 @@ def setup_config(params: dict[str, typing.Any]):
         sys.exit(os.EX_CONFIG)
 
 
-def param_parser(params: str = None) -> dict:
+def param_parser(method: str = None, params: str = None) -> dict:
     """
 
+    :param method:
     :param params:
     :return:
     """
-    kv_dict = {}
+    kv_dict = CONFIG.get('params', {}).get(method, {})
     if params:
         for p in params.split(","):
             if len(kv := p.split('=', maxsplit=1)) == 2:

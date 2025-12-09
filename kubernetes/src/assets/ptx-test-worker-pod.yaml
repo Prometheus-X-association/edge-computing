@@ -26,9 +26,9 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "false"
 reclaimPolicy: Delete
 allowVolumeExpansion: false
-provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
-#volumeBindingMode: WaitForFirstConsumer
-volumeBindingMode: Immediate
+provisioner: kubernetes.io/no-provisioner # Indicates that this StorageClass does not support automatic provisioning
+#volumeBindingMode: WaitForFirstConsumer  # Allow (default) scheduler to consider PV nodeaffinity with pod requirements
+volumeBindingMode: Immediate  # Bind PVC to PV immediately, useful in exclusive bind with custom scheduler
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -47,12 +47,12 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   #hostPath:
   local:
-    path: "/var/lib/rancher/k3s/storage"
+    path: "/var/lib/rancher/k3s"  # Mount path from the local node (must exist)
   volumeMode: Filesystem
-  claimRef: # Bind pv -> pvc directly, preventing others to bind
+  claimRef: # Static bind pv -> pvc, preventing other PVCs to bind
     name: test-pvc
     namespace: ptx-edge
-  nodeAffinity:
+  nodeAffinity: # PV type local must have nodeaffinity so as spec device/folder must exist on the assigned node
     required:
       nodeSelectorTerms:
         - matchExpressions:
@@ -77,7 +77,7 @@ spec:
       storage: 10Mi
   selector:
     matchLabels:
-      app: worker # Filter potential pv in case of no direct binding
+      app: worker # Filter potential pv in case of dynamic PVC -> PV assignment (no direct binding)
   volumeName: test-pv  # Bind pvc -> pv directly
 ---
 apiVersion: v1
@@ -107,7 +107,9 @@ spec:
           memory: 310Mi
       volumeMounts:
         - mountPath: "/data"  # Mounts the volume at the "/data" directory inside the container
+          subPath: "storage/result" # Create subpath(folders) in the mount volume
           name: result-dir
+
   volumes:
     - name: result-dir
       persistentVolumeClaim:

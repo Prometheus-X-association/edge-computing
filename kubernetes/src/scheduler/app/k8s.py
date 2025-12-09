@@ -72,18 +72,19 @@ def assign_pod_to_node(pod: client.V1Pod, ns: str, node_meta: dict[str, ...], sc
         return True
     except client.ApiException as e:
         log.error(f"Error received:\n{e}")
-        raise_failed_k8s_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, method=method, reason=e.reason)
+        raise_failed_k8s_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, method=method, reason=e.reason,
+                                          msg=json.loads(e.body).get("message"))
 
 
 def create_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str,
-                            level: str, result: str, msg: str) -> client.CoreV1Event:
+                            level: str, reason: str, msg: str) -> client.CoreV1Event:
     """
 
     :param pod:
     :param ns:
     :param scheduler:
     :param level:
-    :param result:
+    :param reason:
     :param msg:
     :return:
     """
@@ -94,7 +95,7 @@ def create_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str,
                                                                  creation_timestamp=timestamp),
                                     type=level,
                                     action="Binding",
-                                    reason=result,
+                                    reason=reason,
                                     message=msg,
                                     involved_object=client.V1ObjectReference(
                                         api_version=pod.api_version,
@@ -103,8 +104,8 @@ def create_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str,
                                         namespace=pod.metadata.namespace,
                                         resource_version=pod.metadata.resource_version,
                                         uid=pod.metadata.uid),
-                                    reporting_component="default-scheduler",
-                                    reporting_instance="default-scheduler",
+                                    reporting_component=scheduler,
+                                    reporting_instance=scheduler,
                                     event_time=timestamp)
     log.debug(f"Created event body:\n{json.dumps(deep_filter(event_body.to_dict()), indent=4, default=str)}")
     return event_body
@@ -120,7 +121,7 @@ def raise_successful_k8s_scheduling_event(pod: client.V1Pod, ns: str, node: str,
     :param method: 
     :return: 
     """
-    event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Normal", result="Scheduled",
+    event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Normal", reason="Scheduled",
                                          msg=f"Successfully assigned {ns}/{pod.metadata.name} to {node} "
                                              f"by scheduler: {scheduler}[{method}]")
     try:
@@ -130,7 +131,7 @@ def raise_successful_k8s_scheduling_event(pod: client.V1Pod, ns: str, node: str,
 
 
 def raise_failed_k8s_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str, method: str,
-                                      reason: str = "Unexpected error"):
+                                      reason: str = "Failed", msg: str = "Unexpected error"):
     """
 
     :param pod:
@@ -138,12 +139,13 @@ def raise_failed_k8s_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str
     :param scheduler:
     :param method:
     :param reason:
+    :param msg:
     :return:
     """
-    event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Warning", result="Failed",
+    event_body = create_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, level="Warning", reason=reason,
                                          msg=f"Failed to assign {ns}/{pod.metadata.name} to a node "
                                              f"by scheduler: {scheduler}[{method}]. "
-                                             f"Reason: {reason}")
+                                             f"Reason: {msg}")
     try:
         client.CoreV1Api().create_namespaced_event(namespace=ns, body=event_body)
     except client.ApiException as e:
