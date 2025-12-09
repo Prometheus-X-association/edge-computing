@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import enum
+import importlib
 import logging
 import os
 import pathlib
@@ -22,11 +24,21 @@ from app import __version__
 from app.config import CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME, setup_config, param_parser
 from app.convert import convert_topo_to_nx, convert_pod_to_nx
 from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
-from app.method.ga_scheduler import do_ga_pod_schedule
-from app.method.random_scheduler import do_random_pod_schedule
 from app.utils import setup_logging, nx_graph_to_str
 
 log = logging.getLogger(__name__)
+
+
+class SchedulerStrategy(enum.Enum):
+    RANDOM = "app.method.random_scheduler.do_random_pod_schedule"
+    GENETIC = "app.method.ga_scheduler.do_ga_pod_schedule"
+
+    def get_algorithm(self):
+        try:
+            _module, _algorithm = self.value.rsplit('.', maxsplit=1)
+            return getattr(importlib.import_module(_module), _algorithm)
+        except AttributeError:
+            raise NotImplementedError(f"Unknown scheduler algorithm!")
 
 
 def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
@@ -43,37 +55,46 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
     pod_nx = convert_pod_to_nx(pod=pod)
     log.info(f"Collected Pod info: {pod_nx}")
     log.debug(f"{pod_nx.name}:\n{nx_graph_to_str(pod_nx)}")
-    node_id = None
-    match CONFIG['method']:
-        case 'random':
-            log.info("Initiate <RANDOM> node selection")
-            node_id = do_random_pod_schedule(topo=topo_nx, pod=pod_nx, **params)
-        case 'genetic':
-            log.info("Initiate <GA> node selection")
-            node_id = do_ga_pod_schedule(topo=topo_nx, pod=pod_nx, **params)
-        case 'linear':
-            raise NotImplementedError
-        case _:
-            log.error(f"Unknown scheduler method: {CONFIG['method']}")
-            sys.exit(os.EX_USAGE)
+    try:
+        method = SchedulerStrategy[CONFIG['method'].upper()]
+        scheduler_algorithm = method.get_algorithm()
+    except KeyError:
+        log.error(f"Unknown scheduler method: {CONFIG['method']}")
+        sys.exit(os.EX_USAGE)
+    log.info(f"Initiate node selection: {method}")
+    log.debug(f"Used parameters: {params}")
+    node_id = scheduler_algorithm(topo=topo_nx, pod=pod_nx, **params)
     if node_id is None:
-        log.error(f"No feasible node is found by strategy: {CONFIG['method']}!")
-        # TODO - add fallback strategy in case the primary fails
+        log.error(f"No feasible node is found by strategy: {method.name}!")
+        if CONFIG.get('fallback'):
+            log.info(f"Falling back to {CONFIG['fallback']}!")
+            try:
+                fallback_method = SchedulerStrategy[CONFIG['fallback'].upper()]
+                fallback_algorithm = fallback_method.get_algorithm()
+            except KeyError:
+                log.error(f"Unknown scheduler method: {CONFIG['fallback']}")
+                sys.exit(os.EX_USAGE)
+            log.info(f"Initiate node selection: {fallback_method}")
+            fallback_params = param_parser(method=CONFIG['fallback'])
+            log.debug(f"Used parameters: {fallback_params}")
+            node_id = fallback_algorithm(topo=topo_nx, pod=pod_nx, **fallback_params)
+            if node_id is None:
+                log.error(f"No feasible node is found by strategy: {fallback_method}!")
+    if node_id is None:
         raise_failed_k8s_scheduling_event(pod=pod,
                                           ns=CONFIG['namespace'],
                                           scheduler=CONFIG['scheduler'],
                                           method=CONFIG['method'],
-                                          reason=f"0/{len(topo_nx)} nodes match Pod's node affinity/selector.")
+                                          msg=f"0/{len(topo_nx)} nodes match Pod's node affinity/selector.")
         return "Failed"
-    else:
-        selected_node_name = str(topo_nx.nodes[node_id]["metadata"]["name"])
-        log.info(f"Selected node name: {selected_node_name}")
-        ret = assign_pod_to_node(pod=pod,
-                                 ns=CONFIG['namespace'],
-                                 node_meta=topo_nx.nodes[node_id]['metadata'],
-                                 scheduler=CONFIG['scheduler'],
-                                 method=CONFIG['method'])
-        return "Success" if ret is not None else "Failed"
+    selected_node_name = str(topo_nx.nodes[node_id]["metadata"]["name"])
+    log.info(f"Selected node name: {selected_node_name}")
+    ret = assign_pod_to_node(pod=pod,
+                             ns=CONFIG['namespace'],
+                             node_meta=topo_nx.nodes[node_id]['metadata'],
+                             scheduler=CONFIG['scheduler'],
+                             method=CONFIG['method'])
+    return "Success" if ret is not None else "Failed"
 
 
 def serve_forever(params: dict[str, ...]):
@@ -134,7 +155,8 @@ def main():
     ################# Setup configuration
     setup_logging(verbosity=args.verbose)
     setup_config(params=vars(args))
-    params = param_parser(params=args.parameters)
+    params = param_parser(method=args.method if args.method else CONFIG['method'], params=args.parameters)
+    log.debug(f"Parsed params: {params}")
     ################# Handle scheduling events
     try:
         serve_forever(params=params)

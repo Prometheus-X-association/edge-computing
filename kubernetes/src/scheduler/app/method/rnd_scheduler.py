@@ -9,10 +9,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import itertools as it
 import logging
-import random
+import random as rnd
 import typing
-from itertools import starmap
 from operator import le
 
 import networkx as nx
@@ -44,8 +44,8 @@ def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, 
         log.debug(f"\t- resources: {ndata['resource']}")
         log.debug(f"\t- capabilities: {ndata['capability']}")
         if (pod_zones & node_zone
-                and all(starmap(le, zip(pod_res, (ndata['resource'][_r] for _r in RESOURCES))))
-                and all(starmap(le, zip(pod_cap, (ndata['capability'][_r] for _r in CAPABILITIES))))):
+                and all(it.starmap(le, zip(pod_res, (ndata['resource'][_r] for _r in RESOURCES))))
+                and all(it.starmap(le, zip(pod_cap, (ndata['capability'][_r] for _r in CAPABILITIES))))):
             log.info(f">>> Feasible node found: {node}")
             yield node
 
@@ -57,23 +57,24 @@ def random_schedule(nodes: list[str]) -> str | None:
     :return:
     """
     try:
-        return random.choice(nodes)
+        return rnd.choice(nodes)
     except IndexError:
         return None
 
 
-def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str | None:
+def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, seed: int = None, **kwargs) -> str | None:
     """
 
     :param topo:
     :param pod:
+    :param seed:
     :return:
     """
     filtered_node_list = list(_filter_nodes(topo=topo, pod=pod))
     log.debug(f"Filtered nodes: {filtered_node_list}")
-    log.debug("Apply random node selection...")
-    if 'seed' in params:
-        random.seed(params['seed'])
+    log.debug("Apply RND node selection...")
+    if seed is not None:
+        rnd.seed(seed)
     selected_node = random_schedule(nodes=filtered_node_list)
     log.debug(f"Selected node ID: {selected_node}")
     return selected_node
