@@ -89,6 +89,7 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
         return "Failed"
     selected_node_name = str(topo_nx.nodes[node_id]["metadata"]["name"])
     log.info(f"Selected node name: {selected_node_name}")
+    # TODO - wait for all PVC to be bounded before pod assignment
     ret = assign_pod_to_node(pod=pod,
                              ns=CONFIG['namespace'],
                              node_meta=topo_nx.nodes[node_id]['metadata'],

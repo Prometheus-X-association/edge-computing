@@ -16,7 +16,7 @@ import random as rnd
 
 import networkx as nx
 
-from app.convert import read_topo_from_file, read_pod_from_file
+from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
 
 log = logging.getLogger(__name__)
 
@@ -32,12 +32,9 @@ def satisfies_hard_constraints(pod: dict[str, ...], node_attr: dict[str, ...]) -
     :return:
     """
     if (not set(pod["zone"]).intersection(node_attr["zone"])
-            or (pod["collocated"] and not node_attr["pdc"])
-            or node_attr["resource"]["cpu"] < pod["demand"]["cpu"]
-            or node_attr["resource"]["memory"] < pod["demand"]["memory"]
-            or node_attr["resource"]["storage"] < pod["demand"]["storage"]
-            or (pod["demand"]["gpu"] and not node_attr["capability"]["gpu"])
-            or (pod["demand"]["ssd"] and not node_attr["capability"]["ssd"])):
+            or (node_attr["pdc"] < pod["collocated"])
+            or any(it.starmap(op.lt, ((node_attr["resource"][_r], pod["demand"][_r]) for _r in RESOURCES)))
+            or any(it.starmap(op.lt, ((node_attr["capability"][_c], pod["demand"][_c]) for _c in CAPABILITIES)))):
         return False
     else:
         return True
@@ -53,12 +50,12 @@ def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
     :param pod:
     :return:
     """
-    return sum(((node_attr["resource"]["cpu"] - pod["demand"]["cpu"]) / 10,
-                (node_attr["resource"]["memory"] - pod["demand"]["memory"]) / 100,
-                (node_attr["resource"]["storage"] - pod["demand"]["storage"]) / 100,
-                5 if pod["prefer"]["gpu"] and node_attr["capability"]["gpu"] else 0,
-                3 if pod["prefer"]["ssd"] and node_attr["capability"]["ssd"] else 0,
-                1 if not pod["collocated"] and node_attr["pdc"] else 0),
+    return sum(((node_attr["resource"]["cpu"] - pod["demand"]["cpu"]) / 10,  # More cpu is better despite demand
+                (node_attr["resource"]["memory"] - pod["demand"]["memory"]) / 100,  # Memory is hard upper-limited
+                (node_attr["resource"]["storage"] - pod["demand"]["storage"]) / 100,  # Storage is hard upper-limited
+                int(node_attr["capability"]["gpu"] == pod["prefer"]["gpu"]) * 5,  # Prefer if needed or avoid wasting
+                int(node_attr["capability"]["ssd"] == pod["prefer"]["ssd"]) * 3,  # Prefer if needed or avoid wasting
+                int(node_attr["pdc"] > pod["collocated"]) * 1), # Prefer collocated PDC for faster communication
                start=0.0)
 
 
