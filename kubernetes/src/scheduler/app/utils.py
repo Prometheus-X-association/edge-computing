@@ -54,7 +54,9 @@ def str2bool(s: str | bool) -> bool:
 
 
 def cpu2int(s: str) -> int:
-    if s.isnumeric():
+    if not s:
+        return 0
+    elif s.isnumeric():
         return int(s)
     elif '.' in s:
         return int(float(s) * 1e3)
@@ -65,4 +67,8 @@ def cpu2int(s: str) -> int:
 
 
 def bits2int(s: str) -> int:
-    return round(bitmath.parse_string(f"{s}B").to_KiB().value)
+    return round(bitmath.parse_string(f"{s}B").to_KiB().value) if s else 0
+
+
+def none2str(s: str) -> str:
+    return s if s else ""

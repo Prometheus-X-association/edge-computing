@@ -18,7 +18,7 @@ import networkx as nx
 from kubernetes import client
 
 from app.k8s import get_available_nodes, get_pods_by_node
-from app.utils import str2bool, cpu2int, bits2int
+from app.utils import str2bool, cpu2int, bits2int, none2str
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +46,6 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'memory': sum(bits2int(c.resources.requests.get('memory', 0))
                           for c in pod.spec.containers if c.resources and c.resources.requests),
             'storage': 0,  # Not supported directly in K8s
-            # TODO - EmptyDir(default) counts from ephemeral storage, EmptyDir("Memory") allocates memory (tmpfs)
             'ssd': pod.spec.node_selector.get(LABEL_DISK_PREFIX) == 'ssd' if pod.spec.node_selector else False,
             'gpu': str2bool(pod.spec.node_selector.get(LABEL_GPU_SUPPORT) if pod.spec.node_selector else False)
         },
@@ -55,7 +54,9 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
                        for c in pod.spec.containers if c.resources and c.resources.limits),
             'memory': sum(bits2int(c.resources.limits.get('memory', 0))
                           for c in pod.spec.containers if c.resources and c.resources.limits),
-            'storage': 0,  # Not supported directly in K8s
+            # EmptyDir(default) counts from ephemeral storage, EmptyDir("Memory") allocates memory (tmpfs)
+            'storage': sum(bits2int(v.empty_dir.size_limit) if v.empty_dir.size_limit else 0 for v in pod.spec.volumes
+                           if pod.spec.volumes and v.empty_dir and v.empty_dir.medium != "Memory"),
             'ssd': pod.metadata.annotations.get(LABEL_DISK_PREFIX) == 'ssd' if pod.metadata.annotations else False,
             'gpu': str2bool(pod.metadata.annotations.get(LABEL_GPU_SUPPORT) if pod.metadata.annotations else False)
         },
@@ -72,10 +73,10 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'labels': copy.deepcopy(pod.metadata.labels),
             'info': {
                 'creation_timestamp': pod.metadata.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                'node': pod.spec.node_name,
+                'node': none2str(pod.spec.node_name),
                 'scheduler': pod.spec.scheduler_name,
                 'status': pod.status.phase,
-                'ip': pod.status.pod_ip
+                'ip': none2str(pod.status.pod_ip)
             }
         }
     }
@@ -103,7 +104,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
                             pod_data['prefer']['ssd'] = True
                         elif ex.key == LABEL_GPU_SUPPORT and ex.operator == 'In' and str2bool(ex.values[0]):
                             pod_data['prefer']['gpu'] = True
-    # TODO - also consider affinity rules in pod's PVC node affinity
+    # TODO - also consider rules in pod's PVC node affinity
     return pod_data
 
 

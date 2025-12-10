@@ -107,10 +107,15 @@ spec:
           memory: 310Mi
       volumeMounts:
         - mountPath: "/data"  # Mounts the volume at the "/data" directory inside the container
+          name: data
+        - mountPath: "/result"
           subPath: "storage/result" # Create subpath(folders) in the mount volume
           name: result-dir
 
   volumes:
+    - name: data
+      emptyDir:
+        sizeLimit: 100Mi
     - name: result-dir
       persistentVolumeClaim:
         claimName: test-pvc

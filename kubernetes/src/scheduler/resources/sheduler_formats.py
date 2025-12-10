@@ -233,6 +233,40 @@ k3s_topo_data = {
             "ssd": False,
             "gpu": True
         },
+        "pod": {},
+        "metadata": {
+            "api_version": "v1",
+            "kind": "Node",
+            "name": "k3d-dev-agent-0",
+            "resource_version": "755",
+            "uid": "c7559d4c-9b82-4f4b-a7bb-110e854f1f35",
+            "info": {
+                "architecture": "amd64",
+                "os": "linux",
+                "kernel": "6.8.0-88-generic",
+                "ip": "172.21.0.3"
+            }
+        }
+    },
+    "k3d-dev-server-0": {
+        "resource": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "capacity": {
+            "cpu": 4000,
+            "memory": 5035316,
+            "storage": 95904111
+        },
+        "zone": [
+            "default"
+        ],
+        "pdc": False,
+        "capability": {
+            "ssd": True,
+            "gpu": False
+        },
         "pod": {
             "scheduler": {
                 "priority": 0,
@@ -255,51 +289,37 @@ k3s_topo_data = {
                 ],
                 "collocated": False,
                 "metadata": {
+                    "api_version": "v1",
+                    "kind": "Pod",
                     "name": "scheduler",
                     "namespace": "ptx-edge",
-                    "created": "2025-12-01T13:40:20Z",
-                    "scheduler": "default-scheduler",
-                    "status": "Running",
+                    "resource_version": "796",
+                    "uid": "9df1eea3-bbb1-4e5d-9c1a-cc457c3ebaaa",
                     "labels": {
                         "app": "scheduler"
+                    },
+                    "info": {
+                        "creation_timestamp": "2025-12-10T11:19:54Z",
+                        "node": "k3d-dev-server-0",
+                        "scheduler": "default-scheduler",
+                        "status": "Running",
+                        "ip": "10.42.1.6"
                     }
                 }
             }
         },
         "metadata": {
-            "name": "k3d-dev-agent-0",
-            "architecture": "amd64",
-            "os": "linux",
-            "kernel": "6.8.0-87-generic",
-            "ip": "172.21.0.3"
-        }
-    },
-    "k3d-dev-server-0": {
-        "resource": {
-            "cpu": 4000,
-            "memory": 5035316,
-            "storage": 95904111
-        },
-        "capacity": {
-            "cpu": 4000,
-            "memory": 5035316,
-            "storage": 95904111
-        },
-        "zone": [
-            "default"
-        ],
-        "pdc": False,
-        "capability": {
-            "ssd": True,
-            "gpu": False
-        },
-        "pod": {},
-        "metadata": {
+            "api_version": "v1",
+            "kind": "Node",
             "name": "k3d-dev-server-0",
-            "architecture": "amd64",
-            "os": "linux",
-            "kernel": "6.8.0-87-generic",
-            "ip": "172.21.0.2"
+            "resource_version": "806",
+            "uid": "c5c38b5d-30d9-444f-a9ef-007b42694746",
+            "info": {
+                "architecture": "amd64",
+                "os": "linux",
+                "kernel": "6.8.0-88-generic",
+                "ip": "172.21.0.2"
+            }
         }
     }
 }
@@ -317,7 +337,7 @@ k3s_pod_data = {
         "prefer": {
             "cpu": 500,
             "memory": 317440,
-            "storage": 0,
+            "storage": 102400,
             "ssd": False,
             "gpu": False
         },
@@ -326,13 +346,21 @@ k3s_pod_data = {
         ],
         "collocated": True,
         "metadata": {
+            "api_version": "v1",
+            "kind": "Pod",
             "name": "test",
             "namespace": "ptx-edge",
-            "created": "2025-12-01T14:34:36Z",
-            "scheduler": "ptx-edge-scheduler",
-            "status": "Pending",
+            "resource_version": "817",
+            "uid": "d1e6574e-d05a-40df-99d7-da71ce269865",
             "labels": {
                 "app": "worker"
+            },
+            "info": {
+                "creation_timestamp": "2025-12-10T11:20:25Z",
+                "node": "",
+                "scheduler": "ptx-edge-scheduler",
+                "status": "Pending",
+                "ip": ""
             }
         }
     }
