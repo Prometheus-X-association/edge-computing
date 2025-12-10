@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: pdc
     app.kubernetes.io/instance: pdc-zone-a
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: connector
     app.kubernetes.io/part-of: ptx-edge
 spec:
@@ -44,7 +44,7 @@ metadata:
   labels:
     app.kubernetes.io/name: pdc
     app.kubernetes.io/instance: pdc-zone-b
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: connector
     app.kubernetes.io/part-of: ptx-edge
 spec:

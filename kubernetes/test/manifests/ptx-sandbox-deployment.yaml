@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: contract-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: contract
     app.kubernetes.io/part-of: ptx-core
 spec:
@@ -20,13 +20,13 @@ spec:
         app: contract
         app.kubernetes.io/name: sandbox
         app.kubernetes.io/instance: contract-mock
-        app.kubernetes.io/version: "1.9.10"
+        app.kubernetes.io/version: "1.10.0"
         app.kubernetes.io/component: contract
         app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: contract-wiremock
-          image: ptx-sandbox/contract:1.9.10-slim
+          image: ptx-sandbox/contract:1.10.0-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: contract-port
@@ -41,7 +41,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: contract-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: contract
     app.kubernetes.io/part-of: ptx-core
 spec:
@@ -49,7 +49,7 @@ spec:
     app: contract
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: contract-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: contract
     app.kubernetes.io/part-of: ptx-core
   ports:
@@ -65,7 +65,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: catalog-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: catalog
     app.kubernetes.io/part-of: ptx-core
 spec:
@@ -79,13 +79,13 @@ spec:
         app: catalog
         app.kubernetes.io/name: sandbox
         app.kubernetes.io/instance: catalog-mock
-        app.kubernetes.io/version: "1.9.10"
+        app.kubernetes.io/version: "1.10.0"
         app.kubernetes.io/component: catalog
         app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: catalog-wiremock
-          image: ptx-sandbox/catalog:1.9.10-slim
+          image: ptx-sandbox/catalog:1.10.0-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: catalog-port
@@ -100,7 +100,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: catalog-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: catalog
     app.kubernetes.io/part-of: ptx-core
 spec:
@@ -119,7 +119,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: consent-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: consent
     app.kubernetes.io/part-of: ptx-core
 spec:
@@ -133,13 +133,13 @@ spec:
         app: consent
         app.kubernetes.io/name: sandbox
         app.kubernetes.io/instance: consent-mock
-        app.kubernetes.io/version: "1.9.10"
+        app.kubernetes.io/version: "1.10.0"
         app.kubernetes.io/component: consent
         app.kubernetes.io/part-of: ptx-core
     spec:
       containers:
         - name: consent-mock
-          image: ptx-sandbox/consent:1.9.10-slim
+          image: ptx-sandbox/consent:1.10.0-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: consent-port
@@ -154,7 +154,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sandbox
     app.kubernetes.io/instance: consent-mock
-    app.kubernetes.io/version: "1.9.10"
+    app.kubernetes.io/version: "1.10.0"
     app.kubernetes.io/component: consent
     app.kubernetes.io/part-of: ptx-core
 spec:

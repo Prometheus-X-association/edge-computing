@@ -56,14 +56,14 @@ LB_HOST="${LB_DOMAIN}:${LB_PORT}"
 
 # PTX-edge components
 API_IMG="ptx-edge/rest-api:1.0"
-PDC_IMG="ptx/connector:1.9.10-slim"
+PDC_IMG="ptx/connector:1.10.0-slim"
 MONGODB_IMG="ptx/mongodb:8.0.5-slim"
 SCHED_IMG="ptx-edge/scheduler:1.0"
 BUILDER_IMG="ptx-edge/builder:1.0"
 
 # PTX-core components
 PTX="ptx-edge"
-CATALOG_IMG="ptx-sandbox/catalog:1.9.10-slim"
+CATALOG_IMG="ptx-sandbox/catalog:1.10.0-slim"
 SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
