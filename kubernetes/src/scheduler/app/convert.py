@@ -79,7 +79,30 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             }
         }
     }
-    # TODO - check PZ in affinity rules
+    if pod.spec.affinity and pod.spec.affinity.node_affinity:
+        if ((reqs := pod.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution)
+                and reqs.node_selector_terms):
+            # Default scheduler OR the different terms, here it is ANDed!
+            for term in reqs.node_selector_terms:
+                if term.match_expressions:
+                    for ex in term.match_expressions:
+                        if ex.key.startswith(LABEL_PZ_PREFIX) and ex.operator == 'In' and str2bool(ex.values[0]):
+                            if (zone := ex.key.removeprefix(LABEL_PZ_PREFIX)) not in pod_data['zone']:
+                                pod_data['zone'].append(zone)
+                        elif ex.key == LABEL_PDC_ENABLED and ex.operator == 'In' and str2bool(ex.values[0]):
+                            pod_data['collocated'] = True
+                        elif ex.key == LABEL_DISK_PREFIX and ex.operator == 'In' and 'SSD' in map(str.upper, ex.values):
+                            pod_data['demand']['ssd'] = True
+                        elif ex.key == LABEL_GPU_SUPPORT and ex.operator == 'In' and str2bool(ex.values[0]):
+                            pod_data['demand']['gpu'] = True
+        if prefs := pod.spec.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution:
+            for pref in prefs:
+                if pref.preference.match_expressions:
+                    for ex in pref.preference.match_expressions:
+                        if ex.key == LABEL_DISK_PREFIX and ex.operator == 'In' and 'SSD' in map(str.upper, ex.values):
+                            pod_data['prefer']['ssd'] = True
+                        elif ex.key == LABEL_GPU_SUPPORT and ex.operator == 'In' and str2bool(ex.values[0]):
+                            pod_data['prefer']['gpu'] = True
     # TODO - also consider affinity rules in pod's PVC node affinity
     return pod_data
 
@@ -132,8 +155,8 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',
                 "gpu": str2bool(node.metadata.labels.get(LABEL_GPU_SUPPORT)),
             },
-            'pod': {p.metadata.name: convert_pod_to_nx(p).nodes[p.metadata.name]
-                    for p in get_pods_by_node(node=node.metadata.name, ns=ns)},
+            'pod': {p.metadata.name: __create_pod_data(p) for p in get_pods_by_node(node=node.metadata.name, ns=ns)
+                    if p.status.phase == "Running"},
             'metadata': {
                 'api_version': "v1",
                 'kind': "Node",
