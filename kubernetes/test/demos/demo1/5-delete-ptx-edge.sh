@@ -19,6 +19,7 @@ source config.sh
 
 LOG "Tearing down PTX-edge deployment..."
 ${KCTL} delete namespace "${PTX}" || true
+${KCTL} delete pv --all || true
 ${KCTL} delete namespace "${SANDBOX}" || true
 
 ########################################################################################################################

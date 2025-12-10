@@ -96,6 +96,7 @@ spec:
         - name: ${SCHEDULER}
           image: ${REGISTRY}:${REGISTRY_PORT}/${SCHED_IMG}
           imagePullPolicy: IfNotPresent
+          command: [ "python3", "-m", "app", "-v"]
           env:
             - name: METHOD
               value: ${SCHEDULER_METHOD}
