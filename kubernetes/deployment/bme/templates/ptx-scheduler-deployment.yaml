@@ -16,7 +16,7 @@ metadata:
 rules:
   - apiGroups: [ "", ]
     resources: [ "pods" ]
-    verbs: [ "watch" ]
+    verbs: [ "watch", "list" ]
   - apiGroups: [ "", ]
     resources: [ "bindings", "events" ]
     verbs: [ "create" ]
@@ -77,6 +77,8 @@ spec:
         app: ${SCHEDULER}
     spec:
       serviceAccountName: ${SCHEDULER}
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       containers:
         - name: ${SCHEDULER}
           image: ${REGISTRY}/ptx-edge/scheduler:1.0
