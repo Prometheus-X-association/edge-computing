@@ -98,8 +98,9 @@ function install_helm() {
 function install_skopeo() {
 	echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
     # sudo apt-get update && sudo apt-get install -y skopeo   # skopeo version 1.13.3
-	sudo add-apt-repository -y ppa:longsleep/golang-backports
-    sudo apt-get satisfy "golang (>=1.23)" go-md2man
+	sudo add-apt-repository -ny ppa:longsleep/golang-backports
+    # sudo apt-get satisfy "golang (>=1.23)" go-md2man
+	sudo apt-get update && sudo apt-get install -y libgpgme-dev libassuan-dev libbtrfs-dev pkg-config go-md2man golang
 	TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
 	    git clone git@github.com:containers/skopeo.git && cd skopeo
 	    git switch --detach ${SKOPEO_VER}
