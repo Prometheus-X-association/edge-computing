@@ -19,7 +19,7 @@ set -eou pipefail
 # Dependencies
 DEPS=(docker k3d kubectl helm)
 
-DOCKER_VER=28.5.2
+DOCKER_VER=29.1.2
 K3D_VER=v5.8.3
 KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
 HELM_VER=v3.19.2
@@ -92,7 +92,7 @@ function install_helm() {
 	echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
 	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
 	echo
-	(set -x; helm version)
+	(set -x; helm version --short)
 }
 
 function install_skopeo() {
