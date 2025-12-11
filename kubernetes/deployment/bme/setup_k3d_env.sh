@@ -106,6 +106,7 @@ function install_skopeo() {
 	    git switch --detach ${SKOPEO_VER}
 	    make bin/skopeo docs
 	    sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
+	    sudo mkdir -p /usr/local/share/man/man1
 	    sudo install -m 644 docs/*.1 /usr/local/share/man/man1
     popd
     rm -rf "${TMP_DIR}"
