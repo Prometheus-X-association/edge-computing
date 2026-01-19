@@ -1,5 +1,5 @@
 #FROM python:3.12-alpine
-FROM python:3.12-slim
+FROM python:3.14-slim
 LABEL maintainer="czentye@tmit.bme.hu"
 WORKDIR /usr/src/worker
 ENV PYTHONUNBUFFERED=1
