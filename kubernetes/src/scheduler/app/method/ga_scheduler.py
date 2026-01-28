@@ -34,6 +34,11 @@ from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPA
 
 log = logging.getLogger(__name__)
 
+THRESHOLD_CROSS = 0.5
+THRESHOLD_MUTATE = 0.2
+FACTOR_POP = 2
+FACTOR_GEN = 5
+
 
 # -------------------------------------------------------------
 #  Constraint checks
@@ -69,7 +74,7 @@ def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
                 (node_attr["resource"]["storage"] - pod["demand"]["storage"]) / 100,  # Storage is hard upper-limited
                 int(node_attr["capability"]["gpu"] == pod["prefer"]["gpu"]) * 5,  # Prefer if needed or avoid wasting
                 int(node_attr["capability"]["ssd"] == pod["prefer"]["ssd"]) * 3,  # Prefer if needed or avoid wasting
-                int(node_attr["pdc"] > pod["collocated"]) * 1), # Prefer collocated PDC for faster communication
+                int(node_attr["pdc"] > pod["collocated"]) * 1),  # Prefer collocated PDC for faster communication
                start=0.0)
 
 
@@ -89,12 +94,12 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
     :return:
     """
     nodes = tuple(topology.nodes)
-    population_size = population_size if population_size is not None else 2 * len(nodes)
+    population_size = population_size if population_size is not None else max(FACTOR_POP * len(nodes), 10)
+    generations = generations if generations else math.ceil(FACTOR_GEN * math.log(len(nodes) + 1))
     tournament_size = math.ceil(tournament_ratio * population_size)
     group_size = math.ceil(tournament_size / pheno_groups)
-    generations = generations if generations else 3 * len(nodes) + 1
 
-    def evaluate(candidate: str) -> float:
+    def evaluate(candidate: str | None) -> float:
         if candidate is not None and satisfies_hard_constraints(pod, topology.nodes[candidate]):
             return fitness(pod, topology.nodes[candidate])
         else:
@@ -106,19 +111,27 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         # population = list(map(op.itemgetter(1), it.islice(it.cycle(_scored), len(_population))))
         return list(map(op.itemgetter(1), _scored)), _weights
 
-    def mutate(candidate: str, _threshold: float = 0.2) -> str:
+    def mutate(candidate: str, _threshold: float = THRESHOLD_MUTATE) -> str:
         return rnd.choice(nodes) if rnd.random() < _threshold else candidate
 
     def crossover(_candidate1: str, _candidate2: str) -> str:
-        return _candidate1 if rnd.random() < 0.5 else _candidate2
+        return _candidate1 if rnd.random() < THRESHOLD_CROSS else _candidate2
 
-    log.debug("Start iterating generations...")
-    fittest, population = (-math.inf, None), rnd.choices(nodes, k=population_size)
+    log.debug(f"Populate initial generation...")
+    population = [n for n in nodes if satisfies_hard_constraints(pod, topology.nodes[n])]
+    if not population:
+        log.error(f"No feasible node found in topology!")
+        return None
+    elif len(population) > population_size:
+        population = rnd.choices(population, k=population_size)
+    elif len(population) < population_size:
+        population.extend(rnd.choices(nodes, k=population_size - len(population)))
 
+    log.debug(f"Start iterating generations[{generations}]...")
+    fittest = (-math.inf, None)
     for i in range(generations):
-        parents, selection_weights = selection(population)
-        population = [mutate(crossover(*rnd.choices(parents, weights=selection_weights, k=2)))
-                      for _ in range(population_size)]
+        parents, weights = selection(population)
+        population = [mutate(crossover(*rnd.choices(parents, weights=weights, k=2))) for _ in range(population_size)]
         best_candidate = ft.reduce(ft.partial(max, key=evaluate), population, initial=None)
         if best_candidate is not None and (best_score := evaluate(best_candidate)) > fittest[0]:
             log.debug(f"New best candidate found in generation {i}/{generations}: {best_candidate}")
