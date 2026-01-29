@@ -1,0 +1,291 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ${PDC}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ${PDC}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${PDC}
+        env: demo
+    spec:
+      nodeSelector:
+        connector.dataspace.ptx.org/enabled: "true"
+      serviceAccountName: ${PDC}
+      initContainers:
+        - name: ${BUILDER}
+          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILDER_IMG}
+          imagePullPolicy: IfNotPresent
+          command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip" ]
+          volumeMounts:
+            - name: kube-api-client-cfg
+              mountPath: /var/run/secrets/projected
+              readOnly: true
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+        - name: mongodb
+          image: ${REGISTRY}:${REGISTRY_PORT}/${MONGODB_IMG}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongo-port
+              containerPort: 27017
+          resources:
+            requests:
+              cpu: 100m
+              memory: 150Mi
+          livenessProbe:
+            httpGet:
+              port: 27017
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          restartPolicy: Always # Native sidecar container
+      containers:
+        - name: connector
+          image: ${REGISTRY}:${REGISTRY_PORT}/${PDC_IMG}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: pdc-port
+              containerPort: ${PDC_PORT}
+              protocol: TCP
+              hostPort: ${PDC_NODE_PORT}
+          resources:
+            requests:
+              cpu: 500m
+              memory: 250Mi
+          volumeMounts:
+            - name: env
+              mountPath: "/usr/src/app/.env.production"
+              subPath: .env.production
+              readOnly: true
+            - name: config-template
+              mountPath: "/usr/src/app/dist/src/config.json.tmp"
+              subPath: config.json.tmp
+              readOnly: true
+            - name: entrypoint
+              mountPath: /usr/src/app/docker/scripts/entrypoint.sh
+              subPath: entrypoint.sh
+              readOnly: true
+          env:
+            - name: PDC_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['connector.dataspace.ptx.org/id']
+          envFrom:
+            - secretRef:
+                name: ${PDC}-secrets-env
+          command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
+          args: [ "npm", "run", "start" ]
+      volumes:
+        - name: env
+          configMap:
+            name: ${PDC}-config
+            items:
+              - key: .env
+                path: .env.production
+        - name: config-template
+          configMap:
+            name: ${PDC}-config
+            items:
+              - key: config.json
+                path: config.json.tmp
+        - name: entrypoint
+          configMap:
+            name: ${PDC}-config
+            items:
+              - key: entrypoint.sh
+                path: entrypoint.sh
+        - name: kube-api-client-cfg
+          projected:
+            defaultMode: 420
+            sources:
+              - serviceAccountToken:
+                  expirationSeconds: 3607
+                  path: token
+              - configMap:
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                  name: kube-root-ca.crt
+              - downwardAPI:
+                  items:
+                    - fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+                      path: namespace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${PDC}-${PZ_TR_0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  selector:
+    app.kubernetes.io/name: ${PDC}
+    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_0}
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: ${PDC_PORT}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${PDC}-${PZ_TR_1}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  selector:
+    app.kubernetes.io/name: ${PDC}
+    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_1}
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: ${PDC_PORT}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${PDC}-${PZ_TR_2}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  selector:
+    app.kubernetes.io/name: ${PDC}
+    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_2}
+  type: ClusterIP
+  ports:
+    - name: pdc-port
+      port: ${PDC_PORT}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ${PDC}-${PZ_TR_0}-stripprefix
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  stripPrefix:
+    prefixes:
+      - /${PDC_PREFIX_TR_0}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ${PDC}-${PZ_TR_1}-stripprefix
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  stripPrefix:
+    prefixes:
+      - /${PDC_PREFIX_TR_1}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ${PDC}-${PZ_TR_2}-stripprefix
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+spec:
+  stripPrefix:
+    prefixes:
+      - /${PDC_PREFIX_TR_2}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${PDC}-${PZ_TR_0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_0}-stripprefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ${LB_DOMAIN}
+      http:
+        paths:
+          - path: /${PDC_PREFIX_TR_0}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${PDC}-${PZ_TR_0}
+                port:
+                  number: ${PDC_PORT}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${PDC}-${PZ_TR_1}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_1}-stripprefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ${LB_DOMAIN}
+      http:
+        paths:
+          - path: /${PDC_PREFIX_TR_1}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${PDC}-${PZ_TR_1}
+                port:
+                  number: ${PDC_PORT}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${PDC}-${PZ_TR_2}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: demo
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_2}-stripprefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ${LB_DOMAIN}
+      http:
+        paths:
+          - path: /${PDC_PREFIX_TR_2}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${PDC}-${PZ_TR_2}
+                port:
+                  number: ${PDC_PORT}
+---

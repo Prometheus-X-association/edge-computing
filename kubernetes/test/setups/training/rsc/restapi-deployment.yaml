@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${REST_API}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ${REST_API}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${REST_API}
+        env: demo
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      containers:
+        - name: rest-api
+          image: ${REGISTRY}:${REGISTRY_PORT}/${API_IMG}
+          imagePullPolicy: IfNotPresent
+          command: [ "uvicorn", "app.main:app", "--workers=2", "--host=0.0.0.0", "--port=${API_PORT}" ]
+          env:
+            - name: ROOT_PATH
+              value: /${PREFIX}
+          ports:
+            - name: api-port
+              containerPort: ${API_PORT}
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 300m
+              memory: 150Mi
+          livenessProbe:
+            httpGet:
+              port: ${API_PORT}
+              path: /${PREFIX}/health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${REST_API}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: demo
+spec:
+  selector:
+    app.kubernetes.io/name: ${REST_API}
+  type: ClusterIP
+  ports:
+    - name: api-port
+      port: ${API_PORT}
+      targetPort: api-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${REST_API}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: demo
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /${PREFIX}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${REST_API}
+                port:
+                  number: ${API_PORT}
+---

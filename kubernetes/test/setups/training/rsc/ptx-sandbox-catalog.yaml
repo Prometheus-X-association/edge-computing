@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${CATALOG}
+  namespace: ${SANDBOX}
+  labels:
+    app.kubernetes.io/name: ${CATALOG}
+    env: sandbox
+spec:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  containers:
+    - name: catalog-wiremock
+      image: ${REGISTRY}:${REGISTRY_PORT}/${CATALOG_IMG}
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: catalog-port
+          containerPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${CATALOG}
+  namespace: ${SANDBOX}
+  labels:
+    app.kubernetes.io/name: ${CATALOG}
+    env: sandbox
+spec:
+  selector:
+    app.kubernetes.io/name: ${CATALOG}
+  type: NodePort
+  ports:
+    - name: catalog-port
+      port: 3002
+      targetPort: catalog-port
+      nodePort: 30032
+---
