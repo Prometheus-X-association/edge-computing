@@ -29,10 +29,10 @@ else
 fi
 
 # Deployment/cluster/component credentials
-source "${SCRIPT_DIR}/creds/cluster-creds.sh"
+source "${SCRIPT_DIR}/creds/demo-cluster-creds.sh"
 
 # Cluster
-TIMEOUT=60
+TIMEOUT=120
 CLUSTER="demo"
 ENV="demo"
 NODE_A="node-a"
@@ -77,8 +77,10 @@ PDC=pdc
 PDC_PORT=3000
 PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'  # placeholder
-PDC_SERVICE_KEY='${SERVICE_KEY}'  # placeholder
-PDC_SECRET_KEY='${SECRET_KEY}'  # placeholder
+PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder
+PDC_CFG_SECRET_KEY='${SECRET_KEY}'  # placeholder
+PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
+PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_PREFIX_A="${PTX}/${PZ_A}/${PDC}"
 PDC_PREFIX_B="${PTX}/${PZ_B}/${PDC}"
 

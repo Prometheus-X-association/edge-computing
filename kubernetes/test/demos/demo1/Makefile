@@ -48,5 +48,5 @@ clear:
 all: | 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
 
 .SILENT:	# Set silent mode (-s) by default
-.PHONY := 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
+.PHONY := 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown status clear all
 .DEFAULT_GOAL := all

@@ -21,8 +21,8 @@ data:
   config.json: |
     {
       "endpoint": "http://${PDC_ID}.${PTX}.svc.cluster.local:${PDC_PORT}/",
-      "serviceKey": "${PDC_SERVICE_KEY}",
-      "secretKey": "${PDC_SECRET_KEY}",
+      "serviceKey": "${PDC_CFG_SERVICE_KEY}",
+      "secretKey": "${PDC_CFG_SECRET_KEY}",
       "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
       "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",

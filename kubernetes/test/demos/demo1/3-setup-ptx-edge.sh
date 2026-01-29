@@ -48,9 +48,9 @@ ${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clust
 
 log "Deploy per-zone PDCs"
 envsubst <"${SCRIPT_DIR}/rsc/pdc-daemon-cluster.yaml" | ${KCTL} apply -f=-
-${KCTL} wait --for=jsonpath='.status.numberReady'=2 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
-echo
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
+echo
+${KCTL} wait --for=jsonpath='.status.numberReady'=2 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
 
 log "Waiting for PDC instances to set up..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
@@ -62,16 +62,13 @@ for node in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{
 done
 
 log "Waiting for ingress to set up..." && sleep 10
-${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${PZ_A}"
-${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${PZ_B}"
-
-log ">>> PDC is exposed on http://${LB_HOST}/${PDC_PREFIX_A}"
-curl -I "http://${LB_HOST}/${PDC_PREFIX_A}"
-curl -Ssf "http://${LB_HOST}/${PDC_PREFIX_A}" | grep "href" | head -n1
-
-log ">>> PDC is exposed on http://${LB_HOST}/${PDC_PREFIX_B}"
-curl -I "http://${LB_HOST}/${PDC_PREFIX_B}"
-curl -Ssf "http://${LB_HOST}/${PDC_PREFIX_B}" | grep "href" | head -n1
+for pz in ${PZ_A} ${PZ_B}; do
+    ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
+    log ">>> PDC is exposed on http://${LB_HOST}/${PTX}/${pz}/${PDC}"
+    curl -I "http://${LB_HOST}/${PTX}/${pz}/${PDC}"
+    curl -Ssf "http://${LB_HOST}/${PTX}/${pz}/${PDC}" | grep "href" | head -n1
+    echo
+done
 
 ########################################################################################################################
 
