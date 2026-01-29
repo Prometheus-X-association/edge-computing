@@ -27,7 +27,7 @@ make -C "${ROOT_DIR}/src/scheduler" build
 make -C "${ROOT_DIR}/src/samples" build-all publish-all
 
 log "Build PTX-core sandbox components..."
-#make -C "${ROOT_DIR}/src/ptx" build
+make -C "${ROOT_DIR}/src/ptx" build
 
 LOG "Creating demo environment..."
 envsubst <"${SCRIPT_DIR}/rsc/k3d-demo-cluster.yaml" | k3d cluster create --config=-

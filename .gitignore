@@ -8,10 +8,11 @@
 **/*.bkp
 **/*.dtmp
 **/*.log
-kubernetes/test/**/*.xml
 kubernetes/src/.cache
 kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/bme/.creds/*
 kubernetes/deployment/*/manifests/*
 kubernetes/src/samples/datasets/*.npz
+kubernetes/test/**/*.xml
+kubernetes/test/demos/demo1/creds/*

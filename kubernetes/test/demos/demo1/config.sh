@@ -28,6 +28,9 @@ else
     KCTL=kubectl
 fi
 
+# Deployment/cluster/component credentials
+source "${SCRIPT_DIR}/creds/cluster-creds.sh"
+
 # Cluster
 TIMEOUT=60
 CLUSTER="demo"
@@ -73,8 +76,8 @@ PDC=pdc
 PDC_PORT=3000
 PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'  # placeholder
-PDC_SERVICE_KEY='${PDC_SERVICE_KEY}'  # placeholder
-PDC_SECRET_KEY='${PDC_SECRET_KEY}'  # placeholder
+PDC_SERVICE_KEY='${SERVICE_KEY}'  # placeholder
+PDC_SECRET_KEY='${SECRET_KEY}'  # placeholder
 PDC_PREFIX_A="${PTX}/${PZ_A}/${PDC}"
 PDC_PREFIX_B="${PTX}/${PZ_B}/${PDC}"
 
