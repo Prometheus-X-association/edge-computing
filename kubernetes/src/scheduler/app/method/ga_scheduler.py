@@ -136,6 +136,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
         if best_candidate is not None and (best_score := evaluate(best_candidate)) > fittest[0]:
             log.debug(f"New best candidate found in generation {i}/{generations}: {best_candidate}")
             fittest = best_score, best_candidate
+    log.debug(f"Generation iterations finished.")
 
     return fittest[1]
 

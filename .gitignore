@@ -16,3 +16,4 @@ kubernetes/deployment/*/manifests/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
 kubernetes/test/demos/demo1/creds/*
+kubernetes/test/setups/training/creds/*
