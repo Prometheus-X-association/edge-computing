@@ -6,7 +6,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
 data:
   .env: |
     NODE_ENV=production
@@ -42,7 +42,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
 data:
   SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
   SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
@@ -55,7 +55,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
 automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -65,7 +65,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
 rules:
   - apiGroups: [ "" ]
     resources: [ "pods" ]
@@ -78,7 +78,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
 subjects:
   - kind: ServiceAccount
     name: ${PDC}
@@ -94,7 +94,7 @@ metadata:
   name: node-lister
   namespace: ${PTX}
   labels:
-    env: demo
+    env: ${ENV}
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
@@ -106,7 +106,7 @@ metadata:
   name: node-lister
   namespace: ${PTX}
   labels:
-    env: demo
+    env: ${ENV}
 subjects:
   - kind: ServiceAccount
     name: ${PDC}

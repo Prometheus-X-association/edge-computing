@@ -36,7 +36,7 @@ metadata:
   #namespace: ${PTX}  # PV is not a namespaced object
   labels:
     app.kubernetes.io/name: ${TASK3}
-    env: demo
+    env: ${ENV}
 spec:
   storageClassName: ptx-edge-local
   capacity:
@@ -70,7 +70,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${TASK3}
-    env: demo
+    env: ${ENV}
 spec:
   storageClassName: ptx-edge-local
   accessModes:
@@ -88,7 +88,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${TASK3}
-    env: demo
+    env: ${ENV}
 spec:
   completions: 1
   parallelism: 1
@@ -97,7 +97,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${TASK3}
-        env: demo
+        env: ${ENV}
     spec:
       initContainers:
         - name: ${BUILDER}

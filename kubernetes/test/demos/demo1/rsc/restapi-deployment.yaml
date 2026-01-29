@@ -6,7 +6,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
 spec:
   replicas: 1
   selector:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${REST_API}
-        env: demo
+        env: ${ENV}
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -51,7 +51,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
 spec:
   selector:
     app.kubernetes.io/name: ${REST_API}
@@ -68,7 +68,7 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
 spec:

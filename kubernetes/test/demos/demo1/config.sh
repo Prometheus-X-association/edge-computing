@@ -34,6 +34,7 @@ source "${SCRIPT_DIR}/creds/cluster-creds.sh"
 # Cluster
 TIMEOUT=60
 CLUSTER="demo"
+ENV="demo"
 NODE_A="node-a"
 NODE_B="node-b"
 NODE_AB="node-ab"
@@ -88,7 +89,7 @@ PREFIX="${PTX}/api/v1"
 
 # Scheduler
 SCHEDULER="scheduler"
-SCHEDULER_METHOD="random"
+SCHEDULER_METHOD="genetic"
 SCHEDULER_REF="${PTX}-${SCHEDULER}"
 
 # Builder
