@@ -40,7 +40,7 @@
 	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
 	bash 6-stop-topo.sh
 
-install:
+deps:
 	bash install_deps.sh
 
 status:
@@ -54,5 +54,5 @@ clear:
 all: | 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
 
 .SILENT:	# Set silent mode (-s) by default
-.PHONY := 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown install status clear all
+.PHONY := 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown deps status clear all
 .DEFAULT_GOAL := all

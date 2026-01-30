@@ -19,7 +19,7 @@ source config.sh
 
 ${KCTL} -n ptx-sandbox get all --ignore-not-found
 echo
-${KCTL} get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress --ignore-not-found
+${KCTL} get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress -o wide --ignore-not-found
 echo
 ${KCTL} events | tail -n20
 
