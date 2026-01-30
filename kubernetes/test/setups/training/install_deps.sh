@@ -296,8 +296,8 @@ install_deps
 ### Docker
 if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
     # Binaries
-	install_docker
 	DOCKER_PRE_INSTALLED=$(command -pv docker)
+	install_docker
     if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
         echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
         # New shell with docker group privilege

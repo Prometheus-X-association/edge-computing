@@ -41,7 +41,7 @@
 	bash 6-stop-topo.sh
 
 deps:
-	bash install_deps.sh
+	bash install_deps.sh -u
 
 status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
