@@ -111,7 +111,7 @@ function install_skopeo() {
     # sudo apt-get satisfy "golang (>=1.23)" go-md2man
 	sudo apt-get update && sudo apt-get install -y libgpgme-dev libassuan-dev libbtrfs-dev pkg-config go-md2man golang
 	TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
-	    git clone git@github.com:containers/skopeo.git && cd skopeo
+	    git clone https://github.com/containers/skopeo && cd skopeo
 	    git switch --detach ${SKOPEO_VER}
 	    make bin/skopeo docs
 	    sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
