@@ -24,6 +24,7 @@ K3D_VER=v5.8.3
 KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
 HELM_VER=v4.0.0
 SKOPEO_VER=v1.21.0
+KCOLOR_VER=0.5.3_amd64
 
 PKG_FREEZE=false
 NO_CHECK=false
@@ -88,16 +89,16 @@ function install_kubectl() {
 }
 
 function install_kubecolor() {
-    KCOLOR_VER="$(wget -q -O- https://kubecolor.github.io/packages/deb/version)_$(dpkg --print-architecture)"
+    #KCOLOR_VER="$(wget -q -O- https://kubecolor.github.io/packages/deb/version)_$(dpkg --print-architecture)"
     echo -e "\n>>> Install kubecolor binary[${KCOLOR_VER}]...\n"
     curl -fsSL -O "https://kubecolor.github.io/packages/deb/pool/main/k/kubecolor/kubecolor_${KCOLOR_VER}.deb" && \
         sudo dpkg -i "kubecolor_${KCOLOR_VER}.deb" && rm "kubecolor_${KCOLOR_VER}.deb"
-    (set -x; kubectl version --client)
+    (set -x; kubecolor version --client)
 }
 
 function install_helm() {
     echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | TAG=${HELM_VER} bash
     echo
     (set -x; helm version --short)
 }
@@ -161,32 +162,28 @@ function setup_skopeo_bash_completion() {
 
 function setup_test_cluster() {
     echo -e "\n>>> Prepare test cluster with id: ${TEST_K8S}...\n"
-#    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=2 \
-#        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
-#        --k3s-node-label="$PZ_LAB/zone-A=true@agent:0" \
-#        --k3s-node-label="$PZ_LAB/zone-B=true@agent:*"
+#    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=1 \
+#        --k3s-node-label="$PZ_LAB/zone-A=true@server:0" \
+#        --k3s-node-label="$PZ_LAB/zone-B=true@agent:0" \
     cat <<EOF | k3d cluster create "${TEST_K8S}" --wait --timeout=60s --config=-
 kind: Simple
 apiVersion: k3d.io/v1alpha5
 metadata:
   name: ${TEST_K8S}
 servers: 1
-agents: 2
+agents: 1
 options:
   k3d:
     wait: true
     timeout: "30s"
   k3s:
     nodeLabels:
-      - label: "${PZ_LAB}/zone-C=true"
-        nodeFilters:
-          - server:0
       - label: "${PZ_LAB}/zone-A=true"
         nodeFilters:
-          - agent:0
-      - label: "${PZ_LAB/}zone-B=true"
+          - server:0
+      - label: "${PZ_LAB}/zone-B=true"
         nodeFilters:
-          - agent:*
+          - agent:0
 EOF
     echo -e "\n>>> K3d cluster info:\n"
     kubectl cluster-info --context k3d-${TEST_K8S}
@@ -195,19 +192,19 @@ EOF
     echo
     kubectl -n kube-system get all
     echo -e "\n>>> K3s nodes:\n"
-    kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
+    kubecolor get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
 }
 
 function perform_test_deployment() {
     echo -e "\n>>> Perform a test deployment using ${TEST_IMG}...\n"
     # Validate K8s control plane
     set -x
-    skopeo inspect -f "\nName: {{.Name}},\nDigest: {{.Digest}}\nCreated: {{.Created}}\n" "docker://${TEST_IMG}"
+    skopeo inspect -f "\nName: {{.Name}},\nDigest: {{.Digest}}\nCreated: {{.Created}}\n\n" "docker://${TEST_IMG}"
     docker pull ${TEST_IMG}
     k3d image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
-                --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
+                --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-B":"true"}}}' \
                 -- /bin/sh -c "${TEST_CMD}"
     kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout=60s pod/${TEST_ID}
     set +x
@@ -234,7 +231,7 @@ function post_install() {
     echo -e "\n>>> Installed dependencies\n"
     docker --version
     k3d version
-    kubectl version --client
+    kubecolor version --client
     helm version --template='Helm: {{.Version}} {{.GoVersion}}' && echo
     skopeo --version
 }

@@ -92,7 +92,7 @@ function install_kubectl() {
 
 function install_helm() {
     echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | TAG=${HELM_VER} bash
     echo
     (set -x; helm version --short)
 }
@@ -197,7 +197,7 @@ function perform_test_deployment() {
     echo -e "\n>>> Perform a test deployment using ${TEST_IMG}...\n"
     # Validate K8s control plane
     set -x
-    skopeo inspect -f "\nName: {{.Name}},\nDigest: {{.Digest}}\nCreated: {{.Created}}\n" "docker://${TEST_IMG}"
+    skopeo inspect -f "\nName: {{.Name}},\nDigest: {{.Digest}}\nCreated: {{.Created}}\n\n" "docker://${TEST_IMG}"
     docker pull ${TEST_IMG}
     k3d image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
