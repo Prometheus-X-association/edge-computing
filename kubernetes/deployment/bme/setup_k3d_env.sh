@@ -207,7 +207,7 @@ function perform_test_deployment() {
     set +x
     # Pod failure test
     echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
-    kubectl -n ${TEST_NS} get pod/${TEST_ID} -o wide
+    kubectl -n ${TEST_NS} get pod/${TEST_ID}
     echo
     if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" == "${TEST_OK}" ]]; then
         echo -e "\n>>> Validation result: OK!\n"
@@ -280,6 +280,17 @@ while getopts ":xfsuchn" flag; do
 done
 
 # Main --------------------------------------------------------------------------------
+
+cat <<'EOF'
+######################################################################################
+##     ____ _______  __              _                          _                   ##
+##    |  _ \_   _\ \/ /      ___  __| | __ _  ___      ___  ___| |_ _   _ _ __      ##
+##    | |_) || |  \  /_____ / _ \/ _` |/ _` |/ _ \    / __|/ _ \ __| | | | '_ \     ##
+##    |  __/ | |  /  \_____|  __/ (_| | (_| |  __/    \__ \  __/ |_| |_| | |_) |    ##
+##    |_|    |_| /_/\_\     \___|\__,_|\__, |\___|    |___/\___|\__|\__,_| .__/     ##
+##                                     |___/                             |_|        ##
+######################################################################################
+EOF
 
 # Check for existence of ANY dependencies
 if command -v "${DEPS[@]}" >/dev/null 2>&1 && [ "${UPDATE}" = false ]; then
