@@ -197,8 +197,9 @@ function perform_test_deployment() {
     echo -e "\n>>> Perform a test deployment using ${TEST_IMG}...\n"
     # Validate K8s control plane
     set -x
+    skopeo inspect -f "\nName: {{.Name}},\nDigest: {{.Digest}}\nCreated: {{.Created}}\n" "docker://${TEST_IMG}"
     docker pull ${TEST_IMG}
-    # k3d image import -c ${TEST_K8S} ${TEST_IMG}
+    k3d image import -c ${TEST_K8S} ${TEST_IMG}
     kubectl create namespace ${TEST_NS}
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
                 --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
