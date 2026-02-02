@@ -309,7 +309,7 @@ if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
         # Binaries
         install_docker
         if [ ${NO_CHECK} = false ] && id -nGz "${USER}" | grep -qzxF "${GRP_DOCKER}"; then
-            echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
+            echo -e "\n\n>>> Jump into a NEW shell for docker group privilege...\n\n" && sleep 3s
             # New shell with docker group privilege [without docker install]
             exec sg docker "$(realpath "$0") -n $*"
         fi
