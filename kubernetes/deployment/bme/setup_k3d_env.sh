@@ -30,7 +30,9 @@ NO_CHECK=false
 SLIM_SETUP=false
 UPDATE=false
 INIT_CLEANUP=false
+NO_DOCKER=false
 
+GRP_DOCKER="docker"
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
@@ -68,7 +70,7 @@ function install_docker() {
         sudo apt-mark hold docker-ce docker-ce-cli docker-ce-rootless-extras
     fi
     # Privileged Docker
-    sudo usermod -aG docker "${USER}"
+    sudo usermod -aG "${GRP_DOCKER}" "${USER}"
     echo
     (set -x; docker --version)
 }
@@ -241,13 +243,14 @@ Options:
     -f  Freeze dependency versions.
     -c  Perform initial cleanup.
     -s  Only install minimum required binaries.
-    -u  Update/overwrite dependencies.
+    -u  Force Update/overwrite dependencies.
     -x  Skip deployment validation.
+    -n  Skip docker install.
     -h  Display help.
 EOF
 }
 
-while getopts ":xfsuch" flag; do
+while getopts ":xfsuchn" flag; do
     case "${flag}" in
         f)
             echo "[x] Freeze dependency versions."
@@ -262,8 +265,11 @@ while getopts ":xfsuch" flag; do
             echo "[x] Slim install is configured."
             SLIM_SETUP=true;;
         u)
-            echo "[x] Update dependencies."
+            echo "[x] Force update dependencies."
             UPDATE=true;;
+        n)
+            echo "[x] Skip docker install."
+            NO_DOCKER=true;;
         h)
             display_help
             exit;;
@@ -286,13 +292,14 @@ install_deps
 
 ### Docker
 if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-    DOCKER_PRE_INSTALLED="$(command -pv docker)" || true
-    # Binaries
-    install_docker
-    if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
-        echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
-        # New shell with docker group privilege
-        exec sg docker "$0" "$@"
+    if [ ${NO_DOCKER} = false ]; then
+        # Binaries
+        install_docker
+        if [ ${NO_CHECK} = false ] && id -nGz "${USER}" | grep -qzxF "${GRP_DOCKER}"; then
+            echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
+            # New shell with docker group privilege [without docker install]
+            exec sg docker "$0 -n $*"
+        fi
     fi
     # Validation
     if [ ${NO_CHECK} = false ]; then
