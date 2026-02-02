@@ -19,11 +19,11 @@ set -eou pipefail
 # Dependencies
 DEPS=(docker k3d kubectl helm kubecolor)
 
-DOCKER_VER=29.1.2
+DOCKER_VER=29.2.0
 K3D_VER=v5.8.3
 KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
-HELM_VER=v3.19.2
-SKOPEO_VER=v1.20.0
+HELM_VER=v4.0.0
+SKOPEO_VER=v1.21.0
 
 PKG_FREEZE=false
 NO_CHECK=false
@@ -35,10 +35,6 @@ CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
 TEST_ID='test42'
-# busybox ~4.2MB
-#TEST_IMG='busybox:latest'
-#TEST_CMD='echo "Waiting to exit..." && time sleep infinity'
-# pause ~240kB
 TEST_IMG='k8s.gcr.io/pause'
 TEST_CMD=''
 TEST_OK='Running'
@@ -49,8 +45,8 @@ RET_VAL=0
 # Install actions --------------------------------------------------------------------------------
 
 function install_deps() {
-	echo -e "\n>>> Install dependencies...\n"
-	sudo apt-get update && sudo apt-get install -y ca-certificates apt-transport-https wget curl gettext \
+    echo -e "\n>>> Install dependencies...\n"
+    sudo apt-get update && sudo apt-get install -y ca-certificates apt-transport-https wget curl gettext \
                                                      make bash-completion apache2-utils
 }
 
@@ -62,61 +58,61 @@ function install_docker() {
         sudo apt-get remove -y --allow-change-held-packages docker-ce docker-ce-cli containerd.io \
                             docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin docker-model-plugin
     fi
-	echo -e "\n>>> Install Docker[${DOCKER_VER}]...\n"
-	curl -fsSL https://get.docker.com/ | VERSION=${DOCKER_VER} sh
-	if [ ${PKG_FREEZE} = true ]; then
-	    echo -e "\n>>> Freeze Docker[${DOCKER_VER}]...\n"
-	    sudo apt-mark hold docker-ce docker-ce-cli docker-ce-rootless-extras
+    echo -e "\n>>> Install Docker[${DOCKER_VER}]...\n"
+    curl -fsSL https://get.docker.com/ | VERSION=${DOCKER_VER} sh
+    if [ ${PKG_FREEZE} = true ]; then
+        echo -e "\n>>> Freeze Docker[${DOCKER_VER}]...\n"
+        sudo apt-mark hold docker-ce docker-ce-cli docker-ce-rootless-extras
     fi
     # Privileged Docker
     sudo usermod -aG docker "${USER}"
-	echo
-	(set -x; docker --version)
+    echo
+    (set -x; docker --version)
 }
 
 function install_k3d() {
-	echo -e "\n>>> Install k3d binary[${K3D_VER}]...\n"
-	curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
-	echo
-	(set -x; k3d version)
+    echo -e "\n>>> Install k3d binary[${K3D_VER}]...\n"
+    curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=${K3D_VER} bash
+    echo
+    (set -x; k3d version)
 }
 
 function install_kubectl() {
-	echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
-	curl -fsSL -O "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl" && \
-	    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
-	echo
-	(set -x; kubectl version --client)
+    echo -e "\n>>> Install kubectl binary[${KUBECTL_VER}]...\n"
+    curl -fsSL -O "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl" && \
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+    echo
+    (set -x; kubectl version --client)
 }
 
 function install_kubecolor() {
     KCOLOR_VER="$(wget -q -O- https://kubecolor.github.io/packages/deb/version)_$(dpkg --print-architecture)"
-	echo -e "\n>>> Install kubecolor binary[${KCOLOR_VER}]...\n"
+    echo -e "\n>>> Install kubecolor binary[${KCOLOR_VER}]...\n"
     curl -fsSL -O "https://kubecolor.github.io/packages/deb/pool/main/k/kubecolor/kubecolor_${KCOLOR_VER}.deb" && \
         sudo dpkg -i "kubecolor_${KCOLOR_VER}.deb" && rm "kubecolor_${KCOLOR_VER}.deb"
-	(set -x; kubectl version --client)
+    (set -x; kubectl version --client)
 }
 
 function install_helm() {
-	echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
-	curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
-	echo
-	(set -x; helm version --short)
+    echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | TAG=${HELM_VER} bash
+    echo
+    (set -x; helm version --short)
 }
 
 function install_skopeo() {
-	echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
+    echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
     # sudo apt-get update && sudo apt-get install -y skopeo   # skopeo version 1.13.3
-	sudo add-apt-repository -ny ppa:longsleep/golang-backports
+    sudo add-apt-repository -ny ppa:longsleep/golang-backports
     # sudo apt-get satisfy "golang (>=1.23)" go-md2man
-	sudo apt-get update && sudo apt-get install -y libgpgme-dev libassuan-dev libbtrfs-dev pkg-config go-md2man golang
-	TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
-	    git clone https://github.com/containers/skopeo && cd skopeo
-	    git switch --detach ${SKOPEO_VER}
-	    make bin/skopeo docs
-	    sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
-	    sudo mkdir -p /usr/local/share/man/man1
-	    sudo install -m 644 docs/*.1 /usr/local/share/man/man1
+    sudo apt-get update && sudo apt-get install -y libgpgme-dev libassuan-dev libbtrfs-dev pkg-config go-md2man golang
+    TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
+        git clone https://github.com/containers/skopeo && cd skopeo
+        git switch --detach ${SKOPEO_VER}
+        make bin/skopeo docs
+        sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
+        sudo mkdir -p /usr/local/share/man/man1
+        sudo install -m 644 docs/*.1 /usr/local/share/man/man1
     popd
     rm -rf "${TMP_DIR}"
     echo
@@ -217,18 +213,18 @@ function perform_test_deployment() {
     kubectl -n ${TEST_NS} get pod/${TEST_ID} -o wide
     echo
     if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" == "${TEST_OK}" ]]; then
-    	echo -e "\n>>> Validation result: OK!\n"
+        echo -e "\n>>> Validation result: OK!\n"
     else
-    	echo -e "\n>>> Validation result: FAILED!\n"
-    	RET_VAL=1
+        echo -e "\n>>> Validation result: FAILED!\n"
+        RET_VAL=1
     fi
 }
 
 function cleanup_test_cluster() {
-	echo -e "\n>>> Cleanup...\n"
-	#kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
-	k3d cluster delete ${TEST_K8S}
-	docker rmi -f "${TEST_IMG}"
+    echo -e "\n>>> Cleanup...\n"
+    #kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
+    k3d cluster delete ${TEST_K8S}
+    docker rmi -f "${TEST_IMG}"
 }
 
 function post_install() {
@@ -257,7 +253,7 @@ EOF
 }
 
 while getopts ":xfsuch" flag; do
-	case "${flag}" in
+    case "${flag}" in
         f)
             echo "[x] Freeze dependency versions."
             PKG_FREEZE=true;;
@@ -295,9 +291,9 @@ install_deps
 
 ### Docker
 if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+    DOCKER_PRE_INSTALLED="$(set -command -pv docker)" || true
     # Binaries
-	DOCKER_PRE_INSTALLED=$(command -pv docker)
-	install_docker
+    install_docker
     if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
         echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
         # New shell with docker group privilege
@@ -313,8 +309,8 @@ fi
 
 ### K3d
 if ! command -v k3d >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_k3d
+    # Binary
+    install_k3d
     if [ ${SLIM_SETUP} = false ]; then
         # Bash completion
         setup_k3d_bash_completion
@@ -323,8 +319,8 @@ fi
 
 ### Kubectl
 if ! command -v kubectl >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_kubectl
+    # Binary
+    install_kubectl
     if [ ${SLIM_SETUP} = false ]; then
         # Bash completion
         setup_kubectl_bash_completion
@@ -333,14 +329,14 @@ fi
 
 ### Kubecolor
 if ! command -v kubecolor >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_kubecolor
+    # Binary
+    install_kubecolor
 fi
 
 ### Helm
 if ! command -v helm >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_helm
+    # Binary
+    install_helm
     if [ ${SLIM_SETUP} = false ]; then
         # Bash completion
         setup_helm_bash_completion
@@ -349,8 +345,8 @@ fi
 
 ### Skopeo
 if ! command -v skopeo >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-	# Binary
-	install_skopeo
+    # Binary
+    install_skopeo
     if [ ${SLIM_SETUP} = false ]; then
         # Bash completion
         setup_skopeo_bash_completion
@@ -378,9 +374,9 @@ post_install
 if [ ${NO_CHECK} = false ]; then
     cat <<EOF
 
-#########################################################################################################
-##  Shell session should be reloaded MANUALLY to make the non-root user access to Docker take effect!  ##
-#########################################################################################################
+##########################################################################################################
+##  This shell session should be reloaded MANUALLY to make non-root user access to Docker take effect!  ##
+##########################################################################################################
 EOF
     fi
 
