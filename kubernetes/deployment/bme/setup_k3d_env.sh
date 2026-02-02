@@ -250,6 +250,21 @@ Options:
 EOF
 }
 
+# Main --------------------------------------------------------------------------------
+
+cat <<'EOF'
+
+######################################################################################
+##     ____ _______  __              _                          _                   ##
+##    |  _ \_   _\ \/ /      ___  __| | __ _  ___      ___  ___| |_ _   _ _ __      ##
+##    | |_) || |  \  /_____ / _ \/ _` |/ _` |/ _ \    / __|/ _ \ __| | | | '_ \     ##
+##    |  __/ | |  /  \_____|  __/ (_| | (_| |  __/    \__ \  __/ |_| |_| | |_) |    ##
+##    |_|    |_| /_/\_\     \___|\__,_|\__, |\___|    |___/\___|\__|\__,_| .__/     ##
+##                                     |___/                             |_|        ##
+######################################################################################
+
+EOF
+
 while getopts ":xfsuchn" flag; do
     case "${flag}" in
         f)
@@ -279,19 +294,6 @@ while getopts ":xfsuchn" flag; do
     esac
 done
 
-# Main --------------------------------------------------------------------------------
-
-cat <<'EOF'
-######################################################################################
-##     ____ _______  __              _                          _                   ##
-##    |  _ \_   _\ \/ /      ___  __| | __ _  ___      ___  ___| |_ _   _ _ __      ##
-##    | |_) || |  \  /_____ / _ \/ _` |/ _` |/ _ \    / __|/ _ \ __| | | | '_ \     ##
-##    |  __/ | |  /  \_____|  __/ (_| | (_| |  __/    \__ \  __/ |_| |_| | |_) |    ##
-##    |_|    |_| /_/\_\     \___|\__,_|\__, |\___|    |___/\___|\__|\__,_| .__/     ##
-##                                     |___/                             |_|        ##
-######################################################################################
-EOF
-
 # Check for existence of ANY dependencies
 if command -v "${DEPS[@]}" >/dev/null 2>&1 && [ "${UPDATE}" = false ]; then
     printf "\nSome of required dependencies are already installed, but the update flag (-u) is not set!\n\n"
@@ -309,7 +311,7 @@ if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
         if [ ${NO_CHECK} = false ] && id -nGz "${USER}" | grep -qzxF "${GRP_DOCKER}"; then
             echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
             # New shell with docker group privilege [without docker install]
-            exec sg docker "$0 -n $*"
+            exec sg docker "$(realpath "$0") -n $*"
         fi
     fi
     # Validation
@@ -379,13 +381,13 @@ fi
 post_install
 
 if [ ${NO_CHECK} = false ]; then
-    cat <<EOF
+    cat <<'EOF'
 
 ##########################################################################################################
 ##  This shell session should be reloaded MANUALLY to make non-root user access to Docker take effect!  ##
 ##########################################################################################################
 EOF
-    fi
+fi
 
 echo -e "\nSetup is finished."
 exit ${RET_VAL}
