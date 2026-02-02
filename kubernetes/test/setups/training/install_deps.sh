@@ -30,6 +30,7 @@ NO_CHECK=false
 SLIM_SETUP=false
 UPDATE=false
 INIT_CLEANUP=false
+NO_RELOAD=false
 
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
@@ -248,11 +249,12 @@ Options:
     -s  Only install minimum required binaries.
     -u  Update/overwrite dependencies.
     -x  Skip deployment validation.
+    -n  No session reloading.
     -h  Display help.
 EOF
 }
 
-while getopts ":xfsuch" flag; do
+while getopts ":xfsuchn" flag; do
     case "${flag}" in
         f)
             echo "[x] Freeze dependency versions."
@@ -269,6 +271,9 @@ while getopts ":xfsuch" flag; do
         u)
             echo "[x] Update dependencies."
             UPDATE=true;;
+        n)
+            echo "[x] No session reloading."
+            NO_RELOAD=true;;
         h)
             display_help
             exit;;
@@ -291,13 +296,15 @@ install_deps
 
 ### Docker
 if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
-    DOCKER_PRE_INSTALLED="$(set -command -pv docker)" || true
-    # Binaries
-    install_docker
-    if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
-        echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
-        # New shell with docker group privilege
-        exec sg docker "$0" "$@"
+    if [ ${NO_RELOAD} = false ]; then
+        DOCKER_PRE_INSTALLED="$(command -pv docker)" || true
+        # Binaries
+        install_docker
+        if [ ${NO_CHECK} = false ] && [ -z "${DOCKER_PRE_INSTALLED}" ]; then
+            echo -e "\n>>> Jump into new shell for docker group privilege...\n" && sleep 3s
+            # New shell with docker group privilege
+            exec sg docker "$0 -r $*"
+        fi
     fi
     # Validation
     if [ ${NO_CHECK} = false ]; then
