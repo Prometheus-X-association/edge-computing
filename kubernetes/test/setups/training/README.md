@@ -70,7 +70,7 @@ Common steps are also encompassed in dedicated targets:
 ```bash
 $ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup, as a single step setup
 
-$ make cleanup  # Invoke 5-delete -> 6-shutdown, as a single step tear down
+$ make teardown # Invoke 5-delete -> 6-shutdown, as a single step tear down
 
 $ make all      # Invoke all numbered targets continuously, as an all-in-one demonstration command
 ```

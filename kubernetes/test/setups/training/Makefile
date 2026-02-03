@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+depends:
+	bash install_deps.sh -u
+
+########################################################################################################################
+
 0-build:
 	bash 0-build-images.sh
 
@@ -40,8 +45,7 @@
 	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
 	bash 6-stop-topo.sh
 
-depends:
-	bash install_deps.sh -u
+########################################################################################################################
 
 status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
@@ -51,12 +55,16 @@ clear:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
 	-kubectl delete jobs,pv,pvc,events --all --now --wait=false --ignore-not-found
 
+########################################################################################################################
+
 setup: | 0-build 1-init 2-viewer 3-setup
 
-cleanup: | 5-delete 6-shutdown
+teardown: | 5-delete 6-shutdown
 
-all: | 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
+all: | depends 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
+
+########################################################################################################################
 
 .SILENT:	# Set silent mode (-s) by default
-.PHONY := 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown depends status clear setup cleanup all
+.PHONY := depends 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown status clear setup teardown all
 .DEFAULT_GOAL := all
