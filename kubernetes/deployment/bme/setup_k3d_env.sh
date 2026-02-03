@@ -182,6 +182,8 @@ function setup_test_cluster() {
     #        nodeFilters:
     #          - agent:*
     #EOF
+    echo -e "\n>>> Docker infrastructure:\n"
+    docker ps -f "name=k3d-test*"
     echo -e "\n>>> K3d cluster info:\n"
     kubectl cluster-info --context k3d-${TEST_K8S}
     echo -e "\n>>> K3s setup:\n"
@@ -315,7 +317,7 @@ if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
             exec sg docker "$(realpath "$0") -n $*"
         fi
     else
-        echo -e "\n>>> Docker install skipped! Current docker install: ${DOCKER_PRE_INSTALLED}\n"
+        echo -e "\n>>> Docker install skipped! Available binary: ${DOCKER_PRE_INSTALLED}\n"
     fi
     # Validation
     if [ ${NO_CHECK} = false ]; then
@@ -389,10 +391,10 @@ if [ ${NO_CHECK} = false ]; then
 ##########################################################################################################
 ##                                                                                                      ##
 ##       Shell session should be reloaded MANUALLY to make non-root access to Docker take effect!       ##
-##       Or just run:                                                                                   ##
-##                         newgrp ${GRP_DOCKER}                                                         ##
 ##                                                                                                      ##
 ##########################################################################################################
+
+For current shell, simply run: newgrp ${GRP_DOCKER}
 
 EOF
 fi
