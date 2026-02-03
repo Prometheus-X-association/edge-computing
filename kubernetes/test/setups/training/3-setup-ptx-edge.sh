@@ -50,11 +50,16 @@ log "Deploy per-zone PDCs"
 envsubst <"${SCRIPT_DIR}/rsc/pdc-daemon-cluster.yaml" | ${KCTL} apply -f=-
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
 echo
+
+log "Waiting for PDC instances to initialize..."
+for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
+    kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
+done
 ${KCTL} wait --for=jsonpath='.status.numberReady'=3 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
 
 log "Waiting for PDC instances to set up..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
-    ( kubectl logs -f "pods/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+    ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
 
 log "Waiting for ingress to set up..." && sleep 10

@@ -19,7 +19,7 @@ source config.sh
 
 LOG "Shutting down test environment..."
 k3d cluster delete "${CLUSTER}"
-rm -rf .cache
+sudo rm -rf .cache
 
 ########################################################################################################################
 
