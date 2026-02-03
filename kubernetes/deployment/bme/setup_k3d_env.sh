@@ -100,7 +100,7 @@ function install_helm() {
 }
 
 function install_skopeo() {
-    echo -e "\n>>> Install skopeo binary[${SKOPEO_VER}]...\n"
+    echo -e "\n>>> Install skopeo from source[${SKOPEO_VER}]...\n"
     # sudo apt-get update && sudo apt-get install -y skopeo   # skopeo version 1.13.3
     sudo add-apt-repository -ny ppa:longsleep/golang-backports
     # sudo apt-get satisfy "golang (>=1.23)" go-md2man
@@ -109,7 +109,7 @@ function install_skopeo() {
         git clone https://github.com/containers/skopeo && cd skopeo
         git switch --detach ${SKOPEO_VER}
         make all
-        sudo make install
+        sudo make install clean
     popd
     rm -rf "${TMP_DIR}"
     echo
@@ -310,12 +310,12 @@ if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
         # Binaries
         install_docker
         if [ ${NO_CHECK} = false ] && id -nGz "${USER}" | grep -qzxF "${GRP_DOCKER}"; then
-            echo -e "\n\n>>> Jump into a NEW shell for '${GRP_DOCKER}' group privilege...\n\n" && sleep 3s
+            echo -e "\n\n>>> Jump into a NEW shell for '${GRP_DOCKER}' group privilege...\n" && sleep 3s
             # New shell with docker group privilege [without docker install]
             exec sg docker "$(realpath "$0") -n $*"
         fi
     else
-        echo -e "\n>>> Docker install skipped! Current docker version: ${DOCKER_PRE_INSTALLED}\n"
+        echo -e "\n>>> Docker install skipped! Current docker install: ${DOCKER_PRE_INSTALLED}\n"
     fi
     # Validation
     if [ ${NO_CHECK} = false ]; then
