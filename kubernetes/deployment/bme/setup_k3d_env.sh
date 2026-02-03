@@ -17,13 +17,15 @@ set -eou pipefail
 # Config --------------------------------------------------------------------------------
 
 # Dependencies
-DEPS=(docker k3d kubectl helm)
+DEPS=(docker k3d kubectl helm skopeo)
 
-DOCKER_VER=29.2.0
-K3D_VER=v5.8.3
-KUBECTL_VER=v1.31.5	# used by k3d v5.8.3 / k3s v1.31.5
-HELM_VER=v4.0.0
-SKOPEO_VER=v1.21.0
+TIMEOUT=120
+
+DOCKER_VER='29.2.0'
+K3D_VER='v5.8.3'
+KUBECTL_VER='v1.31.5'	# used by k3d v5.8.3 / k3s v1.31.5
+HELM_VER='v4.1.0'
+SKOPEO_VER='v1.21.0'
 
 PKG_FREEZE=false
 NO_CHECK=false
@@ -92,7 +94,7 @@ function install_kubectl() {
 
 function install_helm() {
     echo -e "\n>>> Install Helm binary[${HELM_VER}]...\n"
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | TAG=${HELM_VER} bash
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | DESIRED_VERSION=${HELM_VER} bash
     echo
     (set -x; helm version --short)
 }
@@ -106,10 +108,8 @@ function install_skopeo() {
     TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
         git clone https://github.com/containers/skopeo && cd skopeo
         git switch --detach ${SKOPEO_VER}
-        make bin/skopeo docs
-        sudo install -o root -g root -m 0755 bin/skopeo /usr/local/bin/skopeo
-        sudo mkdir -p /usr/local/share/man/man1
-        sudo install -m 644 docs/*.1 /usr/local/share/man/man1
+        make all
+        sudo make install
     popd
     rm -rf "${TMP_DIR}"
     echo
@@ -156,33 +156,32 @@ function setup_skopeo_bash_completion() {
 
 function setup_test_cluster() {
     echo -e "\n>>> Prepare test cluster with id: ${TEST_K8S}...\n"
-#    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=2 \
-#        --k3s-node-label="$PZ_LAB/zone-C=true@server:0" \
-#        --k3s-node-label="$PZ_LAB/zone-A=true@agent:0" \
-#        --k3s-node-label="$PZ_LAB/zone-B=true@agent:*"
-    cat <<EOF | k3d cluster create "${TEST_K8S}" --wait --timeout=60s --config=-
-kind: Simple
-apiVersion: k3d.io/v1alpha5
-metadata:
-  name: ${TEST_K8S}
-servers: 1
-agents: 2
-options:
-  k3d:
-    wait: true
-    timeout: "30s"
-  k3s:
-    nodeLabels:
-      - label: "${PZ_LAB}/zone-C=true"
-        nodeFilters:
-          - server:0
-      - label: "${PZ_LAB}/zone-A=true"
-        nodeFilters:
-          - agent:0
-      - label: "${PZ_LAB/}zone-B=true"
-        nodeFilters:
-          - agent:*
-EOF
+    k3d cluster create "$TEST_K8S" --wait --timeout=30s --servers=1 --agents=1 \
+                                    --k3s-node-label="$PZ_LAB/zone-A=true@server:0" \
+                                    --k3s-node-label="$PZ_LAB/zone-B=true@agent:0" \
+    #    cat <<EOF | k3d cluster create "${TEST_K8S}" --wait --timeout="${TIMEOUT}s" --config=-
+    #kind: Simple
+    #apiVersion: k3d.io/v1alpha5
+    #metadata:
+    #  name: ${TEST_K8S}
+    #servers: 1
+    #agents: 2
+    #options:
+    #  k3d:
+    #    wait: true
+    #    timeout: "${TIMEOUT}s"
+    #  k3s:
+    #    nodeLabels:
+    #      - label: "${PZ_LAB}/zone-C=true"
+    #        nodeFilters:
+    #          - server:0
+    #      - label: "${PZ_LAB}/zone-A=true"
+    #        nodeFilters:
+    #          - agent:0
+    #      - label: "${PZ_LAB/}zone-B=true"
+    #        nodeFilters:
+    #          - agent:*
+    #EOF
     echo -e "\n>>> K3d cluster info:\n"
     kubectl cluster-info --context k3d-${TEST_K8S}
     echo -e "\n>>> K3s setup:\n"
@@ -190,7 +189,7 @@ EOF
     echo
     kubectl -n kube-system get all
     echo -e "\n>>> K3s nodes:\n"
-    kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B -L ${PZ_LAB}/zone-C
+    kubectl get nodes -o wide -L ${PZ_LAB}/zone-A -L ${PZ_LAB}/zone-B
 }
 
 function perform_test_deployment() {
@@ -204,11 +203,11 @@ function perform_test_deployment() {
     kubectl -n ${TEST_NS} run ${TEST_ID} --image ${TEST_IMG} --restart='Never' \
                 --overrides='{"apiVersion":"v1","spec":{"nodeSelector":{'\"${PZ_LAB}'/zone-A":"true"}}}' \
                 -- /bin/sh -c "${TEST_CMD}"
-    kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout=60s pod/${TEST_ID}
     set +x
     # Pod failure test
-    echo -e "\n>>> Waiting for potential escalation...\n" && sleep 3s
-    kubectl -n ${TEST_NS} get pod/${TEST_ID}
+    echo -e "\n>>> Waiting for potential escalation...\n"
+    kubectl -n ${TEST_NS} wait --for="condition=Ready" --timeout="${TIMEOUT}s" pod/${TEST_ID}
+    kubectl -n ${TEST_NS} get pod/${TEST_ID} -o wide
     echo
     if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" == "${TEST_OK}" ]]; then
         echo -e "\n>>> Validation result: OK!\n"
@@ -255,14 +254,14 @@ EOF
 
 cat <<'EOF'
 
-######################################################################################
-##     ____ _______  __              _                          _                   ##
-##    |  _ \_   _\ \/ /      ___  __| | __ _  ___      ___  ___| |_ _   _ _ __      ##
-##    | |_) || |  \  /_____ / _ \/ _` |/ _` |/ _ \    / __|/ _ \ __| | | | '_ \     ##
-##    |  __/ | |  /  \_____|  __/ (_| | (_| |  __/    \__ \  __/ |_| |_| | |_) |    ##
-##    |_|    |_| /_/\_\     \___|\__,_|\__, |\___|    |___/\___|\__|\__,_| .__/     ##
-##                                     |___/                             |_|        ##
-######################################################################################
+          ##############################################################################################
+          ##         ____ _______  __              _                          _                       ##
+          ##        |  _ \_   _\ \/ /      ___  __| | __ _  ___      ___  ___| |_ _   _ _ __          ##
+          ##        | |_) || |  \  /_____ / _ \/ _` |/ _` |/ _ \    / __|/ _ \ __| | | | '_ \         ##
+          ##        |  __/ | |  /  \_____|  __/ (_| | (_| |  __/    \__ \  __/ |_| |_| | |_) |        ##
+          ##        |_|    |_| /_/\_\     \___|\__,_|\__, |\___|    |___/\___|\__|\__,_| .__/         ##
+          ##                                         |___/                             |_|            ##
+          ##############################################################################################
 
 EOF
 
@@ -306,18 +305,21 @@ install_deps
 
 ### Docker
 if ! command -v docker >/dev/null 2>&1 || [ "${UPDATE}" = true ]; then
+    DOCKER_PRE_INSTALLED="$(command -pv docker)" || true
     if [ ${NO_DOCKER} = false ]; then
         # Binaries
         install_docker
         if [ ${NO_CHECK} = false ] && id -nGz "${USER}" | grep -qzxF "${GRP_DOCKER}"; then
-            echo -e "\n\n>>> Jump into a NEW shell for docker group privilege...\n\n" && sleep 3s
+            echo -e "\n\n>>> Jump into a NEW shell for '${GRP_DOCKER}' group privilege...\n\n" && sleep 3s
             # New shell with docker group privilege [without docker install]
             exec sg docker "$(realpath "$0") -n $*"
         fi
+    else
+        echo -e "\n>>> Docker install skipped! Current docker version: ${DOCKER_PRE_INSTALLED}\n"
     fi
     # Validation
     if [ ${NO_CHECK} = false ]; then
-        echo -e "\n>>> Check Docker install...\n"
+        echo -e "\n>>> Check Docker setup...\n"
         # Docker check with simple container
         docker run --rm "${CHECK_IMG}" && docker rmi -f "${CHECK_IMG}"
     fi
@@ -382,11 +384,16 @@ fi
 post_install
 
 if [ ${NO_CHECK} = false ]; then
-    cat <<'EOF'
+    cat <<EOF
 
 ##########################################################################################################
-##  This shell session should be reloaded MANUALLY to make non-root user access to Docker take effect!  ##
+##                                                                                                      ##
+##       Shell session should be reloaded MANUALLY to make non-root access to Docker take effect!       ##
+##       Or just run:                                                                                   ##
+##                         newgrp ${GRP_DOCKER}                                                         ##
+##                                                                                                      ##
 ##########################################################################################################
+
 EOF
 fi
 
