@@ -199,10 +199,12 @@ run-scheduler:
 	#kubectl delete pods -l app=worker
 
 run-controller:
+	@#kubectl apply -f https://github.com/nolar/kopf/raw/main/peering.yaml
+	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
 	kubectl apply -f ${ASSETS}/ptx-controller-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/controller
 	@echo
-	kubectl get all -o wide
+	kubectl get all,crd -o wide
 	@echo
 	-kubectl exec -ti pod/controller -- sh || true
 	kubectl delete pods/controller --now --wait
