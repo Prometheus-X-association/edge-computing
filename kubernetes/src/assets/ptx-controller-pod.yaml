@@ -29,7 +29,7 @@ rules:
     verbs: [ create, patch ]
   # Application: read-only access for watching cluster-wide.
   - apiGroups: [ dataspace.ptx.org ]
-    resources: [ EdgeWorkerTask ]
+    resources: [ edgeworkertasks ]
     verbs: [ list, watch ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -46,12 +46,11 @@ rules:
   - apiGroups: [ "" ]
     resources: [ events ]
     verbs: [ create ]
-  # Application: watching & handling for the custom resource we declare.
+  # Application: watching & handling for the custom resource.
   - apiGroups: [ dataspace.ptx.org ]
-    resources: [ EdgeWorkerTask ]
+    resources: [ edgeworkertasks ]
     verbs: [ list, watch, patch ]
   # Application: other resources it produces and manipulates.
-  # Here, we create Jobs+PVCs+Pods, but we do not patch/update/delete them ever.
   - apiGroups: [ batch, extensions ]
     resources: [ jobs ]
     verbs: [ create ]
@@ -100,7 +99,7 @@ spec:
     - name: controller
       image: registry.k3d.local:5000/ptx-edge/controller:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--debug", "--dev", app/controller.py" ]
+      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--debug", "--dev", "app/controller.py" ]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
       volumeMounts:
         - name: src
