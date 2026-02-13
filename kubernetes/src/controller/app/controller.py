@@ -19,23 +19,23 @@ import sys
 import typing
 
 import kopf
-from kubernetes import config
 
-from app import __version__
-from app.utils import setup_logging
+from utils import setup_logging
 
+__version__ = '1.0.0'
 log = logging.getLogger(__name__)
 
 NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
+REQUIRED_FIELDS = ()
 CONFIG = {}
 
-REQUIRED_FIELDS = ()
-
-
-def serve_forever(param):
-    kopf.run()
-
+@kopf.on.create('edgeworkertasks')
+def create_ewt(spec, **kwargs):
+    print("Creation completed.")
+    print(f"And here we are! Creating: {spec}")
+    log.debug(f"log-Creation completed.")
+    return {'message': 'hello world'}  # will be the new status
 
 def setup_config(params: dict[str, typing.Any]):
     """
@@ -45,18 +45,13 @@ def setup_config(params: dict[str, typing.Any]):
     """
     log.info("Loading configuration...")
     CONFIG.update(kv for kv in params.items() if kv[1] is not None)
-    if CONFIG.get('namespace') is None and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve(strict=True)).exists():
+    if CONFIG.get('namespace') is None and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve()).exists():
         CONFIG['namespace'] = kube_cfg_ns.read_text()
     if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
         log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")
         sys.exit(os.EX_CONFIG)
+    # TODO - optional configs
     log.debug(f"Loaded configuration:\n{json.dumps(CONFIG, indent=4, default=str)}")
-    try:
-        log.debug("Loading in-cluster K8s configuration....")
-        config.load_incluster_config()
-    except config.ConfigException as e:
-        log.error(f"Error loading Kubernetes API config:\n{e}")
-        sys.exit(os.EX_CONFIG)
 
 
 def main():
@@ -72,12 +67,7 @@ def main():
     setup_logging(verbosity=args.verbose)
     setup_config(params=vars(args))
     ################# Handle scheduling events
-    try:
-        serve_forever(**CONFIG)
-    except Exception as e:
-        log.error(f"Unexpected error received:\n{e}")
-        log.exception(e)
-        sys.exit(os.EX_SOFTWARE)
+    log.debug(f"Initialization completed.")
 
 
 if __name__ == '__main__':

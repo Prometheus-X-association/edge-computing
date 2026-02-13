@@ -79,5 +79,5 @@ spec:
   volumes:
     - name: src
       hostPath:
-        path: /usr/local/share/scheduler/app
+        path: /usr/local/share/ptx-edge/scheduler/app
         type: Directory

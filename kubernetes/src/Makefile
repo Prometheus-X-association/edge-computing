@@ -23,7 +23,7 @@ CA_DIR := ${PROJECT_ROOT}/registry/.certs/ca
 
 ASSETS := ${PROJECT_ROOT}/assets
 
-COMPONENTS := builder operator registry rest-api scheduler
+COMPONENTS := builder controller registry rest-api scheduler
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
 SAMPLES := convnet gbc
@@ -196,6 +196,16 @@ run-scheduler:
 	@echo
 	-kubectl exec -ti pod/scheduler -- sh || true
 	kubectl delete pods/scheduler --now --wait
+	#kubectl delete pods -l app=worker
+
+run-controller:
+	kubectl apply -f ${ASSETS}/ptx-controller-pod.yaml
+	kubectl wait --for="condition=Ready" --timeout=30s pod/controller
+	@echo
+	kubectl get all -o wide
+	@echo
+	-kubectl exec -ti pod/controller -- sh || true
+	kubectl delete pods/controller --now --wait
 	#kubectl delete pods -l app=worker
 
 ########################################################################################################################

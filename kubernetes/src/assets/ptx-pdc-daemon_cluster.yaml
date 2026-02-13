@@ -184,7 +184,7 @@ spec:
                 path: entrypoint.sh
         - name: src
           hostPath:
-            path: /usr/local/share/builder/app
+            path: /usr/local/share/ptx-edge/builder/app
             type: Directory
         - name: kube-api-client-cfg
           projected:

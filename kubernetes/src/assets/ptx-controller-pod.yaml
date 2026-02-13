@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: controller
+  namespace: ptx-edge
+  labels:
+    app: controller
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: controller-rbac-cluster
+rules:
+  # Framework: knowing which other operators are running (i.e. peering).
+  - apiGroups: [ kopf.dev ]
+    resources: [ clusterkopfpeerings ]
+    verbs: [ list, watch, patch, get ]
+  # Framework: runtime observation of namespaces & CRDs (addition/deletion).
+  - apiGroups: [ apiextensions.k8s.io ]
+    resources: [ customresourcedefinitions ]
+    verbs: [ list, watch ]
+  - apiGroups: [ "" ]
+    resources: [ namespaces ]
+    verbs: [ list, watch ]
+  # Framework: admission webhook configuration management.
+  - apiGroups: [ admissionregistration.k8s.io/v1, admissionregistration.k8s.io/v1beta1 ]
+    resources: [ validatingwebhookconfigurations, mutatingwebhookconfigurations ]
+    verbs: [ create, patch ]
+  # Application: read-only access for watching cluster-wide.
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ EdgeWorkerTask ]
+    verbs: [ list, watch ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: controller-rbac
+  namespace: ptx-edge
+rules:
+  # Framework: knowing which other operators are running (i.e. peering).
+  - apiGroups: [ kopf.dev ]
+    resources: [ kopfpeerings ]
+    verbs: [ list, watch, patch, get ]
+  # Framework: posting the events about the handlers progress/errors.
+  - apiGroups: [ "" ]
+    resources: [ events ]
+    verbs: [ create ]
+  # Application: watching & handling for the custom resource we declare.
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ EdgeWorkerTask ]
+    verbs: [ list, watch, patch ]
+  # Application: other resources it produces and manipulates.
+  # Here, we create Jobs+PVCs+Pods, but we do not patch/update/delete them ever.
+  - apiGroups: [ batch, extensions ]
+    resources: [ jobs ]
+    verbs: [ create ]
+  - apiGroups: [ "" ]
+    resources: [ pods, persistentvolumeclaims ]
+    verbs: [ create ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: controller-rbac-cluster
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: controller
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: controller-rbac-cluster
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: controller-rbac
+  namespace: ptx-edge
+subjects:
+  - kind: ServiceAccount
+    name: controller
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: controller-rbac
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controller
+  namespace: ptx-edge
+  labels:
+    app: controller
+spec:
+  serviceAccountName: controller
+  containers:
+    - name: controller
+      image: registry.k3d.local:5000/ptx-edge/controller:1.0
+      imagePullPolicy: IfNotPresent
+      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--debug", "--dev", app/controller.py" ]
+      command: [ "/bin/sh", "-c", "sleep infinity" ]
+      volumeMounts:
+        - name: src
+          mountPath: /usr/src/controller/app
+  volumes:
+    - name: src
+      hostPath:
+        path: /usr/local/share/ptx-edge/controller/app
+        type: Directory

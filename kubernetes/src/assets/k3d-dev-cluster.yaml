@@ -14,15 +14,7 @@ ports:
       - agent:0:direct
 volumes:
   # Development purposes
-  - volume: ${PROJECT_ROOT}/builder:/usr/local/share/builder
-    nodeFilters:
-      - all
-  # Development purposes
-  - volume: ${PROJECT_ROOT}/rest-api:/usr/local/share/rest-api
-    nodeFilters:
-      - all
-  # Development purposes
-  - volume: ${PROJECT_ROOT}/scheduler:/usr/local/share/scheduler
+  - volume: ${PROJECT_ROOT}:/usr/local/share/ptx-edge
     nodeFilters:
       - all
   # Add registry CA cert

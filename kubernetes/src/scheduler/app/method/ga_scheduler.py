@@ -95,7 +95,7 @@ def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = 
     """
     nodes = tuple(topology.nodes)
     population_size = population_size if population_size is not None else max(FACTOR_POP * len(nodes), 10)
-    generations = generations if generations else math.ceil(FACTOR_GEN * math.log(len(nodes) + 1))
+    generations = generations if generations is not None else math.ceil(FACTOR_GEN * math.log(len(nodes) + 1))
     tournament_size = math.ceil(tournament_ratio * population_size)
     group_size = math.ceil(tournament_size / pheno_groups)
 

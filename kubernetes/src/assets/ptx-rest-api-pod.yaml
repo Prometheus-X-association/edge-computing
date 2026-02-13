@@ -26,7 +26,7 @@ spec:
   volumes:
     - name: src
       hostPath:
-        path: /usr/local/share/rest-api/app
+        path: /usr/local/share/ptx-edge/rest-api/app
         type: Directory
 ---
 apiVersion: v1
