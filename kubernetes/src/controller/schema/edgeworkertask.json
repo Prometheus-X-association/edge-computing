@@ -9,6 +9,9 @@
     "schemas": {
       "EdgeWorkerTask": {
         "type": "object",
+        "required": [
+          "spec"
+        ],
         "properties": {
           "spec": {
             "type": "object",

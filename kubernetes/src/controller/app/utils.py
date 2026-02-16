@@ -16,6 +16,7 @@ import typing
 
 log = logging.getLogger(__name__)
 
+
 def setup_logging(verbosity: int):
     logging.basicConfig(level=logging.DEBUG if verbosity > 0 else logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")

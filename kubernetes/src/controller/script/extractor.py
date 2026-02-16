@@ -20,34 +20,31 @@ import yaml
 OPENAPI_VERSION = "3.0.0"
 
 
-def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_file: pathlib.Path) -> None:
+def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.Path) -> None:
     """
 
     :param crd_file:
-    :param scheme_file:
+    :param scheme_dir:
     :return:
     """
+    scheme_dir.mkdir(parents=True, exist_ok=True)
     crds = list(filter(bool, yaml.safe_load_all(crd_file.resolve(strict=True).read_text())))
     for crd in crds:
-        name = crd['metadata']['name']
-        kind = crd['spec']['names']['kind']
         for ver in crd['spec']['versions']:
-            v3_scheme = ver['schema']['openAPIV3Schema']
             data = {
                 "openapi": OPENAPI_VERSION,
                 "info": {
-                    "title": name,
+                    "title": crd['metadata']['name'],
                     "version": ver["name"],
                 },
                 "paths": {},
                 "components": {
                     "schemas": {
-                        kind: v3_scheme
+                        crd['spec']['names']['kind']: ver['schema']['openAPIV3Schema']
                     }
                 }
             }
-            scheme_file.parent.mkdir(parents=True, exist_ok=True)
-            with scheme_file.open("w") as f:
+            with scheme_dir.joinpath(crd['spec']['names']['singular'] + ".json").open("w") as f:
                 json.dump(data, f, indent=2, sort_keys=False)
 
 
@@ -55,11 +52,12 @@ def main():
     ################# Parse parameters
     parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="K8s CRD-OpenAPI Schema Extractor")
     parser.add_argument('crd', type=pathlib.Path, help="Input k8s CRD file")
-    parser.add_argument('schema', type=pathlib.Path, help="Extracted OpenAPI schema file")
+    parser.add_argument('schema_dir', type=pathlib.Path, default=argparse.SUPPRESS,
+                        help="Extracted OpenAPI schema file")
     args = parser.parse_args()
     #################
     try:
-        extract_openapi_scheme_from_crd(crd_file=args.crd, scheme_file=args.schema)
+        extract_openapi_scheme_from_crd(crd_file=args.crd, scheme_dir=args.schema_dir)
     except Exception as e:
         print(e)
 

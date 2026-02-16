@@ -32,12 +32,14 @@ NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 REQUIRED_FIELDS = ()
 CONFIG = {}
 
+
 @kopf.on.create('edgeworkertasks')
 def create_ewt(spec, **kwargs):
     print("Creation completed.")
     print(f"And here we are! Creating: {spec}")
     log.debug(f"log-Creation completed.")
     return {'message': 'hello world'}  # will be the new status
+
 
 def setup_config(params: dict[str, typing.Any]):
     """
