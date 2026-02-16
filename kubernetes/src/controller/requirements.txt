@@ -1,1 +1,2 @@
 kopf[uvloop]~=1.43.0
+pydantic

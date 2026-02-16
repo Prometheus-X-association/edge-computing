@@ -32,16 +32,14 @@ clean:
 
 extract:
 	. .venv/bin/activate && \
-	for crd in crd/ptx-edge-*.yaml; do\
-    	python3 script/extractor.py "$${crd}" "./schema/";\
+	for crd in crd/ptx-edge-*.yaml; do \
+    	python3 script/extractor.py "$${crd}" "./schema/"; \
 	done
 
 generate:
 	. .venv/bin/activate && \
-	for schema in schema/*.json; do\
-    	datamodel-codegen --input="$${schema}" --input-file-type='openapi' --openapi-scopes='schemas' \
-    			--formatter='isort' --target-python-version='3.14' --keep-model-order --schema-version-mode='strict'\
-				--output-model-type='pydantic_v2.BaseModel' --output "app/model/$$(basename $${schema} .json).py";\
+	for schema in schema/*.json; do \
+		sh script/generator.sh "$${schema}" "app/model/$$(basename $${schema} .json).py"; \
 	done
 
 convert: | extract generate
