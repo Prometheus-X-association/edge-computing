@@ -16,5 +16,5 @@
 # Usage: generator.sh [schema_file] [model_file]
 
 datamodel-codegen --input="${1}" --input-file-type='openapi' --openapi-scopes='schemas' \
-                    --formatter='isort' --keep-model-order --schema-version-mode='strict' \
+                    --formatter='isort' --keep-model-order --schema-version-mode='strict' --enable-version-header \
                     --target-python-version='3.14' --output-model-type='pydantic_v2.BaseModel' --output "${2}"

@@ -16,16 +16,38 @@
           "spec": {
             "type": "object",
             "properties": {
-              "src": {
-                "type": "object"
+              "data": {
+                "type": "object",
+                "required": [
+                  "src"
+                ],
+                "properties": {
+                  "src": {
+                    "type": "string"
+                  },
+                  "dst": {
+                    "type": "string"
+                  }
+                }
               },
-              "dst": {
-                "type": "object"
+              "worker": {
+                "type": "object",
+                "required": [
+                  "src"
+                ],
+                "properties": {
+                  "src": {
+                    "type": "string"
+                  },
+                  "dst": {
+                    "type": "string"
+                  }
+                }
               }
             },
             "required": [
-              "src",
-              "dst"
+              "data",
+              "worker"
             ]
           },
           "status": {
@@ -33,7 +55,7 @@
             "x-kubernetes-preserve-unknown-fields": true,
             "properties": {
               "ready": {
-                "type": "string"
+                "type": "boolean"
               }
             }
           }

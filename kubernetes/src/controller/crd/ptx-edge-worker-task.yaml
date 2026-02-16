@@ -7,9 +7,10 @@ spec:
   group: dataspace.ptx.org
   scope: Namespaced
   names:
+    kind: EdgeWorkerTask
+    listKind: EdgeWorkerTaskList
     plural: edgeworkertasks
     singular: edgeworkertask
-    kind: EdgeWorkerTask
     shortNames:
       - ewt
       - ewts
@@ -26,26 +27,44 @@ spec:
             spec:
               type: object
               properties:
-                src:
+                data:
                   type: object
-                dst:
+                  required:
+                    - src
+                  properties:
+                    src:
+                      type: string
+                    dst:
+                      type: string
+                worker:
                   type: object
+                  required:
+                    - src
+                  properties:
+                    src:
+                      type: string
+                    dst:
+                      type: string
               required:
-                - src
-                - dst
+                - data
+                - worker
             status:
               type: object
               x-kubernetes-preserve-unknown-fields: true
               properties:
                 ready:
-                  type: string
+                  type: boolean
       additionalPrinterColumns:
-        - name: DataProvider
+        - name: Data-Provider
           type: string
           description: Datasource configuration
-          jsonPath: .spec.src
-        - name: DataConsumer
+          jsonPath: .spec.data.src
+        - name: Data-Consumer
           type: string
           description: Worker logic configuration
-          jsonPath: .spec.dst
+          jsonPath: .spec.worker.src
+        - name: Status
+          type: string
+          description: Status
+          jsonPath: .status.ready
 ---

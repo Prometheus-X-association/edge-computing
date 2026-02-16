@@ -1,0 +1,11 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: EdgeWorkerTask
+metadata:
+  name: test-ewt
+spec:
+  data:
+    src: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+    dst: "/var/cache/data/"
+  worker:
+    src: "remote://busybox:latest"
+    dst: "REGISTRY/myworker:latest"
