@@ -1,0 +1,3 @@
+kopf[uvloop]~=1.43.0
+pyyaml~=6.0.3
+datamodel-code-generator~=0.54.0

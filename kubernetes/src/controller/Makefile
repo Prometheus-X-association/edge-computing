@@ -1,4 +1,4 @@
-# Copyright 2025 Janos Czentye
+# Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,13 @@ clean:
 	docker rmi -f ${IMG}
 	py3clean -v .
 	rm -rf .venv
+
+########################################################################################################################
+
+extract:
+	for crd in crd/ptx-edge-*.yaml; do\
+    	python3 script/extractor.py "$${crd}" "schema/$$(basename $${crd} .yaml).json";\
+	done
 
 ########################################################################################################################
 
