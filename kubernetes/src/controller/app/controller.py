@@ -22,6 +22,7 @@ import typing
 
 import kopf
 
+from model.edgeworkertask import EdgeWorkerTask
 from utils import setup_logging
 
 __version__ = '1.0.0'
@@ -35,10 +36,13 @@ CONFIG = {}
 
 @kopf.on.create('edgeworkertasks')
 def create_ewt(spec, **kwargs):
-    print("Creation completed.")
-    print(f"And here we are! Creating: {spec}")
-    log.debug(f"log-Creation completed.")
-    return {'message': 'hello world'}  # will be the new status
+    log.debug("=" * 40)
+    log.info(spec)
+    ewt = EdgeWorkerTask(spec=spec)
+    log.info(f"Created {ewt}")
+    log.debug(f"Creation completed.")
+    log.debug("=" * 40)
+    return {'ready': True}  # will be the new status
 
 
 def setup_config(params: dict[str, typing.Any]):
