@@ -231,8 +231,9 @@ function post_install() {
     #sudo sysctl -w fs.inotify.max_user_instances=8192 fs.inotify.max_user_watches=524288
     echo 'fs.inotify.max_user_instances = 8192' | sudo tee -a /etc/sysctl.conf
     echo 'fs.inotify.max_user_watches = 524288' | sudo tee -a /etc/sysctl.conf
-    sudo sysctl -p    echo -e "\n>>> Installed dependencies\n"
+    sudo sysctl -p
 
+    echo -e "\n>>> Installed dependencies\n"
     docker --version
     k3d version
     kubectl version --client
