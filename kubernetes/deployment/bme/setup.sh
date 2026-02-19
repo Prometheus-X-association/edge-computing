@@ -27,6 +27,13 @@ COMMENT_FILTER='/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//'
 PERSIST=true
 RESET=true
 
+GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+echo "Detected global IP: ${GLOBAL_IP}"
+# shellcheck disable=SC2086
+GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
+echo "Generated IP hex: ${GLOBAL_IP_HEX}"
+GW_TLS_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
+
 ########################################################################################################################
 
 function build() {
@@ -149,6 +156,13 @@ function deploy() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
+    GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+    echo "Detected global IP: ${GLOBAL_IP}"
+    GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
+    echo "Generated IP hex: ${GLOBAL_IP_HEX}"
+    #GW_TLS_DOMAIN="bme-www-9842f595.sslip.io"
+    GW_TLS_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
+
     kubectl get ns "${PTX_NS}" || (
         kubectl create namespace "${PTX_NS}" && kubectl config set-context --current --namespace "${PTX_NS}")
     echo
