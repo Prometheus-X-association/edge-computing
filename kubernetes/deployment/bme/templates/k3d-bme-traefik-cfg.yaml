@@ -31,7 +31,7 @@ spec:
       - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:${GW_WEBSECURE_PORT}"
       - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.domains[0].main=${GW_TLS_DOMAIN}"
+      - "--entrypoints.websecure.http.tls.domains[0].main=${GW_DOMAIN}"
       - "--entrypoints.websecure.http.tls.options=kube-system-tls-opt@kubernetescrd"
       - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
       - "--certificatesresolvers.letsencrypt.acme.email=${GW_TLS_EMAIL}"

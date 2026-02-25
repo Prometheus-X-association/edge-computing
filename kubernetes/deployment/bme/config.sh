@@ -60,8 +60,17 @@ REG_CRT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
 TIMEOUT=120s
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
-#GW_TLS_DOMAIN=
+#GW_DOMAIN=
 #GW_TLS_EMAIL=
+if [ -z "${GW_DOMAIN}" ]; then
+    GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+    echo "Detected global IP: ${GLOBAL_IP}"
+    # shellcheck disable=SC2086
+    GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
+    echo "Generated IP hex: ${GLOBAL_IP_HEX}"
+    #GW_DOMAIN="bme-www-9842f595.sslip.io"
+    GW_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
+fi
 GW_LOCAL_DOMAIN="${GW}.${PTX_NS}.localhost"
 GW_WEB_PORT=80
 GW_WEBSECURE_PORT=443
@@ -76,11 +85,10 @@ PDC_ID="pdc-${DEF_ZONE}"
 PDC_SUBPATH="${PTX_NS}/${DEF_ZONE}/${PDC}"
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
-#PDC_DOMAIN=
 #SERVICE_KEY=
 #SECRET_KEY=
-#PDC_ENDPOINT="http://${PDC_DOMAIN}:${GW_WEB_PORT}/${PDC_SUBPATH}"
-PDC_ENDPOINT="https://${PDC_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}"
+#PDC_ENDPOINT="http://${GW_DOMAIN}:${GW_WEB_PORT}/${PDC_SUBPATH}"
+PDC_ENDPOINT="https://${GW_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}"
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${PDC_CFG_SERVICE_KEY}'    # Placeholder for substitution in pdc's entrypoint.sh

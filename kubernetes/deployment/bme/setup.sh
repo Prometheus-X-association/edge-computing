@@ -32,7 +32,7 @@ echo "Detected global IP: ${GLOBAL_IP}"
 # shellcheck disable=SC2086
 GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
 echo "Generated IP hex: ${GLOBAL_IP_HEX}"
-GW_TLS_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
+GW_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
 
 ########################################################################################################################
 
@@ -156,12 +156,6 @@ function deploy() {
     echo
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
     echo
-    GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
-    echo "Detected global IP: ${GLOBAL_IP}"
-    GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
-    echo "Generated IP hex: ${GLOBAL_IP_HEX}"
-    #GW_TLS_DOMAIN="bme-www-9842f595.sslip.io"
-    GW_TLS_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"
 
     kubectl get ns "${PTX_NS}" || (
         kubectl create namespace "${PTX_NS}" && kubectl config set-context --current --namespace "${PTX_NS}")
@@ -186,15 +180,15 @@ function deploy() {
 	rm -rf "${CFG_DIR}/.creds/gw/" && mkdir -pv "${CFG_DIR}/.creds/gw/"
     pushd "${CFG_DIR}/.creds/gw/" >/dev/null
     ### Simple self-signed cert
- 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" \
+ 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" \
     #            -keyout tls.key -out tls.cert
     ### Simple self-signed cert with specific CA
 	# openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
 	# 		-CA "${PROJECT_ROOT}"/src/registry/.certs/ca/ca.crt -CAkey "${PROJECT_ROOT}"/src/registry/.certs/ca.key \
-	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}" -keyout tls.key -out tls.cert
+	#		-subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout tls.key -out tls.cert
     ### Self-signed cert with CA and SAN
     #openssl req -newkey rsa:2048 -noenc -keyout tls.key -out tls.csr \
-    #        -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_TLS_DOMAIN}"
+    #        -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}"
     #printf "subjectAltName=DNS:%s" "${GW_LOCAL_DOMAIN}" | openssl x509 -req -days 365 -extfile=- \
     #        -CA "${PROJECT_ROOT}/src/registry/.certs/ca/ca.crt" \
     #        -CAkey "${PROJECT_ROOT}/src/registry/.certs/ca.key" -in tls.csr -out tls.cert
@@ -257,7 +251,7 @@ function deploy() {
     wget -S -T5 --retry-on-http-error=404,502 --tries=5 --read-timeout=5 -O /dev/null --no-check-certificate "${CHECK_PDC_URL}"
     curl -Ssfk "${CHECK_PDC_URL}" | grep "href"
     ###
-    CHECK_PDC_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
+    CHECK_PDC_URL="https://${GW_DOMAIN}:${GW_WEBSECURE_PORT}/${PDC_SUBPATH}/"
     echo
     echo "Check ${CHECK_PDC_URL}..."
     curl -Ssfk -I "${CHECK_PDC_URL}" || true
@@ -285,7 +279,7 @@ function deploy() {
             --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${CHECK_API_URL}"
     curl -Ssfk -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}" | python3 -m json.tool
     ###
-    CHECK_API_URL="https://${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
+    CHECK_API_URL="https://${GW_DOMAIN}:${GW_WEBSECURE_PORT}/${API_SUBPATH}/versions"
     echo
     echo "Check ${CHECK_API_URL}..."
     curl -Ssfk -I -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "${CHECK_API_URL}" || true
@@ -294,8 +288,8 @@ function deploy() {
     echo ">>> Cert details [${GW_LOCAL_DOMAIN}]:"
     openssl s_client -showcerts -connect "${GW_LOCAL_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
     echo
-    echo ">>> Cert details [${GW_TLS_DOMAIN}]:"
-    openssl s_client -showcerts -connect "${GW_TLS_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
+    echo ">>> Cert details [${GW_DOMAIN}]:"
+    openssl s_client -showcerts -connect "${GW_DOMAIN}:${GW_WEBSECURE_PORT}" -brief </dev/null
     #######
     echo
     echo ">>> Applying ptx-scheduler-deployment.yaml"

@@ -22,7 +22,7 @@ spec:
 #  entryPoints:
 #    - web
 #  routes:
-#    - match: (Host(`${GW_TLS_DOMAIN}`) || Host(`${GW_LOCAL_DOMAIN}`) ) && PathPrefix(`/${PDC_SUBPATH}`)
+#    - match: (Host(`${GW_DOMAIN}`) || Host(`${GW_LOCAL_DOMAIN}`) ) && PathPrefix(`/${PDC_SUBPATH}`)
 #      kind: Rule
 #      middlewares:
 #        - name: ${PDC}-${DEF_ZONE}-stripprefix
@@ -45,11 +45,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX_NS}-${PDC}-${DEF_ZONE}-stripprefix@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_TLS_DOMAIN}
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: ${GW_DOMAIN}
 spec:
   ingressClassName: traefik
   rules:
-    - host: ${GW_TLS_DOMAIN}
+    - host: ${GW_DOMAIN}
       http:
         paths:
           - path: /${PDC_SUBPATH}
@@ -72,5 +72,5 @@ spec:
   tls:
     #- secretName: gw-tls
     - hosts:
-        - ${GW_TLS_DOMAIN}
+        - ${GW_DOMAIN}
 ---
