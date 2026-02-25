@@ -62,7 +62,7 @@ TIMEOUT=120s
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
 #GW_DOMAIN=
 #GW_TLS_EMAIL=
-if [ -z "${GW_DOMAIN}" ]; then
+if [ -z "${GW_DOMAIN:-}" ]; then
     GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
     echo "Detected global IP: ${GLOBAL_IP}"
     # shellcheck disable=SC2086
