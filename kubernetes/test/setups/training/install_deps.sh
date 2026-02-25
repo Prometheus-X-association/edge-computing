@@ -230,11 +230,14 @@ function cleanup_test_cluster() {
 }
 
 function post_install() {
-    echo -e "\n>>> Increase fsnotify values for large clusters...\n"
     #sudo sysctl -w fs.inotify.max_user_instances=8192 fs.inotify.max_user_watches=524288
-    echo 'fs.inotify.max_user_instances = 8192' | sudo tee -a /etc/sysctl.conf
-    echo 'fs.inotify.max_user_watches = 524288' | sudo tee -a /etc/sysctl.conf
-    sudo sysctl -p
+    if [ "$(sysctl -n fs.inotify.max_user_instances)" -lt "${FS_MUI}" ] && \
+        [ "$(sysctl -n fs.inotify.max_user_watches)" -lt "${FS_MUW}" ]; then
+        echo -e "\n>>> Increase fsnotify values for large clusters...\n"
+        echo "fs.inotify.max_user_instances = ${FS_MUI}" | sudo tee -a /etc/sysctl.conf
+        echo "fs.inotify.max_user_watches = ${FS_MUW}" | sudo tee -a /etc/sysctl.conf
+        sudo sysctl -q -p
+    fi
 
     echo -e "\n>>> Installed dependencies\n"
     docker --version

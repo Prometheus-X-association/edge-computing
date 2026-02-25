@@ -16,10 +16,8 @@ set -eou pipefail
 
 # Config --------------------------------------------------------------------------------
 
-# Dependencies
+## Dependencies
 DEPS=(docker k3d kubectl helm skopeo)
-
-TIMEOUT=120
 
 DOCKER_VER='29.2.0'
 K3D_VER='v5.8.3'
@@ -27,6 +25,7 @@ KUBECTL_VER='v1.31.5'	# used by k3d v5.8.3 / k3s v1.31.5
 HELM_VER='v4.1.0'
 SKOPEO_VER='v1.21.0'
 
+## Install parameters
 PKG_FREEZE=false
 NO_CHECK=false
 SLIM_SETUP=false
@@ -34,7 +33,8 @@ UPDATE=false
 INIT_CLEANUP=false
 NO_DOCKER=false
 
-GRP_DOCKER="docker"
+## Test parameters
+TIMEOUT=120
 CHECK_IMG="hello-world:latest"
 TEST_K8S='test-cluster'
 TEST_NS='ptx-edge'
@@ -49,6 +49,11 @@ TEST_OK='Running'
 
 PZ_LAB='privacy-zone.dataspace.ptx.org'
 RET_VAL=0
+
+## System-wide attributes
+GRP_DOCKER="docker"
+FS_MUI=8192
+FS_MUW=524288
 
 # Install actions --------------------------------------------------------------------------------
 
@@ -227,11 +232,14 @@ function cleanup_test_cluster() {
 }
 
 function post_install() {
-    echo -e "\n>>> Increase fsnotify values for large clusters...\n"
     #sudo sysctl -w fs.inotify.max_user_instances=8192 fs.inotify.max_user_watches=524288
-    echo 'fs.inotify.max_user_instances = 8192' | sudo tee -a /etc/sysctl.conf
-    echo 'fs.inotify.max_user_watches = 524288' | sudo tee -a /etc/sysctl.conf
-    sudo sysctl -p
+    if [ "$(sysctl -n fs.inotify.max_user_instances)" -lt "${FS_MUI}" ] && \
+        [ "$(sysctl -n fs.inotify.max_user_watches)" -lt "${FS_MUW}" ]; then
+        echo -e "\n>>> Increase fsnotify values for large clusters...\n"
+        echo "fs.inotify.max_user_instances = ${FS_MUI}" | sudo tee -a /etc/sysctl.conf
+        echo "fs.inotify.max_user_watches = ${FS_MUW}" | sudo tee -a /etc/sysctl.conf
+        sudo sysctl -q -p
+    fi
 
     echo -e "\n>>> Installed dependencies\n"
     docker --version
