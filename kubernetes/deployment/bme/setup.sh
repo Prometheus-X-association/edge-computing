@@ -31,7 +31,7 @@ RESET=true
 
 function build() {
     echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}..."
     echo
     if [ "${RESET}" = "true" ]; then
         git pull || true
@@ -52,7 +52,7 @@ function build() {
 
 function init() {
     echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}..."
     echo
     #######
     if [ "${PERSIST}" = "true" ]; then
@@ -102,7 +102,7 @@ function init() {
 
 function remove() {
     echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}..."
     echo
     k3d cluster list "${CLUSTER}" || cluster_missing="$?"
     if [ ! "${cluster_missing+0}" ]; then
@@ -115,7 +115,7 @@ function remove() {
 function cleanup() {
     remove
     echo
-    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}....."
+    echo ">>>>>>>>> Invoke ${FUNCNAME[0]}..."
     echo
     k3d cluster delete "${CLUSTER}" || true
     if [ "${RESET}" = "true" ]; then
@@ -156,7 +156,7 @@ function deploy() {
     #######
     if [ "${PERSIST}" = "true" ]; then
         echo
-        echo ">>> Generate manifests...."
+        echo ">>> Generate manifests..."
         mkdir -pv "${CFG_DIR}/manifests"
         pushd "${CFG_DIR}/templates" >/dev/null
         for file in ptx-*.yaml; do
@@ -188,7 +188,7 @@ function deploy() {
 	### Self-signed cert from .conf
     if [ "${PERSIST}" = true ]; then
         echo
-        echo ">>> Generate manifests...."
+        echo ">>> Generate manifests..."
         mkdir -pv "${CFG_DIR}/manifests"
         pushd "${CFG_DIR}/templates" >/dev/null
         for file in *.conf; do

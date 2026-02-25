@@ -13,6 +13,12 @@
 # limitations under the License.
 set -uo allexport
 
+echo
+echo ">>> Load configuration....."
+echo
+
+################################## Global parameters
+
 CFG_DIR=$(readlink -f "$(dirname "$0")")
 PROJECT_ROOT=$(readlink -f "${CFG_DIR}/../..")
 
