@@ -72,7 +72,7 @@ if [ -z "${GW_DOMAIN:-}" ]; then
     GLOBAL_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
     echo "Detected global IP: ${GLOBAL_IP}"
     # shellcheck disable=SC2086
-    GLOBAL_IP_HEX=$(printf '%02X' ${GLOBAL_IP//./ })
+    GLOBAL_IP_HEX=$(printf '%02x' ${GLOBAL_IP//./ })
     echo "Generated IP hex: ${GLOBAL_IP_HEX}"
     #GW_DOMAIN="bme-www-9842f595.sslip.io"
     GW_DOMAIN="bme-www-${GLOBAL_IP_HEX}.sslip.io"

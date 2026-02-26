@@ -79,9 +79,11 @@ tls:
 	@echo
 	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs
 	openssl req -x509 -noenc -days 365 -newkey rsa:2048 \
-			-CA ${CURDIR}/../registry/.certs/ca/ca.crt -CAkey ${CURDIR}/../registry/.certs/ca.key \
-			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost" \
-			-keyout ${CURDIR}/.certs/api-tls.key -out ${CURDIR}/.certs/api-tls.cert
+			-CA "${CURDIR}/../registry/.certs/ca/ca.crt" \
+			-CAkey "${CURDIR}/../registry/.certs/ca.key" \
+			-keyout "${CURDIR}/.certs/api-tls.key" \
+			-out "${CURDIR}/.certs/api-tls.cert" \
+			-subj "/C=EU/ST=''/L=''/O=PTX/OU=dataspace/CN=api.ptx-edge.localhost"
 	kubectl create secret tls api-tls --cert=${CURDIR}/.certs/api-tls.cert --key=${CURDIR}/.certs/api-tls.key \
 			-o yaml --dry-run=client | tee api-tls-secret.yaml
 

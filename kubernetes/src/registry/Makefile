@@ -15,27 +15,35 @@ export REGISTRY := registry.k3d.local
 export LOCAL_REGISTRY := registry.k3d.localhost
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-REGISTRY_USER := admin
-REGISTRY_SECRET := admin
+# set default values or define as makefile param or from envvar
+REGISTRY_USER ?= admin
+REGISTRY_SECRET ?= admin
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-CRED := ${REGISTRY_USER}:${REGISTRY_SECRET}
 
+CRED := ${REGISTRY_USER}:${REGISTRY_SECRET}
 NAME := registry
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 
 cert:
-	rm -rf ${CURDIR}/.certs && mkdir -p ${CURDIR}/.certs/ca && mkdir -p ${CURDIR}/.certs/auth
-	openssl genrsa -out ${CURDIR}/.certs/ca.key 2048
-	openssl req -new -x509 -days 365 -key ${CURDIR}/.certs/ca.key -out ${CURDIR}/.certs/ca/ca.crt \
-			-subj "/C=EU/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org"
-	openssl req -newkey rsa:2048 -noenc -keyout ${CURDIR}/.certs/auth/server.key -out ${CURDIR}/.certs/server.csr \
-			-subj "/C=EU/O=ptx-edge/OU=ptx-edge/CN=*.ptx-edge.prometheus-x.org"
+	rm -rf "${CURDIR}/.certs" && mkdir -p "${CURDIR}/.certs/ca" && mkdir -p "${CURDIR}/.certs/auth"
+	openssl genrsa -out "${CURDIR}/.certs/ca.key" 2048
+	openssl req -new -x509 -days 365 \
+			-key "${CURDIR}/.certs/ca.key" \
+			-out "${CURDIR}/.certs/ca/ca.crt" \
+			-subj '/C=EU/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org'
+	openssl req -newkey rsa:2048 -noenc \
+			-keyout "${CURDIR}/.certs/auth/server.key" \
+			-out "${CURDIR}/.certs/server.csr" \
+			-subj '/C=EU/O=ptx-edge/OU=ptx-edge/CN=*.ptx-edge.prometheus-x.org'
 	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
-			-in ${CURDIR}/.certs/server.csr -CA ${CURDIR}/.certs/ca/ca.crt -CAkey ${CURDIR}/.certs/ca.key \
-			-out ${CURDIR}/.certs/auth/server.cert -CAcreateserial -extfile=-
+			-in "${CURDIR}/.certs/server.csr" \
+			-CA "${CURDIR}/.certs/ca/ca.crt" \
+			-CAkey "${CURDIR}/.certs/ca.key" \
+			-out "${CURDIR}/.certs/auth/server.cert" \
+			-CAcreateserial -extfile=-
+	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > "${CURDIR}/.certs/auth/htpasswd"
 	@#docker run --entrypoint htpasswd httpd:2 -Bbn admin admin > .certs/htpasswd
-	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > ${CURDIR}/.certs/auth/htpasswd
 	@#curl -k -u admin:admin https://localhost:5555/v2/_catalog
 	@#wget -O- --no-check-certificate --user=admin --password=admin https://localhost:5555/v2/_catalog
 	@#
@@ -50,22 +58,22 @@ build: cert
 
 run: build
 	docker run --rm -ti -p 5555:5000 --restart=no --name ptx-registry \
-		-v ${CURDIR}/.certs/auth:/opt/registry/auth:ro \
-		-e "REGISTRY_AUTH=htpasswd" \
-		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
-		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
-		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
+		-v "${CURDIR}/.certs/auth:/opt/registry/auth:ro" \
+		-e 'REGISTRY_AUTH=htpasswd' \
+		-e 'REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm' \
+		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
+		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
+		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
 		registry:3
 
 test: clear
 	docker run -d -p 5678:5000 --restart=no --name test-registry \
-		-v ${CURDIR}/.certs/auth:/opt/registry/auth:ro \
-		-e "REGISTRY_AUTH=htpasswd" \
-		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
-		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
-		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
+		-v "${CURDIR}/.certs/auth:/opt/registry/auth:ro" \
+		-e 'REGISTRY_AUTH=htpasswd' \
+		-e 'REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm' \
+		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
+		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
+		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
 		registry:3
 	docker pull busybox:latest
 	docker login -u ${REGISTRY_USER} -p ${REGISTRY_SECRET} ${LOCAL_REGISTRY}:5678
@@ -102,11 +110,11 @@ run-mock:
 	htpasswd -Bbn ${MOCK_USER} ${MOCK_PASS} > ${CURDIR}/.mock/auth/htpasswd
 	docker run -d -p 5555:5000 --restart=no --name mock-registry \
 		-v ${CURDIR}/.mock/auth:/opt/registry/auth:ro \
-		-e "REGISTRY_AUTH=htpasswd" \
-		-e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-		-e "REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd" \
-		-e "REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert" \
-		-e "REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key" \
+		-e 'REGISTRY_AUTH=htpasswd' \
+		-e 'REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm' \
+		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
+		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
+		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
 		registry:3
 	docker ps -a -f name=mock-registry
 	docker pull busybox:latest
