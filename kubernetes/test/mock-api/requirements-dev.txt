@@ -1,5 +1,5 @@
 # Development
-virtualenv~=20.33.1
+virtualenv>=20.36.1
 fastapi[standard]     # For the fastapi shell command
 fastapi-code-generator
 # Testing
