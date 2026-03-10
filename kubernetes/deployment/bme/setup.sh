@@ -55,6 +55,9 @@ function init() {
     echo ">>>>>>>>> Invoke ${FUNCNAME[0]}..."
     echo
     #######
+    echo "Detected global IP: ${GLOBAL_IP}"
+    echo "Generated IP hex: ${GLOBAL_IP_HEX}"
+    #######
     if [ "${PERSIST}" = "true" ]; then
         echo
         echo ">>> Generate manifests...."
@@ -95,7 +98,7 @@ function init() {
     fi
 	#######
     echo
-	echo ">>> Uploaded images:"
+    echo ">>> Uploaded images:"
 	curl -Sskf --cacert "${REG_CA_DIR}/ca.crt" -u "${REG_CREDS}" "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 	echo
 }
