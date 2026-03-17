@@ -9,53 +9,245 @@
     "schemas": {
       "EdgeWorkerTask": {
         "type": "object",
+        "description": "Edge Worker Task description",
         "required": [
           "spec"
         ],
         "properties": {
           "spec": {
             "type": "object",
+            "description": "Specification of PTX Edge Task",
+            "required": [
+              "data",
+              "worker"
+            ],
             "properties": {
-              "data": {
+              "service": {
                 "type": "object",
+                "description": "Initiate worker as a service, not a single-executed task",
                 "required": [
-                  "src"
+                  "enabled"
                 ],
                 "properties": {
-                  "src": {
-                    "type": "string"
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Enable service creation",
+                    "default": false
                   },
-                  "dst": {
-                    "type": "string"
+                  "interfaces": {
+                    "type": "array",
+                    "description": "Exposed worker interfaces",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "port"
+                      ],
+                      "properties": {
+                        "port": {
+                          "type": "integer",
+                          "description": "Service port",
+                          "minimum": 1,
+                          "maximum": 65535,
+                          "example": 8080
+                        },
+                        "public": {
+                          "type": "boolean",
+                          "description": "Enable out-of-cluster access",
+                          "default": false
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "type": "object",
+                "description": "Data collection parameters",
+                "required": [
+                  "source"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "Data source location - [scheme]://([host][:port])/[path]",
+                    "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)?(/.+)$",
+                    "example": "https://my.api.localhost:8080/data/example.csv"
+                  },
+                  "auth": {
+                    "type": "object",
+                    "description": "Credentials for remote data collection",
+                    "required": [
+                      "scheme",
+                      "user",
+                      "secret"
+                    ],
+                    "properties": {
+                      "scheme": {
+                        "type": "string",
+                        "description": "Used authentication method",
+                        "example": "basic"
+                      },
+                      "user": {
+                        "type": "string",
+                        "description": "User identification",
+                        "example": "admin"
+                      },
+                      "secret": {
+                        "type": "string",
+                        "description": "Secret token or password",
+                        "example": "myPasswd!007"
+                      }
+                    }
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Absolut path of local directory for collected data - /[path]/",
+                    "pattern": "^((/[a-zA-Z0-9-_]+)+)/?$",
+                    "default": "/var/cache/data/"
                   }
                 }
               },
               "worker": {
                 "type": "object",
+                "description": "Worker environment parameters",
                 "required": [
-                  "src"
+                  "source"
                 ],
                 "properties": {
-                  "src": {
-                    "type": "string"
+                  "source": {
+                    "type": "string",
+                    "description": "Worker image location - [scheme]://[host][:port]/[name][:version]",
+                    "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
+                    "example": "docker://busybox:latest"
                   },
-                  "dst": {
-                    "type": "string"
+                  "cached": {
+                    "type": "boolean",
+                    "description": "Worker cached in local registry, otherwise only pull secret is used",
+                    "default": true
+                  },
+                  "auth": {
+                    "type": "object",
+                    "description": "Credentials for remote image collection",
+                    "required": [
+                      "user",
+                      "secret"
+                    ],
+                    "properties": {
+                      "server": {
+                        "type": "string",
+                        "description": "Image server prefix - [scheme]://[host][:port]/[path]/",
+                        "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$",
+                        "default": "https://index.docker.io/v1/"
+                      },
+                      "user": {
+                        "type": "string",
+                        "description": "Image registry user",
+                        "example": "admin"
+                      },
+                      "secret": {
+                        "type": "string",
+                        "description": "Server password or token",
+                        "example": "myPasswd!007"
+                      },
+                      "insecure": {
+                        "type": "boolean",
+                        "description": "Disable verification of image server's TLS certificate",
+                        "default": false
+                      }
+                    }
+                  },
+                  "image": {
+                    "type": "string",
+                    "description": "Cached image name, otherwise autogenerated",
+                    "pattern": "^([^:]+):([^:/]+)$",
+                    "example": "myworker:latest"
+                  },
+                  "config": {
+                    "type": "object",
+                    "description": "Worker image configuration parameters",
+                    "properties": {
+                      "file": {
+                        "type": "object",
+                        "description": "Configuration file",
+                        "required": [
+                          "path",
+                          "data"
+                        ],
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "description": "Mount path of configuration file",
+                            "pattern": "^((/[a-zA-Z0-9-_\\.]+)+)$",
+                            "example": "/var/cache/worker/cfg.ini"
+                          },
+                          "data": {
+                            "type": "string",
+                            "description": "Configuration data"
+                          }
+                        }
+                      },
+                      "env": {
+                        "type": "array",
+                        "description": "Environment variables",
+                        "items": {
+                          "type": "object",
+                          "description": "Key-value pairs",
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "description": "Variable name",
+                              "example": "MY_CFG_ENVVAR"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Value string",
+                              "example": "42"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "dataspace": {
+                "type": "object",
+                "description": "Attributes of data exchange via PTX dataspace",
+                "properties": {
+                  "offer": {
+                    "type": "object",
+                    "description": "PTX dataspace contract info",
+                    "required": [
+                      "provider",
+                      "consumer"
+                    ],
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "description": "Data provider ID"
+                      },
+                      "consumer": {
+                        "type": "string",
+                        "description": "Data consumer ID"
+                      }
+                    }
                   }
                 }
               }
-            },
-            "required": [
-              "data",
-              "worker"
-            ]
+            }
           },
           "status": {
             "type": "object",
+            "description": "Runtime information",
             "x-kubernetes-preserve-unknown-fields": true,
             "properties": {
-              "ready": {
-                "type": "boolean"
+              "state": {
+                "type": "string",
+                "description": "Task state from [created | running | finished]"
               }
             }
           }

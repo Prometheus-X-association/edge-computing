@@ -3,9 +3,39 @@ kind: EdgeWorkerTask
 metadata:
   name: test-ewt
 spec:
+  service:
+    enabled: true
+    interfaces:
+      - port: 8080
+      - port: 80
+        public: true
   data:
-    src: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
-    dst: "/var/cache/data/"
+    source: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+    auth:
+      scheme: basic
+      user: admin
+      secret: admin
+    path: "/var/cache/data/"
   worker:
-    src: "remote://busybox:latest"
-    dst: "REGISTRY/myworker:latest"
+    source: "docker://busybox:latest"
+    #cached: true
+    auth:
+      server: https://index.docker.io/v1/
+      user: admin
+      secret: admin
+      insecure: false
+    image: "myworker:latest"
+    config:
+      file:
+        path: /var/cache/worker/config.json
+        data: |
+          {
+            "test": 42
+          }
+      env:
+        - key: WRK_TEST_VAR
+          value: "test123"
+  dataspace:
+    offer:
+      provider: 66d187f4ee71f9f096bae8ca
+      consumer: 66d18b79ee71f9f096baecb1

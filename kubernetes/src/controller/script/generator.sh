@@ -14,7 +14,9 @@
 # limitations under the License.
 
 # Usage: generator.sh [schema_file] [model_file]
+#PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+PY_VER='3.14'
 
 datamodel-codegen --input="${1}" --input-file-type='openapi' --openapi-scopes='schemas' \
-                    --formatter='isort' --keep-model-order --schema-version-mode='strict' --enable-version-header \
-                    --target-python-version='3.14' --output-model-type='pydantic_v2.BaseModel' --output "${2}"
+                    --formatter='isort' --keep-model-order --schema-version-mode='strict' \
+                    --enable-version-header --enable-command-header --target-python-version=${PY_VER} --output "${2}"
