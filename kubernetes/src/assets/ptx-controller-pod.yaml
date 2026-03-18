@@ -28,9 +28,9 @@ rules:
     resources: [ validatingwebhookconfigurations, mutatingwebhookconfigurations ]
     verbs: [ create, patch ]
   # Application: read-only access for watching cluster-wide.
-  - apiGroups: [ dataspace.ptx.org ]
-    resources: [ edgeworkertasks ]
-    verbs: [ list, watch ]
+  #- apiGroups: [ dataspace.ptx.org ]
+  #  resources: [ edgeworkertasks ]
+  #  verbs: [ list, watch ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -48,7 +48,7 @@ rules:
     verbs: [ create ]
   # Application: watching & handling for the custom resource.
   - apiGroups: [ dataspace.ptx.org ]
-    resources: [ edgeworkertasks ]
+    resources: [ edgeworkertasks, edgeworkertasks/status ]
     verbs: [ list, watch, patch ]
   # Application: other resources it produces and manipulates.
   - apiGroups: [ batch, extensions ]

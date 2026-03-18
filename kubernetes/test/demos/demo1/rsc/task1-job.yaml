@@ -118,9 +118,9 @@ spec:
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
-              value: "remote://docker.io/czentye/convnet-worker:latest"
+              value: "docker://czentye/convnet-worker:latest"
             - name: BUILD_WORKER_DST
-              value: "REGISTRY/worker/task:latest"
+              value: "worker/task:latest"
       containers:
         - name: worker
           image: ${REGISTRY}:${REGISTRY_PORT}/worker/task:latest

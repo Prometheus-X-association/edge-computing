@@ -204,8 +204,8 @@ spec:
                 state:
                   type: string
                   description: "Task state from [created | running | finished]"
-            #subresources:
-            #  status: { }
+      subresources:
+        status: { }
       selectableFields:
         - jsonPath: .spec.service.enabled
         - jsonPath: .status.state
