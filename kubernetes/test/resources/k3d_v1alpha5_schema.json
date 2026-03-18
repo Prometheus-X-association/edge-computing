@@ -118,7 +118,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["source", "destination"],
+        "required": [
+          "source",
+          "destination"
+        ],
         "properties": {
           "source": {
             "type": "string"

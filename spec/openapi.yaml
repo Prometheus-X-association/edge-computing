@@ -34,7 +34,7 @@ paths:
           description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -57,7 +57,7 @@ paths:
           description: Privacy zone not found
       tags:
         - connectorAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -82,7 +82,7 @@ paths:
           description: Function not found
       tags:
         - connectorAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -107,7 +107,7 @@ paths:
           description: Private data not found
       tags:
         - connectorAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -142,7 +142,7 @@ paths:
           description: Insufficient compute resources or unavailable deployment service
       tags:
         - customerAPI
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -333,12 +333,12 @@ components:
         uri:
           type: string
           description: Location description of the private data
-  links: {}
-  callbacks: {}
+  links: { }
+  callbacks: { }
 tags:
   - name: customerAPI
     description: Customer-facing API (EdgeAPI)
   - name: connectorAPI
     description: Connector-facing API (PrivacyPreservingPDC)
-security: []
-servers: []
+security: [ ]
+servers: [ ]

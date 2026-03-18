@@ -19,10 +19,11 @@ import pathlib
 import sys
 import typing
 
-from kubernetes import client
 from kubernetes.client import OpenApiException, ApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
+
+from kubernetes import client
 
 log = logging.getLogger(__name__)
 

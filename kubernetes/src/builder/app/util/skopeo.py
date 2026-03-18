@@ -50,17 +50,18 @@ def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '',
     :return:
     """
     cmd = ['skopeo']
-    if timeout:
-        cmd.append(f'--command-timeout={timeout}s')
     if verbose:
         cmd.append(f'--debug')
+    if timeout:
+        cmd.append(f'--command-timeout={timeout}s')
     cmd.append(op)
     if on_behalf:
         if on_behalf == 'bearer':
             cmd.append(f"--registry-token={secret}")
         else:
             cmd.extend((f"--username={on_behalf}", f"--password={secret}"))
-    cmd.append(f'--tls-verify={str(not insecure).lower()}')
+    if insecure:
+        cmd.append(f'--tls-verify=false')
     if ca_dir:
         cmd.append(f'--cert-dir={ca_dir}')
     if retry:
@@ -76,25 +77,27 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
                                 dst_auth: tuple[str, str] = None, dst_insecure: bool = False, dst_ca_dir: str = None,
                                 retry: int = None, timeout: int = None, verbose: bool = False) -> list[str]:
     cmd = ['skopeo']
-    if timeout:
-        cmd.append(f"--command-timeout={timeout}s")
     if verbose:
         cmd.append(f'--debug')
+    if timeout:
+        cmd.append(f"--command-timeout={timeout}s")
     cmd.append(op)
-    if src_auth:
+    if all(src_auth):
         if src_auth[0] == 'bearer':
             cmd.append(f"--src-registry-token={src_auth[1]}")
         else:
             cmd.extend((f"--src-username={src_auth[0]}", f"--src-password={src_auth[1]}"))
-    cmd.append(f'--src-tls-verify={str(not src_insecure).lower()}')
+    if src_insecure:
+        cmd.append(f'--src-tls-verify=false')
     if src_ca_dir:
         cmd.append(f'--src-cert-dir={src_ca_dir}')
-    if dst_auth:
+    if all(dst_auth):
         if dst_auth[0] == 'bearer':
             cmd.append(f"--dest-registry-token={dst_auth[1]}")
         else:
             cmd.extend((f"--dest-username={dst_auth[0]}", f"--dest-password={dst_auth[1]}"))
-    cmd.append(f'--dest-tls-verify={str(not dst_insecure).lower()}')
+    if dst_insecure:
+        cmd.append(f'--dest-tls-verify=false')
     if dst_ca_dir:
         cmd.append(f'--dest-cert-dir={dst_ca_dir}')
     if retry:

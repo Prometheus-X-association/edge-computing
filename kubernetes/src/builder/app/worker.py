@@ -26,44 +26,36 @@ from app.util.skopeo import copy_image_to_registry, inspect_docker_image
 log = logging.getLogger(__name__)
 
 
-def collect_worker_image_from_repo(src: str, dst: str, with_ref: str = None,
-                                   src_auth: dict | str = None, src_insecure: bool = False, src_ca_dir: str = None,
+def collect_worker_image_from_repo(src: str, dst: str | None, src_auth: DockerRegistryAuth,
                                    retry: int = None, timeout: int = None) -> str | None:
     """
 
     :param src:
     :param dst:
-    :param with_ref:
     :param src_auth:
-    :param src_insecure:
-    :param src_ca_dir:
     :param retry:
     :param timeout:
     :return:
     """
-    src_path, dst_path = get_resource_path(src), get_resource_path(dst)
-    repo, img = dst_path.split('/', maxsplit=1)
-    ref = with_ref if with_ref else img
-    if repo.upper() == "REGISTRY":
-        repo = CONFIG['registry.url']
-    dst_auth, dst_ca_dir = CONFIG.get('registry.auth.cred'), CONFIG.get('registry.auth.ca_dir')
-    dst_insecure = CONFIG.get('registry.auth.insecure', default=False)
-    src_auth = DockerRegistryAuth.parse(src_auth).get_creds() if src_auth else None
-    dst_auth = DockerRegistryAuth.parse(dst_auth).get_creds() if dst_auth else None
-    success = copy_image_to_registry(image=src_path, registry=repo, with_reference=ref,
-                                     src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=src_ca_dir,
-                                     dst_auth=dst_auth, dst_insecure=dst_insecure, dst_ca_dir=dst_ca_dir,
-                                     retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
+    src_path = get_resource_path(src)
+    img_name = get_resource_path(dst) if dst else src_path.rsplit('/', maxsplit=1)[-1]
+    dst_auth = DockerRegistryAuth.parse(CONFIG['registry.auth'])
+    success = copy_image_to_registry(
+        image=src_path, registry=dst_auth.server, with_reference=img_name,
+        src_auth=src_auth.get_creds(), src_insecure=src_auth.insecure, src_ca_dir=src_auth.ca_dir,
+        dst_auth=dst_auth.get_creds(), dst_insecure=dst_auth.insecure, dst_ca_dir=dst_auth.ca_dir,
+        retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
     if not success:
         return None
-    image = inspect_docker_image(image=ref, registry=repo,
-                                 on_behalf=dst_auth[0], secret=dst_auth[1], insecure=False, ca_dir=dst_ca_dir,
-                                 retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
+    image = inspect_docker_image(
+        image=img_name, registry=dst_auth.server,
+        on_behalf=dst_auth.user, secret=dst_auth.secret, insecure=dst_auth.insecure, ca_dir=dst_auth.ca_dir,
+        retry=retry, timeout=timeout, verbose=log.level < logging.INFO)
     log.debug(f"Created image description:\n{pprint.pformat(image)}")
     return image.get('Digest') if image else None
 
 
-def configure_worker_pull_credential(name: str, cred: dict | str, app: str, namespace: str = None,
+def configure_worker_pull_credential(name: str, cred: DockerRegistryAuth, app: str, namespace: str = None,
                                      timeout: int = None) -> str | None:
     """
 
@@ -74,8 +66,7 @@ def configure_worker_pull_credential(name: str, cred: dict | str, app: str, name
     :param timeout:
     :return:
     """
-    cred = DockerRegistryAuth.parse(cred)
-    secret = create_image_pull_secret(name=name, user=cred.on_behalf, passwd=cred.secret, server=cred.get_registry(),
+    secret = create_image_pull_secret(name=name, user=cred.user, passwd=cred.secret, server=cred.server,
                                       namespace=namespace, app=app, projected=True, timeout=timeout)
     log.debug(f"Created secret description:\n{pprint.pformat(secret.to_dict()) if secret else None}")
     return secret.metadata.uid if secret else None
@@ -122,14 +113,15 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
 
 ########################################################################################################################
 
-def get_worker_resources(data_path: str | pathlib.Path) -> str:
+def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
     """
 
     :param data_path:
     :return:
     """
     log.info("Obtaining worker configuration...")
-    conn_timeout, conn_retry = int(CONFIG.get('connection.timeout', default=30)), int(CONFIG.get('connection.retry', default=3))
+    conn_timeout = int(CONFIG.get('connection.timeout', default=30))
+    conn_retry = int(CONFIG.get('connection.retry', default=3))
     log.debug(f"Check worker setup in configuration...")
     worker_src = CONFIG.get('worker.src')
     if worker_src is None:
@@ -142,23 +134,19 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str:
         load_configuration(base=worker_cfg['worker'])
     worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
+    result_id = None
     match get_resource_scheme(worker_src):
         case 'skip':
             result_id = "skipped"
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':
-            src_auth = CONFIG.get('worker.auth.cred')
-            src_insecure = CONFIG.get('worker.auth.insecure', default=False)
-            ca_dir = CONFIG.get('worker.auth.ca_dir')
-            result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst,
-                                                       src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=ca_dir,
+            src_auth = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
+            result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, src_auth=src_auth,
                                                        retry=conn_retry, timeout=conn_timeout)
         case 'auth' | 'secret':
-            name = CONFIG.get('worker.pull-secret', default=worker_dst)
-            src_path = get_resource_path(worker_src)
-            cred = CONFIG.get('worker.auth.cred') if src_path.upper() == 'REGISTRY' else src_path
-            app = CONFIG.get('worker.app', default='worker')
+            name, app = CONFIG.get('worker.pull-secret', default=worker_dst), CONFIG.get('worker.app', default='worker')
+            cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
         case 'ptx':
             result_id = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,

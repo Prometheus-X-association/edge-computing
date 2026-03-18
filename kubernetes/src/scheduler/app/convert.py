@@ -15,10 +15,10 @@ import logging
 import pathlib
 
 import networkx as nx
-from kubernetes import client
-
 from app.k8s import get_available_nodes, get_pods_by_node
 from app.utils import str2bool, cpu2int, bits2int, none2str
+
+from kubernetes import client
 
 log = logging.getLogger(__name__)
 

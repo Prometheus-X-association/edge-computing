@@ -16,13 +16,11 @@ import pathlib
 import tempfile
 
 import httpx
-import httpx_auth
-from httpx_retries import RetryTransport, Retry
-
 from app.ptx.connector import perform_pdc_data_exchange
 from app.util.config import CONFIG
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth
+from httpx_retries import RetryTransport, Retry
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ def collect_data_from_filesystem(src: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: int = None,
+def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int = None,
                           retry: int = 1) -> pathlib.Path | None:
     """
     Download data from url.
@@ -58,16 +56,16 @@ def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: 
     log.info(f"Downloading data from {url}...")
     src_url, dst_path = httpx.URL(url), None
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
-        auth = DataSourceAuth.parse(auth)
         match auth.scheme:
             case None:
                 auth = None
             case "basic":
-                auth = httpx.BasicAuth(**auth.params)
+                auth = httpx.BasicAuth(username=auth.user, password=auth.secret)
             case "digest":
-                auth = httpx.DigestAuth(**auth.params)
-            case custom:
-                auth = getattr(httpx_auth, custom)(**auth.params)
+                auth = httpx.DigestAuth(username=auth.user, password=auth.secret)
+            case _:
+                # auth = getattr(httpx_auth, custom)(**auth.params)
+                raise NotImplementedError
         client = httpx.Client(http2=True, follow_redirects=True, auth=auth, timeout=timeout,
                               transport=RetryTransport(retry=Retry(total=retry, backoff_factor=1)))
         log.info(f"Sending GET request to {url} with auth: {type(auth).__name__}...")
@@ -94,11 +92,12 @@ def collect_data_from_url(url: str, dst: str, auth: str | dict = None, timeout: 
     return dst_path
 
 
-def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
+def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: int = None):
     """
 
     :param contract_id:
     :param dst:
+    :param retry:
     :param timeout:
     :return:
     """
@@ -119,8 +118,8 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
                 tmp.write(data_content.encode(encoding=data.get("encoding", "utf-8")))
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'url':
-            url, auth = data['url'], data.get('auth')
-            dst_path = collect_data_from_url(url=url, dst=dst, auth=auth)
+            url, auth = data['url'], DataSourceAuth.parse(data.get('auth'))
+            dst_path = collect_data_from_url(url=url, dst=dst, auth=auth, retry=retry, timeout=timeout)
         case 'docker':
             raise NotImplementedError
             # TODO - manage authentication params defined in 'data'
@@ -131,26 +130,28 @@ def collect_data_from_ptx(contract_id: str, dst: str, timeout: int = None):
 
 ########################################################################################################################
 
-def get_data_resources() -> pathlib.Path:
+def get_data_resources() -> pathlib.Path | None:
     """
 
     :return:
     """
     log.info("Obtaining input data...")
-    conn_timeout, conn_retry = int(CONFIG.get('connection.timeout', default=30)), int(CONFIG.get('connection.retry', default=3))
+    conn_timeout = int(CONFIG.get('connection.timeout', default=30))
+    conn_retry = int(CONFIG.get('connection.retry', default=3))
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
+    data_path = None
     match get_resource_scheme(data_src):
         case 'file' | 'dir' | 'mount':
             data_path = collect_data_from_filesystem(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
         case 'http' | 'https':
-            auth = CONFIG.get('data.auth')
+            auth = DataSourceAuth.parse(CONFIG.get('data.auth'))
             data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
                                               auth=auth, retry=conn_retry, timeout=conn_timeout)
         case 'ptx':
             data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
                                               dst=get_resource_path(data_dst),
-                                              timeout=conn_timeout)
+                                              retry=conn_retry, timeout=conn_timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")
             data_path = None
@@ -160,4 +161,4 @@ def get_data_resources() -> pathlib.Path:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     # collect_data_from_url("https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz", ".")
-    collect_data_from_url("http://localhost:9000/datetime.txt", ".", auth="basic:demo:demo")
+    collect_data_from_url("http://localhost:9000/datetime.txt", ".", auth=DataSourceAuth.parse("basic:demo:demo"))

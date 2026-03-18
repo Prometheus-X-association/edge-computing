@@ -201,9 +201,9 @@ run-scheduler:
 run-controller:
 	@#kubectl apply -f https://github.com/nolar/kopf/raw/main/peering.yaml
 	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
+	sleep 3s
 	kubectl wait --for="condition=established" --timeout=30s crd/kopfpeerings.kopf.dev \
 		crd/clusterkopfpeerings.kopf.dev crd/edgeworkertasks.dataspace.ptx.org
-	sleep 3s
 	kubectl apply -f ${ASSETS}/ptx-controller-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/controller
 	@echo
@@ -318,11 +318,18 @@ stop:
 	skopeo delete --cert-dir=${CA_DIR} --creds=${REG_CREDS} docker://${K3D_REG}/myworker:latest || true
 	kubectl delete events --all
 
-clear:
+THIS_FILE := $(lastword $(MAKEFILE_LIST))
+
+clear-test:
+	kubectl delete all,pv,pvc,secret -l env=test
+	kubectl delete events --all
+	@#${MAKE} -f $(THIS_FILE) status
+	@echo && ${MAKE} -s status
+
+
+tear-down:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	-k3d cluster delete dev
-
-tear-down: clear
 
 purge: clear
 	rm -rf ${PROJECT_ROOT}/.cache

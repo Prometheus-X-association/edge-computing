@@ -16,7 +16,6 @@ import typing
 from operator import le
 
 import networkx as nx
-
 from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
 
 log = logging.getLogger(__name__)

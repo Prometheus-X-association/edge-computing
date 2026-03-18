@@ -15,7 +15,6 @@ import pathlib
 import time
 
 import pytest
-
 from app.util.config import load_configuration, DEF_CFG_FILE
 
 

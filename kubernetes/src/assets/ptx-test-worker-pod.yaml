@@ -24,6 +24,8 @@ metadata:
   name: ptx-edge-local
   annotations:
     storageclass.kubernetes.io/is-default-class: "false"
+  labels:
+    env: test
 reclaimPolicy: Delete
 allowVolumeExpansion: false
 provisioner: kubernetes.io/no-provisioner # Indicates that this StorageClass does not support automatic provisioning
@@ -37,6 +39,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app: worker
+    env: test
 spec:
   #  storageClassName: "" # Disable dynamic provisioning explicitly
   storageClassName: ptx-edge-local
@@ -66,6 +69,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: test-pvc
   namespace: ptx-edge
+  labels:
+    env: test
 spec:
   #  storageClassName: ""  # Disable dynamic provisioning explicitly
   storageClassName: ptx-edge-local
@@ -87,6 +92,7 @@ metadata:
   namespace: ptx-edge
   labels:
     app: worker
+    env: test
 spec:
   schedulerName: ptx-edge-scheduler
   terminationGracePeriodSeconds: 1

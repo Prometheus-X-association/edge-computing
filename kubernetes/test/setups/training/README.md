@@ -7,8 +7,9 @@ The figure below depicts the schematic architecture of the created infrastructur
 
 Each physical node is configured as a separate docker image playing the role of a cluster node.
 The Edge computing building block (ptx-edge) is represented with standalone components distributed in these nodes.
- - k3d-training-server-0: main control plane node running ptx-edge management components.
- - k3d-node-*: worker nodes belonging to different privacy zones (TR-1/2/3, AG, and OR).
+
+- k3d-training-server-0: main control plane node running ptx-edge management components.
+- k3d-node-*: worker nodes belonging to different privacy zones (TR-1/2/3, AG, and OR).
 
 ![trainig_setup_architecture.png](figures/trainig_setup_architecture.png)
 
@@ -17,18 +18,22 @@ The Edge computing building block (ptx-edge) is represented with standalone comp
 The setup script ([install_deps.sh](install_deps.sh)) is tested on Ubuntu 24.04.3 LTS with upgraded packages.
 
 The script installs required system packages and dependencies for the following tools:
- - `docker`: container manager
- - `k3d`: managing local clusters with docker-in-docker based on the Kubernetes variant k3s
- - `kubectl`: CLI tool for interacting with Kubernetes API
- - `kubecolor`: colored logging for kubectl
- - `helm`: Kubernetes package manager
- - `skopeo`: local container inspection and handling
+
+- `docker`: container manager
+- `k3d`: managing local clusters with docker-in-docker based on the Kubernetes variant k3s
+- `kubectl`: CLI tool for interacting with Kubernetes API
+- `kubecolor`: colored logging for kubectl
+- `helm`: Kubernetes package manager
+- `skopeo`: local container inspection and handling
 
 To prepare the environment, run the following command:
+
 ```bash
 $ ./install_deps.sh -u
 ```
+
 or in case the tool `make` is already installed, simply use:
+
 ```bash
 $ make depends
 ```
@@ -67,6 +72,7 @@ $ make 6-shutdown
 ```
 
 Common steps are also encompassed in dedicated targets:
+
 ```bash
 $ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup, as a single step setup
 
@@ -76,6 +82,7 @@ $ make all      # Invoke all numbered targets continuously, as an all-in-one dem
 ```
 
 Further useful targets:
+
 ```bash
 $ make status   # Print info about deployed Kubernetes objects
 

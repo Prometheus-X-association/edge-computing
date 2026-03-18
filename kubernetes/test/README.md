@@ -68,6 +68,7 @@ All test/install scripts are tested on a virtual machine based on _Ubuntu 24.04 
 > image import in cluster creation!
 
 To extend the logical volume on the VM, the following helper script can be used.
+
 ```bash
 $ cd kubernetes/test/scripts && ./ubuntu-resize-lvm.sh
 ```

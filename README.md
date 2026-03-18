@@ -170,8 +170,8 @@ $ make setup
 > The configured level based on the `ptx-edge`-internal
 > [definitions](kubernetes/test/README.md#overview) is **Level 5**.
 
-Current development of BB-02 addresses additional features to ease the development and usage 
-of the building block feature for human users in order to fulfill the goals of final Level 6. 
+Current development of BB-02 addresses additional features to ease the development and usage
+of the building block feature for human users in order to fulfill the goals of final Level 6.
 
 #### Dedicated Deployment Configurations
 

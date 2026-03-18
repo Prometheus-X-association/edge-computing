@@ -29,7 +29,6 @@ import operator as op
 import random as rnd
 
 import networkx as nx
-
 from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
 
 log = logging.getLogger(__name__)

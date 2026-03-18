@@ -5,6 +5,8 @@ metadata:
   namespace: ptx-edge
   annotations:
     defaultVolumeType: local
+  labels:
+    env: test
 spec:
   accessModes:
     - ReadWriteOncePod
@@ -19,6 +21,8 @@ kind: Job
 metadata:
   name: consumer-test-job
   namespace: ptx-edge
+  labels:
+    env: test
 spec:
   completions: 1
   parallelism: 1
@@ -27,6 +31,7 @@ spec:
     metadata:
       labels:
         app: consumer
+        env: test
     spec:
       initContainers:
         - name: builder

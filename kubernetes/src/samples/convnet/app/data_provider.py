@@ -18,7 +18,8 @@ from urllib.request import urlretrieve
 
 import numpy as np
 
-BUILD_DATA_SRC = os.environ.get('BUILD_DATA_SRC', "https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz")
+BUILD_DATA_SRC = os.environ.get('BUILD_DATA_SRC',
+                                "https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz")
 BUILD_RAW_FILENAME = pathlib.Path(os.environ.get('BUILD_RAW_FILENAME', "mnist.npz")).resolve()
 BUILD_TRIM_RATIO = int(os.environ.get('BUILD_TRIM_RATIO', 100))
 BUILD_DATA_DST = pathlib.Path(os.environ.get('BUILD_DATA_DST', "./mnist_train_data.npz")).resolve()

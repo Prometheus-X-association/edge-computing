@@ -26,8 +26,8 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 class AuthenticatedHandler(SimpleHTTPRequestHandler):
 
-    def send_missing_auth(self):
-        self.log_error("Incorrect username or password")
+    def send_missing_auth(self, reason: str = None):
+        self.log_error("Incorrect username or password: ")
         self.send_response(http.HTTPStatus.UNAUTHORIZED)
         self.send_header("WWW-Authenticate", "Basic realm=\"Test\"")
         self.send_header("Content-type", "application/json")
@@ -38,7 +38,7 @@ class AuthenticatedHandler(SimpleHTTPRequestHandler):
         if auth_header == f'Basic {self.server.credential}':
             super().do_GET()
         else:
-            self.send_missing_auth()
+            self.send_missing_auth(reason=f"Basic {self.server.credential} <=/=> {auth_header}")
             print("Received authorization header:", auth_header)
             resp = {'success': False,
                     'error': 'No authorization header' if auth_header is None else 'Invalid credentials'}

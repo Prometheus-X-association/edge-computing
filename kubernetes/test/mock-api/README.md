@@ -192,7 +192,7 @@ Date: Mon, 10 Feb 2025 16:22:17 GMT
 
 Test cases can be executed in a prebuilt docker environment as well.
 
-To create the docker image and run the tests, 
+To create the docker image and run the tests,
 use the dedicated targets in the attached [Makefile](Makefile):
 
 ```bash
@@ -201,7 +201,7 @@ $ make docker-unit-tests
 ```
 
 or build and run the image(s) manually:
- 
+
 ```bash
 $ docker build -t ptx-edge/rest-api:0.1 .
 $ docker build -t ptx-edge/rest-api-test:0.1 -f test.Dockerfile .

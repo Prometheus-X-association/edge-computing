@@ -56,6 +56,7 @@ def test_request_edge_proc_fail401():
     response = tester.post(url='/ptx-edge/v1/requestPrivacyEdgeProc', json=body)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+
 def test_request_edge_proc_fail403():
     """Test case for invalid request_edge_proc request: HTTP 403
 

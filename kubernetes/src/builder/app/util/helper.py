@@ -21,22 +21,22 @@ log = logging.getLogger(__name__)
 DEF_WAIT_SECONDS = 5
 
 
-def get_resource_scheme(path: str) -> str:
+def get_resource_scheme(path: str | None) -> str | None:
     """
 
     :param path:
     :return:
     """
-    return path.strip().split('://', 1)[0].lower()
+    return path.strip().split('://', 1)[0].lower() if path is not None else None
 
 
-def get_resource_path(path: str) -> str:
+def get_resource_path(path: str | None) -> str | None:
     """
 
     :param path:
     :return:
     """
-    return path.strip().split('://', 1)[-1]
+    return path.strip().split('://', 1)[-1] if path is not None else None
 
 
 def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str = None) -> pathlib.Path:
@@ -75,3 +75,7 @@ def deep_filter(data: object, keep: typing.Callable = bool) -> object:
         return data
     else:
         return None
+
+
+def str2bool(s: str | bool) -> bool:
+    return str(s).lower() in ('true', 'yes', 'on', '1')

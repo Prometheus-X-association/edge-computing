@@ -16,10 +16,9 @@ import pprint
 import sys
 
 import httpx
-from httpx import HTTPStatusError
-
 from app.util.config import CONFIG
 from app.util.webhook import WebHooKManager
+from httpx import HTTPStatusError
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +90,7 @@ def make_data_exchange(contract_id: str, token: str, timeout: int = None) -> dic
         log.info("Webhook received successfully!")
         log.debug(f"Received data size: {sys.getsizeof(webhook_data)}")
     return webhook_data
+
 
 def perform_pdc_data_exchange(contract_id: str, timeout: int = None) -> dict | None:
     """

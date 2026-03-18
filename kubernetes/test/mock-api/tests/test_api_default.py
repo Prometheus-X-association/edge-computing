@@ -23,9 +23,11 @@ def test_openapi():
     response = tester.get("/ptx-edge/v1/openapi.json")
     assert response.status_code == 200
 
+
 def test_ui_doc():
     response = tester.get("/ui/")
     assert response.status_code == 200
+
 
 def test_versions():
     response = tester.get("/versions")

@@ -17,10 +17,11 @@ import logging
 import pathlib
 
 from app.util.helper import deep_filter
-from kubernetes import config, client
 from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
+
+from kubernetes import config, client
 
 log = logging.getLogger(__name__)
 

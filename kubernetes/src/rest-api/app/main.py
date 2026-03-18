@@ -14,11 +14,12 @@
 import pathlib
 
 import fastapi
+from app.config import CFG
+from app.model.versions import VersionsResponse
 from starlette import responses, status
 
 from app import __version__
-from app.model.versions import VersionsResponse
-from app.config import CFG
+
 app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
                                   "services exploiting an underlying distributed edge computing infrastructure.",

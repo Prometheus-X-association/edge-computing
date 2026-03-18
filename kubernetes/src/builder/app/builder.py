@@ -18,12 +18,13 @@ import os
 import pathlib
 import sys
 
-from app import __version__
 from app.datasource import get_data_resources
 from app.util.config import load_configuration
 from app.util.dummy import wait_and_exit
 from app.util.logger import set_logging_level
 from app.worker import get_worker_resources
+
+from app import __version__
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def build() -> bool:
         return False
     else:
         log.info(f"Collected data resources: {data_path}")
-    result = get_worker_resources(data_path)
+    result = get_worker_resources(data_path=data_path)
     if result is None:
         log.error("No worker configuration is collected. Abort builder...")
         return False
