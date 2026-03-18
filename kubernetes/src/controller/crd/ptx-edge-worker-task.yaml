@@ -131,13 +131,13 @@ spec:
                           type: string
                           description: "Image pull approach"
                           enum: [ docker, secret, ptx ]
-                          example: docker
+                          default: docker
                         location:
                           type: string
                           format: "([scheme]://)([host][:port]/)[name][:version]"
                           description: "Image resource location"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
-                          example: docker://busybox:latest
+                          example: busybox:latest
                     cached:
                       type: boolean
                       description: "Worker cached in local registry, otherwise only pull secret is used"
@@ -176,6 +176,14 @@ spec:
                       format: "[name][:version]"
                       pattern: ^([^:]+):([^:/]+)$
                       example: myworker:latest
+                    command:
+                      type: array
+                      description: "Override image start command"
+                      minItems: 1
+                      items:
+                        type: string
+                        description: "command & args"
+
                     config:
                       type: object
                       description: "Worker image configuration parameters"

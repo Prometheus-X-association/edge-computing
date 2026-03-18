@@ -159,14 +159,14 @@
                           "secret",
                           "ptx"
                         ],
-                        "example": "docker"
+                        "default": "docker"
                       },
                       "location": {
                         "type": "string",
                         "format": "([scheme]://)([host][:port]/)[name][:version]",
                         "description": "Image resource location",
                         "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
-                        "example": "docker://busybox:latest"
+                        "example": "busybox:latest"
                       }
                     }
                   },
@@ -216,6 +216,15 @@
                     "format": "[name][:version]",
                     "pattern": "^([^:]+):([^:/]+)$",
                     "example": "myworker:latest"
+                  },
+                  "command": {
+                    "type": "array",
+                    "description": "Override image start command",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "description": "command & args"
+                    }
                   },
                   "config": {
                     "type": "object",

@@ -48,14 +48,17 @@ raw_k8s_obj = r"""
     "kind": "EdgeWorkerTask",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"/var/cache/data/\",\"source\":{\"location\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"image\":\"myworker:latest\",\"source\":{\"location\":\"busybox:latest\",\"scheme\":\"docker\"}}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"/var/cache/data/\",\"source\":{\"location\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"image\":\"myworker:latest\",\"source\":{\"location\":\"busybox:latest\",\"scheme\":\"docker\"}}}}\n"
         },
-        "creationTimestamp": "2026-03-18T13:44:18Z",
-        "generation": 4,
+        "creationTimestamp": "2026-03-18T20:46:17Z",
+        "generation": 1,
+        "labels": {
+            "env": "test"
+        },
         "name": "test-ewt",
         "namespace": "ptx-edge",
-        "resourceVersion": "4603",
-        "uid": "eb6c488f-3ca5-4321-b3d1-684fa62ff196"
+        "resourceVersion": "7951",
+        "uid": "18cef8a1-d2f7-4111-b781-285849d37335"
     },
     "spec": {
         "data": {
@@ -96,6 +99,10 @@ raw_k8s_obj = r"""
                 "user": "admin"
             },
             "cached": true,
+            "command": [
+                "/bin/bash",
+                "date"
+            ],
             "config": {
                 "env": [
                     {

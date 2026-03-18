@@ -2,6 +2,8 @@ apiVersion: dataspace.ptx.org/v1alpha1
 kind: EdgeWorkerTask
 metadata:
   name: test-ewt
+  labels:
+    env: test
 spec:
   service:
     enabled: true
@@ -29,6 +31,7 @@ spec:
       secret: admin
       insecure: false
     image: "myworker:latest"
+    command: [ "/bin/bash", "date" ]
     config:
       file:
         path: /var/cache/worker/config.json
