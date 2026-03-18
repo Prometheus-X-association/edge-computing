@@ -14,15 +14,20 @@
 # limitations under the License.
 import pprint
 
-from model.edgeworkertask import EdgeWorkerTask, Spec
+from model.edgeworkertask import EdgeWorkerTask, EdgeWorkerTaskSpec
 
 raw_kopf_obj = {
     'data': {
-        'source': 'https://github.com:80/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz',
+        'source': {
+            'location': 'https://github.com:80/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz'
+        },
         'path': '/var/cache/data/',
     },
     'worker': {
-        'source': 'docker://busybox:latest',
+        'source': {
+            'scheme': 'docker',
+            'location': 'busybox:latest',
+        },
         'image': 'myworker:latest',
         'config': {
             'env': [
@@ -35,7 +40,7 @@ raw_kopf_obj = {
     }
 }
 
-pprint.pprint(EdgeWorkerTask(spec=Spec(**raw_kopf_obj)))
+pprint.pprint(EdgeWorkerTask(spec=EdgeWorkerTaskSpec(**raw_kopf_obj)))
 
 raw_k8s_obj = r"""
 {
@@ -43,24 +48,26 @@ raw_k8s_obj = r"""
     "kind": "EdgeWorkerTask",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"auth\":{\"scheme\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"/var/cache/data/\",\"source\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\"},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"image\":\"myworker:latest\",\"source\":\"docker://busybox:latest\"}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"/var/cache/data/\",\"source\":{\"location\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"image\":\"myworker:latest\",\"source\":{\"location\":\"busybox:latest\",\"scheme\":\"docker\"}}}}\n"
         },
-        "creationTimestamp": "2026-03-17T12:56:03Z",
-        "generation": 1,
+        "creationTimestamp": "2026-03-18T13:44:18Z",
+        "generation": 4,
         "name": "test-ewt",
         "namespace": "ptx-edge",
-        "resourceVersion": "14671",
-        "uid": "27bca6f8-05b5-4141-9045-25b657e478b2"
+        "resourceVersion": "4603",
+        "uid": "eb6c488f-3ca5-4321-b3d1-684fa62ff196"
     },
     "spec": {
         "data": {
             "auth": {
-                "scheme": "basic",
+                "method": "basic",
                 "secret": "admin",
                 "user": "admin"
             },
             "path": "/var/cache/data/",
-            "source": "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+            "source": {
+                "location": "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+            }
         },
         "dataspace": {
             "offer": {
@@ -102,7 +109,10 @@ raw_k8s_obj = r"""
                 }
             },
             "image": "myworker:latest",
-            "source": "docker://busybox:latest"
+            "source": {
+                "location": "busybox:latest",
+                "scheme": "docker"
+            }
         }
     }
 }

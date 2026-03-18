@@ -10,14 +10,18 @@ spec:
       - port: 80
         public: true
   data:
-    source: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+    source:
+      #scheme: https
+      location: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
     auth:
-      scheme: basic
+      method: basic
       user: admin
       secret: admin
     path: "/var/cache/data/"
   worker:
-    source: "docker://busybox:latest"
+    source:
+      scheme: docker
+      location: "busybox:latest"
     #cached: true
     auth:
       server: https://index.docker.io/v1/

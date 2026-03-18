@@ -68,40 +68,70 @@
                 ],
                 "properties": {
                   "source": {
-                    "type": "string",
-                    "description": "Data source location - [scheme]://([host][:port])/[path]",
-                    "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)?(/.+)$",
-                    "example": "https://my.api.localhost:8080/data/example.csv"
+                    "type": "object",
+                    "description": "Data source location",
+                    "required": [
+                      "location"
+                    ],
+                    "properties": {
+                      "scheme": {
+                        "type": "string",
+                        "description": "Data collection scheme",
+                        "enum": [
+                          "file",
+                          "dir",
+                          "http",
+                          "https",
+                          "ptx"
+                        ],
+                        "example": "https"
+                      },
+                      "location": {
+                        "type": "string",
+                        "description": "Data resource location",
+                        "format": "([scheme]://)([host][:port])/[path]",
+                        "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$",
+                        "example": "https://my.api.localhost:8080/data/example.csv"
+                      }
+                    }
                   },
                   "auth": {
                     "type": "object",
                     "description": "Credentials for remote data collection",
                     "required": [
-                      "scheme",
+                      "method",
                       "user",
                       "secret"
                     ],
                     "properties": {
-                      "scheme": {
+                      "method": {
                         "type": "string",
                         "description": "Used authentication method",
+                        "enum": [
+                          "basic",
+                          "digest"
+                        ],
                         "example": "basic"
                       },
                       "user": {
                         "type": "string",
                         "description": "User identification",
+                        "minLength": 1,
                         "example": "admin"
                       },
                       "secret": {
                         "type": "string",
                         "description": "Secret token or password",
+                        "minLength": 1,
+                        "format": "password",
                         "example": "myPasswd!007"
                       }
                     }
                   },
                   "path": {
                     "type": "string",
-                    "description": "Absolut path of local directory for collected data - /[path]/",
+                    "description": "Absolut path of local directory for collected data",
+                    "format": "/[path]/",
                     "pattern": "^((/[a-zA-Z0-9-_]+)+)/?$",
                     "default": "/var/cache/data/"
                   }
@@ -115,10 +145,30 @@
                 ],
                 "properties": {
                   "source": {
-                    "type": "string",
-                    "description": "Worker image location - [scheme]://[host][:port]/[name][:version]",
-                    "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
-                    "example": "docker://busybox:latest"
+                    "type": "object",
+                    "description": "Worker image location",
+                    "required": [
+                      "location"
+                    ],
+                    "properties": {
+                      "scheme": {
+                        "type": "string",
+                        "description": "Image pull approach",
+                        "enum": [
+                          "docker",
+                          "secret",
+                          "ptx"
+                        ],
+                        "example": "docker"
+                      },
+                      "location": {
+                        "type": "string",
+                        "format": "([scheme]://)([host][:port]/)[name][:version]",
+                        "description": "Image resource location",
+                        "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
+                        "example": "docker://busybox:latest"
+                      }
+                    }
                   },
                   "cached": {
                     "type": "boolean",
@@ -135,18 +185,22 @@
                     "properties": {
                       "server": {
                         "type": "string",
-                        "description": "Image server prefix - [scheme]://[host][:port]/[path]/",
+                        "description": "Image server prefix",
+                        "format": "[scheme]://[host][:port]/[path]/",
                         "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$",
                         "default": "https://index.docker.io/v1/"
                       },
                       "user": {
                         "type": "string",
                         "description": "Image registry user",
+                        "minLength": 1,
                         "example": "admin"
                       },
                       "secret": {
                         "type": "string",
                         "description": "Server password or token",
+                        "minLength": 1,
+                        "format": "password",
                         "example": "myPasswd!007"
                       },
                       "insecure": {
@@ -159,6 +213,7 @@
                   "image": {
                     "type": "string",
                     "description": "Cached image name, otherwise autogenerated",
+                    "format": "[name][:version]",
                     "pattern": "^([^:]+):([^:/]+)$",
                     "example": "myworker:latest"
                   },
@@ -200,6 +255,7 @@
                             "key": {
                               "type": "string",
                               "description": "Variable name",
+                              "minLength": 1,
                               "example": "MY_CFG_ENVVAR"
                             },
                             "value": {
@@ -228,11 +284,13 @@
                     "properties": {
                       "provider": {
                         "type": "string",
-                        "description": "Data provider ID"
+                        "description": "Data provider ID",
+                        "minLength": 1
                       },
                       "consumer": {
                         "type": "string",
-                        "description": "Data consumer ID"
+                        "description": "Data consumer ID",
+                        "minLength": 1
                       }
                     }
                   }

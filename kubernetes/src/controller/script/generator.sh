@@ -19,4 +19,6 @@ PY_VER='3.14'
 
 datamodel-codegen --input="${1}" --input-file-type='openapi' --openapi-scopes='schemas' \
                     --formatter='isort' --keep-model-order --schema-version-mode='strict' \
-                    --enable-version-header --enable-command-header --target-python-version=${PY_VER} --output "${2}"
+                    --enum-field-as-literal=none --field-constraints --use-annotated --naming-strategy=parent-prefixed \
+                    --enable-version-header --enable-command-header --target-python-version=${PY_VER} \
+                    --disable-warnings --output "${2}"
