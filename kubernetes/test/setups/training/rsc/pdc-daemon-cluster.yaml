@@ -22,7 +22,7 @@ spec:
       serviceAccountName: ${PDC}
       initContainers:
         - name: ${BUILDER}
-          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILDER_IMG}
+          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app.tools.pdc-init", "-v", "--type=clusterip" ]
           volumeMounts:
@@ -127,7 +127,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${PDC}-${PZ_TR_0}
+  name: ${PDC}-${PZ_DATA_0}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
@@ -135,7 +135,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
-    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_0}
+    privacy-zone.dataspace.ptx.org/default: ${PZ_DATA_0}
   type: ClusterIP
   ports:
     - name: pdc-port
@@ -144,7 +144,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${PDC}-${PZ_TR_1}
+  name: ${PDC}-${PZ_DATA_1}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
@@ -152,24 +152,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
-    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_1}
-  type: ClusterIP
-  ports:
-    - name: pdc-port
-      port: ${PDC_PORT}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${PDC}-${PZ_TR_2}
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${PDC}
-    env: demo
-spec:
-  selector:
-    app.kubernetes.io/name: ${PDC}
-    privacy-zone.dataspace.ptx.org/default: ${PZ_TR_2}
+    privacy-zone.dataspace.ptx.org/default: ${PZ_DATA_1}
   type: ClusterIP
   ports:
     - name: pdc-port
@@ -178,7 +161,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: ${PDC}-${PZ_TR_0}-stripprefix
+  name: ${PDC}-${PZ_DATA_0}-stripprefix
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
@@ -186,12 +169,12 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /${PDC_PREFIX_TR_0}
+      - /${PDC_PREFIX_DATA_0}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: ${PDC}-${PZ_TR_1}-stripprefix
+  name: ${PDC}-${PZ_DATA_1}-stripprefix
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
@@ -199,93 +182,55 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /${PDC_PREFIX_TR_1}
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: ${PDC}-${PZ_TR_2}-stripprefix
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${PDC}
-    env: demo
-spec:
-  stripPrefix:
-    prefixes:
-      - /${PDC_PREFIX_TR_2}
+      - /${PDC_PREFIX_DATA_1}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ${PDC}-${PZ_TR_0}
+  name: ${PDC}-${PZ_DATA_0}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
     env: demo
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_0}-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_0}-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
     - host: ${LB_DOMAIN}
       http:
         paths:
-          - path: /${PDC_PREFIX_TR_0}
+          - path: /${PDC_PREFIX_DATA_0}
             pathType: Prefix
             backend:
               service:
-                name: ${PDC}-${PZ_TR_0}
+                name: ${PDC}-${PZ_DATA_0}
                 port:
                   number: ${PDC_PORT}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ${PDC}-${PZ_TR_1}
+  name: ${PDC}-${PZ_DATA_1}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
     env: demo
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_1}-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_1}-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
     - host: ${LB_DOMAIN}
       http:
         paths:
-          - path: /${PDC_PREFIX_TR_1}
+          - path: /${PDC_PREFIX_DATA_1}
             pathType: Prefix
             backend:
               service:
-                name: ${PDC}-${PZ_TR_1}
-                port:
-                  number: ${PDC_PORT}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ${PDC}-${PZ_TR_2}
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${PDC}
-    env: demo
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_TR_2}-stripprefix@kubernetescrd
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: ${LB_DOMAIN}
-      http:
-        paths:
-          - path: /${PDC_PREFIX_TR_2}
-            pathType: Prefix
-            backend:
-              service:
-                name: ${PDC}-${PZ_TR_2}
+                name: ${PDC}-${PZ_DATA_1}
                 port:
                   number: ${PDC_PORT}
 ---

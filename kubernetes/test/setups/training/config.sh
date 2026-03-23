@@ -35,9 +35,8 @@ source "${SCRIPT_DIR}/creds/cluster-creds.sh"
 TIMEOUT=60
 CLUSTER="training"
 ENV="demo"
-NODE_TR="node-tr"
-NODE_AG="node-ag"
-NODE_OR="node-or"
+NODE_DATA="node-data"
+NODE_FED="node-federated"
 
 # Labels
 LAB_PZ="privacy-zone.dataspace.ptx.org"
@@ -45,11 +44,9 @@ LAB_WORK="node-role.kubernetes.io/worker=true"
 LAB_PDC="connector.dataspace.ptx.org/enabled=true"
 
 # Privacy zones
-PZ_TR_0="zone-tr-0"
-PZ_TR_1="zone-tr-1"
-PZ_TR_2="zone-tr-2"
-PZ_AG="zone-ag"
-PZ_OR="zone-or"
+PZ_DATA_0="zone-data-0"
+PZ_DATA_1="zone-data-1"
+PZ_FED="zone-federated"
 
 # Registry
 REGISTRY="registry.k3d.local"
@@ -67,18 +64,21 @@ LB_DOMAIN="${CLUSTER}.k3d.localhost"
 LB_HOST="${LB_DOMAIN}:${LB_PORT}"
 
 # PTX-edge components
-API_IMG="ptx-edge/rest-api:1.0"
+COMPONENTS=(builder controller ptx registry rest-api scheduler)
+BUILD_IMG="ptx-edge/builder:1.0"
+CONTROL_IMG="ptx-edge/controller:1.0"
 PDC_IMG="ptx/connector:1.10.0-slim"
 MONGODB_IMG="ptx/mongodb:8.0.5-slim"
+API_IMG="ptx-edge/rest-api:1.0"
 SCHED_IMG="ptx-edge/scheduler:1.0"
-BUILDER_IMG="ptx-edge/builder:1.0"
-
 # PTX-core components
 PTX="ptx-edge"
 CATALOG_IMG="ptx-sandbox/catalog:1.10.0-slim"
 SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
+
+IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 
 # PDC
 PDC=pdc
@@ -89,9 +89,8 @@ PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder
 PDC_CFG_SECRET_KEY='${SECRET_KEY}'  # placeholder
-PDC_PREFIX_TR_0="${PTX}/${PZ_TR_0}/${PDC}"
-PDC_PREFIX_TR_1="${PTX}/${PZ_TR_1}/${PDC}"
-PDC_PREFIX_TR_2="${PTX}/${PZ_TR_2}/${PDC}"
+PDC_PREFIX_DATA_0="${PTX}/${PZ_DATA_0}/${PDC}"
+PDC_PREFIX_DATA_1="${PTX}/${PZ_DATA_1}/${PDC}"
 
 # REST-API
 REST_API="rest-api"
@@ -103,10 +102,10 @@ SCHEDULER="scheduler"
 SCHEDULER_METHOD="generic"
 SCHEDULER_REF="${PTX}-${SCHEDULER}"
 
+# Controller
+CONTROLLER="controller"
+
 # Builder
 BUILDER=builder
 
-# Tasks
-TASK1=task1
-TASK2=task2
-TASK3=task3
+# EWT configuration

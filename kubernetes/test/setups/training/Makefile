@@ -26,10 +26,10 @@ depends:
 2-viewer:
 	( kubectl proxy 2>/dev/null & ) || exit 0
 	docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
-        		--port=0.0.0.0:8081:8081 --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
+        		--port=8081 --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
 	( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
 	echo
-	echo "K8s Ops Viewer is available on http://$(hostname -I):8081/"
+	echo "K8s Ops Viewer is available on http://localhost:8081/"
 	echo
 
 3-setup:

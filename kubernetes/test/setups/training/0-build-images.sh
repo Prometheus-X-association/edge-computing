@@ -20,14 +20,13 @@ source config.sh
 LOG "Building docker images...."
 
 log "Build PTX-edge components"
-make -C "${ROOT_DIR}/src/registry" build
-make -C "${ROOT_DIR}/src/builder" build
-make -C "${ROOT_DIR}/src/rest-api" build
-make -C "${ROOT_DIR}/src/scheduler" build
+for comp in "${COMPONENTS[@]}"; do
+    make -C "${ROOT_DIR}/src/${comp}" build
+done
 #make -C "${ROOT_DIR}/src/samples" build-all publish-all
 
-log "Build PTX-core sandbox components"
-make -C "${ROOT_DIR}/src/ptx" build
+#log "Build PTX-core sandbox components"
+#make -C "${ROOT_DIR}/src/ptx" build
 
 ########################################################################################################################
 

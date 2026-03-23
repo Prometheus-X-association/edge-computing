@@ -55,7 +55,7 @@ log "Waiting for PDC instances to initialize..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
-${KCTL} wait --for=jsonpath='.status.numberReady'=3 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
+${KCTL} wait --for=jsonpath='.status.numberReady'=2 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
 
 log "Waiting for PDC instances to set up..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
@@ -63,7 +63,7 @@ for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.
 done
 
 log "Waiting for ingress to set up..." && sleep 10
-for pz in ${PZ_TR_0} ${PZ_TR_1} ${PZ_TR_2}; do
+for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
     log ">>> PDC is exposed on http://${LB_HOST}/${PTX}/${pz}/${PDC}"
     curl -I "http://${LB_HOST}/${PTX}/${pz}/${PDC}"
@@ -88,11 +88,22 @@ curl -LSs "http://${LB_HOST}/${PREFIX}/versions" | python3 -m json.tool
 
 ########################################################################################################################
 
+log "Deploy Controller"
+#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
+#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
+envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-task.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/controller-deployment.yaml" | ${KCTL} apply -f=-
+${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
+echo
+${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
+
+########################################################################################################################
+
 log "Deploy scheduler"
 envsubst <"${SCRIPT_DIR}/rsc/scheduler-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
 echo
-${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${SCHEDULER}"
+${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
 
 ########################################################################################################################
 

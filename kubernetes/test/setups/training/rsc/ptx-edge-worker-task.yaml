@@ -1,0 +1,284 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: edgeworkertasks.dataspace.ptx.org # <plural>.<group> format
+  labels:
+    app.kubernetes.io/name: ${CONTROLLER}
+    env: demo
+spec:
+  group: dataspace.ptx.org
+  scope: Namespaced
+  names:
+    kind: EdgeWorkerTask
+    listKind: EdgeWorkerTaskList
+    plural: edgeworkertasks
+    singular: edgeworkertask
+    shortNames:
+      - ewt
+      - ewts
+    categories:
+      - all
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: "Edge Worker Task description"
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              description: "Specification of PTX Edge Task"
+              required:
+                - data
+                - worker
+              properties:
+                service:
+                  type: object
+                  description: "Initiate worker as a service, not a single-executed task"
+                  required:
+                    - enabled
+                  properties:
+                    enabled:
+                      type: boolean
+                      description: "Enable service creation"
+                      default: false
+                    interfaces:
+                      type: array
+                      description: "Exposed worker interfaces"
+                      items:
+                        type: object
+                        required:
+                          - port
+                        properties:
+                          port:
+                            type: integer
+                            description: "Service port"
+                            minimum: 1
+                            maximum: 65535
+                            example: 8080
+                          public:
+                            type: boolean
+                            description: "Enable out-of-cluster access"
+                            default: false
+                data:
+                  type: object
+                  description: "Data collection parameters"
+                  required:
+                    - source
+                  properties:
+                    source:
+                      type: object
+                      description: "Data source location"
+                      required:
+                        - location
+                      properties:
+                        scheme:
+                          type: string
+                          description: "Data collection scheme"
+                          enum: [ file, dir, http, https, ptx ]
+                          example: https
+                        location:
+                          type: string
+                          description: "Data resource location"
+                          format: "([scheme]://)([host][:port])/[path]"
+                          pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
+                          example: https://my.api.localhost:8080/data/example.csv
+                    auth:
+                      type: object
+                      description: "Credentials for remote data collection"
+                      required:
+                        - method
+                        - user
+                        - secret
+                      properties:
+                        method:
+                          type: string
+                          description: "Used authentication method"
+                          enum: [ basic, digest ]
+                          example: basic
+                        user:
+                          type: string
+                          description: "User identification"
+                          minLength: 1
+                          example: admin
+                        secret:
+                          type: string
+                          description: "Secret token or password"
+                          minLength: 1
+                          format: password
+                          example: myPasswd!007
+                    path:
+                      type: string
+                      description: "Absolut path of local directory for collected data"
+                      format: "/[path]/"
+                      pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
+                      default: /var/cache/data/
+                worker:
+                  type: object
+                  description: "Worker environment parameters"
+                  required:
+                    - source
+                  properties:
+                    source:
+                      type: object
+                      description: "Worker image location"
+                      required:
+                        - location
+                      properties:
+                        scheme:
+                          type: string
+                          description: "Image pull approach"
+                          enum: [ docker, secret, ptx ]
+                          default: docker
+                        location:
+                          type: string
+                          format: "([scheme]://)([host][:port]/)[name][:version]"
+                          description: "Image resource location"
+                          pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
+                          example: busybox:latest
+                    cached:
+                      type: boolean
+                      description: "Worker cached in local registry, otherwise only pull secret is used"
+                      default: true
+                    auth:
+                      type: object
+                      description: "Credentials for remote image collection"
+                      required:
+                        - user
+                        - secret
+                      properties:
+                        server:
+                          type: string
+                          description: "Image server prefix"
+                          format: "[scheme]://[host][:port]/[path]/"
+                          pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
+                          default: https://index.docker.io/v1/
+                        user:
+                          type: string
+                          description: "Image registry user"
+                          minLength: 1
+                          example: admin
+                        secret:
+                          type: string
+                          description: "Server password or token"
+                          minLength: 1
+                          format: password
+                          example: myPasswd!007
+                        insecure:
+                          type: boolean
+                          description: "Disable verification of image server's TLS certificate"
+                          default: false
+                    image:
+                      type: string
+                      description: "Cached image name, otherwise autogenerated"
+                      format: "[name][:version]"
+                      pattern: ^([^:]+):([^:/]+)$
+                      example: myworker:latest
+                    command:
+                      type: array
+                      description: "Override image start command"
+                      minItems: 1
+                      items:
+                        type: string
+                        description: "command & args"
+
+                    config:
+                      type: object
+                      description: "Worker image configuration parameters"
+                      properties:
+                        file:
+                          type: object
+                          description: "Configuration file"
+                          required:
+                            - path
+                            - data
+                          properties:
+                            path:
+                              type: string
+                              description: "Mount path of configuration file"
+                              pattern: ^((/[a-zA-Z0-9-_\.]+)+)$
+                              example: /var/cache/worker/cfg.ini
+                            data:
+                              type: string
+                              description: "Configuration data"
+                        env:
+                          type: array
+                          description: "Environment variables"
+                          items:
+                            type: object
+                            description: "Key-value pairs"
+                            required:
+                              - key
+                              - value
+                            properties:
+                              key:
+                                type: string
+                                description: "Variable name"
+                                minLength: 1
+                                example: MY_CFG_ENVVAR
+                              value:
+                                type: string
+                                description: "Value string"
+                                example: "42"
+                dataspace:
+                  type: object
+                  description: "Attributes of data exchange via PTX dataspace"
+                  properties:
+                    offer:
+                      type: object
+                      description: "PTX dataspace contract info"
+                      required:
+                        - provider
+                        - consumer
+                      properties:
+                        provider:
+                          type: string
+                          description: "Data provider ID"
+                          minLength: 1
+                        consumer:
+                          type: string
+                          description: "Data consumer ID"
+                          minLength: 1
+            status:
+              type: object
+              description: "Runtime information"
+              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                state:
+                  type: string
+                  description: "Task state from [created | running | finished]"
+      subresources:
+        status: { }
+      selectableFields:
+        - jsonPath: .spec.service.enabled
+        - jsonPath: .status.state
+      additionalPrinterColumns:
+        - name: Datasource
+          type: string
+          description: "Datasource configuration"
+          jsonPath: .spec.data.source
+          priority: 1
+        - name: Worker
+          type: string
+          description: "Worker configuration"
+          jsonPath: .spec.worker.source
+          priority: 1
+        - name: Service
+          type: boolean
+          jsonPath: .spec.service.enabled
+          description: "Enabled as a Service"
+          priority: 1
+        - name: State
+          type: string
+          jsonPath: .status.state
+          priority: 0
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+          priority: 0
+---
