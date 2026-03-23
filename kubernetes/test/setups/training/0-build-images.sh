@@ -28,6 +28,11 @@ done
 #log "Build PTX-core sandbox components"
 #make -C "${ROOT_DIR}/src/ptx" build
 
+log "Collect federated learning images"
+for img in "${FED_COMPONENTS[@]}"; do
+    docker pull "${img}"
+done
+
 ########################################################################################################################
 
 echo -e "\nDone."

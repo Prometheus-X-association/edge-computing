@@ -109,3 +109,8 @@ CONTROLLER="controller"
 BUILDER=builder
 
 # EWT configuration
+FED_COMPONENTS=(ghcr.io/alelevente/orchestrator:latest \
+                ghcr.io/alelevente/orchestrator:latest \
+                ghcr.io/alelevente/orchestrator:latest)
+DP0="data-processor-0"
+DP1="data-processor-1"
