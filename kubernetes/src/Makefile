@@ -45,21 +45,25 @@ setup:
 		IMG=$$(docker image ls -f reference="ptx-edge/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
+		if [ -z "$${IMG+x}" ]; then echo "Missing image: $${img}" && exit 1; fi; \
 		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${PTX_CORE}; do \
 		IMG=$$(docker image ls -f reference="ptx-sandbox/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		if [ -z "$${IMG+x}" ]; then echo "Missing image: $${img}" && exit 1; fi; \
 		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${CONNECTOR}; do \
 		IMG=$$(docker image ls -f reference="ptx/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		if [ -z "$${IMG+x}" ]; then echo "Missing image: $${img}" && exit 1; fi; \
 		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
 	for img in ${SAMPLES}; do \
 		IMG=$$(docker image ls -f reference="samples/$${img}*" --format='{{.Repository}}:{{.Tag}}' | sort | head -n1); \
+		if [ -z "$${IMG+x}" ]; then echo "Missing image: $${img}" && exit 1; fi; \
 		echo "$${IMG} --> ${K3D_REG}/$${IMG}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker-daemon:$${IMG} docker://${K3D_REG}/$${IMG}; \
 	done
@@ -68,6 +72,7 @@ setup:
 		# IMG=$$(docker image ls -f reference="$${img}*" --format='{{.Repository}}:{{.Tag}}'); \
 		# LOCAL_IMG="localhost:5000/$${IMG}"; \
 		# docker tag $${IMG} $${LOCAL_IMG} && docker push $${LOCAL_IMG} && docker rmi $${LOCAL_IMG}; \
+		if [ -z "$${img+x}" ]; then echo "Missing image: $${img}" && exit 1; fi; \
 		echo "$${img} --> ${K3D_REG}/$${img}"; \
 		skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS} docker://$${img} docker://${K3D_REG}/$${img}; \
 	done
@@ -200,10 +205,13 @@ run-scheduler:
 
 run-controller:
 	@#kubectl apply -f https://github.com/nolar/kopf/raw/main/peering.yaml
-	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
+	@#kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
+	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/0_peering-crd.yaml
+	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/1_peering.yaml
+	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/ptx-edge-worker-task.yaml
 	sleep 3s
-	kubectl wait --for="condition=established" --timeout=30s crd/kopfpeerings.kopf.dev \
-		crd/clusterkopfpeerings.kopf.dev crd/edgeworkertasks.dataspace.ptx.org
+	kubectl wait --for="condition=established" --timeout=30s crd/edgeworkertasks.dataspace.ptx.org \
+		crd/kopfpeerings.kopf.dev crd/clusterkopfpeerings.kopf.dev
 	kubectl apply -f ${ASSETS}/ptx-controller-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/controller
 	@echo

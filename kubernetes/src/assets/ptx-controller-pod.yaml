@@ -99,7 +99,7 @@ spec:
     - name: controller
       image: registry.k3d.local:5000/ptx-edge/controller:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--debug", "--dev", "app/controller.py" ]
+      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--standalone", "--debug", "app/controller.py" ]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
       volumeMounts:
         - name: src

@@ -1,2 +1,2 @@
-kopf[uvloop]~=1.43.0
+kopf[uvloop]~=1.44.1
 pydantic
