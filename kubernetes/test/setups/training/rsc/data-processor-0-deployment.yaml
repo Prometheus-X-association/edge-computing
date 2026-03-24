@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${DP0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ${DP0}
+      env: ${ENV}
+      tier: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${DP0}
+        env: ${ENV}
+        tier: worker
+    spec:
+      initContainers:
+        - name: ${BUILDER}
+          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
+          imagePullPolicy: IfNotPresent
+          command: [ "python3", "-m", "app", "-v" ]
+          volumeMounts:
+            - name: data-dir
+              mountPath: /var/cache/data
+              readOnly: false
+            - name: registry-ca
+              mountPath: /usr/share/ca-certificates/ptx-edge
+              readOnly: true
+          env:
+            - name: BUILD_CONNECTION_TIMEOUT
+              value: "${BUILD_TIMEOUT}"
+            - name: BUILD_DATA_SRC
+              value: "${DP0_DATA}"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data/"
+            - name: BUILD_WORKER_SRC
+              value: "docker://${DP0_IMG}"
+            - name: BUILD_WORKER_DST
+              value: "worker/${DP0}:latest"
+      containers:
+        - name: worker
+          image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
+          imagePullPolicy: Always
+          #resources:
+          #  requests:
+          #    cpu: 2850m
+          #    memory: 700Mi
+          #  limits:
+          #    cpu: 3500m
+          #    memory: 1Gi
+          volumeMounts:
+            - name: data-dir
+              mountPath: /data
+              readOnly: true
+          env:
+            - name: mlflow_tracking_uri_internal
+              value: http://localhost:5000
+            - name: mlflow_tracking_uri_external
+              value: http://${DP0}.${PTX}.svc.default.local:5000
+          ports:
+            - name: port-5000
+              containerPort: 5000
+            - name: port-8000
+              containerPort: 8000
+      #      schedulerName: ptx-edge-scheduler
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: ${LAB_PZ}/${PZ_DATA_0}
+                    operator: In
+                    values:
+                      - "true"
+      volumes:
+        - name: data-dir
+          emptyDir:
+            sizeLimit: 100Mi
+        - name: registry-ca
+          configMap:
+            name: registry-root-ca.crt
+            items:
+              - key: ca.crt
+                path: registry_CA.crt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${DP0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+    tier: worker
+spec:
+  selector:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+    tier: worker
+  type: ClusterIP
+  ports:
+    - name: port-5000
+      port: 5000
+      targetPort: port-5000
+    - name: port-8000
+      port: 8000
+      targetPort: port-8000
+---

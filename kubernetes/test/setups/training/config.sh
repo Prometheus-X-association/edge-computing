@@ -107,12 +107,23 @@ CONTROLLER="controller"
 
 # Builder
 BUILDER=builder
-BUILD_TIMEOUT=600
+BUILD_TIMEOUT=300
 
 # EWT configuration
 FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/aggregator:latest \
                 ghcr.io/alelevente/orchestrator:latest)
+#
 DP0="data-processor-0"
+DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
+DP0_IMG="ghcr.io/alelevente/data_processor:latest"
+#
 DP1="data-processor-1"
+DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
+DP1_IMG="ghcr.io/alelevente/data_processor:latest"
+#
 AGG="aggregator"
+AGG_IMG="ghcr.io/alelevente/aggregator:latest"
+#
+ORCH="orchestrator"
+ORCH_IMG="ghcr.io/alelevente/orchestrator:latest"

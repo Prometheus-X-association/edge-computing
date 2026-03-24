@@ -51,10 +51,16 @@ status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
 	bash status.sh
 
-clear:
+shell:
+	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
+
+stop:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
-	-kubectl delete pdeployments,services,jobs,pods -l tier=worker --now --wait=false --ignore-not-found
+	-kubectl delete deployments,services,jobs,pods -l tier=worker --ignore-not-found
 	-kubectl delete pv,pvc,events --all --now --wait=false --ignore-not-found
+
+clear:
+	docker rmi -f $$(docker images -aq)
 
 ########################################################################################################################
 

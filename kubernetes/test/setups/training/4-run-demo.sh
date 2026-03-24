@@ -15,12 +15,69 @@
 set -eou pipefail
 source config.sh
 
-########################################################################################################################
-
-LOG "Execute joint Edge Computing -- AI Training (BB-01/02) demo..."
-
-# TODO
+LOG "Run joint Edge Computing -- AI Training (BB-01/02) demo..."
 
 ########################################################################################################################
 
+log "Initiate Data Processing Function 0..."
+envsubst <"rsc/${DP0}-deployment.yaml" | ${KCTL} apply -f=-
+${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
+${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
+
+log "Waiting for worker to set up..."
+${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+echo
+${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
+
+########################################################################################################################
+
+log "Initiate Data Processing Function 1..."
+envsubst <"rsc/${DP1}-deployment.yaml" | ${KCTL} apply -f=-
+${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
+${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
+
+log "Waiting for worker to set up..."
+${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+echo
+${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
+
+########################################################################################################################
+
+log "Initiate Aggregator..."
+envsubst <"rsc/${AGG}-deployment.yaml" | ${KCTL} apply -f=-
+${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
+${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
+
+log "Waiting for worker to set up..."
+${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+echo
+${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
+
+log "Waiting for ingress to set up..." && sleep 10
+${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
+log ">>> Aggregator is exposed on http://${LB_HOST}/worker/${AGG}"
+curl -I "http://${LB_HOST}/worker/${AGG}"
+
+########################################################################################################################
+
+log "Initiate Orchestrator..."
+envsubst <"rsc/${ORCH}-deployment.yaml" | ${KCTL} apply -f=-
+${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"
+${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
+
+log "Waiting for worker to set up..."
+${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+echo
+${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
+
+log "Waiting for ingress to set up..." && sleep 10
+${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
+log ">>> Aggregator is exposed on http://${LB_HOST}/worker/${ORCH}/docs"
+curl -I "http://${LB_HOST}/worker/${ORCH}/docs"
+
+########################################################################################################################
 echo -e "\nDone."

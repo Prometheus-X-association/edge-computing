@@ -24,10 +24,10 @@ for comp in "${COMPONENTS[@]}"; do
     make -C "${ROOT_DIR}/src/${comp}" build
 done
 
-log "Collect federated learning images"
-for img in "${FED_COMPONENTS[@]}"; do
-    docker pull "${img}"
-done
+#log "Collect federated learning images"
+#for img in "${FED_COMPONENTS[@]}"; do
+#    docker pull "${img}"
+#done
 
 ########################################################################################################################
 
