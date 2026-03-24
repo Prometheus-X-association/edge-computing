@@ -23,10 +23,6 @@ log "Build PTX-edge components"
 for comp in "${COMPONENTS[@]}"; do
     make -C "${ROOT_DIR}/src/${comp}" build
 done
-#make -C "${ROOT_DIR}/src/samples" build-all publish-all
-
-#log "Build PTX-core sandbox components"
-#make -C "${ROOT_DIR}/src/ptx" build
 
 log "Collect federated learning images"
 for img in "${FED_COMPONENTS[@]}"; do

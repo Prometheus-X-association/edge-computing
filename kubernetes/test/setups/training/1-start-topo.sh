@@ -17,7 +17,7 @@ source config.sh
 
 ########################################################################################################################
 
-LOG "Creating training infrastructure..."
+LOG "Creating cluster infrastructure..."
 envsubst <"${SCRIPT_DIR}/rsc/k3d-demo-cluster.yaml" | k3d cluster create --config=-
 ${KCTL} cluster-info
 

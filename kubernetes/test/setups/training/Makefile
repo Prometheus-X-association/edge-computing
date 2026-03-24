@@ -53,7 +53,8 @@ status:
 
 clear:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
-	-kubectl delete jobs,pv,pvc,events --all --now --wait=false --ignore-not-found
+	-kubectl delete pdeployments,services,jobs,pods -l tier=worker --now --wait=false --ignore-not-found
+	-kubectl delete pv,pvc,events --all --now --wait=false --ignore-not-found
 
 ########################################################################################################################
 

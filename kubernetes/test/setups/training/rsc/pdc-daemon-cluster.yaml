@@ -6,7 +6,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
 spec:
   selector:
     matchLabels:
@@ -15,7 +16,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${PDC}
-        env: demo
+        env: ${ENV}
+        tier: ptx
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
@@ -131,7 +133,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
@@ -148,7 +151,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
@@ -165,7 +169,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
 spec:
   stripPrefix:
     prefixes:
@@ -178,7 +183,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
 spec:
   stripPrefix:
     prefixes:
@@ -191,7 +197,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_0}-stripprefix@kubernetescrd
@@ -216,7 +223,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}
-    env: demo
+    env: ${ENV}
+    tier: ptx
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_1}-stripprefix@kubernetescrd

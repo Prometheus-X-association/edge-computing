@@ -6,7 +6,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
+    tier: edge
 spec:
   replicas: 1
   selector:
@@ -16,7 +17,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${REST_API}
-        env: demo
+        env: ${ENV}
+        tier: edge
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -51,7 +53,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
+    tier: edge
 spec:
   selector:
     app.kubernetes.io/name: ${REST_API}
@@ -68,7 +71,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${REST_API}
-    env: demo
+    env: ${ENV}
+    tier: edge
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
 spec:

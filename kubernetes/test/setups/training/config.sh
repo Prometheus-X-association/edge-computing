@@ -107,10 +107,12 @@ CONTROLLER="controller"
 
 # Builder
 BUILDER=builder
+BUILD_TIMEOUT=600
 
 # EWT configuration
-FED_COMPONENTS=(ghcr.io/alelevente/orchestrator:latest \
-                ghcr.io/alelevente/orchestrator:latest \
+FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
+                ghcr.io/alelevente/aggregator:latest \
                 ghcr.io/alelevente/orchestrator:latest)
 DP0="data-processor-0"
 DP1="data-processor-1"
+AGG="aggregator"

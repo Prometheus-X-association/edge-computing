@@ -6,7 +6,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${SCHEDULER}
-    env: demo
+    env: ${ENV}
+    tier: edge
 automountServiceAccountToken: true
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -16,7 +17,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${SCHEDULER}
-    env: demo
+    env: ${ENV}
+    tier: edge
 rules:
   - apiGroups: [ "", ]
     resources: [ "pods" ]
@@ -32,7 +34,8 @@ metadata:
   namespace: ${PTX_NS}
   labels:
     app.kubernetes.io/name: ${SCHEDULER}
-    env: demo
+    env: ${ENV}
+    tier: edge
 subjects:
   - kind: ServiceAccount
     name: ${SCHEDULER}
@@ -48,7 +51,8 @@ metadata:
   name: node-lister
   namespace: ${PTX}
   labels:
-    env: demo
+    env: ${ENV}
+    tier: edge
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
@@ -60,7 +64,8 @@ metadata:
   name: node-lister
   namespace: ${PTX}
   labels:
-    env: demo
+    env: ${ENV}
+    tier: edge
 subjects:
   - kind: ServiceAccount
     name: ${SCHEDULER}
@@ -77,7 +82,8 @@ metadata:
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${SCHEDULER}
-    env: demo
+    env: ${ENV}
+    tier: edge
 spec:
   replicas: 1
   selector:
@@ -87,7 +93,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${SCHEDULER}
-        env: demo
+        env: ${ENV}
+        tier: edge
     spec:
       serviceAccountName: ${SCHEDULER}
       nodeSelector:
