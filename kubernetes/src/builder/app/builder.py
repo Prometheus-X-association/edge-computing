@@ -13,18 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import datetime
 import logging
 import os
 import pathlib
 import sys
+import time
 
+from app import __version__
 from app.datasource import get_data_resources
 from app.util.config import load_configuration
 from app.util.dummy import wait_and_exit
 from app.util.logger import set_logging_level
 from app.worker import get_worker_resources
-
-from app import __version__
 
 log = logging.getLogger(__name__)
 
@@ -35,13 +36,19 @@ def build() -> bool:
     :return:
     """
     log.info("Building worker environment...")
+    _start = time.perf_counter()
     data_path = get_data_resources()
+    _end = time.perf_counter()
+    log.debug(f"Data collection delta: {datetime.timedelta(seconds=_end - _start)}")
     if data_path is None:
         log.error("No data resource is collected. Abort builder...")
         return False
     else:
         log.info(f"Collected data resources: {data_path}")
+    _start = time.perf_counter()
     result = get_worker_resources(data_path=data_path)
+    _end = time.perf_counter()
+    log.debug(f"Worker collection delta: {datetime.timedelta(seconds=_end - _start)}")
     if result is None:
         log.error("No worker configuration is collected. Abort builder...")
         return False
