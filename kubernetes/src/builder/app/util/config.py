@@ -23,6 +23,7 @@ DEF_CFG_FILE = pathlib.Path("app/config.toml")
 CFG_ENV_PREFIX = "prefix"
 # Global config object
 CONFIG = benedict(keypath_separator='.', keyattr_dynamic=True)
+SKIPPED = "SKIPPED"
 
 log = logging.getLogger(__name__)
 

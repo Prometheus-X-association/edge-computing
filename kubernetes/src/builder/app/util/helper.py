@@ -27,7 +27,7 @@ def get_resource_scheme(path: str | None) -> str | None:
     :param path:
     :return:
     """
-    return path.strip().split('://', 1)[0].lower() if path is not None else None
+    return path.strip().split('://', 1)[0].lower() if path else None
 
 
 def get_resource_path(path: str | None) -> str | None:
@@ -36,7 +36,7 @@ def get_resource_path(path: str | None) -> str | None:
     :param path:
     :return:
     """
-    return path.strip().split('://', 1)[-1] if path is not None else None
+    return path.strip().split('://', 1)[-1] if path else None
 
 
 def local_copy(src: pathlib.Path | str, dst: pathlib.Path | str, orig_name: str = None) -> pathlib.Path:

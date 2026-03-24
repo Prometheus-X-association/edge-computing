@@ -22,7 +22,7 @@ import time
 
 from app import __version__
 from app.datasource import get_data_resources
-from app.util.config import load_configuration
+from app.util.config import load_configuration, SKIPPED
 from app.util.dummy import wait_and_exit
 from app.util.logger import set_logging_level
 from app.worker import get_worker_resources
@@ -40,7 +40,9 @@ def build() -> bool:
     data_path = get_data_resources()
     _end = time.perf_counter()
     log.debug(f"Data collection delta: {datetime.timedelta(seconds=_end - _start)}")
-    if data_path is None:
+    if data_path is SKIPPED:
+        log.warning("Data collection skipped. Continue builder...")
+    elif data_path is None:
         log.error("No data resource is collected. Abort builder...")
         return False
     else:
@@ -49,7 +51,9 @@ def build() -> bool:
     result = get_worker_resources(data_path=data_path)
     _end = time.perf_counter()
     log.debug(f"Worker collection delta: {datetime.timedelta(seconds=_end - _start)}")
-    if result is None:
+    if result is SKIPPED:
+        log.warning("Worker collection skipped. Continue builder...")
+    elif result is None:
         log.error("No worker configuration is collected. Abort builder...")
         return False
     else:
@@ -72,7 +76,7 @@ def main():
     args = parser.parse_args()
     # Set up logging
     set_logging_level(verbosity=args.verbose)
-    log.info(" builder START ".center(80, '='))
+    log.info(" builder START ".center(120, '='))
     log.debug("Configuration arguments: %s", args)
     # Load configuration
     load_configuration(cfg_file=args.config, from_env=True)
@@ -87,7 +91,7 @@ def main():
         if args.verbose:
             log.exception(e)
         sys.exit(os.EX_SOFTWARE)
-    log.info(" builder END ".center(80, '='))
+    log.info(" builder END ".center(120, '='))
     # Return value based on success
     sys.exit(os.EX_OK if success else os.EX_SOFTWARE)
 

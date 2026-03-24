@@ -17,7 +17,7 @@ import pathlib
 import pprint
 
 from app.ptx.connector import perform_pdc_data_exchange
-from app.util.config import CONFIG, load_configuration
+from app.util.config import CONFIG, load_configuration, SKIPPED
 from app.util.helper import get_resource_path, get_resource_scheme
 from app.util.k8s import create_image_pull_secret
 from app.util.parsers import DockerRegistryAuth
@@ -126,7 +126,7 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
     worker_src = CONFIG.get('worker.src')
     if worker_src is None:
         log.warning("Worker source configuration is missing! Skipping...")
-        CONFIG['worker.src'] = "skip"
+        CONFIG['worker.src'] = SKIPPED
     elif worker_src.upper() in ('INLINE', 'DATASOURCE'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         with open(data_path, 'r') as f:
@@ -136,8 +136,8 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     result_id = None
     match get_resource_scheme(worker_src):
-        case 'skip':
-            result_id = "skipped"
+        case 'skip' | None:
+            result_id = SKIPPED
         case 'git':
             raise NotImplementedError
         case 'docker' | 'remote':

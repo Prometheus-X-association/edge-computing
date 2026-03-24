@@ -17,7 +17,7 @@ import tempfile
 
 import httpx
 from app.ptx.connector import perform_pdc_data_exchange
-from app.util.config import CONFIG
+from app.util.config import CONFIG, SKIPPED
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth
 from httpx_retries import RetryTransport, Retry
@@ -152,6 +152,8 @@ def get_data_resources() -> pathlib.Path | None:
             data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
                                               dst=get_resource_path(data_dst),
                                               retry=conn_retry, timeout=conn_timeout)
+        case 'skip' | None:
+            data_path = SKIPPED
         case other:
             log.error(f"Unknown data source protocol: {other}")
             data_path = None
