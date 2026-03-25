@@ -32,7 +32,7 @@ fi
 source "${SCRIPT_DIR}/creds/cluster-creds.sh"
 
 # Cluster
-TIMEOUT=60
+TIMEOUT=120
 CLUSTER="training"
 ENV="demo"
 NODE_DATA="node-data"
@@ -110,7 +110,7 @@ CONTROLLER="controller"
 
 # Builder
 BUILDER=builder
-BUILD_TIMEOUT=300
+BUILD_TIMEOUT=600
 
 ########################################################################################################################
 
@@ -137,7 +137,7 @@ AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
 AGG_MLFLOW_INT="http://localhost:5000"
 AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.default.local:5000"
-AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686"
+AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686/worker/aggregator"
 #
 ORCH="orchestrator"
 ORCH_IMG="ghcr.io/alelevente/orchestrator:latest"
