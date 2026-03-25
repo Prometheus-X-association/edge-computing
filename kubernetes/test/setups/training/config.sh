@@ -63,6 +63,9 @@ LB_PORT=8080
 LB_DOMAIN="${CLUSTER}.k3d.localhost"
 LB_HOST="${LB_DOMAIN}:${LB_PORT}"
 
+PRIMARY_IP="$(ip route get 1 | awk '{print $(NF-2);exit}')"
+PRIMARY_HOST="${PRIMARY_IP}:${LB_PORT}"
+
 # PTX-edge components
 COMPONENTS=(builder controller ptx registry rest-api scheduler)
 BUILD_IMG="ptx-edge/builder:1.0"

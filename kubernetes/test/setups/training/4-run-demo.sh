@@ -58,8 +58,8 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
 log "Waiting for ingress to set up..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
-log ">>> Aggregator is exposed on http://${LB_HOST}/worker/${AGG}"
-curl -I "http://${LB_HOST}/worker/${AGG}"
+log ">>> Aggregator is exposed on http://${PRIMARY_HOST}/worker/${AGG}"
+curl -I "http://${PRIMARY_HOST}/worker/${AGG}"
 
 ########################################################################################################################
 
@@ -76,8 +76,8 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 
 log "Waiting for ingress to set up..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
-log ">>> Orchestrator is exposed on http://${LB_HOST}/worker/${ORCH}/docs"
-curl -I "http://${LB_HOST}/worker/${ORCH}/docs"
+log ">>> Orchestrator is exposed on http://${PRIMARY_HOST}/worker/${ORCH}/docs"
+curl -I "http://${PRIMARY_HOST}/worker/${ORCH}/docs"
 
 ########################################################################################################################
 echo -e "\nDone."

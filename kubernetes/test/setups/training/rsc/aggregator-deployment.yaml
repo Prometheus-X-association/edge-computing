@@ -136,7 +136,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: ${LB_DOMAIN}
+    - host: #${LB_DOMAIN}
       http:
         paths:
           - path: /worker/${AGG}
