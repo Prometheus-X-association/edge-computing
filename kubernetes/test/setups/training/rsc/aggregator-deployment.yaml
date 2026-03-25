@@ -57,14 +57,16 @@ spec:
           env:
             - name: mlflow_tracking_uri_internal
               value: http://localhost:5000
-            - name: mlflow_tracking_uri_external
+            - name: mlflow_tracking_uri_organizational
               value: http://${AGG}.${PTX}.svc.default.local:5000
+            - name: mlflow_tracking_uri_external
+              value: http://vm.fured.cloud.bme.hu:9860
           ports:
             - name: port-5000
               containerPort: 5000
             - name: port-8000
               containerPort: 8000
-#      schedulerName: ptx-edge-scheduler
+      #schedulerName: ptx-edge-scheduler
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
