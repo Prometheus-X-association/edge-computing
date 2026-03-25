@@ -47,6 +47,18 @@ spec:
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${ORCH}:latest
           image: ${ORCH_IMG}
           imagePullPolicy: Always
+          #command:
+          #  - "fastapi"
+          #  - "run"
+          #  - "orchestrator.py"
+          #  - "--host=0.0.0.0"
+          #  - "--port=8000"
+          #  - "--proxy-headers"
+          #  - "--forwarded-allow-ips='*'"
+          #  - "--root-path=/worker/orchestrator"
+          env:
+            - name: ROOT_PATH
+              value: /worker/${ORCH}
           resources:
             requests:
               cpu: 500m
