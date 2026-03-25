@@ -39,12 +39,13 @@ spec:
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
-              value: "docker://${AGG_IMG}"
+              #value: "docker://${AGG_IMG}"
             - name: BUILD_WORKER_DST
               value: "worker/${AGG}:latest"
       containers:
         - name: worker
-          image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest
+          #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest
+          image: ${AGG_IMG}
           imagePullPolicy: Always
           #resources:
           #  requests:

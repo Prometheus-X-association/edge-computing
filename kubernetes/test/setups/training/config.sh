@@ -107,7 +107,7 @@ CONTROLLER="controller"
 
 # Builder
 BUILDER=builder
-BUILD_TIMEOUT=300
+BUILD_TIMEOUT=600
 
 # EWT configuration
 FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \

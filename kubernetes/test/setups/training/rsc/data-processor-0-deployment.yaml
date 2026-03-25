@@ -42,12 +42,13 @@ spec:
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
-              value: "docker://${DP0_IMG}"
+              #value: "docker://${DP0_IMG}"
             - name: BUILD_WORKER_DST
               value: "worker/${DP0}:latest"
       containers:
         - name: worker
-          image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
+          #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
+          image: ${DP0_IMG}
           imagePullPolicy: Always
           #resources:
           #  requests:
