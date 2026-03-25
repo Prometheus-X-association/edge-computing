@@ -112,7 +112,9 @@ CONTROLLER="controller"
 BUILDER=builder
 BUILD_TIMEOUT=600
 
-# EWT configuration
+########################################################################################################################
+
+# Demo configuration
 FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/aggregator:latest \
                 ghcr.io/alelevente/orchestrator:latest)
@@ -120,13 +122,20 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
 DP0="data-processor-0"
 DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
 DP0_IMG="ghcr.io/alelevente/data_processor:latest"
+DP0_MLFLOW_INT="http://localhost:5000"
+DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.default.local:5000"
 #
 DP1="data-processor-1"
 DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
 DP1_IMG="ghcr.io/alelevente/data_processor:latest"
+DP1_MLFLOW_INT="http://localhost:5000"
+DP1_MLFLOW_ORG="http://${DP1}.${PTX}.svc.default.local:5000"
 #
 AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
+AGG_MLFLOW_INT="http://localhost:5000"
+AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.default.local:5000"
+AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:9860"
 #
 ORCH="orchestrator"
 ORCH_IMG="ghcr.io/alelevente/orchestrator:latest"

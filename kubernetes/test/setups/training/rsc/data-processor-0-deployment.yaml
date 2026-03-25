@@ -63,9 +63,9 @@ spec:
               readOnly: true
           env:
             - name: mlflow_tracking_uri_internal
-              value: http://localhost:5000
+              value: ${DP0_MLFLOW_INT}
             - name: mlflow_tracking_uri_organizational
-              value: http://${DP0}.${PTX}.svc.default.local:5000
+              value: ${DP0_MLFLOW_ORG}
           ports:
             - name: port-5000
               containerPort: 5000
