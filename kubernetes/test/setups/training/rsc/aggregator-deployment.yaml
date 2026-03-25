@@ -47,10 +47,10 @@ spec:
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest
           image: ${AGG_IMG}
           imagePullPolicy: Always
-          #resources:
-          #  requests:
-          #    cpu: 2850m
-          #    memory: 700Mi
+          resources:
+            requests:
+              cpu: 500m
+              memory: 3000Mi
           #  limits:
           #    cpu: 3500m
           #    memory: 1Gi

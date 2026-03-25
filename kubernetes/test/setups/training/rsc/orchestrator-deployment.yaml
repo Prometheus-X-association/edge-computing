@@ -47,10 +47,10 @@ spec:
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${ORCH}:latest
           image: ${ORCH_IMG}
           imagePullPolicy: Always
-          #resources:
-          #  requests:
-          #    cpu: 2850m
-          #    memory: 700Mi
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500Mi
           #  limits:
           #    cpu: 3500m
           #    memory: 1Gi

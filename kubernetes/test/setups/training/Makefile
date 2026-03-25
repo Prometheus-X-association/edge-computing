@@ -54,6 +54,9 @@ status:
 shell:
 	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
 
+top:
+	watch -d -n1 kubectl top pod -l tier=worker --sum --containers
+
 stop:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
 	-kubectl delete deployments,services,jobs,pods -l tier=worker --ignore-not-found
