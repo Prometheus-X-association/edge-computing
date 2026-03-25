@@ -62,7 +62,8 @@ $ make 2-viewer
 # Setup ptx-edge extension in the emulated Kubernetes cluster
 $ make 3-setup
 
-#$ make 4-demo 
+# Initiate federated learning components
+$ make 4-demo 
 
 # Remove all ptx-edge extension components, leaves the infrastructure intact
 $ make 5-delete
@@ -74,7 +75,7 @@ $ make 6-shutdown
 Common steps are also encompassed in dedicated targets:
 
 ```bash
-$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup, as a single step setup
+$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup -> 4-demo, as a single step setup
 
 $ make teardown # Invoke 5-delete -> 6-shutdown, as a single step tear down
 
@@ -85,6 +86,12 @@ Further useful targets:
 
 ```bash
 $ make status   # Print info about deployed Kubernetes objects
+
+$ make shell    # Initiate a simple alpine pod within the cluster for testing APIs
+
+$ make top      # Periodically poll resource usage of pods in worker tier
+
+$ make stop     # Sopt and delete pods in worker tier, i.e., federated learning components (4-demo)
 
 $ make clear    # Remove initiates and possibly failed tasks and related objects, leaving ptx-edge setup intact
 ```
