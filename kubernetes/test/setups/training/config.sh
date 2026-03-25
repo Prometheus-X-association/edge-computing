@@ -110,7 +110,7 @@ CONTROLLER="controller"
 
 # Builder
 BUILDER=builder
-BUILD_TIMEOUT=600
+BUILD_TIMEOUT=300
 
 ########################################################################################################################
 
@@ -137,7 +137,7 @@ AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
 AGG_MLFLOW_INT="http://localhost:5000"
 AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.default.local:5000"
-AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:9860"
+AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686"
 #
 ORCH="orchestrator"
 ORCH_IMG="ghcr.io/alelevente/orchestrator:latest"
