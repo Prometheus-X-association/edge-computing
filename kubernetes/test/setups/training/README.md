@@ -9,7 +9,7 @@ Each physical node is configured as a separate docker image playing the role of 
 The Edge computing building block (ptx-edge) is represented with standalone components distributed in these nodes.
 
 - k3d-training-server-0: main control plane node running ptx-edge management components.
-- k3d-node-*: worker nodes belonging to different privacy zones (TR-1/2/3, AG, and OR).
+- k3d-node-*: worker nodes belonging to different privacy zones (data-0/1, and federated).
 
 ![trainig_setup_architecture.png](figures/trainig_setup_architecture.png)
 
@@ -72,12 +72,12 @@ $ make 5-delete
 $ make 6-shutdown
 ```
 
-Common steps are also encompassed in dedicated targets:
+Common steps are also grouped in dedicated high-level targets:
 
 ```bash
-$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup -> 4-demo, as a single step setup
+$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup -> 4-demo, as a single setup step
 
-$ make teardown # Invoke 5-delete -> 6-shutdown, as a single step tear down
+$ make teardown # Invoke 5-delete -> 6-shutdown, as a single tear down step
 
 $ make all      # Invoke all numbered targets continuously, as an all-in-one demonstration command
 ```
@@ -85,15 +85,17 @@ $ make all      # Invoke all numbered targets continuously, as an all-in-one dem
 Further useful targets:
 
 ```bash
-$ make status   # Print info about deployed Kubernetes objects
+$ make status   # Print detailed info about deployed Kubernetes objects
 
-$ make shell    # Initiate a simple alpine pod within the cluster for testing APIs
+$ make shell    # Initiate a shell in a simple pod within the cluster for testing purposes
 
 $ make top      # Periodically poll resource usage of pods in worker tier
 
-$ make stop     # Sopt and delete pods in worker tier, i.e., federated learning components (4-demo)
+$ make log      # Display pod logs in worker tier continuously (4-demo)
 
-$ make clear    # Remove initiates and possibly failed tasks and related objects, leaving ptx-edge setup intact
+$ make stop     # Stop and delete pods in worker tier, i.e., 4-demo, leaving ptx-edge setup intact
+
+$ make clear    # Remove all local container images 
 ```
 
 ## K8s Viewer
