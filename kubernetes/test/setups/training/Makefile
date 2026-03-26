@@ -77,4 +77,4 @@ all: | depends 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
 
 .SILENT:	# Set silent mode (-s) by default
 .PHONY:		# Set all target phony
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := setup
