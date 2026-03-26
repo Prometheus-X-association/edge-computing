@@ -81,6 +81,8 @@ SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
 
+########################################################################################################################
+
 IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 
 # PDC
@@ -120,23 +122,23 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/orchestrator:latest)
 #
 DP0="data-processor-0"
-#DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
-DP0_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8201/train_data.npz"
+DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
+#DP0_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8201/train_data.npz"
 DP0_IMG="ghcr.io/alelevente/data_processor:latest"
 DP0_MLFLOW_INT="http://localhost:5000"
-DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.default.local:5000"
+DP0_MLFLOW_ORG="http://${DP0}.${PTX}:5000"
 #
 DP1="data-processor-1"
-#DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
-DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
+DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
+#DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
 DP1_IMG="ghcr.io/alelevente/data_processor:latest"
 DP1_MLFLOW_INT="http://localhost:5000"
-DP1_MLFLOW_ORG="http://${DP1}.${PTX}.svc.default.local:5000"
+DP1_MLFLOW_ORG="http://${DP1}.${PTX}:5000"
 #
 AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
 AGG_MLFLOW_INT="http://localhost:5000"
-AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.default.local:5000"
+AGG_MLFLOW_ORG="http://${AGG}.${PTX}:5000"
 AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686/worker/aggregator"
 #
 ORCH="orchestrator"
