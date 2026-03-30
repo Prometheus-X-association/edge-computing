@@ -15,9 +15,9 @@ import logging
 import time
 import typing
 
-from app.utils import deep_filter
-
 from kubernetes import client
+
+from app.utils import deep_filter
 
 log = logging.getLogger(__name__)
 

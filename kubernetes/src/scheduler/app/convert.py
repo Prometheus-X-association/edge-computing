@@ -15,13 +15,14 @@ import logging
 import pathlib
 
 import networkx as nx
+from kubernetes import client
+
 from app.k8s import get_available_nodes, get_pods_by_node
 from app.utils import str2bool, cpu2int, bits2int, none2str
 
-from kubernetes import client
-
 log = logging.getLogger(__name__)
 
+LABEL_NODE_WORKER = 'node-role.kubernetes.io/worker'
 LABEL_PDC_ENABLED = 'connector.dataspace.ptx.org/enabled'
 LABEL_PZ_PREFIX = 'privacy-zone.dataspace.ptx.org/'
 LABEL_DISK_PREFIX = "hardware/disktype"
@@ -61,7 +62,7 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
             'gpu': str2bool(pod.metadata.annotations.get(LABEL_GPU_SUPPORT) if pod.metadata.annotations else False)
         },
         'zone': list(s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items()
-                     if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [DEF_PZ],
+                     if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [],
         'collocated': str2bool(pod.spec.node_selector.get(LABEL_PDC_ENABLED)) if pod.spec.node_selector else False,
         'metadata': {
             'api_version': "v1",
@@ -84,6 +85,9 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
         if ((reqs := pod.spec.affinity.node_affinity.required_during_scheduling_ignored_during_execution)
                 and reqs.node_selector_terms):
             # Default scheduler OR the different terms, here it is ANDed!
+            if len(reqs.node_selector_terms) > 1:
+                log.warning(f"Multiple node affinity requests detected! "
+                            f"Considering AND relations between them instead of OR relations (kubernetes default)!")
             for term in reqs.node_selector_terms:
                 if term.match_expressions:
                     for ex in term.match_expressions:
@@ -104,6 +108,9 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
                             pod_data['prefer']['ssd'] = True
                         elif ex.key == LABEL_GPU_SUPPORT and ex.operator == 'In' and str2bool(ex.values[0]):
                             pod_data['prefer']['gpu'] = True
+    if not pod_data['zone']:
+        log.warning(f"No privacy zone info detected in {pod.metadata.name}! Adding to default zone: {DEF_PZ}")
+        pod_data['zone'].append(DEF_PZ)
     # TODO - also consider rules in pod's PVC node affinity
     return pod_data
 
@@ -114,6 +121,7 @@ def convert_pod_to_nx(pod: client.V1Pod) -> nx.Graph:
     :param pod:
     :return:
     """
+    log.info(f"Converting pod {pod.metadata.name}...")
     pod_obj = nx.Graph(name='Pod')
     pod_obj.add_node(pod.metadata.name, **__create_pod_data(pod=pod))
     return pod_obj
@@ -140,6 +148,7 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
     :param ns:
     :return:
     """
+    log.info(f"Converting topology of namespace: {ns}...")
     topo_obj = nx.Graph(name='Topology')
     for i, node in enumerate(get_available_nodes(), start=1):
         node_data = {
@@ -149,8 +158,9 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
                 'memory': bits2int(node.status.allocatable.get('memory', 0)),
                 'storage': bits2int(node.status.allocatable.get('ephemeral-storage', 0))
             },
-            'zone': [DEF_PZ, *(l.removeprefix(LABEL_PZ_PREFIX) for l, v in node.metadata.labels.items()
-                               if l.startswith(LABEL_PZ_PREFIX))],
+            'zone': [l.removeprefix(LABEL_PZ_PREFIX) if l.startswith(LABEL_PZ_PREFIX) else DEF_PZ
+                     for l, v in node.metadata.labels.items()
+                     if l.startswith(LABEL_PZ_PREFIX) or l.startswith(LABEL_NODE_WORKER)],
             'pdc': str2bool(node.metadata.labels.get(LABEL_PDC_ENABLED)),
             'capability': {
                 "ssd": node.metadata.labels.get(LABEL_DISK_PREFIX) == 'ssd',

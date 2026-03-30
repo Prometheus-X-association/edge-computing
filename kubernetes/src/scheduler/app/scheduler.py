@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Janos Czentye
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at:
@@ -18,13 +20,14 @@ import os
 import pathlib
 import sys
 
+from kubernetes import client, watch
+
+from app import __version__
 from app.config import CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME, setup_config, param_parser
 from app.convert import convert_topo_to_nx, convert_pod_to_nx
 from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
-from app.utils import setup_logging, nx_graph_to_str
-
-from app import __version__
-from kubernetes import client, watch
+from app.logger import setup_logging
+from app.utils import nx_graph_to_str
 
 log = logging.getLogger(__name__)
 
