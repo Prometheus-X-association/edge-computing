@@ -68,7 +68,7 @@ spec:
               containerPort: 5000
             - name: port-8000
               containerPort: 8000
-      #schedulerName: ptx-edge-scheduler
+      schedulerName: ptx-edge-scheduler
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
