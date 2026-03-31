@@ -63,11 +63,8 @@ spec:
             requests:
               cpu: 500m
               memory: 500Mi
-          #  limits:
-          #    cpu: 3500m
-          #    memory: 1Gi
           ports:
-            - name: port-8000
+            - name: port-api
               containerPort: 8000
       schedulerName: ptx-edge-scheduler
       affinity:
@@ -103,9 +100,9 @@ spec:
     tier: worker
   type: ClusterIP
   ports:
-    - name: port-8000
+    - name: port-api
       port: 8000
-      targetPort: port-8000
+      targetPort: port-api
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -136,8 +133,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: #${LB_DOMAIN}
-      http:
+    - http:
         paths:
           - path: /worker/${ORCH}
             pathType: Prefix
@@ -145,5 +141,5 @@ spec:
               service:
                 name: ${ORCH}
                 port:
-                  number: 8000
+                  name: port-api
 ---

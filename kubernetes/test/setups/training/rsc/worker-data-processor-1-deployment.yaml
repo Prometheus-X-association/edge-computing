@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ${AGG}
+  name: ${DP1}
   namespace: ${PTX}
   labels:
-    app.kubernetes.io/name: ${AGG}
+    app.kubernetes.io/name: ${DP1}
     env: ${ENV}
     tier: worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: ${AGG}
+      app.kubernetes.io/name: ${DP1}
       env: ${ENV}
       tier: worker
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: ${AGG}
+        app.kubernetes.io/name: ${DP1}
         env: ${ENV}
         tier: worker
     spec:
@@ -28,6 +28,9 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
+            - name: data-dir
+              mountPath: /var/cache/data
+              readOnly: false
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
@@ -35,38 +38,35 @@ spec:
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
             - name: BUILD_DATA_SRC
-              #value: null
+              value: "${DP1_DATA}"
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
-              #value: "docker://${AGG_IMG}"
+              #value: "docker://${DP1_IMG}"
             - name: BUILD_WORKER_DST
-              value: "worker/${AGG}:latest"
+              value: "worker/${DP1}:latest"
       containers:
         - name: worker
-          #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest
-          image: ${AGG_IMG}
+          #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP1}:latest
+          image: ${DP1_IMG}
           imagePullPolicy: Always
           resources:
             requests:
-              cpu: 500m
+              cpu: 1000m
               memory: 3000Mi
-          #  limits:
-          #    cpu: 3500m
-          #    memory: 1Gi
+          volumeMounts:
+            - name: data-dir
+              mountPath: /data
+              readOnly: true
           env:
             - name: mlflow_tracking_uri_internal
-              value: ${AGG_MLFLOW_INT}
+              value: ${DP1_MLFLOW_INT}
             - name: mlflow_tracking_uri_organizational
-              value: ${AGG_MLFLOW_ORG}
-            - name: mlflow_tracking_uri_external
-              value: ${AGG_MLFLOW_EXT}
-            - name: STATIC_PREFIX
-              value: /worker/${AGG}
+              value: ${DP1_MLFLOW_ORG}
           ports:
-            - name: port-5000
+            - name: port-mlflow
               containerPort: 5000
-            - name: port-8000
+            - name: port-api
               containerPort: 8000
       schedulerName: ptx-edge-scheduler
       affinity:
@@ -74,11 +74,14 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: ${LAB_PZ}/${PZ_FED}
+                  - key: ${LAB_PZ}/${PZ_DATA_1}
                     operator: In
                     values:
                       - "true"
       volumes:
+        - name: data-dir
+          emptyDir:
+            sizeLimit: 100Mi
         - name: registry-ca
           configMap:
             name: registry-root-ca.crt
@@ -89,63 +92,23 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${AGG}
+  name: ${DP1}
   namespace: ${PTX}
   labels:
-    app.kubernetes.io/name: ${AGG}
+    app.kubernetes.io/name: ${DP1}
     env: ${ENV}
     tier: worker
 spec:
   selector:
-    app.kubernetes.io/name: ${AGG}
+    app.kubernetes.io/name: ${DP1}
     env: ${ENV}
     tier: worker
   type: ClusterIP
   ports:
-    - name: port-5000
+    - name: port-mlflow
       port: 5000
-      targetPort: port-5000
-    - name: port-8000
+      targetPort: port-mlflow
+    - name: port-api
       port: 8000
-      targetPort: port-8000
-#---
-#apiVersion: traefik.io/v1alpha1
-#kind: Middleware
-#metadata:
-#  name: ${AGG}-stripprefix
-#  namespace: ${PTX}
-#  labels:
-#    app.kubernetes.io/name: ${AGG}
-#    env: ${ENV}
-#    tier: worker
-#spec:
-#  stripPrefix:
-#    prefixes:
-#      - /worker/${AGG}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ${AGG}
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${AGG}
-    env: ${ENV}
-    tier: worker
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    #traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${AGG}-stripprefix@kubernetescrd
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: #${LB_DOMAIN}
-      http:
-        paths:
-          - path: /worker/${AGG}
-            pathType: Prefix
-            backend:
-              service:
-                name: ${AGG}
-                port:
-                  number: 5000
+      targetPort: port-api
 ---

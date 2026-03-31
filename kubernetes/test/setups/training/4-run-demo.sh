@@ -20,7 +20,7 @@ LOG "Run joint Edge Computing -- AI Training (BB-01/02) demo..."
 ########################################################################################################################
 
 log "Initiate Data Processing Function 0..."
-envsubst <"rsc/${DP0}-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"rsc/worker-${DP0}-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
@@ -33,7 +33,7 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 ########################################################################################################################
 
 log "Initiate Data Processing Function 1..."
-envsubst <"rsc/${DP1}-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"rsc/worker-${DP1}-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
@@ -46,7 +46,7 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 ########################################################################################################################
 
 log "Initiate Aggregator..."
-envsubst <"rsc/${AGG}-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"rsc/worker-${AGG}-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
@@ -64,7 +64,7 @@ curl -I "http://${PRIMARY_HOST}/worker/${AGG}"
 ########################################################################################################################
 
 log "Initiate Orchestrator..."
-envsubst <"rsc/${ORCH}-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"rsc/worker-${ORCH}-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 

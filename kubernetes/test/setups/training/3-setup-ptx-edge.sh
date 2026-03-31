@@ -19,7 +19,7 @@ source config.sh
 
 LOG "Setting up PTX-core sandbox..."
 ${KCTL} create namespace "${SANDBOX}"
-envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog.yaml" | ${KCTL} -n "${SANDBOX}" apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml" | ${KCTL} -n "${SANDBOX}" apply -f=-
 ${KCTL} -n "${SANDBOX}" wait --for="condition=Ready" --timeout="${TIMEOUT}s" "pod/${CATALOG}"
 echo
 ${KCTL} -n "${SANDBOX}" get all -o wide -l "app.kubernetes.io/name=${CATALOG}"
@@ -42,12 +42,12 @@ ${KCTL} create configmap registry-root-ca.crt --from-file="ca.crt=${ROOT_DIR}/sr
 ########################################################################################################################
 
 log "Set up PDC configuration..."
-envsubst <"${SCRIPT_DIR}/rsc/pdc-daemon-config.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-config.yaml" | ${KCTL} apply -f=-
 echo
 ${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clusterrolebinding -l "app.kubernetes.io/name=${PDC}"
 
 log "Deploy per-zone PDCs"
-envsubst <"${SCRIPT_DIR}/rsc/pdc-daemon-cluster.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-daemon.yaml" | ${KCTL} apply -f=-
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
 echo
 
@@ -74,7 +74,7 @@ done
 ########################################################################################################################
 
 log "Deploy REST-API"
-envsubst <"${SCRIPT_DIR}/rsc/restapi-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-restapi-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
@@ -91,8 +91,8 @@ curl -LSs "http://${LB_HOST}/${PREFIX}/versions" | python3 -m json.tool
 log "Deploy Controller"
 #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
 #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
-envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-task.yaml" | ${KCTL} apply -f=-
-envsubst <"${SCRIPT_DIR}/rsc/controller-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-task-crd.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
 echo
 ${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
@@ -100,7 +100,7 @@ ${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
 ########################################################################################################################
 
 log "Deploy scheduler"
-envsubst <"${SCRIPT_DIR}/rsc/scheduler-deployment.yaml" | ${KCTL} apply -f=-
+envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-scheduler-deployment.yaml" | ${KCTL} apply -f=-
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
 echo
 ${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
