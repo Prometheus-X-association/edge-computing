@@ -58,12 +58,12 @@ top:
 	watch -d -n1 kubectl top pod -l tier=worker --sum --containers
 
 log:
-	kubectl logs --prefix -l tier=worker --follow
+	kubecolor logs --prefix -l tier=worker --follow
 
 stop:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
-	-kubectl delete deployments,services,jobs,pods -l tier=worker --ignore-not-found
-	-kubectl delete pv,pvc,events --all --now --wait=false --ignore-not-found
+	-kubecolor delete deployments,services,jobs,pods -l tier=worker --ignore-not-found
+	-kubecolor delete pv,pvc,events --all --now --wait=false --ignore-not-found
 
 clear:
 	docker rmi -f $$(docker images -aq)
