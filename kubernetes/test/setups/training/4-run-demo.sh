@@ -57,9 +57,9 @@ echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
 log "Waiting for ingress to set up..." && sleep 10
-${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
-log ">>> Aggregator is exposed on http://${PRIMARY_HOST}/worker/${AGG}"
-curl -I "http://${PRIMARY_HOST}/worker/${AGG}"
+${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
+log ">>> Aggregator is exposed on http://${PRIMARY_HOST}/worker/${AGG}/"
+curl -I "http://${PRIMARY_HOST}/worker/${AGG}/"
 
 ########################################################################################################################
 
