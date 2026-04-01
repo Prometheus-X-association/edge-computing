@@ -18,7 +18,7 @@ source config.sh
 ########################################################################################################################
 
 LOG "Creating cluster infrastructure..."
-envsubst <"${SCRIPT_DIR}/rsc/cluster-k3d-demo-training.yaml" | k3d cluster create --config=-
+envsubst <"${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml" | k3d cluster create --config=-
 ${KCTL} cluster-info
 
 log "Create Privacy Zones: zone-tr-* for <TRAINING>"

@@ -14,10 +14,13 @@
 # limitations under the License.
 set -o allexport    # Also export all variables for envsubst
 
+########################################################################################################################
+
 # Logging
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../../..")
 
+# Imports
 source "${ROOT_DIR}/test/scripts/helper.sh"
 
 if command -v kubecolor >/dev/null 2>&1; then
@@ -29,7 +32,11 @@ else
 fi
 
 # Deployment/cluster/component credentials
-source "${SCRIPT_DIR}/creds/cluster-creds.sh"
+for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
+    source "${cfg}"
+done
+
+########################################################################################################################
 
 # Cluster
 TIMEOUT=120
@@ -51,9 +58,9 @@ PZ_FED="zone-federated"
 # Registry
 REGISTRY="registry.k3d.local"
 REGISTRY_PORT=5000
-REGISTRY_USER="admin"
-REGISTRY_SECRET="admin"
-#
+# Loaded from creds/cluster-creds.sh !
+#REGISTRY_USER=
+#REGISTRY_SECRET=
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
 REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 CA_DIR="${ROOT_DIR}/src/registry/.certs/ca"
