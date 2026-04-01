@@ -67,6 +67,7 @@ CA_DIR="${ROOT_DIR}/src/registry/.certs/ca"
 
 # Loadbalancer
 LB_PORT=8080
+LB_SECURE_PORT=8443
 LB_DOMAIN="${CLUSTER}.k3d.localhost"
 LB_HOST="${LB_DOMAIN}:${LB_PORT}"
 

@@ -73,8 +73,8 @@ metadata:
     app.kubernetes.io/name: ${REST_API}
     env: ${ENV}
     tier: edge
-  annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
+#  annotations:
+#    ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
     - http:
