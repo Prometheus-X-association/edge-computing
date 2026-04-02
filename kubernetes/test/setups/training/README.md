@@ -60,26 +60,32 @@ $ make 1-init
 $ make 2-viewer
 
 # Setup ptx-edge extension in the emulated Kubernetes cluster
-$ make 3-setup
+$ make 3-edge
 
 # Initiate federated learning components
-$ make 4-demo 
+$ make 4-demo
+```
 
-# Remove all ptx-edge extension components, leaves the infrastructure intact
-$ make 5-delete
+To stop and remove installed setup components, use the following steps:
 
-# Tear down emulated infrastructure and purge caches
-$ make 6-shutdown
+```bash
+# Stop and delete demo setup
+$ make stop-demo
+
+# Remove ptx-edge components
+$ make delete-edge
+
+# Shut down cluster
+$ make shutdown-cluster
 ```
 
 Common steps are also grouped in dedicated high-level targets:
 
+
 ```bash
-$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-setup -> 4-demo, as a single setup step
+$ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-edge -> 4-demo, as a single setup step
 
-$ make teardown # Invoke 5-delete -> 6-shutdown, as a single tear down step
-
-$ make all      # Invoke all numbered targets continuously, as an all-in-one demonstration command
+$ make teardown # Invoke stop-demo -> delete-edge -> shutdown-cluster, as a single step
 ```
 
 Further useful targets:
@@ -93,9 +99,7 @@ $ make top      # Periodically poll resource usage of pods in worker tier
 
 $ make log      # Display pod logs in worker tier continuously (4-demo)
 
-$ make stop     # Stop and delete pods in worker tier, i.e., 4-demo, leaving ptx-edge setup intact
-
-$ make clear    # Remove all local container images 
+$ make cleanup  # Remove all local container images 
 ```
 
 ## K8s Viewer

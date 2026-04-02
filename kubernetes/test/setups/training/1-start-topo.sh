@@ -33,6 +33,19 @@ ${KCTL} label "node/k3d-${NODE_FED}-0" "node/k3d-${NODE_FED}-1" "${LAB_WORK}" "$
 #log "Reserve mount points for persistent volumes..."
 #docker container ls -qf "name=k3d-node-" -f "name=k3d-demo-server-" | xargs -rI {} docker exec {} sh -c 'mkdir -pv /var/cache/storage'
 
+log "Generate certificate for domain: ${GW_DOMAIN} with port: ${GW_PORT}"
+rm -rf "${SCRIPT_DIR}/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/"
+pushd "${SCRIPT_DIR}/creds/cert/"
+    # Simple self-signed cert
+    openssl req -x509 -noenc -days 365 -newkey rsa:4096 \
+                -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout cluster-tls.key -out cluster-tls.cert
+    ${KCTL} -n kube-system create secret tls "${CLUSTER_TLS_SECRET}" --cert=cluster-tls.cert --key=cluster-tls.key
+popd
+
+log "Waiting for cluster networking to set up...."
+${KCTL} -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}s" job/helm-install-traefik
+${KCTL} -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}s" deployment/traefik
+
 LOG "Load components into registry: ${K3D_REG}"
 for img in "${IMAGES[@]}"; do
     skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${img}" "docker://${K3D_REG}/${img}"

@@ -32,18 +32,28 @@ depends:
 	echo "K8s Ops Viewer is available on http://localhost:8081/"
 	echo
 
-3-setup:
+3-edge:
 	bash 3-setup-ptx-edge.sh
 
 4-demo:
 	bash 4-run-demo.sh
 
-5-delete:
-	bash 5-delete-ptx-edge.sh
+setup: | 0-build 1-init 2-viewer 3-edge 4-demo
 
-6-shutdown:
+########################################################################################################################
+
+stop-demo:
+	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
+	bash stop-demo.sh
+
+delete-edge:
+	bash delete-ptx-edge.sh
+
+shutdown-cluster:
+	bash shutdown-topo.sh
 	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
-	bash 6-stop-topo.sh
+
+teardown: | stop-demo delete-edge shutdown-cluster
 
 ########################################################################################################################
 
@@ -60,21 +70,10 @@ top:
 log:
 	kubecolor logs --prefix -l tier=worker --follow
 
-stop:
-	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
-	-kubecolor delete deployments,services,jobs,pods -l tier=worker --ignore-not-found
-	-kubecolor delete pv,pvc,events --all --now --wait=false --ignore-not-found
-
-clear:
-	docker rmi -f $$(docker images -aq)
-
-########################################################################################################################
-
-setup: | 0-build 1-init 2-viewer 3-setup 4-demo
-
-teardown: | 5-delete 6-shutdown
-
-all: | depends 0-build 1-init 2-viewer 3-setup 4-demo 5-delete 6-shutdown
+cleanup:
+	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" \
+					 -f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" | xargs -r docker rmi -f
+	docker image prune -f
 
 ########################################################################################################################
 

@@ -1,6 +1,6 @@
 ### Registry
 REGISTRY_USER="admin"
 REGISTRY_SECRET="admin"
-### PDC test keys
+### PDC testing keys for senadbox
 PDC_SERVICE_KEY='dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV'
 PDC_SECRET_KEY='Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x'

@@ -65,9 +65,9 @@ done
 log "Waiting for ingress to set up..." && sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
-    log ">>> PDC is exposed on http://${LB_HOST}/${PTX}/${pz}/${PDC}"
-    curl -I "http://${LB_HOST}/${PTX}/${pz}/${PDC}"
-    curl -Ssf "http://${LB_HOST}/${PTX}/${pz}/${PDC}" | grep "href" | head -n1
+    log ">>> PDC is exposed on http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
+    curl -I "http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
+    curl -Ssf "http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}" | grep "href" | head -n1
     echo
 done
 
@@ -82,9 +82,9 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
 log "Waiting for ingress to set up..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
-log ">>> ${REST_API} is exposed on http://${LB_HOST}/${PREFIX}/ui/"
-curl -I "http://${LB_HOST}/${PREFIX}/ui/"
-curl -LSs "http://${LB_HOST}/${PREFIX}/versions" | python3 -m json.tool
+log ">>> ${REST_API} is exposed on http://${CLUSTER_HOST}/${PREFIX}/ui/"
+curl -I "http://${CLUSTER_HOST}/${PREFIX}/ui/"
+curl -LSs "http://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
 
 ########################################################################################################################
 

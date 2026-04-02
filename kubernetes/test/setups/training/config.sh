@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -o allexport    # Also export all variables for envsubst
+set -o allexport    # Also export all defined variables for 'envsubst'
 
 ########################################################################################################################
 
-# Logging
+# Define base path for absolute file access
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../../..")
 
-# Imports
+# Import essentials as logging, etc.
 source "${ROOT_DIR}/test/scripts/helper.sh"
 
+# Set colorful logging if available
 if command -v kubecolor >/dev/null 2>&1; then
     KUBECOLOR_FORCE_COLORS=auto
     KUBECOLOR_PRESET="dark"
@@ -31,21 +32,51 @@ else
     KCTL=kubectl
 fi
 
-# Deployment/cluster/component credentials
+# Import additional confidential configurations from creds folder
 for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
     source "${cfg}"
 done
 
 ########################################################################################################################
 
-# Cluster
+# Fundamental cluster configuration
 TIMEOUT=120
 CLUSTER="training"
 ENV="demo"
 NODE_DATA="node-data"
 NODE_FED="node-federated"
 
-# Labels
+# Registry
+REGISTRY="registry.k3d.local"
+REGISTRY_PORT=5000
+# Loaded from creds/cluster-creds.sh !
+### REGISTRY_USER=
+### REGISTRY_SECRET=
+K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
+REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
+CA_DIR="${ROOT_DIR}/src/registry/.certs/ca"
+
+# Loadbalancer
+LB_WEB_PORT=8080
+LB_WEBSECURE_PORT=8443
+LB_DOMAIN="${CLUSTER}.k3d.localhost"
+# Loaded from creds/websecure-creds.sh !
+### GW_DOMAIN=
+### GW_PORT=
+CLUSTER_HOST="${LB_DOMAIN}:${LB_WEB_PORT}"
+#CLUSTER_HOST="${GW_DOMAIN}:${GW_PORT}"
+
+PRIMARY_IP="$(ip route get 1 | awk '{print $(NF-2);exit}')"
+PRIMARY_HOST="${PRIMARY_IP}:${LB_WEB_PORT}"
+
+CLUSTER_TLS_SECRET="cluster-websecure-tls"
+
+########################################################################################################################
+
+# PTX namespace
+PTX="ptx-edge"
+
+# Used PTX-related labels
 LAB_PZ="privacy-zone.dataspace.ptx.org"
 LAB_WORK="node-role.kubernetes.io/worker=true"
 LAB_PDC="connector.dataspace.ptx.org/enabled=true"
@@ -55,55 +86,41 @@ PZ_DATA_0="zone-data-0"
 PZ_DATA_1="zone-data-1"
 PZ_FED="zone-federated"
 
-# Registry
-REGISTRY="registry.k3d.local"
-REGISTRY_PORT=5000
-# Loaded from creds/cluster-creds.sh !
-#REGISTRY_USER=
-#REGISTRY_SECRET=
-K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
-REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
-CA_DIR="${ROOT_DIR}/src/registry/.certs/ca"
-
-# Loadbalancer
-LB_PORT=8080
-LB_SECURE_PORT=8443
-LB_DOMAIN="${CLUSTER}.k3d.localhost"
-LB_HOST="${LB_DOMAIN}:${LB_PORT}"
-
-PRIMARY_IP="$(ip route get 1 | awk '{print $(NF-2);exit}')"
-PRIMARY_HOST="${PRIMARY_IP}:${LB_PORT}"
-
 # PTX-edge components
 COMPONENTS=(builder controller ptx registry rest-api scheduler)
+#
 BUILD_IMG="ptx-edge/builder:1.0"
 CONTROL_IMG="ptx-edge/controller:1.0"
 PDC_IMG="ptx/connector:1.10.0-slim"
 MONGODB_IMG="ptx/mongodb:8.0.5-slim"
 API_IMG="ptx-edge/rest-api:1.0"
 SCHED_IMG="ptx-edge/scheduler:1.0"
+
 # PTX-core components
-PTX="ptx-edge"
 CATALOG_IMG="ptx-sandbox/catalog:1.10.0-slim"
 SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
-
-########################################################################################################################
-
-IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 
 # PDC
 PDC=pdc
 PDC_PORT=3000
 PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'  # placeholder
+# Loaded from creds/cluster-creds.sh !
+### PDC_SERVICE_KEY=
+### PDC_SECRET_KEY=
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder
 PDC_CFG_SECRET_KEY='${SECRET_KEY}'  # placeholder
+#
 PDC_PREFIX_DATA_0="${PTX}/${PZ_DATA_0}/${PDC}"
 PDC_PREFIX_DATA_1="${PTX}/${PZ_DATA_1}/${PDC}"
+
+IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
+
+########################################################################################################################
 
 # REST-API
 REST_API="rest-api"
