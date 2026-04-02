@@ -13,21 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
-source config.sh
+source "$(dirname "$0")/config.sh"
 
 ########################################################################################################################
 
-LOG "Building docker images...."
-
-log "Build PTX-edge components"
-for comp in "${COMPONENTS[@]}"; do
-    make -C "${ROOT_DIR}/src/${comp}" build
-done
-
-#log "Collect federated learning images"
-#for img in "${FED_COMPONENTS[@]}"; do
-#    docker pull "${img}"
-#done
+LOG "Tearing down PTX-edge deployment..."
+${KCTL} delete namespace "${PTX}" || true
+${KCTL} delete pv --all || true
+${KCTL} delete crd -l env=demo || true
+${KCTL} delete namespace "${SANDBOX}" || true
 
 ########################################################################################################################
 

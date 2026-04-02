@@ -15,7 +15,7 @@ The Edge computing building block (ptx-edge) is represented with standalone comp
 
 ## Dependencies
 
-The setup script ([install_deps.sh](install_deps.sh)) is tested on Ubuntu 24.04.3 LTS with upgraded packages.
+The setup script ([install_deps.sh](scripts/install_deps.sh)) is tested on Ubuntu 24.04.3 LTS with upgraded packages.
 
 The script installs required system packages and dependencies for the following tools:
 

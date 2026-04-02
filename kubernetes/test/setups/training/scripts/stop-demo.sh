@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
-source config.sh
+source "$(dirname "$0")/config.sh"
 
 ########################################################################################################################
 
-${KCTL} -n ptx-sandbox get all --ignore-not-found
-echo
-${KCTL} get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress -o wide --ignore-not-found
-echo
-${KCTL} events | tail -n20
+LOG "Shutting down demo setup..."
+${KCTL} delete deployments,services,jobs,pods -l tier=worker --ignore-not-found || true
+${KCTL} delete pv,pvc,events --all --now --wait=false --ignore-not-found || true
 
 ########################################################################################################################
+
+echo -e "\nDone."

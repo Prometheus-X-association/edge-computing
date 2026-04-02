@@ -13,15 +13,15 @@
 # limitations under the License.
 
 depends:
-	bash install_deps.sh -u
+	cd ./scripts && ./install_deps.sh -u
 
 ########################################################################################################################
 
 0-build:
-	bash 0-build-images.sh
+	bash scripts/0-build-images.sh
 
 1-init:
-	bash 1-start-topo.sh
+	bash scripts/1-start-topo.sh
 
 2-viewer:
 	( kubectl proxy 2>/dev/null & ) || exit 0
@@ -33,10 +33,10 @@ depends:
 	echo
 
 3-edge:
-	bash 3-setup-ptx-edge.sh
+	bash scripts/3-setup-ptx-edge.sh
 
 4-demo:
-	bash 4-run-demo.sh
+	bash scripts/4-run-demo.sh
 
 setup: | 0-build 1-init 2-viewer 3-edge 4-demo
 
@@ -44,13 +44,13 @@ setup: | 0-build 1-init 2-viewer 3-edge 4-demo
 
 stop-demo:
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
-	bash stop-demo.sh
+	bash scripts/stop-demo.sh
 
 delete-edge:
-	bash delete-ptx-edge.sh
+	bash scripts/delete-ptx-edge.sh
 
 shutdown-cluster:
-	bash shutdown-topo.sh
+	bash scripts/shutdown-topo.sh
 	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
 
 teardown: | stop-demo delete-edge shutdown-cluster
@@ -59,7 +59,7 @@ teardown: | stop-demo delete-edge shutdown-cluster
 
 status:
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
-	bash status.sh
+	bash ./scripts/status.sh
 
 shell:
 	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
@@ -77,6 +77,7 @@ cleanup:
 
 ########################################################################################################################
 
+SHELL := bash
 .SILENT:	# Set silent mode (-s) by default
 .PHONY:		# Set all target phony
 .DEFAULT_GOAL := setup

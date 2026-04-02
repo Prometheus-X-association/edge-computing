@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
-source config.sh
+source "$(dirname "$0")/config.sh"
 
 ########################################################################################################################
 
