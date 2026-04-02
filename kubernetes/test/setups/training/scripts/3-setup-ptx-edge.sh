@@ -62,12 +62,13 @@ for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.
     ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
 
-log "Waiting for ingress to set up..." && sleep 10
+log "Waiting for ingress to set up[10s]..." && sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
-    log ">>> PDC is exposed on http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
-    curl -I "http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
-    curl -Ssf "http://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}" | grep "href" | head -n1
+    _PDC_URL="https://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
+    log ">>> PDC is exposed on ${_PDC_URL}"
+    wget --spider -S -nv --no-check-certificate "${_PDC_URL}"
+    curl -k -LSsf "${_PDC_URL}" | grep "href" | head -n1
     echo
 done
 
@@ -79,12 +80,13 @@ ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${R
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
 
-log "Waiting for ingress to set up..." && sleep 10
+log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
-log ">>> ${REST_API} is exposed on http://${CLUSTER_HOST}/${PREFIX}/ui/"
-curl -I "http://${CLUSTER_HOST}/${PREFIX}/ui/"
-curl -LSs "http://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
+_REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"
+log ">>> ${REST_API} is exposed on ${_REST_API_URL}"
+wget --spider -S -nv --no-check-certificate "${_REST_API_URL}"
+curl -k -LSsf "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
 
 ########################################################################################################################
 

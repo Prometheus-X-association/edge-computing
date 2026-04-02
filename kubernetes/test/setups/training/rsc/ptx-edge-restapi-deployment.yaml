@@ -73,9 +73,11 @@ metadata:
     app.kubernetes.io/name: ${REST_API}
     env: ${ENV}
     tier: edge
-#  annotations:
-#    ingress.kubernetes.io/ssl-redirect: "false"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
+  ingressClassName: traefik
   rules:
     - http:
         paths:
@@ -85,5 +87,5 @@ spec:
               service:
                 name: ${REST_API}
                 port:
-                  number: ${API_PORT}
+                  name: api-port
 ---

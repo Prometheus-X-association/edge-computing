@@ -339,7 +339,7 @@ tear-down:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	-k3d cluster delete dev
 
-purge: clear
+purge: clear-test
 	rm -rf ${PROJECT_ROOT}/.cache
 	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" \
 					 -f "reference=ptx-sandbox/*" -f "reference=samples/*" | xargs -r docker rmi -f

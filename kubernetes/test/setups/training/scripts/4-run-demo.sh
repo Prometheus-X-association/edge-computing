@@ -56,10 +56,11 @@ ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployme
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
-log "Waiting for ingress to set up..." && sleep 10
+log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
-log ">>> Aggregator is exposed on http://${PRIMARY_HOST}/worker/${AGG}/"
-curl -I "http://${PRIMARY_HOST}/worker/${AGG}/"
+_AGG_URL="https://${PRIMARY_HOST}/worker/${AGG}/"
+log ">>> Aggregator is exposed on ${_AGG_URL}"
+wget --spider -S -nv --no-check-certificate "${_AGG_URL}"
 
 ########################################################################################################################
 
@@ -74,10 +75,11 @@ ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployme
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 
-log "Waiting for ingress to set up..." && sleep 10
+log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
-log ">>> Orchestrator is exposed on http://${PRIMARY_HOST}/worker/${ORCH}/docs"
-curl -I "http://${PRIMARY_HOST}/worker/${ORCH}/docs"
+_ORCH_URL="https://${PRIMARY_HOST}/worker/${ORCH}/docs"
+log ">>> Orchestrator is exposed on ${_ORCH_URL}"
+wget --spider -S -nv --no-check-certificate  "${_ORCH_URL}"
 
 ########################################################################################################################
 echo -e "\nDone."

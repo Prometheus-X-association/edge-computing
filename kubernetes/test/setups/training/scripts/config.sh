@@ -63,11 +63,11 @@ LB_DOMAIN="${CLUSTER}.k3d.localhost"
 # Loaded from creds/websecure-creds.sh !
 ### GW_DOMAIN=
 ### GW_PORT=
-CLUSTER_HOST="${LB_DOMAIN}:${LB_WEB_PORT}"
+CLUSTER_HOST="${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
 #CLUSTER_HOST="${GW_DOMAIN}:${GW_PORT}"
 
 PRIMARY_IP="$(ip route get 1 | awk '{print $(NF-2);exit}')"
-PRIMARY_HOST="${PRIMARY_IP}:${LB_WEB_PORT}"
+PRIMARY_HOST="${PRIMARY_IP}:${LB_WEBSECURE_PORT}"
 
 CLUSTER_TLS_SECRET="cluster-websecure-tls"
 

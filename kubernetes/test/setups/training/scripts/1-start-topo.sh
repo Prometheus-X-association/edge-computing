@@ -18,7 +18,8 @@ source "$(dirname "$0")/config.sh"
 ########################################################################################################################
 
 LOG "Creating cluster infrastructure..."
-envsubst <"${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml" | k3d cluster create --config=-
+#envsubst <"${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml" | k3d cluster create --config=-
+k3d cluster create --config="${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml"  # k3d resolves envvars by default
 ${KCTL} cluster-info
 
 log "Create Privacy Zones: zone-tr-* for <TRAINING>"

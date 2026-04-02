@@ -143,6 +143,7 @@ spec:
   ports:
     - name: pdc-port
       port: ${PDC_PORT}
+      targetPort: pdc-port
 ---
 apiVersion: v1
 kind: Service
@@ -161,6 +162,7 @@ spec:
   ports:
     - name: pdc-port
       port: ${PDC_PORT}
+      targetPort: pdc-port
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -200,13 +202,13 @@ metadata:
     env: ${ENV}
     tier: ptx
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_0}-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: ${LB_DOMAIN}
-      http:
+    - http:
         paths:
           - path: /${PDC_PREFIX_DATA_0}
             pathType: Prefix
@@ -214,7 +216,7 @@ spec:
               service:
                 name: ${PDC}-${PZ_DATA_0}
                 port:
-                  number: ${PDC_PORT}
+                  name: pdc-port
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -226,13 +228,13 @@ metadata:
     env: ${ENV}
     tier: ptx
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${PDC}-${PZ_DATA_1}-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: ${LB_DOMAIN}
-      http:
+    - http:
         paths:
           - path: /${PDC_PREFIX_DATA_1}
             pathType: Prefix
@@ -240,5 +242,5 @@ spec:
               service:
                 name: ${PDC}-${PZ_DATA_1}
                 port:
-                  number: ${PDC_PORT}
+                  name: pdc-port
 ---

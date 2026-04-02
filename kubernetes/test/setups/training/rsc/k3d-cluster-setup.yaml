@@ -19,9 +19,9 @@ volumes:
     nodeFilters:
       - all
   # Add traefik startup config
-  - volume: ${SCRIPT_DIR}/rsc/k3d-cluster-traefik-helm-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
-    nodeFilters:
-      - server:0
+#  - volume: ${SCRIPT_DIR}/rsc/k3d-cluster-traefik-helm-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
+#    nodeFilters:
+#      - server:0
 registries:
   create:
     name: ${REGISTRY}
