@@ -26,7 +26,7 @@ K3D_VER='v5.8.3'
 KUBECTL_VER='v1.31.5'	# used by k3d v5.8.3 / k3s v1.31.5
 HELM_VER='v4.1.0'
 SKOPEO_VER='v1.21.0'
-KCOLOR_VER='0.5.3_amd64'
+KCOLOR_VER='0.6.0'
 
 PKG_FREEZE=false
 NO_CHECK=false
@@ -93,7 +93,7 @@ function install_kubectl() {
 function install_kubecolor() {
     #KCOLOR_VER="$(wget -q -O- https://kubecolor.github.io/packages/deb/version)_$(dpkg --print-architecture)"
     echo -e "\n>>> Install kubecolor binary[${KCOLOR_VER}]...\n"
-    curl -fsSL -O "https://kubecolor.github.io/packages/deb/pool/main/k/kubecolor/kubecolor_${KCOLOR_VER}.deb" && \
+    curl -fsSL -O "https://github.com/kubecolor/kubecolor/releases/download/v0.6.0/kubecolor_${KCOLOR_VER}_linux_amd64.deb" && \
         sudo dpkg -i "kubecolor_${KCOLOR_VER}.deb" && rm "kubecolor_${KCOLOR_VER}.deb"
     (set -x; kubecolor version --client)
 }
