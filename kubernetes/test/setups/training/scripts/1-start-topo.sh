@@ -34,7 +34,7 @@ ${KCTL} label "node/k3d-${NODE_FED}-0" "node/k3d-${NODE_FED}-1" "${LAB_WORK}" "$
 #log "Reserve mount points for persistent volumes..."
 #docker container ls -qf "name=k3d-node-" -f "name=k3d-demo-server-" | xargs -rI {} docker exec {} sh -c 'mkdir -pv /var/cache/storage'
 
-log "Generate certificate for domain: ${GW_DOMAIN} with port: ${GW_PORT}"
+log "Generate certificate for domain: ${GW_DOMAIN}"
 rm -rf "${SCRIPT_DIR}/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/"
 pushd "${SCRIPT_DIR}/creds/cert/"
     # Simple self-signed cert
@@ -46,6 +46,9 @@ popd
 log "Waiting for cluster networking to set up...."
 ${KCTL} -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}s" job/helm-install-traefik
 ${KCTL} -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}s" deployment/traefik
+
+log "Default certificate details on ${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
+openssl s_client -showcerts -connect "${LB_DOMAIN}:${LB_WEBSECURE_PORT}" -brief </dev/null
 
 LOG "Load components into registry: ${K3D_REG}"
 for img in "${IMAGES[@]}"; do

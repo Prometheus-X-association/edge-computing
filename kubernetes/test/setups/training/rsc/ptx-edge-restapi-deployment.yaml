@@ -64,6 +64,41 @@ spec:
       port: ${API_PORT}
       targetPort: api-port
 ---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: api-basic-auth
+  namespace: ${PTX}
+data:
+  users: ${API_CREDS_BASE64_ENCODED}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-basic-auth
+  namespace: ${PTX}
+spec:
+  basicAuth:
+    secret: api-basic-auth
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-secure-headers
+  namespace: ${PTX}
+spec:
+  headers:
+    frameDeny: true
+    customFrameOptionsValue: SAMEORIGIN
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -75,7 +110,7 @@ metadata:
     tier: edge
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-api-basic-auth@kubernetescrd,${PTX}-api-secure-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

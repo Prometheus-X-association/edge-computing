@@ -18,10 +18,64 @@ volumes:
   - volume: ${CA_DIR}/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
     nodeFilters:
       - all
-  # Add traefik startup config
-#  - volume: ${SCRIPT_DIR}/rsc/k3d-cluster-traefik-helm-cfg.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml:ro
-#    nodeFilters:
-#      - server:0
+files:
+  - description: "Registry CA cert"
+    source: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChartConfig
+      metadata:
+        name: traefik
+        namespace: kube-system
+      spec:
+        valuesContent: |-
+          additionalArguments:
+            - "--global.checknewversion=false"
+            - "--global.sendanonymoususage=false"
+            - "--log.level=DEBUG"
+            - "--accesslog=false"
+            - "--providers.kubernetescrd=true"
+            - "--providers.kubernetesingress=true"
+            - "--api=false"
+            - "--entryPoints.web.http.redirections.entrypoint.to=websecure"
+            - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+            - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
+            - "--entrypoints.websecure.http.tls=true"
+            - "--entrypoints.websecure.http.tls.options=kube-system-tls-opt@kubernetescrd"
+          extraObjects:
+          - apiVersion: traefik.io/v1alpha1
+            kind: TLSStore
+            metadata:
+              name: default
+              namespace: kube-system
+            spec:
+              defaultCertificate:
+                secretName: ${CLUSTER_TLS_SECRET}
+          - apiVersion: traefik.io/v1alpha1
+            kind: TLSOption
+            metadata:
+              name: tls-opt
+              namespace: kube-system
+            spec:
+              minVersion: VersionTLS12
+              cipherSuites:
+                - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+                - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+                - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+                - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+                - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+                - TLS_AES_256_GCM_SHA384
+                - TLS_AES_128_GCM_SHA256
+                - TLS_CHACHA20_POLY1305_SHA256
+                - TLS_FALLBACK_SCSV
+              curvePreferences:
+                - CurveP521
+                - CurveP384
+              sniStrict: false
+    destination: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    nodeFilters:
+      - all
 registries:
   create:
     name: ${REGISTRY}

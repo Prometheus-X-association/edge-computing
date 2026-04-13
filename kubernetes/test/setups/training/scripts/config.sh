@@ -102,6 +102,12 @@ SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
 
+# API auth
+# Loaded from creds/websecure-creds.sh !
+### API_BASIC_USER=
+### API_BASIC_PASSWORD=
+API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}" | openssl base64 -A)
+
 # PDC
 PDC=pdc
 PDC_PORT=3000

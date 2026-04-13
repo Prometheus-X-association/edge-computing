@@ -68,6 +68,7 @@ for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     _PDC_URL="https://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
     log ">>> PDC is exposed on ${_PDC_URL}"
     wget --spider -S -nv --no-check-certificate "${_PDC_URL}"
+    echo
     curl -k -LSsf "${_PDC_URL}" | grep "href" | head -n1
     echo
 done
@@ -85,8 +86,9 @@ ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${T
 
 _REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"
 log ">>> ${REST_API} is exposed on ${_REST_API_URL}"
-wget --spider -S -nv --no-check-certificate "${_REST_API_URL}"
-curl -k -LSsf "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
+wget --spider -S -nv --no-check-certificate --tries=5 --read-timeout=5 \
+    --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
+curl -k -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
 
 ########################################################################################################################
 
