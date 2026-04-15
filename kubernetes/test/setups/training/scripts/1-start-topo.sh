@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
-source "$(dirname "$0")/config.sh"
+
+source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
@@ -38,8 +39,10 @@ log "Generate certificate for domain: ${GW_DOMAIN}"
 rm -rf "${SCRIPT_DIR}/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/"
 pushd "${SCRIPT_DIR}/creds/cert/"
     # Simple self-signed cert
-    openssl req -x509 -noenc -days 365 -newkey rsa:4096 \
-                -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout cluster-tls.key -out cluster-tls.cert
+    #openssl req -x509 -noenc -days 365 -newkey rsa:4096 \
+    #            -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout cluster-tls.key -out cluster-tls.cert
+    envsubst <"${SCRIPT_DIR}/cfg/cluster-tls.conf" | openssl req -x509 -noenc -days 365 -new \
+                -keyout cluster-tls.key -out cluster-tls.cert -config=-
     ${KCTL} -n kube-system create secret tls "${CLUSTER_TLS_SECRET}" --cert=cluster-tls.cert --key=cluster-tls.key
 popd
 

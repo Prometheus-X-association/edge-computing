@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set -eou pipefail
-source "$(dirname "$0")/config.sh"
+
+source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 LOG "Run joint Edge Computing -- AI Training (BB-01/02) demo..."
 
