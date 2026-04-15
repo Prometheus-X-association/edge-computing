@@ -129,7 +129,7 @@ metadata:
     tier: worker
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${ORCH}-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-api-basic-auth@kubernetescrd,${PTX}-${ORCH}-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
