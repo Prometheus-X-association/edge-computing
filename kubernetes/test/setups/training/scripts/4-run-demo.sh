@@ -61,7 +61,7 @@ log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
 _AGG_URL="https://${PRIMARY_HOST}/worker/${AGG}/"
 log ">>> Aggregator is exposed on ${_AGG_URL}"
-wget --spider -S -nv --no-check-certificate "${_AGG_URL}"
+wget --spider -S -nv --no-check-certificate --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_AGG_URL}"
 
 ########################################################################################################################
 
@@ -80,7 +80,7 @@ log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
 _ORCH_URL="https://${PRIMARY_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is exposed on ${_ORCH_URL}"
-wget --spider -S -nv --no-check-certificate  "${_ORCH_URL}"
+wget --spider -S -nv --no-check-certificate --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_ORCH_URL}"
 
 ########################################################################################################################
 echo -e "\nDone."

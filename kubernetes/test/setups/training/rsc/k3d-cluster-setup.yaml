@@ -19,7 +19,7 @@ volumes:
     nodeFilters:
       - all
 files:
-  - description: "Registry CA cert"
+  - description: "Default TLS cert"
     source: |
       apiVersion: helm.cattle.io/v1
       kind: HelmChartConfig
