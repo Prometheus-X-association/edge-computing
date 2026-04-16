@@ -50,8 +50,9 @@ log "Waiting for cluster networking to set up...."
 ${KCTL} -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}s" job/helm-install-traefik
 ${KCTL} -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}s" deployment/traefik
 
-log "Default certificate details on ${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
-openssl s_client -showcerts -connect "${LB_DOMAIN}:${LB_WEBSECURE_PORT}" -brief </dev/null
+log "Default certificate details on localhost:${LB_WEBSECURE_PORT}"
+sleep 3
+openssl s_client -showcerts -brief -servername "${GW_DOMAIN}" -connect "localhost:${LB_WEBSECURE_PORT}" </dev/null
 
 LOG "Load components into registry: ${K3D_REG}"
 for img in "${IMAGES[@]}"; do
