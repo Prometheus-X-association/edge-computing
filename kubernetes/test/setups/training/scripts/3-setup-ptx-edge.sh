@@ -86,10 +86,12 @@ log "Waiting for ingress to set up[10s]..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
 _REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"
-log ">>> ${REST_API} is exposed on ${_REST_API_URL}"
+log ">>> ${REST_API} is available on ${_REST_API_URL}"
 wget --spider -S -nv --no-check-certificate --tries=5 --read-timeout=5 \
     --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
 curl -k -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
+log ">>> ${REST_API} is exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/"
+log ">>> ${REST_API} is exposed on https://${GW_HOST}/${PREFIX}/ui/"
 
 ########################################################################################################################
 
