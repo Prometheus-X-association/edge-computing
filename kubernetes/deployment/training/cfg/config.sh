@@ -18,7 +18,7 @@ set -o allexport    # Also export all defined variables for 'envsubst'
 
 # Define base path for absolute file access
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")/..")
-ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../../..")
+ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../..")
 
 # Import essentials as logging, etc.
 source "${ROOT_DIR}/test/scripts/helper.sh"
