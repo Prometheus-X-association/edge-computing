@@ -31,7 +31,7 @@ PDC_COMPONENTS="connector mongodb"
 
 ################################## Deployment/cluster/component credentials
 
-source "${CFG_DIR}"/.creds/cluster-creds.sh
+source "${CFG_DIR}"/creds/cluster-creds.sh
 
 ################################## PTX-edge setup
 
@@ -62,8 +62,6 @@ REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
 REG_CA_DIR="${PROJECT_ROOT}/src/registry/.certs/ca"
 REG_CRT_PATH="/usr/share/ca-certificates/ptx-edge/registry_CA.crt"
-
-TIMEOUT=120s
 
 # <- source "${CFG_DIR}"/.creds/cluster-creds.sh
 #GW_DOMAIN=
