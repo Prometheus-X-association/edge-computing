@@ -26,9 +26,9 @@ raw_kopf_obj = {
     'worker': {
         'source': {
             'scheme': 'docker',
-            'location': 'busybox:latest',
+            'image': 'busybox:latest',
         },
-        'image': 'myworker:latest',
+        'name': 'myworker:latest',
         'config': {
             'env': [
                 {
@@ -115,9 +115,9 @@ raw_k8s_obj = r"""
                     "path": "/var/cache/worker/config.json"
                 }
             },
-            "image": "myworker:latest",
+            "name": "myworker:latest",
             "source": {
-                "location": "busybox:latest",
+                "image": "busybox:latest",
                 "scheme": "docker"
             }
         }

@@ -17,8 +17,10 @@
 #PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 PY_VER='3.14'
 
-datamodel-codegen --input="${1}" --input-file-type='openapi' --openapi-scopes='schemas' \
-                    --formatter='isort' --keep-model-order --schema-version-mode='strict' \
-                    --enum-field-as-literal=none --field-constraints --use-annotated --naming-strategy=parent-prefixed \
-                    --enable-version-header --enable-command-header --target-python-version=${PY_VER} \
-                    --disable-warnings --output "${2}"
+datamodel-codegen --input="${1}" --input-file-type="openapi" --openapi-scopes="schemas" \
+                --formatter="isort" --keep-model-order --schema-version="3.0" --schema-version-mode="strict" \
+                --field-constraints --use-annotated --naming-strategy="parent-prefixed" \
+                --enum-field-as-literal="one" --capitalize-enum-members \
+                --use-field-description --use-field-description-example \
+                --enable-version-header --target-python-version="${PY_VER}" \
+                --disable-warnings --output "${2}"
