@@ -36,12 +36,12 @@ spec:
               value: "${BUILD_TIMEOUT}"
             - name: BUILD_DATA_SRC
               #value: null
-            - name: BUILD_DATA_DST
-              value: "/var/cache/data/"
+            #- name: BUILD_DATA_DST
+            #  value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
               #value: "docker://${AGG_IMG}"
-            - name: BUILD_WORKER_DST
-              value: "worker/${AGG}:latest"
+            #- name: BUILD_WORKER_DST
+            #  value: "worker/${AGG}:latest"
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest

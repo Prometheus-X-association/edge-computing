@@ -43,8 +43,8 @@ spec:
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
               #value: "docker://${DP0_IMG}"
-            - name: BUILD_WORKER_DST
-              value: "worker/${DP0}:latest"
+            #- name: BUILD_WORKER_DST
+            #  value: "worker/${DP0}:latest"
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
