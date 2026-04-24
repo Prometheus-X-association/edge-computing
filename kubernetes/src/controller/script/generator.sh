@@ -18,9 +18,9 @@
 PY_VER='3.14'
 
 datamodel-codegen --input="${1}" --input-file-type="openapi" --openapi-scopes="schemas" \
-                --formatter="isort" --keep-model-order --schema-version="3.0" --schema-version-mode="strict" \
-                --field-constraints --use-annotated --use-union-operator --extra-fields="ignore" \
-                --skip-root-model --use-generic-base-class \
+                --formatter="ruff-format" --keep-model-order --schema-version="3.0" --schema-version-mode="strict" \
+                --field-constraints --use-annotated --use-union-operator --use-standard-collections \
+                --skip-root-model --use-generic-base-class --extra-fields="ignore" \
                 --naming-strategy="full-path" --field-type-collision-strategy="rename-type" \
                 --use-specialized-enum --enum-field-as-literal="one" --capitalize-enum-members \
                 --use-field-description --use-field-description-example \

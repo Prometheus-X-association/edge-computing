@@ -22,7 +22,7 @@ import typing
 
 import kopf
 
-from model.edgeworkertask import EdgeWorkerTask
+from model.edgeworkertask import EWT
 from utils import setup_logging
 
 __version__ = '1.0.0'
@@ -38,7 +38,7 @@ CONFIG = {}
 def create_ewt(spec, **kwargs):
     log.debug("=" * 40)
     log.info(spec)
-    ewt = EdgeWorkerTask(spec=spec)
+    ewt = EWT(spec=spec)
     log.info(f"Created {ewt}")
     log.debug(f"Creation completed.")
     log.debug("=" * 40)
