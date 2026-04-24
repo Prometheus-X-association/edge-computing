@@ -66,68 +66,103 @@ spec:
                   type: object
                   description: "Data collection parameters"
                   required:
-                    - source
+                    - src
                   properties:
-                    source:
+                    src:
                       type: object
                       description: "Data source location"
                       required:
-                        - location
+                        - path
                       properties:
                         scheme:
                           type: string
                           description: "Data collection scheme"
                           enum: [ file, dir, http, https, ptx ]
                           example: https
-                        location:
+                        path:
                           type: string
                           description: "Data resource location"
                           format: "([scheme]://)([host][:port])/[path]"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
                           example: https://my.api.localhost:8080/data/example.csv
-                    auth:
+                        auth:
+                          type: object
+                          description: "Authentication parameters for remote data collection"
+                          required:
+                            - method
+                            - user
+                            - secret
+                          properties:
+                            method:
+                              type: string
+                              description: "Used authentication method"
+                              enum: [ basic, digest, bearer ]
+                              example: basic
+                            user:
+                              type: string
+                              description: "User identification"
+                              minLength: 1
+                              example: admin
+                            secret:
+                              type: string
+                              description: "Secret token or password"
+                              minLength: 1
+                              format: password
+                              example: myPasswd!007
+                    dst:
                       type: object
-                      description: "Credentials for remote data collection"
+                      description: "Data destination location"
                       required:
-                        - method
-                        - user
-                        - secret
+                        - path
                       properties:
-                        method:
+                        scheme:
                           type: string
-                          description: "Used authentication method"
-                          enum: [ basic, digest ]
-                          example: basic
-                        user:
+                          description: "Data propagation scheme"
+                          enum: [ local ]
+                          default: local
+                        path:
                           type: string
-                          description: "User identification"
-                          minLength: 1
-                          example: admin
-                        secret:
-                          type: string
-                          description: "Secret token or password"
-                          minLength: 1
-                          format: password
-                          example: myPasswd!007
-                    path:
-                      type: string
-                      description: "Absolut path of local directory for collected data"
-                      format: "/[path]/"
-                      pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
-                      default: /var/cache/data/
+                          description: "Data resource location"
+                          format: "([scheme]://)([host][:port])/[path]"
+                          pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
+                          example: https://my.api.localhost:8080/data/example.csv
+                        auth:
+                          type: object
+                          description: "Authentication parameters for remote data storage"
+                          required:
+                            - method
+                            - user
+                            - secret
+                          properties:
+                            method:
+                              type: string
+                              description: "Used authentication method"
+                              enum: [ basic, digest, bearer ]
+                              example: basic
+                            user:
+                              type: string
+                              description: "User identification"
+                              minLength: 1
+                              example: admin
+                            secret:
+                              type: string
+                              description: "Secret token or password"
+                              minLength: 1
+                              format: password
+                              example: myPasswd!007
                 worker:
                   type: object
                   description: "Worker environment parameters"
                   required:
-                    - source
+                    - location
                   properties:
-                    source:
+                    location:
                       type: object
                       description: "Worker image location"
                       required:
                         - image
                       properties:
-                        scheme:
+                        protocol:
                           type: string
                           description: "Image pull approach"
                           enum: [ docker, secret, ptx ]
@@ -138,38 +173,38 @@ spec:
                           description: "Image resource location"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
                           example: busybox:latest
+                        cred:
+                          type: object
+                          description: "Credentials for remote image collection"
+                          required:
+                            - user
+                            - secret
+                          properties:
+                            server:
+                              type: string
+                              description: "Image server prefix"
+                              format: "[scheme]://[host][:port]/[path]/"
+                              pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
+                              default: https://index.docker.io/v1/
+                            user:
+                              type: string
+                              description: "Image registry user"
+                              minLength: 1
+                              example: admin
+                            secret:
+                              type: string
+                              description: "Server password or token"
+                              minLength: 1
+                              format: password
+                              example: myPasswd!007
+                            insecure:
+                              type: boolean
+                              description: "Disable verification of image server's TLS certificate"
+                              default: false
                     cached:
                       type: boolean
                       description: "Worker cached in local registry, otherwise pull secret is used with auth"
                       default: true
-                    auth:
-                      type: object
-                      description: "Credentials for remote image collection"
-                      required:
-                        - user
-                        - secret
-                      properties:
-                        server:
-                          type: string
-                          description: "Image server prefix"
-                          format: "[scheme]://[host][:port]/[path]/"
-                          pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
-                          default: https://index.docker.io/v1/
-                        user:
-                          type: string
-                          description: "Image registry user"
-                          minLength: 1
-                          example: admin
-                        secret:
-                          type: string
-                          description: "Server password or token"
-                          minLength: 1
-                          format: password
-                          example: myPasswd!007
-                        insecure:
-                          type: boolean
-                          description: "Disable verification of image server's TLS certificate"
-                          default: false
                     name:
                       type: string
                       description: "Cached image name, otherwise autogenerated from source image"
@@ -257,12 +292,12 @@ spec:
         - name: Datasource
           type: string
           description: "Datasource configuration"
-          jsonPath: .spec.data.source
+          jsonPath: .spec.data.src.path
           priority: 1
         - name: Worker
           type: string
           description: "Worker configuration"
-          jsonPath: .spec.worker.source
+          jsonPath: .spec.worker.location.image
           priority: 1
         - name: Service
           type: boolean

@@ -1,4 +1,4 @@
 kopf[uvloop]~=1.44.5
-pydantic
-pyyaml~=6.0.3
 datamodel-code-generator[ruff]~=0.56.1
+pydantic~=2.13.3
+pyyaml~=6.0.3

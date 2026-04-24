@@ -41,7 +41,8 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
                 "paths": {},
                 "components": {
                     "schemas": {
-                        crd['spec']['names']['kind']: ver['schema']['openAPIV3Schema']
+                        # crd['spec']['names']['kind']: ver['schema']['openAPIV3Schema']
+                        crd['spec']['names']['shortNames'][0].upper(): ver['schema']['openAPIV3Schema']
                     }
                 }
             }

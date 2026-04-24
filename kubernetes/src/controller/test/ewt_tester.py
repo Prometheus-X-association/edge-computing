@@ -14,18 +14,20 @@
 # limitations under the License.
 import pprint
 
-from model.edgeworkertask import EdgeWorkerTask, EdgeWorkerTaskSpec
+from model.edgeworkertask import EWT, EWTSpec
 
 raw_kopf_obj = {
     'data': {
-        'source': {
-            'location': 'https://github.com:80/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz'
+        'src': {
+            'path': 'https://github.com:80/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz'
         },
-        'path': '/var/cache/data/',
+        'dst': {
+            'path': '/var/cache/data/',
+        }
     },
     'worker': {
-        'source': {
-            'scheme': 'docker',
+        'location': {
+            'protocol': 'docker',
             'image': 'busybox:latest',
         },
         'name': 'myworker:latest',
@@ -40,7 +42,7 @@ raw_kopf_obj = {
     }
 }
 
-pprint.pprint(EdgeWorkerTask(spec=EdgeWorkerTaskSpec(**raw_kopf_obj)))
+pprint.pprint(EWT(spec=EWTSpec(**raw_kopf_obj)))
 
 raw_k8s_obj = r"""
 {
@@ -48,28 +50,32 @@ raw_k8s_obj = r"""
     "kind": "EdgeWorkerTask",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"/var/cache/data/\",\"source\":{\"location\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"image\":\"myworker:latest\",\"source\":{\"location\":\"busybox:latest\",\"scheme\":\"docker\"}}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"path\":\"/var/cache/data/\",\"scheme\":\"local\"},\"src\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"scheme\":\"https\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"cached\":true,\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"location\":{\"cred\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"protocol\":\"docker\"},\"name\":\"myworker:latest\"}}}\n"
         },
-        "creationTimestamp": "2026-03-18T20:46:17Z",
+        "creationTimestamp": "2026-04-24T13:38:17Z",
         "generation": 1,
         "labels": {
             "env": "test"
         },
         "name": "test-ewt",
         "namespace": "ptx-edge",
-        "resourceVersion": "7951",
-        "uid": "18cef8a1-d2f7-4111-b781-285849d37335"
+        "resourceVersion": "812",
+        "uid": "d654e961-b305-42c5-b369-0457e68c0f8d"
     },
     "spec": {
         "data": {
-            "auth": {
-                "method": "basic",
-                "secret": "admin",
-                "user": "admin"
+            "dst": {
+                "path": "/var/cache/data/",
+                "scheme": "local"
             },
-            "path": "/var/cache/data/",
-            "source": {
-                "location": "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+            "src": {
+                "auth": {
+                    "method": "basic",
+                    "secret": "admin",
+                    "user": "admin"
+                },
+                "path": "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz",
+                "scheme": "https"
             }
         },
         "dataspace": {
@@ -92,12 +98,6 @@ raw_k8s_obj = r"""
             ]
         },
         "worker": {
-            "auth": {
-                "insecure": false,
-                "secret": "admin",
-                "server": "https://index.docker.io/v1/",
-                "user": "admin"
-            },
             "cached": true,
             "command": [
                 "/bin/bash",
@@ -115,14 +115,24 @@ raw_k8s_obj = r"""
                     "path": "/var/cache/worker/config.json"
                 }
             },
-            "name": "myworker:latest",
-            "source": {
+            "location": {
+                "cred": {
+                    "insecure": false,
+                    "secret": "admin",
+                    "server": "https://index.docker.io/v1/",
+                    "user": "admin"
+                },
                 "image": "busybox:latest",
-                "scheme": "docker"
-            }
+                "protocol": "docker"
+            },
+            "name": "myworker:latest"
         }
     }
 }
 """
 
-pprint.pprint(EdgeWorkerTask.model_validate_json(raw_k8s_obj))
+k8s_model = EWT.model_validate_json(raw_k8s_obj)
+pprint.pprint(k8s_model)
+
+print("Parsed datasource:", k8s_model.spec.data.src.path)
+print("Parsed image:", k8s_model.spec.worker.location.image)
