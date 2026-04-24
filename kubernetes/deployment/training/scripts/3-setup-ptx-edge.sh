@@ -56,7 +56,8 @@ log "Waiting for PDC instances to initialize..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
-${KCTL} wait --for=jsonpath='.status.numberReady'=2 --timeout="${TIMEOUT}s" "daemonset/${PDC}"
+${KCTL} wait --for=jsonpath='.status.numberReady'="$(kubectl get "ds/${PDC}" -o=jsonpath='{.status.desiredNumberScheduled}')" \
+            --timeout="${TIMEOUT}s" "ds/${PDC}"
 
 log "Waiting for PDC instances to set up..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
