@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # check=skip=SecretsUsedInArgOrEnv
-FROM registry:3
+FROM registry:3.0.0
 LABEL maintainer="czentye@tmit.bme.hu"
 ENV REGISTRY_AUTH=htpasswd \
     REGISTRY_AUTH_HTPASSWD_REALM="Registry Realm" \

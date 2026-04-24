@@ -64,7 +64,7 @@ run: build
 		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
 		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
 		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
-		registry:3
+		registry:3.0.0
 
 test: clear
 	docker run -d -p 5678:5000 --restart=no --name test-registry \
@@ -74,7 +74,7 @@ test: clear
 		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
 		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
 		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
-		registry:3
+		registry:3.0.0
 	docker pull busybox:latest
 	docker login -u ${REGISTRY_USER} -p ${REGISTRY_SECRET} ${LOCAL_REGISTRY}:5678
 	docker tag busybox:latest ${LOCAL_REGISTRY}:5678/busybox:latest
@@ -90,6 +90,9 @@ test: clear
 			https://registry.k3d.localhost:5678/v2/_catalog
 	@echo
 	skopeo inspect --cert-dir=.certs/ca --creds=${CRED} docker://${LOCAL_REGISTRY}:5678/busybox:latest
+	skopeo copy --dest-cert-dir=.certs/ca --dest-creds=${CRED} docker://k8s.gcr.io/pause \
+																docker://${LOCAL_REGISTRY}:5678/pause:latest
+	skopeo inspect --cert-dir=.certs/ca --creds=${CRED} docker://${LOCAL_REGISTRY}:5678/pause:latest
 
 MOCK_USER := mock
 MOCK_PASS := mock
@@ -115,7 +118,7 @@ run-mock:
 		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
 		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
 		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
-		registry:3
+		registry:3.0.0
 	docker ps -a -f name=mock-registry
 	docker pull busybox:latest
 	docker login -u mock -p mock localhost:5555
