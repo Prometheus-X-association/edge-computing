@@ -36,8 +36,8 @@ ${KCTL} label "node/k3d-${NODE_FED}-0" "node/k3d-${NODE_FED}-1" "${LAB_WORK}" "$
 #docker container ls -qf "name=k3d-node-" -f "name=k3d-demo-server-" | xargs -rI {} docker exec {} sh -c 'mkdir -pv /var/cache/storage'
 
 log "Generate certificate for domain: ${GW_DOMAIN}"
-rm -rf "${SCRIPT_DIR}/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/"
-pushd "${SCRIPT_DIR}/creds/cert/"
+rm -rf "${SCRIPT_DIR}/creds/cluster/" && mkdir -pv "${SCRIPT_DIR}/creds/cluster/cert/"
+pushd "${SCRIPT_DIR}/creds/cluster/cert/"
     # Simple self-signed cert
     #openssl req -x509 -noenc -days 365 -newkey rsa:4096 \
     #            -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout cluster-tls.key -out cluster-tls.cert

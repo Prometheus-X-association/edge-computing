@@ -25,6 +25,10 @@ for comp in "${COMPONENTS[@]}"; do
     make -C "${ROOT_DIR}/src/${comp}" build
 done
 
+log "Cache used registry CA files locally"
+rm -rf "${SCRIPT_DIR}/creds/reg/ca/" && mkdir -p "${SCRIPT_DIR}/creds/reg/ca/"
+cp -vR "${ROOT_DIR}/src/registry/.certs/ca/" "${SCRIPT_DIR}/creds/reg/"
+
 #log "Collect federated learning images"
 #for img in "${FED_COMPONENTS[@]}"; do
 #    docker pull "${img}"
