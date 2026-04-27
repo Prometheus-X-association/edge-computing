@@ -34,7 +34,7 @@ venv:
 	test -d .venv || (\
 		${PY} -m venv --upgrade-deps .venv && \
 		. .venv/bin/activate && \
-		${PY} -m pip install -U -r requirements.txt -r requirements-dev.txt \
+		${PY} -m pip install -U -r requirements-dev.txt \
 	)
 
 dev-local: venv
@@ -60,7 +60,7 @@ tests: venv
 unit-tests: venv
 	( . .venv/bin/activate && tox -v )
 
-docker-test-setup: build
+docker-test-setup:
 	docker build -t ${TEST_IMG} -f test.Dockerfile --build-arg USER=$$(id -u)  .
 	docker images --no-trunc ${TEST_IMG}
 
