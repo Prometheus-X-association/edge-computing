@@ -21,7 +21,7 @@ SCRIPT_DIR=$(readlink -f "$(dirname "$0")/..")
 ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../..")
 
 # Import essentials as logging, etc.
-source "${ROOT_DIR}/test/scripts/helper.sh"
+source "${SCRIPT_DIR}/cfg/helper.sh"
 
 # Set colorful logging if available
 if command -v kubecolor >/dev/null 2>&1; then
@@ -154,16 +154,16 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/orchestrator:latest)
 #
 DP0="data-processor-0"
-DP0_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8201/train_data.npz"
-#DP0_DATA="http://host.k3d.internal:9999/dp1/train_data.npz"
+#DP0_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8201/train_data.npz"
+DP0_DATA="http://host.k3d.internal:9999/dp1/train_data.npz"
 #DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
 DP0_IMG="ghcr.io/alelevente/data_processor:latest"
 DP0_MLFLOW_INT="http://localhost:5000"
 DP0_MLFLOW_ORG="http://${DP0}.${PTX}:5000"
 #
 DP1="data-processor-1"
-DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
-#DP1_DATA="http://host.k3d.internal:9999/dp2/train_data.npz"
+#DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
+DP1_DATA="http://host.k3d.internal:9999/dp2/train_data.npz"
 #DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
 DP1_IMG="ghcr.io/alelevente/data_processor:latest"
 DP1_MLFLOW_INT="http://localhost:5000"

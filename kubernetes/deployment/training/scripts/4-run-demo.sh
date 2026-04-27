@@ -62,8 +62,8 @@ ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${T
 _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
 wget --spider -S -nv --no-check-certificate --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_AGG_URL}"
-log ">>> Aggregator is exposed on https://${PRIMARY_HOST}/worker/${AGG}/"
-log ">>> Aggregator is exposed on https://${GW_HOST}/worker/${AGG}/"
+log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}/"
+log ">>> Aggregator is also exposed on https://${GW_HOST}/worker/${AGG}/"
 
 ########################################################################################################################
 
@@ -83,8 +83,8 @@ ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${T
 _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"
 wget --spider -S -nv --no-check-certificate --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_ORCH_URL}"
-log ">>> Orchestrator is exposed on https://${PRIMARY_HOST}/worker/${ORCH}/docs"
-log ">>> Orchestrator is exposed on https://${GW_HOST}/worker/${ORCH}/docs"
+log ">>> Orchestrator is also exposed on https://${PRIMARY_HOST}/worker/${ORCH}/docs"
+log ">>> Orchestrator is also exposed on https://${GW_HOST}/worker/${ORCH}/docs"
 
 ########################################################################################################################
 echo -e "\nDone."

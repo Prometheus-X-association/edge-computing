@@ -91,8 +91,8 @@ log ">>> ${REST_API} is available on ${_REST_API_URL}"
 wget --spider -S -nv --no-check-certificate --tries=5 --read-timeout=5 \
     --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
 curl -k -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
-log ">>> ${REST_API} is exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/"
-log ">>> ${REST_API} is exposed on https://${GW_HOST}/${PREFIX}/ui/"
+log ">>> ${REST_API} is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/"
+log ">>> ${REST_API} is also exposed on https://${GW_HOST}/${PREFIX}/ui/"
 
 ########################################################################################################################
 
