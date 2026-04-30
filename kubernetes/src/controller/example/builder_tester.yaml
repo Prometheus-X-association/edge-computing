@@ -2,6 +2,7 @@ apiVersion: dataspace.ptx.org/v1alpha1
 kind: EdgeWorkerTask
 metadata:
   name: test-ewt
+  namespace: ptx-edge
   labels:
     env: test
 spec:
