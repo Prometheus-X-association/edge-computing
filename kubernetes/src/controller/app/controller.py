@@ -12,71 +12,100 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import argparse
-import json
 import logging
 import os
 import pathlib
-import sys
-import typing
+from typing import Any
 
+import jinja2
 import kopf
+import yaml
+from jinja2.sandbox import ImmutableSandboxedEnvironment
+from kubernetes import client
 
 from model.edgeworkertask import EWT
-from utils import setup_logging
+from utils import sanitize, ExcludeProbesFilter
+
+########################################################################################################################
 
 __version__ = '1.0.0'
-log = logging.getLogger(__name__)
 
-NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
-
-REQUIRED_FIELDS = ()
-CONFIG = {}
-
-
-@kopf.on.create('edgeworkertasks')
-def create_ewt(spec, **kwargs):
-    log.debug("=" * 40)
-    log.info(spec)
-    ewt = EWT(spec=spec)
-    log.info(f"Created {ewt}")
-    log.debug(f"Creation completed.")
-    log.debug("=" * 40)
-    return {'ready': True}  # will be the new status
+### Globally available objects
+# Controllers own configuration
+CONFIG: dict[str, Any] = {}
+# Required fields in the configuration
+REQUIRED_FIELDS = ("temp_dir",)
+DEF_TEMP_DIR = "templates"
+# Environment of loaded manifest templates
+TEMPLATES: jinja2.Environment
 
 
-def setup_config(params: dict[str, typing.Any]):
-    """
+########################################################################################################################
 
-    :param params:
-    :return:
-    """
-    log.info("Loading configuration...")
-    CONFIG.update(kv for kv in params.items() if kv[1] is not None)
-    if CONFIG.get('namespace') is None and (kube_cfg_ns := pathlib.Path(NS_CONFIG_FILE).resolve()).exists():
-        CONFIG['namespace'] = kube_cfg_ns.read_text()
-    if not all(map(lambda param: bool(CONFIG[param]), REQUIRED_FIELDS)):
-        log.error(f"Missing one of the required parameters: {REQUIRED_FIELDS} from {CONFIG}")
-        sys.exit(os.EX_CONFIG)
-    # TODO - optional configs
-    log.debug(f"Loaded configuration:\n{json.dumps(CONFIG, indent=4, default=str)}")
-
-
-def main():
-    ################# Parse parameters
-    parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="PTX-edge custom scheduler")
-    parser.add_argument("-n", "--namespace", type=str, required=False,
-                        help="Watched worker namespace (def: from kube cfg/envvar)")
-    parser.add_argument("-v", "--verbose", action='count', default=0, required=False,
-                        help="Increase verbosity")
-    parser.add_argument("-V", "--version", action='version', version=f"{parser.description} v{__version__}")
-    args = parser.parse_args()
-    ################# Setup configuration
-    setup_logging(verbosity=args.verbose)
-    setup_config(params=vars(args))
-    ################# Handle scheduling events
-    log.debug(f"Initialization completed.")
+def load_config(settings: kopf.OperatorSettings, logger: kopf.Logger) -> None:
+    logger.info(f"Loading controller configuration...")
+    # PTX-edge/controller related configurations
+    global CONFIG
+    CONFIG.update({
+        "temp_dir": os.getenv('TEMP_DIR', DEF_TEMP_DIR)
+    })
+    if not all(map(lambda _p: CONFIG[_p] is not None, REQUIRED_FIELDS)):
+        raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {CONFIG}!")
+    logger.debug(f"Loaded configuration: {CONFIG}")
+    # Kopf-internal configurations
+    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix='dataspace.ptx.org')
+    settings.persistence.finalizer = "dataspace.ptx.org/ewt-finalizer"  # Specify own finalizer
+    settings.posting.loggers = False  # No auto-creating events from logs
+    logging.getLogger('kubernetes.client.rest').setLevel(logging.WARNING)  # Disable k8s client dump logs
+    logging.getLogger('aiohttp.access').addFilter(ExcludeProbesFilter())  # Disable access logging
 
 
-if __name__ == '__main__':
-    main()
+def load_templates(logger: kopf.Logger) -> None:
+    logger.info("Loading manifest templates...")
+    global TEMPLATES
+    TEMPLATES = ImmutableSandboxedEnvironment(
+        loader=jinja2.PackageLoader(package_name=pathlib.Path(__file__).stem,
+                                    package_path=CONFIG["temp_dir"]),
+        autoescape=False,
+        auto_reload=False,
+        optimized=True,
+        enable_async=False)
+    logger.debug(f"Loaded templates: {','.join(TEMPLATES.list_templates())}")
+
+
+@kopf.on.startup()
+def setup(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
+    load_config(settings=settings, logger=logger)
+    load_templates(logger=logger)
+
+########################################################################################################################
+
+@kopf.on.create(group="dataspace.ptx.org", version="v1alpha1", kind="EdgeWorkerTask")
+def create(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+    logger.debug("=" * 100)
+    logger.info(f"Parsing {EWT.__name__} model...")
+    ewt = EWT.model_validate(body)
+    logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
+    logger.info("Rendering application manifests...")
+    if ewt.spec.service is not None and ewt.spec.service.enabled is True:
+        worker_temp = TEMPLATES.get_template("worker_pod.yaml.j2")
+    else:
+        # worker_temp = TEMPLATES.get_template("worker_job.yaml.j2")
+        raise NotImplementedError
+    manifest = worker_temp.render(**ewt.spec.model_dump())
+    logger.debug(f"Rendered pod manifest:\n{manifest}")
+    logger.info("Serializing API requests...")
+    _body = yaml.safe_load(manifest)
+    kopf.adopt(_body, forced=True)
+    logger.debug(f"Serialized request body:\n{sanitize(_body)}")
+    try:
+        logger.info("Invoke k8s API...")
+        pod, status, _ = client.CoreV1Api().create_namespaced_pod_with_http_info(body=_body,
+                                                                                 namespace=namespace,
+                                                                                 _preload_content=True)
+        logger.debug(f"Invocation result: HTTP:{status}\n{sanitize(pod)}")
+        kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
+    except client.ApiException as e:
+        logger.error(f"Error received:\n{e}")
+    logger.debug("=" * 100)
+    return {'finished': True}  # will be the new status

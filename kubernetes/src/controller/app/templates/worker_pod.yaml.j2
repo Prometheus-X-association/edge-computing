@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: worker
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+    - name: test
+      image: {{ worker.location.image }}
+      imagePullPolicy: Always
+      command: [ "sh", "-c", "sleep infinity" ]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 90Mi
+        limits:
+          cpu: 500m
+          memory: 310Mi
+      volumeMounts:
+        - mountPath: "/data"  # Mounts the volume at the "/data" directory inside the container
+          name: data
+  volumes:
+    - name: data
+      emptyDir:
+        sizeLimit: 100Mi

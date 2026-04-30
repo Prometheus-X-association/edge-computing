@@ -21,7 +21,7 @@ build:
 	docker images --no-trunc ${IMG}
 
 run: build
-	docker run --rm --name ${NAME} -ti ${IMG}
+	docker run --rm --name ${NAME}  -v ./app/templates:/usr/src/controller/app/templates -ti ${IMG} sh
 
 clean:
 	docker rmi -f ${IMG}
