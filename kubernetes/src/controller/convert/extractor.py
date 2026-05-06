@@ -15,10 +15,16 @@
 import argparse
 import json
 import pathlib
+import sys
+import warnings
+from importlib import resources
 
 import yaml
 
 OPENAPI_VERSION = "3.0.0"
+CODEGEN_MODEL_DIR = pathlib.Path(str(resources.files("datamodel_code_generator").joinpath("model")))
+BASEMODEL_TEMPLATE_FILE = pathlib.Path("template/pydantic_v2/BaseModel.jinja2")
+CRD_META_EXT_FILE = pathlib.Path("template/pydantic_v2/CrdMetaExtension.jinja2")
 
 
 def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.Path, served: bool = False) -> None:
@@ -29,6 +35,24 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
     :param served:
     :return:
     """
+    basemodel = pathlib.Path(__file__).parent / BASEMODEL_TEMPLATE_FILE
+    basemodel.parent.mkdir(parents=True, exist_ok=True)
+    orig_template = pathlib.Path(CODEGEN_MODEL_DIR / BASEMODEL_TEMPLATE_FILE)
+    orig_template.copy(basemodel)
+    temp_data = basemodel.read_text(encoding="utf-8").splitlines(keepends=True)
+    class_def_idx = [(i, line) for i, line in enumerate(temp_data) if
+                     line.startswith("class ") and line.endswith("{% endif %}\n")]
+    if len(class_def_idx) != 1:
+        warnings.warn(f"No unique class definition found in BaseModel template({basemodel}):\n"
+                      f"{class_def_idx}\nAbort extraction!")
+        sys.exit(1)
+    idx = class_def_idx[0][0] + 1
+    temp_data.insert(idx, f"{{% include 'CrdMetaExtension.jinja2' %}}\n")
+    # temp_data = [*temp_data[:idx],
+    #              *(pathlib.Path(__file__).parent / CRD_META_EXT_FILE).read_text().splitlines(keepends=True),
+    #              *temp_data[idx:]]
+    with open(basemodel, "wt") as f:
+        f.writelines(temp_data)
     scheme_dir.mkdir(parents=True, exist_ok=True)
     crds = list(filter(bool, yaml.safe_load_all(crd_file.resolve(strict=True).read_text())))
     for crd in crds:

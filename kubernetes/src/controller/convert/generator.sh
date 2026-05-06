@@ -26,5 +26,5 @@ datamodel-codegen --input="${1}" --input-file-type="openapi" --openapi-scopes="s
                 --use-specialized-enum --enum-field-as-literal="one" --capitalize-enum-members \
                 --use-field-description --use-field-description-example --use-double-quotes \
                 --enable-version-header --target-python-version="${PY_VER}" \
-                --custom-template-dir="${TEMPLATE_DIR}/templates" --additional-imports="typing.ClassVar" \
+                --custom-template-dir="${TEMPLATE_DIR}/template" --additional-imports="typing.ClassVar" \
                 --disable-warnings --output "${2}"

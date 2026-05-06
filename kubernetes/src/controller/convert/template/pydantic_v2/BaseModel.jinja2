@@ -2,17 +2,11 @@
 {{ decorator }}
 {% endfor -%}
 class {{ class_name }}({{ base_class }}):{% if comment is defined %}  # {{ comment }}{% endif %}
+{% include 'CrdMetaExtension.jinja2' %}
 {%- if description %}
     """
     {{ description | escape_docstring | indent(4) }}
     """
-{%- endif %}
-{%- if extensions is defined and extensions.get('x-database-model') %}
-    group: ClassVar[str] = "{{ extensions['x-database-model']['group'] }}"
-    kind: ClassVar[str] = "{{ extensions['x-database-model']['kind'] }}"
-    plural: ClassVar[str] = "{{ extensions['x-database-model']['plural'] }}"
-    singular: ClassVar[str]  = "{{ extensions['x-database-model']['singular'] }}"
-    version: ClassVar[str] = "{{ extensions['x-database-model']['version'] }}"
 {%- endif %}
 {%- if not fields and not description and not config and not class_body_lines %}
     pass
@@ -34,7 +28,7 @@ class {{ class_name }}({{ base_class }}):{% if comment is defined %}  # {{ comme
     {%- else %}
     {{ field.name }}: {{ field.type_hint }}
     {%- endif %}
-    {%- if not field.has_default_factory_in_field and (not field.required or field.use_default_with_required) and (field.represented_default != 'None' or not field.strip_default_none or field.data_type.is_optional)
+    {%- if not field.has_default_factory_in_field and not field.required and (field.represented_default != 'None' or not field.strip_default_none or field.data_type.is_optional)
             %} = {{ field.represented_default }}
     {%- endif -%}
     {%- endif %}
