@@ -85,18 +85,18 @@ def setup(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> Non
 
 ########################################################################################################################
 
-@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind)
-def create(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+def is_service(spec: kopf.Spec, **_: Any) -> bool:
+    return spec.get("service", {}).get("enabled", False)
+
+
+@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind, when=is_service, id="create")
+def create_ewt_deployment(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     logger.info(f"Parsing {EWT.__name__} model...")
     ewt = EWT.model_validate(body)
     logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
     logger.info("Rendering application manifests...")
-    if ewt.spec.service is not None and ewt.spec.service.enabled is True:
-        worker_temp = TEMPLATES.get_template("worker_pod.yaml.j2")
-    else:
-        # worker_temp = TEMPLATES.get_template("worker_job.yaml.j2")
-        raise NotImplementedError
+    worker_temp = TEMPLATES.get_template("worker_pod.yaml.j2")
     manifest = worker_temp.render(**ewt.spec.model_dump())
     logger.debug(f"Rendered pod manifest:\n{manifest}")
     logger.info("Serializing API requests...")
@@ -112,5 +112,11 @@ def create(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> di
         kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
     except client.ApiException as e:
         logger.error(f"Error received:\n{e}")
+        raise kopf.TemporaryError(str(e)) from e
     logger.debug("=" * 100)
     return {'finished': True}  # will be the new status
+
+
+@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind, when=kopf.not_(is_service), id="create")
+def create_ewt_job(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+    raise kopf.PermanentError("Not implemented yet!")

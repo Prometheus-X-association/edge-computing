@@ -42,7 +42,10 @@ raw_kopf_obj = {
     }
 }
 
-pprint.pprint(EWT(spec=EWTSpec(**raw_kopf_obj)))
+
+def test_ewt_spec_parsing():
+    pprint.pprint(EWT(spec=EWTSpec(**raw_kopf_obj)))
+
 
 raw_k8s_obj = r"""
 {
@@ -131,8 +134,15 @@ raw_k8s_obj = r"""
 }
 """
 
-k8s_model = EWT.model_validate_json(raw_k8s_obj)
-pprint.pprint(k8s_model)
 
-print("Parsed datasource:", k8s_model.spec.data.src.path)
-print("Parsed image:", k8s_model.spec.worker.location.image)
+def test_k8s_raw_parsing():
+    k8s_model = EWT.model_validate_json(raw_k8s_obj)
+    pprint.pprint(k8s_model)
+
+    print("Parsed datasource:", k8s_model.spec.data.src.path)
+    print("Parsed image:", k8s_model.spec.worker.location.image)
+
+
+if __name__ == '__main__':
+    test_ewt_spec_parsing()
+    test_k8s_raw_parsing()
