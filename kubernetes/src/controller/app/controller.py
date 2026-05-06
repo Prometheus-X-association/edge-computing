@@ -28,6 +28,7 @@ from utils import sanitize, ExcludeProbesFilter
 
 ########################################################################################################################
 
+# Controller version
 __version__ = '1.0.0'
 
 ### Globally available objects
@@ -35,6 +36,7 @@ __version__ = '1.0.0'
 CONFIG: dict[str, Any] = {}
 # Required fields in the configuration
 REQUIRED_FIELDS = ("temp_dir",)
+# Default values of required fields using DEF_{field} names
 DEF_TEMP_DIR = "templates"
 # Environment of loaded manifest templates
 TEMPLATES: jinja2.Environment
@@ -46,15 +48,17 @@ def load_config(settings: kopf.OperatorSettings, logger: kopf.Logger) -> None:
     logger.info(f"Loading controller configuration...")
     # PTX-edge/controller related configurations
     global CONFIG
-    CONFIG.update({
-        "temp_dir": os.getenv('TEMP_DIR', DEF_TEMP_DIR)
-    })
+    # Read config items from envvars dynamically using global default values
+    CONFIG.update({field: os.getenv(field.upper(), default=globals().get(f"DEF_{field.upper()}", None))
+                   for field in REQUIRED_FIELDS})
     if not all(map(lambda _p: CONFIG[_p] is not None, REQUIRED_FIELDS)):
         raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {CONFIG}!")
     logger.debug(f"Loaded configuration: {CONFIG}")
     # Kopf-internal configurations
-    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix='dataspace.ptx.org')
-    settings.persistence.finalizer = "dataspace.ptx.org/ewt-finalizer"  # Specify own finalizer
+    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=EWT.group)
+    settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=EWT.group,
+                                                                            key='last-handled-configuration')
+    settings.persistence.finalizer = f"{EWT.group}/ewt-finalizer"  # Specify own finalizer
     settings.posting.loggers = False  # No auto-creating events from logs
     logging.getLogger('kubernetes.client.rest').setLevel(logging.WARNING)  # Disable k8s client dump logs
     logging.getLogger('aiohttp.access').addFilter(ExcludeProbesFilter())  # Disable access logging
@@ -78,9 +82,10 @@ def setup(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> Non
     load_config(settings=settings, logger=logger)
     load_templates(logger=logger)
 
+
 ########################################################################################################################
 
-@kopf.on.create(group="dataspace.ptx.org", version="v1alpha1", kind="EdgeWorkerTask")
+@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind)
 def create(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     logger.info(f"Parsing {EWT.__name__} model...")
