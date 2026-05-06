@@ -370,6 +370,13 @@
               }
             }
           }
+        },
+        "x-database-model": {
+          "group": "dataspace.ptx.org",
+          "version": "v1alpha1",
+          "kind": "EdgeWorkerTask",
+          "singular": "edgeworkertask",
+          "plural": "edgeworkertasks"
         }
       }
     }

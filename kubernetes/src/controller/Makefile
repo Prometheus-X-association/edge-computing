@@ -33,13 +33,13 @@ clean:
 extract:
 	. .venv/bin/activate && \
 	for crd in crd/ptx-edge-*.yaml; do \
-    	python3 script/extractor.py "$${crd}" "./schema/"; \
+    	python3 convert/extractor.py "$${crd}" "./convert/schema/"; \
 	done
 
 generate:
 	. .venv/bin/activate && \
-	for schema in schema/*.json; do \
-		sh script/generator.sh "$${schema}" "app/model/$$(basename $${schema} .json).py"; \
+	for schema in convert/schema/*.json; do \
+		sh convert/generator.sh "$${schema}" "app/model/$$(basename $${schema} .json).py"; \
 	done
 
 convert: | extract generate

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 # Usage: generator.sh [schema_file] [model_file]
+TEMPLATE_DIR=$(readlink -f "$(dirname "$0")")
 #PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 PY_VER='3.14'
 
@@ -23,6 +24,7 @@ datamodel-codegen --input="${1}" --input-file-type="openapi" --openapi-scopes="s
                 --skip-root-model --use-generic-base-class --extra-fields="ignore" \
                 --naming-strategy="full-path" --field-type-collision-strategy="rename-type" \
                 --use-specialized-enum --enum-field-as-literal="one" --capitalize-enum-members \
-                --use-field-description --use-field-description-example \
+                --use-field-description --use-field-description-example --use-double-quotes \
                 --enable-version-header --target-python-version="${PY_VER}" \
+                --custom-template-dir="${TEMPLATE_DIR}/templates" --additional-imports="typing.ClassVar" \
                 --disable-warnings --output "${2}"
