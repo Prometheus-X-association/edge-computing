@@ -18,9 +18,9 @@ import pathlib
 from typing import Any
 
 import jinja2
+import jinja2.sandbox
 import kopf
 import yaml
-from jinja2.sandbox import ImmutableSandboxedEnvironment
 from kubernetes import client
 
 from model.edgeworkertask import EWT
@@ -67,7 +67,7 @@ def load_config(settings: kopf.OperatorSettings, logger: kopf.Logger) -> None:
 def load_templates(logger: kopf.Logger) -> None:
     logger.info("Loading manifest templates...")
     global TEMPLATES
-    TEMPLATES = ImmutableSandboxedEnvironment(
+    TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
         loader=jinja2.PackageLoader(package_name=pathlib.Path(__file__).stem,
                                     package_path=CONFIG["temp_dir"]),
         autoescape=False,
@@ -89,7 +89,7 @@ def is_service(spec: kopf.Spec, **_: Any) -> bool:
     return spec.get("service", {}).get("enabled", False)
 
 
-@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind, when=is_service, id="create")
+@kopf.on.create(*EWT.SELECTOR, when=is_service, id="create")
 def create_ewt_deployment(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     logger.info(f"Parsing {EWT.__name__} model...")
@@ -114,9 +114,9 @@ def create_ewt_deployment(body: kopf.Body, namespace: str, logger: kopf.Logger, 
         logger.error(f"Error received:\n{e}")
         raise kopf.TemporaryError(str(e)) from e
     logger.debug("=" * 100)
-    return {'finished': True}  # will be the new status
+    return {'initialized': True}
 
 
-@kopf.on.create(group=EWT.group, version=EWT.version, kind=EWT.kind, when=kopf.not_(is_service), id="create")
+@kopf.on.create(*EWT.SELECTOR, when=kopf.not_(is_service), id="create")
 def create_ewt_job(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
     raise kopf.PermanentError("Not implemented yet!")

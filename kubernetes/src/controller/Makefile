@@ -33,7 +33,7 @@ clean:
 extract:
 	. .venv/bin/activate && \
 	for crd in crd/ptx-edge-*.yaml; do \
-    	python3 convert/extractor.py "$${crd}" "./convert/schema/"; \
+    	python3 convert/extractor.py "$${crd}" "./convert/schema/" --served; \
 	done
 
 generate:

@@ -58,6 +58,7 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
     for crd in crds:
         for version in crd['spec']['versions']:
             if served and not version['served']:
+                print("Skip non-served version", version['name'])
                 continue
             # Add CRD name and version info as extensions
             version['schema']['openAPIV3Schema'].update({

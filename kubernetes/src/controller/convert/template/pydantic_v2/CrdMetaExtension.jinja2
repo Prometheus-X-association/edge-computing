@@ -1,7 +1,11 @@
 {%- if extensions is defined and extensions.get('x-database-model') %}
-    group: ClassVar[str] = "{{ extensions['x-database-model']['group'] }}"
-    kind: ClassVar[str] = "{{ extensions['x-database-model']['kind'] }}"
-    plural: ClassVar[str] = "{{ extensions['x-database-model']['plural'] }}"
-    singular: ClassVar[str]  = "{{ extensions['x-database-model']['singular'] }}"
-    version: ClassVar[str] = "{{ extensions['x-database-model']['version'] }}"
+    # Resource specification parameters from CustomResourceDefinition
+    group: ClassVar[str] = "{{ extensions['x-database-model'].get('group') }}"
+    version: ClassVar[str] = "{{ extensions['x-database-model'].get('version') }}"
+    kind: ClassVar[str] = "{{ extensions['x-database-model'].get('kind') }}"
+    plural: ClassVar[str] = "{{ extensions['x-database-model'].get('plural') }}"
+    singular: ClassVar[str]  = "{{ extensions['x-database-model'].get('singular') }}"
+    # Unique resource identification
+    SELECTOR: ClassVar[tuple[str, str, str]] = (group, version, kind)
+    #
 {%- endif %}
