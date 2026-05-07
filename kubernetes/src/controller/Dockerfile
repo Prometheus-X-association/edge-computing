@@ -6,6 +6,7 @@ ARG NS="ptx-edge"
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
 COPY ./app ./app
+EXPOSE 8080
 RUN echo "kopf run --verbose --standalone --dev -n ${NS} app/controller.py" > /usr/bin/run-controller && \
                                                                                     chmod +x /usr/bin/run-controller
-CMD [ "kopf", "run", "--standalone", "--namespace=${NS}", "app/controller.py"]
+CMD [ "kopf", "run", "--liveness=http://0.0.0.0:8080/healthz", "--standalone", "--namespace=${NS}", "app/controller.py"]
