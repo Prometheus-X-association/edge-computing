@@ -53,7 +53,7 @@ def deep_openapi_filter(data: object, keep: typing.Callable = bool) -> object:
         return None
 
 
-def sanitize(data: object, indent: int = 2) -> str:
+def sanitize_model(data: object, indent: int = 2) -> str:
     return pprint.pformat(deep_openapi_filter(data), indent=indent)
 
 

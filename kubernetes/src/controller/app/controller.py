@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import http
 import logging
 import os
 import pathlib
@@ -24,7 +25,7 @@ import yaml
 from kubernetes import client
 
 from model.edgeworkertask import EWT
-from utils import sanitize, ExcludeProbesFilter
+from utils import sanitize_model, ExcludeProbesFilter
 
 ########################################################################################################################
 
@@ -32,28 +33,23 @@ from utils import sanitize, ExcludeProbesFilter
 __version__ = '1.0.0'
 
 ### Globally available objects
-# Controllers own configuration
-CONFIG: dict[str, Any] = {}
 # Required fields in the configuration
 REQUIRED_FIELDS = ("temp_dir",)
 # Default values of required fields using DEF_{field} names
 DEF_TEMP_DIR = "templates"
-# Environment of loaded manifest templates
-TEMPLATES: jinja2.Environment
 
 
 ########################################################################################################################
 
-def load_config(settings: kopf.OperatorSettings, logger: kopf.Logger) -> None:
+async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger) -> None:
     logger.info(f"Loading controller configuration...")
     # PTX-edge/controller related configurations
-    global CONFIG
     # Read config items from envvars dynamically using global default values
-    CONFIG.update({field: os.getenv(field.upper(), default=globals().get(f"DEF_{field.upper()}", None))
-                   for field in REQUIRED_FIELDS})
-    if not all(map(lambda _p: CONFIG[_p] is not None, REQUIRED_FIELDS)):
-        raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {CONFIG}!")
-    logger.debug(f"Loaded configuration: {CONFIG}")
+    memo.CONFIG = {field: os.getenv(field.upper(), default=globals().get(f"DEF_{field.upper()}", None))
+                   for field in REQUIRED_FIELDS}
+    if not all(map(lambda _p: memo.CONFIG[_p] is not None, REQUIRED_FIELDS)):
+        raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {memo.CONFIG}!")
+    logger.debug(f"Loaded configuration: {memo.CONFIG}")
     # Kopf-internal configurations
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=EWT.group)
     settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=EWT.group,
@@ -64,23 +60,22 @@ def load_config(settings: kopf.OperatorSettings, logger: kopf.Logger) -> None:
     logging.getLogger('aiohttp.access').addFilter(ExcludeProbesFilter())  # Disable access logging
 
 
-def load_templates(logger: kopf.Logger) -> None:
+async def load_templates(memo: kopf.Memo, logger: kopf.Logger) -> None:
     logger.info("Loading manifest templates...")
-    global TEMPLATES
-    TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
+    memo.TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
         loader=jinja2.PackageLoader(package_name=pathlib.Path(__file__).stem,
-                                    package_path=CONFIG["temp_dir"]),
+                                    package_path=memo.CONFIG["temp_dir"]),
         autoescape=False,
         auto_reload=False,
         optimized=True,
         enable_async=False)
-    logger.debug(f"Loaded templates: {','.join(TEMPLATES.list_templates())}")
+    logger.debug(f"Loaded templates: {','.join(memo.TEMPLATES.list_templates())}")
 
 
-@kopf.on.startup()
-def setup(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
-    load_config(settings=settings, logger=logger)
-    load_templates(logger=logger)
+@kopf.on.startup(errors=kopf.ErrorsMode.PERMANENT)
+async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger, **_: Any) -> None:
+    await load_config(settings=settings, memo=memo, logger=logger)
+    await load_templates(logger=logger, memo=memo)
 
 
 ########################################################################################################################
@@ -90,26 +85,31 @@ def is_service(spec: kopf.Spec, **_: Any) -> bool:
 
 
 @kopf.on.create(*EWT.SELECTOR, when=is_service, id="create")
-def create_ewt_deployment(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
+    ####
     logger.info(f"Parsing {EWT.__name__} model...")
     ewt = EWT.model_validate(body)
     logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
-    logger.info("Rendering application manifests...")
-    worker_temp = TEMPLATES.get_template("worker_pod.yaml.j2")
+    ####
+    logger.info(f"Rendering manifest...")
+    worker_temp = memo.TEMPLATES.get_template("worker_pod.yaml.j2")
     manifest = worker_temp.render(**ewt.spec.model_dump())
-    logger.debug(f"Rendered pod manifest:\n{manifest}")
-    logger.info("Serializing API requests...")
-    _body = yaml.safe_load(manifest)
-    kopf.adopt(_body, forced=True)
-    logger.debug(f"Serialized request body:\n{sanitize(_body)}")
+    new_body = yaml.safe_load(manifest)
+    kopf.adopt(new_body, forced=True)
+    logger.debug(f"New object:\n{sanitize_model(new_body)}")
+    ####
     try:
         logger.info("Invoke k8s API...")
-        pod, status, _ = client.CoreV1Api().create_namespaced_pod_with_http_info(body=_body,
+        pod, status, _ = client.CoreV1Api().create_namespaced_pod_with_http_info(body=new_body,
                                                                                  namespace=namespace,
                                                                                  _preload_content=True)
-        logger.debug(f"Invocation result: HTTP:{status}\n{sanitize(pod)}")
-        kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
+        status = http.HTTPStatus(status)
+        if status.is_success:
+            logger.debug(f"Invocation result: {status.name}")
+            kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
+        else:
+            raise kopf.TemporaryError(f"Kube API response: {status!r}")
     except client.ApiException as e:
         logger.error(f"Error received:\n{e}")
         raise kopf.TemporaryError(str(e)) from e
@@ -118,5 +118,5 @@ def create_ewt_deployment(body: kopf.Body, namespace: str, logger: kopf.Logger, 
 
 
 @kopf.on.create(*EWT.SELECTOR, when=kopf.not_(is_service), id="create")
-def create_ewt_job(body: kopf.Body, namespace: str, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+def create_ewt_job(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     raise kopf.PermanentError("Not implemented yet!")
