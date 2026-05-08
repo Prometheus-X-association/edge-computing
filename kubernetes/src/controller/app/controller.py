@@ -63,8 +63,7 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
 async def load_templates(memo: kopf.Memo, logger: kopf.Logger) -> None:
     logger.info("Loading manifest templates...")
     memo.TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
-        loader=jinja2.PackageLoader(package_name=pathlib.Path(__file__).stem,
-                                    package_path=memo.CONFIG["temp_dir"]),
+        loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent / memo.CONFIG["temp_dir"]),
         autoescape=False,
         auto_reload=False,
         optimized=True,
@@ -93,8 +92,8 @@ def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: k
     logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
     ####
     logger.info(f"Rendering manifest...")
-    worker_temp = memo.TEMPLATES.get_template("worker_pod.yaml.j2")
-    manifest = worker_temp.render(**ewt.spec.model_dump())
+    worker_temp: jinja2.Template = memo.TEMPLATES.get_template("worker_pod.yaml.j2")
+    manifest = worker_temp.render(ewt.spec.model_dump())
     new_body = yaml.safe_load(manifest)
     kopf.adopt(new_body, forced=True)
     logger.debug(f"New object:\n{sanitize_model(new_body)}")
