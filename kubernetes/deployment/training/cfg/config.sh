@@ -171,7 +171,7 @@ DP1_MLFLOW_ORG="http://${DP1}.${PTX}:5000"
 #
 AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
-AGG_MLFLOW_INT="http://localhost:5000"
+AGG_MLFLOW_INT="http://localhost:5000/worker/aggregator"
 AGG_MLFLOW_ORG="http://${AGG}.${PTX}:5000"
 AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686/worker/aggregator"
 MLFLOW_API_PREFIX="api/2.0/mlflow"
