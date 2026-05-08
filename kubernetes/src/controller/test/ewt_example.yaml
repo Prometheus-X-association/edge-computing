@@ -12,6 +12,7 @@ spec:
       - port: 8080
       - port: 80
         public: true
+        secured: true
   data:
     src:
       scheme: https

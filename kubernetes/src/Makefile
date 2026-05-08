@@ -206,12 +206,13 @@ run-scheduler:
 run-controller:
 	@#kubectl apply -f https://github.com/nolar/kopf/raw/main/peering.yaml
 	@#kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
-	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/0_peering-crd.yaml
-	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/1_peering.yaml
+	#
+	#kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/0_peering-crd.yaml
+	#kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/1_peering.yaml
 	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/ptx-edge-worker-task.yaml
 	sleep 3s
-	kubectl wait --for="condition=established" --timeout=30s crd/edgeworkertasks.dataspace.ptx.org \
-		crd/kopfpeerings.kopf.dev crd/clusterkopfpeerings.kopf.dev
+	kubectl wait --for="condition=established" --timeout=30s crd/edgeworkertasks.dataspace.ptx.org
+		#crd/kopfpeerings.kopf.dev crd/clusterkopfpeerings.kopf.dev
 	kubectl apply -f ${ASSETS}/ptx-controller-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/controller
 	@echo

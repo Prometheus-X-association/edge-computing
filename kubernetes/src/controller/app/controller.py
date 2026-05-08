@@ -104,9 +104,9 @@ def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: k
         pod, status, _ = client.CoreV1Api().create_namespaced_pod_with_http_info(body=new_body,
                                                                                  namespace=namespace,
                                                                                  _preload_content=True)
-        status = http.HTTPStatus(status)
-        if status.is_success:
-            logger.debug(f"Invocation result: {status.name}")
+        logging.debug(f"Received response: HTTP/{status}")
+        if (status := http.HTTPStatus(status)).is_success:
+            logger.debug(f"Invocation status: {status.name}")
             kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
         else:
             raise kopf.TemporaryError(f"Kube API response: {status!r}")

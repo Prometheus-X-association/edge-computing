@@ -53,17 +53,19 @@ raw_k8s_obj = r"""
     "kind": "EdgeWorkerTask",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"test-ewt\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"path\":\"/var/cache/data/\",\"scheme\":\"local\"},\"src\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"scheme\":\"https\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true}]},\"worker\":{\"cached\":true,\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"location\":{\"cred\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"protocol\":\"docker\"},\"name\":\"myworker:latest\"}}}\n"
+            "dataspace.ptx.org/kopf-managed": "yes",
+            "dataspace.ptx.org/last-handled-configuration": "{\"spec\":{\"data\":{\"dst\":{\"path\":\"/var/cache/data/\",\"scheme\":\"local\"},\"src\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"scheme\":\"https\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080,\"public\":false,\"secured\":false},{\"port\":80,\"public\":true,\"secured\":true}]},\"worker\":{\"cached\":true,\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"location\":{\"cred\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"protocol\":\"docker\"},\"name\":\"myworker:latest\"}},\"metadata\":{\"labels\":{\"env\":\"test\"}}}\n",
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"EdgeWorkerTask\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"test-example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"path\":\"/var/cache/data/\",\"scheme\":\"local\"},\"src\":{\"auth\":{\"method\":\"basic\",\"secret\":\"admin\",\"user\":\"admin\"},\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"scheme\":\"https\"}},\"dataspace\":{\"offer\":{\"consumer\":\"66d18b79ee71f9f096baecb1\",\"provider\":\"66d187f4ee71f9f096bae8ca\"}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"secured\":true}]},\"worker\":{\"cached\":true,\"command\":[\"/bin/bash\",\"date\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"location\":{\"cred\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"protocol\":\"docker\"},\"name\":\"myworker:latest\"}}}\n"
         },
-        "creationTimestamp": "2026-04-24T13:38:17Z",
+        "creationTimestamp": "2026-05-08T11:45:04Z",
         "generation": 1,
         "labels": {
             "env": "test"
         },
-        "name": "test-ewt",
+        "name": "test-example",
         "namespace": "ptx-edge",
-        "resourceVersion": "812",
-        "uid": "d654e961-b305-42c5-b369-0457e68c0f8d"
+        "resourceVersion": "6380",
+        "uid": "48283b1c-f3ac-4e10-a748-6b3dc6d40676"
     },
     "spec": {
         "data": {
@@ -92,11 +94,13 @@ raw_k8s_obj = r"""
             "interfaces": [
                 {
                     "port": 8080,
-                    "public": false
+                    "public": false,
+                    "secured": false
                 },
                 {
                     "port": 80,
-                    "public": true
+                    "public": true,
+                    "secured": true
                 }
             ]
         },
@@ -129,6 +133,11 @@ raw_k8s_obj = r"""
                 "protocol": "docker"
             },
             "name": "myworker:latest"
+        }
+    },
+    "status": {
+        "create": {
+            "initialized": true
         }
     }
 }
