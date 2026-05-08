@@ -62,6 +62,10 @@ spec:
                             type: boolean
                             description: "Enable out-of-cluster access"
                             default: false
+                          secured:
+                            type: boolean
+                            description: "Apply the same security measures as of the REST-API, e.g., authentication"
+                            default: false
                 data:
                   type: object
                   description: "Data collection parameters"
