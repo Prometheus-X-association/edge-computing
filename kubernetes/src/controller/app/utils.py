@@ -59,4 +59,4 @@ def sanitize_model(data: object, indent: int = 2) -> str:
 
 class ExcludeProbesFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        return 'GET /healthz ' not in record.message
+        return 'GET /healthz ' not in record.getMessage()

@@ -99,8 +99,13 @@ spec:
     - name: controller
       image: registry.k3d.local:5000/ptx-edge/controller:1.0
       imagePullPolicy: IfNotPresent
-      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--standalone", "--debug", "app/controller.py" ]
+      #command: [ "kopf", "run",  "--namespace=ptx-edge", "--standalone", "--debug",
+      #           "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
+      ports:
+        - name: api-port
+          containerPort: 8080
+          protocol: TCP
       volumeMounts:
         - name: src
           mountPath: /usr/src/controller/app
