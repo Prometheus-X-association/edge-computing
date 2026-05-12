@@ -81,6 +81,7 @@ metadata:
 spec:
   basicAuth:
     secret: api-basic-auth
+    realm: ${PTX}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
