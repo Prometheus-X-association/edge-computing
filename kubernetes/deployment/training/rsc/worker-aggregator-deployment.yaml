@@ -132,42 +132,43 @@ spec:
                 port:
                   name: port-mlflow
 ---
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: ${AGG}-stripprefix
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${AGG}
-    env: ${ENV}
-    tier: worker
-spec:
-  stripPrefix:
-    prefixes:
-      - /worker/${AGG}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ${AGG}-mlflow-api
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${AGG}
-    env: ${ENV}
-    tier: worker
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${AGG}-stripprefix@kubernetescrd
-spec:
-  ingressClassName: traefik
-  rules:
-    - http:
-        paths:
-          - path: /worker/${AGG}/${MLFLOW_API_PREFIX}
-            pathType: Prefix
-            backend:
-              service:
-                name: ${AGG}
-                port:
-                  name: port-mlflow
----
+#apiVersion: traefik.io/v1alpha1
+#kind: Middleware
+#metadata:
+#  name: ${AGG}-stripprefix
+#  namespace: ${PTX}
+#  labels:
+#    app.kubernetes.io/name: ${AGG}
+#    env: ${ENV}
+#    tier: worker
+#spec:
+#  stripPrefix:
+#    prefixes:
+#      - /worker/${AGG}
+#---
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: ${AGG}-mlflow-api
+#  namespace: ${PTX}
+#  labels:
+#    app.kubernetes.io/name: ${AGG}
+#    env: ${ENV}
+#    tier: worker
+#  annotations:
+#    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+#    traefik.ingress.kubernetes.io/router.tls: "true"
+#    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${AGG}-stripprefix@kubernetescrd
+#spec:
+#  ingressClassName: traefik
+#  rules:
+#    - http:
+#        paths:
+#          - path: /worker/${AGG}/${MLFLOW_API_PREFIX}
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: ${AGG}
+#                port:
+#                  name: port-mlflow
+#---

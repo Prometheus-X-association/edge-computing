@@ -61,10 +61,10 @@ CA_DIR="${SCRIPT_DIR}/creds/reg/ca"
 LB_WEB_PORT=8080
 LB_WEBSECURE_PORT=8443
 LB_DOMAIN="${CLUSTER}.k3d.localhost"
+CLUSTER_HOST="${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
 # Loaded from creds/websecure-creds.sh !
 ### GW_DOMAIN=
 ### GW_PORT=
-CLUSTER_HOST="${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
 GW_HOST="${GW_DOMAIN}:${GW_PORT}"
 
 PRIMARY_IP="$(ip route get 1 | awk '{print $(NF-2);exit}')"
@@ -161,7 +161,7 @@ DP0_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8201/train_data.npz"
 #DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
 DP0_IMG="ghcr.io/alelevente/data_processor:latest"
 DP0_MLFLOW_INT="http://localhost:5000"
-DP0_MLFLOW_ORG="http://${DP0}.${PTX}:5000"
+DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 #
 DP1="data-processor-1"
 DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
@@ -169,12 +169,12 @@ DP1_DATA="http://cloud-26952.vm.fured.cloud.bme.hu:8202/train_data.npz"
 #DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp2/train_data.npz"
 DP1_IMG="ghcr.io/alelevente/data_processor:latest"
 DP1_MLFLOW_INT="http://localhost:5000"
-DP1_MLFLOW_ORG="http://${DP1}.${PTX}:5000"
+DP1_MLFLOW_ORG="http://${DP1}.${PTX}.svc.cluster.local:5000"
 #
 AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:latest"
 AGG_MLFLOW_INT="http://localhost:5000/worker/aggregator"
-AGG_MLFLOW_ORG="http://${AGG}.${PTX}:5000"
+AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.cluster.local:5000"
 AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686/worker/aggregator"
 MLFLOW_API_PREFIX="api/2.0/mlflow"
 #

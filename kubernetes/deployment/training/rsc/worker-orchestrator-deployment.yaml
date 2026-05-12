@@ -59,6 +59,8 @@ spec:
           env:
             - name: ROOT_PATH
               value: /worker/${ORCH}
+            - name: BASIC_AUTH_USERNAME
+            - name: BASIC_AUTH_PASSWORD
           resources:
             requests:
               cpu: 500m
