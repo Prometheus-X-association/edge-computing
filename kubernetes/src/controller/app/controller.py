@@ -92,7 +92,7 @@ def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: k
     logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
     ####
     logger.info(f"Rendering manifest...")
-    worker_temp: jinja2.Template = memo.TEMPLATES.get_template("worker_pod.yaml.j2")
+    worker_temp: jinja2.Template = memo.TEMPLATES.get_template("worker_pod.yaml.jinja2")
     manifest = worker_temp.render(ewt.spec.model_dump())
     new_body = yaml.safe_load(manifest)
     kopf.adopt(new_body, forced=True)

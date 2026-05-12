@@ -141,6 +141,8 @@ SCHEDULER_REF="${PTX}-${SCHEDULER}"
 
 # Controller
 CONTROLLER="controller"
+CNTR_PORT=8080
+CNTR_LIVE_PATH="healthz"
 
 # Builder
 BUILDER=builder

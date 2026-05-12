@@ -18,44 +18,13 @@ metadata:
     env: ${ENV}
     tier: edge
 rules:
-  - apiGroups: [ kopf.dev ]
-    resources: [ clusterkopfpeerings ]
-    verbs: [ list, watch, patch, get ]
+  ### Framework: runtime observation of namespaces & CRDs (addition/deletion).
   - apiGroups: [ apiextensions.k8s.io ]
     resources: [ customresourcedefinitions ]
     verbs: [ list, watch ]
   - apiGroups: [ "" ]
     resources: [ namespaces ]
     verbs: [ list, watch ]
-  - apiGroups: [ admissionregistration.k8s.io/v1, admissionregistration.k8s.io/v1beta1 ]
-    resources: [ validatingwebhookconfigurations, mutatingwebhookconfigurations ]
-    verbs: [ create, patch ]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: ${CONTROLLER}-rbac
-  namespace: ${PTX}
-  labels:
-    app.kubernetes.io/name: ${CONTROLLER}
-    env: ${ENV}
-    tier: edge
-rules:
-  - apiGroups: [ kopf.dev ]
-    resources: [ kopfpeerings ]
-    verbs: [ list, watch, patch, get ]
-  - apiGroups: [ "" ]
-    resources: [ events ]
-    verbs: [ create ]
-  - apiGroups: [ dataspace.ptx.org ]
-    resources: [ edgeworkertasks, edgeworkertasks/status ]
-    verbs: [ list, watch, patch ]
-  - apiGroups: [ batch, extensions ]
-    resources: [ jobs ]
-    verbs: [ create ]
-  - apiGroups: [ "" ]
-    resources: [ pods, persistentvolumeclaims ]
-    verbs: [ create ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -74,6 +43,41 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: ${CONTROLLER}-rbac-cluster
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${CONTROLLER}-rbac
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${CONTROLLER}
+    env: ${ENV}
+    tier: edge
+rules:
+  ### Framework: posting the events about the handlers progress/errors.
+  - apiGroups: [ "" ]
+    resources: [ events ]
+    verbs: [ create ]
+  ### Application: watching & handling for the custom resource.
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ edgeworkertasks, edgeworkertasks/status ]
+    verbs: [ list, watch, patch ]
+  ### Application: other resources it produces and manipulates.
+  - apiGroups: [ batch ]
+    resources: [ jobs ]
+    verbs: [ create ]
+  - apiGroups: [ apps ]
+    resources: [ deployments ]
+    verbs: [ create ]
+  - apiGroups: [ "" ]
+    resources: [ services ]
+    verbs: [ create ]
+  - apiGroups: [ networking.k8s.io ]
+    resources: [ ingress ]
+    verbs: [ create ]
+  - apiGroups: [ traefik.io ]
+    resources: [ middlewares ]
+    verbs: [ create ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -104,6 +108,8 @@ metadata:
     tier: edge
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: ${CONTROLLER}
@@ -123,6 +129,17 @@ spec:
         - name: ${CONTROLLER}
           image: ${REGISTRY}:${REGISTRY_PORT}/${CONTROL_IMG}
           imagePullPolicy: IfNotPresent
-          command: [ "kopf", "run",  "--namespace=${PTX}", "--verbose", "--standalone", "app/controller.py" ]
+          command: [ "kopf", "run", "--standalone",
+                     "--namespace=${NS}", "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
+          ports:
+            - name: api-port
+              containerPort: ${CNTR_PORT}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: ${CNTR_PORT}
+              path: /${CNTR_LIVE_PATH}
+            initialDelaySeconds: 5
+            periodSeconds: 5
       restartPolicy: Always
 ---
