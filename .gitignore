@@ -13,7 +13,7 @@ kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/*/creds/*
 kubernetes/deployment/*/manifests/*
-kubernetes/deployment/training/data/*
+kubernetes/deployment/training/data/resource/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
 kubernetes/test/demos/demo1/creds/*
