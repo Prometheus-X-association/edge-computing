@@ -1,3 +1,4 @@
+# Development cfg and temp files
 **/.*
 **/.idea
 **/.venv
@@ -8,12 +9,14 @@
 **/*.bkp
 **/*.dtmp
 **/*.log
+# sensitive settings
 kubernetes/src/.cache
 kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/*/creds/*
+kubernetes/test/demos/demo1/creds/*
+# data files
 kubernetes/deployment/*/manifests/*
 kubernetes/deployment/training/data/resource/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
-kubernetes/test/demos/demo1/creds/*
