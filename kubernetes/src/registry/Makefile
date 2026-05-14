@@ -25,25 +25,41 @@ NAME := registry
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 
+cert: SHELL := /bin/bash
 cert:
 	rm -rf "${CURDIR}/.certs" && mkdir -p "${CURDIR}/.certs/ca" && mkdir -p "${CURDIR}/.certs/auth"
-	openssl genrsa -out "${CURDIR}/.certs/ca.key" 2048
+	# Generate CA root key
+	openssl genrsa -out "${CURDIR}/.certs/ca.key" 4096
+	# Generate CA certificate signed with root key
 	openssl req -new -x509 -days 365 \
 			-key "${CURDIR}/.certs/ca.key" \
 			-out "${CURDIR}/.certs/ca/ca.crt" \
 			-subj '/C=EU/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org'
-	openssl req -newkey rsa:2048 -noenc \
+	# Check created signing request
+	openssl x509 -in "${CURDIR}/.certs/ca/ca.crt" -noout -text
+	# Generate registry key and its signing request for the CA
+	openssl req -newkey rsa:4096 -noenc -days 365 \
 			-keyout "${CURDIR}/.certs/auth/server.key" \
 			-out "${CURDIR}/.certs/server.csr" \
-			-subj '/C=EU/O=ptx-edge/OU=ptx-edge/CN=*.ptx-edge.prometheus-x.org'
-	printf "subjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}" | openssl x509 -req -days 365 \
+			-subj '/C=EU/O=PTX/OU=edge/CN=edge.dataspace.ptx.org' \
+			-reqexts SAN \
+			-config <(printf "[SAN]\nsubjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}")
+	# Check created signing request
+	openssl req -in "${CURDIR}/.certs/server.csr" -noout -text
+	# Generate certificate from registry key by CA key and certificate using the signing request
+	openssl x509 -req -days 365 \
 			-in "${CURDIR}/.certs/server.csr" \
 			-CA "${CURDIR}/.certs/ca/ca.crt" \
 			-CAkey "${CURDIR}/.certs/ca.key" \
 			-out "${CURDIR}/.certs/auth/server.cert" \
-			-CAcreateserial -extfile=-
-	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > "${CURDIR}/.certs/auth/htpasswd"
+			-CAcreateserial \
+			-extensions SAN \
+			-extfile <(printf "[SAN]\nsubjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}")
+	# Validate generated registry server certificate
+	openssl x509 -in "${CURDIR}/.certs/auth/server.cert" -noout -text
 	@#docker run --entrypoint htpasswd httpd:2 -Bbn admin admin > .certs/htpasswd
+	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > "${CURDIR}/.certs/auth/htpasswd"
+	@#openssl s_client -showcerts -brief -servername registry.k3d.localhost localhost:5555 </dev/null
 	@#curl -k -u admin:admin https://localhost:5555/v2/_catalog
 	@#wget -O- --no-check-certificate --user=admin --password=admin https://localhost:5555/v2/_catalog
 	@#
@@ -53,27 +69,24 @@ cert:
 	@#skopeo inspect --cert-dir=.certs/ca --creds=admin:admin docker://registry.k3d.localhost:5555/busybox:latest
 
 build: cert
-	docker build -t ${IMG} .
+	docker build -t ${IMG} --build-arg HTTP_SECRET=$$(openssl rand -base64 32 | tr -d /=+ | cut -c -16) .
 	docker images --no-trunc ${IMG}
 
 run: build
 	docker run --rm -ti -p 5555:5000 --restart=no --name ptx-registry \
 		-v "${CURDIR}/.certs/auth:/opt/registry/auth:ro" \
-		-e 'REGISTRY_AUTH=htpasswd' \
-		-e 'REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm' \
-		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
-		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
-		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
-		registry:3.0.0
+		ptx-edge/registry:1.0
 
 test: clear
 	docker run -d -p 5678:5000 --restart=no --name test-registry \
 		-v "${CURDIR}/.certs/auth:/opt/registry/auth:ro" \
 		-e 'REGISTRY_AUTH=htpasswd' \
-		-e 'REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm' \
+		-e 'REGISTRY_AUTH_HTPASSWD_REALM=K3dRegistry' \
 		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
 		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
 		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
+		-e 'REGISTRY_LOG_LEVEL=debug' \
+		-e 'OTEL_TRACES_EXPORTER=none' \
 		registry:3.0.0
 	docker pull busybox:latest
 	docker login -u ${REGISTRY_USER} -p ${REGISTRY_SECRET} ${LOCAL_REGISTRY}:5678
@@ -118,6 +131,8 @@ run-mock:
 		-e 'REGISTRY_AUTH_HTPASSWD_PATH=/opt/registry/auth/htpasswd' \
 		-e 'REGISTRY_HTTP_TLS_CERTIFICATE=/opt/registry/auth/server.cert' \
 		-e 'REGISTRY_HTTP_TLS_KEY=/opt/registry/auth/server.key' \
+		-e 'REGISTRY_LOG_LEVEL=info' \
+		-e 'OTEL_TRACES_EXPORTER=none' \
 		registry:3.0.0
 	docker ps -a -f name=mock-registry
 	docker pull busybox:latest
@@ -143,7 +158,7 @@ unit-tests:
 ########################################################################################################################
 
 clear:
-	-docker rm -f test-registry ptx-registry
+	-docker rm -f test-registry ptx-registry || true
 
 purge: clear
 	rm -rf ${CURDIR}/.certs
