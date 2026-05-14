@@ -36,13 +36,22 @@ ${KCTL} label "node/k3d-${NODE_FED}-0" "node/k3d-${NODE_FED}-1" "${LAB_WORK}" "$
 #docker container ls -qf "name=k3d-node-" -f "name=k3d-demo-server-" | xargs -rI {} docker exec {} sh -c 'mkdir -pv /var/cache/storage'
 
 log "Generate certificate for domain: ${GW_DOMAIN}"
-rm -rf "${SCRIPT_DIR}/creds/cluster/" && mkdir -pv "${SCRIPT_DIR}/creds/cluster/cert/"
-pushd "${SCRIPT_DIR}/creds/cluster/cert/"
-    # Simple self-signed cert
+rm -rf "${SCRIPT_DIR}/creds/cert/cluster/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/cluster/"
+pushd "${SCRIPT_DIR}/creds/cert/cluster/"
+    ### Simple self-signed cert
     #openssl req -x509 -noenc -days 365 -newkey rsa:4096 \
     #            -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" -keyout cluster-tls.key -out cluster-tls.cert
-    envsubst <"${SCRIPT_DIR}/cfg/cluster-tls.conf" | openssl req -x509 -noenc -days 365 -new \
-                -keyout cluster-tls.key -out cluster-tls.cert -config=-
+    #envsubst <"${SCRIPT_DIR}/cfg/cluster-tls.conf" | openssl req -x509 -noenc -days 365 -new \
+    #            -keyout cluster-tls.key -out cluster-tls.cert -config=-
+    ### Self-signed cert with root CA
+    openssl req -newkey rsa:4096 -noenc -keyout cluster-tls.key -out cluster-tls.csr \
+                                -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
+                                -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "${LB_DOMAIN}")
+    #openssl req -in cluster-tls.csr -noout -text
+    openssl x509 -req -days 365 -in cluster-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
+                                -out cluster-tls.cert -CAcreateserial -extensions SAN \
+                                -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "${LB_DOMAIN}")
+    openssl x509 -in cluster-tls.cert -noout -text
     ${KCTL} -n kube-system create secret tls "${CLUSTER_TLS_SECRET}" --cert=cluster-tls.cert --key=cluster-tls.key
 popd
 
@@ -58,7 +67,7 @@ until [ -n "$(openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}"
 do
     printf "." && sleep 1 && _cntr=$((_cntr+1))
 done; echo
-openssl s_client -showcerts -brief -servername "${GW_DOMAIN}" "${_TRAEFIK_HTTPS}" </dev/null
+openssl s_client -showcerts -brief -CAfile="${CA_DIR}/ca.crt" -servername "${GW_DOMAIN}" "${_TRAEFIK_HTTPS}" </dev/null
 
 LOG "Load components into registry: ${K3D_REG}"
 for img in "${IMAGES[@]}"; do
