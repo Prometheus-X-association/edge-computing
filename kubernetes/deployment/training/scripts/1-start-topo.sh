@@ -19,7 +19,6 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ########################################################################################################################
 
 LOG "Creating cluster infrastructure..."
-#envsubst <"${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml" | k3d cluster create --config=-
 k3d cluster create --config="${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml"  # k3d resolves envvars by default
 ${KCTL} cluster-info
 
