@@ -18,6 +18,7 @@ export LOCAL_REGISTRY := registry.k3d.localhost
 # set default values or define as makefile param or from envvar
 REGISTRY_USER ?= admin
 REGISTRY_SECRET ?= admin
+REGISTRY_HTTP_SECRET ?= $(shell openssl rand -base64 32 | tr -d /=+ | cut -c -16)
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 CRED := ${REGISTRY_USER}:${REGISTRY_SECRET}
@@ -69,7 +70,7 @@ cert:
 	@#skopeo inspect --cert-dir=.certs/ca --creds=admin:admin docker://registry.k3d.localhost:5555/busybox:latest
 
 build: cert
-	docker build -t ${IMG} --build-arg HTTP_SECRET=$$(openssl rand -base64 32 | tr -d /=+ | cut -c -16) .
+	docker build -t ${IMG} --build-arg REGISTRY_HTTP_SECRET=${REGISTRY_HTTP_SECRET} .
 	docker images --no-trunc ${IMG}
 
 run: build
