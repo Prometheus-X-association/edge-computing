@@ -9,6 +9,6 @@ RUN apk add --no-cache openssl && \
                                                             -keyout .cert/api-tls.key -out .cert/api-tls.cert
 RUN python3 -m pip install --no-cache-dir -U fastapi uvicorn
 COPY api.py ./
-EXPOSE 8443
-CMD ["uvicorn", "api:app", "--host=0.0.0.0", "--port=8443", "--workers=2", "--access-log", \
+EXPOSE 4443
+CMD ["uvicorn", "api:app", "--host=0.0.0.0", "--port=4443", "--workers=2", "--access-log", \
         "--ssl-keyfile=.cert/api-tls.key", "--ssl-certfile=.cert/api-tls.cert" ]

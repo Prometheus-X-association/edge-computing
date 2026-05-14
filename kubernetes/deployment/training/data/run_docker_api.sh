@@ -17,17 +17,18 @@ set -eou pipefail
 IMG="training/data-api:latest"
 NAME="training-data-api"
 #
-PORT=8443
+PORT=4443
 DOMAIN="datasource.ptx.localhost"
 #
 USERNAME="admin"
 PASSWORD="datasource1234"
 
 # Build image
-docker build -t "${IMG}" --build-arg PORT="${PORT}" --build-arg DOMAIN="${DOMAIN}" .
-docker image ls "${IMG}"
+docker build -t "${IMG}" --build-arg DOMAIN="${DOMAIN}" . && docker image ls "${IMG}"
+# Shut down running instance
 docker rm --force "${NAME}" || true
-docker run -d -p "${PORT}:${PORT}" -v "./resource:/usr/src/api/resource" -e USERNAME="${USERNAME}" -e PASSWORD="${PASSWORD}" \
-    --name "${NAME}" "${IMG}"
-docker ps -l
-sleep 1 && docker logs "${NAME}"
+# Run datasource API server
+docker run -d -p "${PORT}:4443" -v "./resource:/usr/src/api/resource" \
+                                        -e USERNAME="${USERNAME}" -e PASSWORD="${PASSWORD}" --name "${NAME}" "${IMG}"
+# Check running instance
+docker ps -l && sleep 1 && docker logs "${NAME}" -f

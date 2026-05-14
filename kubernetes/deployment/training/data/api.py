@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 __version__ = '1.0.0'
 
 # Main app
-app = FastAPI(title="Training Data API", version=__version__, docs_url=None, redoc_url=None)
+app = FastAPI(title="DatasourceAPI", version=__version__, docs_url=None, redoc_url=None)
 
 
 # For checking API availability
@@ -35,7 +35,8 @@ async def version():
 
 
 # Include datasets from /resource unauthorized to API as fallback static routes
-app.mount("/static", StaticFiles(directory="./resource"), name="static")
+RESOURCE = os.getenv("RESOURCE", "resource")
+app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOURCE), name="static")
 
 # Define basic authentication credentials
 security = HTTPBasic(realm="DataSource")
@@ -52,13 +53,13 @@ def _authenticate_user(creds: typing.Annotated[HTTPBasicCredentials, Depends(sec
 
 
 # Define protected datasets
-DS_PREFIX = os.getenv("PREFIX", "/dataset")
-datasource = APIRouter(prefix=DS_PREFIX, dependencies=[Depends(_authenticate_user)])
+PREFIX = os.getenv("PREFIX", "dataset")
+datasource = APIRouter(prefix=f"/{PREFIX}", dependencies=[Depends(_authenticate_user)])
 
 
 @datasource.get("/{zone}/{data}")
 async def get_data(zone: str, data: str):
-    if not (dataset := pathlib.Path(__file__).parent / "resource" / zone / data).exists():
+    if not (dataset := pathlib.Path(__file__).parent / RESOURCE / zone / data).exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return FileResponse(dataset, media_type="application/octet-stream")
 
