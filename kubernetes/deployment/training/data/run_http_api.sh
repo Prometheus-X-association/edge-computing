@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python3 -m http.server --bind='0.0.0.0' --directory="./data" 8888
+python3 -m http.server --bind='0.0.0.0' --directory="$(dirname "${0}")/resource" 8888
