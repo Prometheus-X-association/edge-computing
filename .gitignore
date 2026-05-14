@@ -14,6 +14,7 @@ kubernetes/src/.cache
 kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/*/creds/*
+kubernetes/deployment/training/data/cert/*
 kubernetes/test/demos/demo1/creds/*
 # data files
 kubernetes/deployment/*/manifests/*

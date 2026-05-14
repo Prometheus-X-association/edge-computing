@@ -18,7 +18,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
-LOG "Building docker images...."
+LOG "Building docker images..."
 
 log "Remove cached cert files..."
 rm -rf "${SCRIPT_DIR}/creds/cert"

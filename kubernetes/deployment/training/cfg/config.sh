@@ -49,7 +49,7 @@ NODE_FED="node-federated"
 # Registry
 REGISTRY="registry.k3d.local"
 REGISTRY_PORT=5000
-# Loaded from creds/cluster-creds.sh !
+# Loaded from creds/websecure-creds.sh !
 ### REGISTRY_USER=
 ### REGISTRY_SECRET=
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
@@ -114,7 +114,7 @@ PDC=pdc
 PDC_PORT=3000
 PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'  # placeholder
-# Loaded from creds/cluster-creds.sh !
+# Loaded from creds/websecure-creds.sh !
 ### PDC_SERVICE_KEY=
 ### PDC_SECRET_KEY=
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)

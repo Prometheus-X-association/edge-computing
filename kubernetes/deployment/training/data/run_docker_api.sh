@@ -14,21 +14,46 @@
 # limitations under the License.
 set -eou pipefail
 
-IMG="training/data-api:latest"
-NAME="training-data-api"
-#
-PORT=4443
-DOMAIN="datasource.ptx.localhost"
-#
-USERNAME="admin"
-PASSWORD="datasource1234"
+source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
+
+########################################################################################################################
+
+# Datasource image config
+DATASOURCE_IMG="training/data-api:latest"
+DATASOURCE_API_NAME="training-data-api"
+DATASOURCE_PORT=9443
+# Datasource API config
+# Loaded from creds/websecure-creds.sh !
+### DATASOURCE_API_DOMAIN=
+### DATASOURCE_USERNAME=
+### DATASOURCE_PASSWORD=
+
+########################################################################################################################
+
+LOG "Initiate Datasource API..."
+
+# Create certs
+rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
+pushd "${SCRIPT_DIR}/data/cert/"
+    openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
+        -subj "/C=EU/O=PTX/OU=edge/CN=${DATASOURCE_API_DOMAIN}" -reqexts SAN \
+        -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${DATASOURCE_API_DOMAIN}" "datasource.ptx.localhost")
+    openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
+        -out api-tls.cert -CAcreateserial -extensions SAN \
+        -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${DATASOURCE_API_DOMAIN}" "datasource.ptx.localhost")
+    openssl x509 -in api-tls.cert -noout -text
+popd
 
 # Build image
-docker build -t "${IMG}" --build-arg DOMAIN="${DOMAIN}" . && docker image ls "${IMG}"
+docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${DATASOURCE_API_DOMAIN}" .
+docker image ls "${DATASOURCE_IMG}"
+
 # Shut down running instance
-docker rm --force "${NAME}" || true
+docker rm --force "${DATASOURCE_API_NAME}" || true
+
 # Run datasource API server
-docker run -d -p "${PORT}:4443" -v "./resource:/usr/src/api/resource" \
-                                        -e USERNAME="${USERNAME}" -e PASSWORD="${PASSWORD}" --name "${NAME}" "${IMG}"
+docker run -d -p "${DATASOURCE_PORT}:4443" -e USERNAME="${DATASOURCE_USERNAME}" -e PASSWORD="${DATASOURCE_PASSWORD}" \
+    -v "./resource:/usr/src/api/resource" --name "${DATASOURCE_API_NAME}" "${DATASOURCE_IMG}"
+
 # Check running instance
-docker ps -l && sleep 1 && docker logs "${NAME}" -f
+docker ps -l && sleep 1 && docker logs "${DATASOURCE_API_NAME}" -f
