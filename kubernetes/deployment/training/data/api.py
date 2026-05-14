@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import enum
 import os
 import pathlib
 import secrets
 import typing
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, status, Depends, APIRouter
+from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -56,10 +57,15 @@ def _authenticate_user(creds: typing.Annotated[HTTPBasicCredentials, Depends(sec
 PREFIX = os.getenv("PREFIX", "dataset")
 datasource = APIRouter(prefix=f"/{PREFIX}", dependencies=[Depends(_authenticate_user)])
 
+Zone = enum.StrEnum("Zone", [p.name for p in pathlib.Path(__file__).parent.joinpath(RESOURCE).iterdir()
+                             if p.is_dir() and not p.name.startswith("_") and not p.name.startswith(".")])
+
 
 @datasource.get("/{zone}/{data}")
-async def get_data(zone: str, data: str):
-    if not (dataset := pathlib.Path(__file__).parent / RESOURCE / zone / data).exists():
+async def get_data(zone: typing.Annotated[Zone, ...],
+                   data: typing.Annotated[str, Path(min_length=1, pattern='^([^/]+)\\.\\w+$')]):
+    dataset: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value / data).resolve()
+    if not dataset.exists() or not str(dataset).startswith(str(pathlib.Path(__file__).parent)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return FileResponse(dataset, media_type="application/octet-stream")
 
