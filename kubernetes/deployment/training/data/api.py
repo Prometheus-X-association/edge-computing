@@ -64,8 +64,13 @@ Zone = enum.StrEnum("Zone", [p.name for p in pathlib.Path(__file__).parent.joinp
 @datasource.get("/{zone}/{data}")
 async def get_data(zone: typing.Annotated[Zone, ...],
                    data: typing.Annotated[str, Path(min_length=1, pattern='^([^/]+)\\.\\w+$')]):
-    dataset: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value / data).resolve()
-    if not dataset.exists() or not str(dataset).startswith(str(pathlib.Path(__file__).parent)):
+    base_dir: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value).resolve()
+    dataset: pathlib.Path = (base_dir / data).resolve()
+    try:
+        dataset.relative_to(base_dir)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if not dataset.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return FileResponse(dataset, media_type="application/octet-stream")
 
