@@ -20,14 +20,19 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 LOG "Building docker images...."
 
+log "Remove cached cert files..."
+rm -rf "${SCRIPT_DIR}/creds/cert"
+
 log "Build PTX-edge components"
 for comp in "${COMPONENTS[@]}"; do
     make -C "${ROOT_DIR}/src/${comp}" build
 done
 
 log "Cache used registry CA files locally"
-rm -rf "${SCRIPT_DIR}/creds/reg/ca/" && mkdir -p "${SCRIPT_DIR}/creds/reg/ca/"
-cp -vR "${ROOT_DIR}/src/registry/.certs/ca" "${SCRIPT_DIR}/creds/reg/"
+mkdir -p "${SCRIPT_DIR}/creds/cert/ca" "${SCRIPT_DIR}/creds/cert/registry"
+cp -vR "${ROOT_DIR}/src/registry/.certs/ca/ca.crt" "${SCRIPT_DIR}/creds/cert/ca/ca.crt"
+cp -vR "${ROOT_DIR}/src/registry/.certs/ca.key" "${SCRIPT_DIR}/creds/cert/ca.key"
+cp -vR "${ROOT_DIR}/src/registry/.certs/auth/server.cert" "${SCRIPT_DIR}/creds/cert/registry/server.cert"
 
 #log "Collect federated learning images"
 #for img in "${FED_COMPONENTS[@]}"; do

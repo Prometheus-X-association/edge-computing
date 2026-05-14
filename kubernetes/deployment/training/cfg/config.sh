@@ -55,7 +55,7 @@ REGISTRY_PORT=5000
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
 REG_CREDS="${REGISTRY_USER}:${REGISTRY_SECRET}"
 #CA_DIR="${ROOT_DIR}/src/registry/.certs/ca"
-CA_DIR="${SCRIPT_DIR}/creds/reg/ca"
+CA_DIR="${SCRIPT_DIR}/creds/cert/ca"
 
 # Loadbalancer
 LB_WEB_PORT=8080
