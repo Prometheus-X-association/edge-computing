@@ -69,8 +69,8 @@ for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
     _PDC_URL="https://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
     log ">>> PDC is exposed on ${_PDC_URL}"
-    wget --spider -S -nv --no-check-certificate --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 \
-            "${_PDC_URL}"
+    wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" \
+            --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_PDC_URL}"
     echo
     curl -k -LSsf "${_PDC_URL}" | grep "href" | head -n1
     echo
@@ -89,9 +89,10 @@ ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${T
 
 _REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"
 log ">>> ${REST_API} is available on ${_REST_API_URL}"
-wget --spider -S -nv --no-check-certificate --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 \
-    --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
-curl -k -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
+wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" --retry-on-http-error=500,502 --waitretry=2 \
+            --read-timeout=3 --tries=10 --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
+curl --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                                    "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
 log ">>> ${REST_API} is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/\n
 >>> ${REST_API} is also exposed on https://${GW_HOST}/${PREFIX}/ui/"
 
