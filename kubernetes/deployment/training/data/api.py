@@ -32,7 +32,8 @@ app = FastAPI(title="DatasourceAPI", version=__version__, docs_url=None, redoc_u
 GW_DOMAIN = os.getenv("GW_DOMAIN", "")
 
 # noinspection PyTypeChecker
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "*.localhost", GW_DOMAIN, f"*.{GW_DOMAIN}"])
+app.add_middleware(TrustedHostMiddleware,
+                   allowed_hosts=["localhost", "*.localhost", "host.k3d.internal", GW_DOMAIN, f"*.{GW_DOMAIN}"])
 
 
 # For checking API availability
@@ -78,7 +79,7 @@ async def get_train_data(zone: typing.Annotated[Zone, Path()],
     dataset: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value / data).resolve()
     if not dataset.exists() or not str(dataset).startswith(str(pathlib.Path(__file__).parent)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return FileResponse(dataset, media_type="application/octet-stream")
+    return FileResponse(dataset, media_type="application/octet-stream", filename=dataset.name)
 
 
 # Include datasource endpoints to API
