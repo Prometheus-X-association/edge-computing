@@ -55,7 +55,7 @@ security = HTTPBasic(realm="DataSource")
 USER = os.getenv("USERNAME", "")
 PASSWORD = os.getenv("PASSWORD", "")
 
-if not USER or PASSWORD:
+if not USER or not PASSWORD:
     warnings.warn("USERNAME and PASSWORD environment variable is not set!")
     sys.exit(-1)
 
