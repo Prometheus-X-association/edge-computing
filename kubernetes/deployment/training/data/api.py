@@ -18,8 +18,9 @@ import secrets
 import typing
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 
@@ -41,8 +42,8 @@ app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOU
 
 # Define basic authentication credentials
 security = HTTPBasic(realm="DataSource")
-USER = os.getenv("USERNAME", "admin")
-PASSWORD = os.getenv("PASSWORD", "datasource1234")
+USER = os.getenv("USERNAME", "")
+PASSWORD = os.getenv("PASSWORD", "")
 
 
 # Authenticate requests based on user/pass from envvars
@@ -61,8 +62,13 @@ Zone = enum.StrEnum("Zone", [p.name for p in pathlib.Path(__file__).parent.joinp
                              if p.is_dir() and not p.name.startswith("_") and not p.name.startswith(".")])
 
 
+@app.exception_handler(RequestValidationError)
+async def suppress_validation_error(request: Request, exc: RequestValidationError):
+    return PlainTextResponse("Validation error!", status_code=400)
+
+
 @datasource.get("/{zone}/{data}")
-async def get_data(zone: typing.Annotated[Zone, ...],
+async def get_data(zone: typing.Annotated[Zone, Path()],
                    data: typing.Annotated[str, Path(min_length=1, pattern='^([^/]+)\\.\\w+$')]):
     dataset: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value / data).resolve()
     if not dataset.exists() or not str(dataset).startswith(str(pathlib.Path(__file__).parent)):
