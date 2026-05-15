@@ -16,11 +16,12 @@ import pathlib
 import tempfile
 
 import httpx
+from httpx_retries import RetryTransport, Retry
+
 from app.ptx.connector import perform_pdc_data_exchange
 from app.util.config import CONFIG, SKIPPED
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth
-from httpx_retries import RetryTransport, Retry
 
 log = logging.getLogger(__name__)
 
@@ -58,15 +59,14 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
         match auth.scheme:
             case None:
-                auth = None
+                req_auth = None
             case "basic":
-                auth = httpx.BasicAuth(username=auth.user, password=auth.secret)
+                req_auth = httpx.BasicAuth(username=auth.user, password=auth.secret)
             case "digest":
-                auth = httpx.DigestAuth(username=auth.user, password=auth.secret)
+                req_auth = httpx.DigestAuth(username=auth.user, password=auth.secret)
             case _:
-                # auth = getattr(httpx_auth, custom)(**auth.params)
                 raise NotImplementedError
-        client = httpx.Client(http2=True, follow_redirects=True, auth=auth, timeout=timeout,
+        client = httpx.Client(http2=True, follow_redirects=True, auth=req_auth, timeout=timeout,
                               transport=RetryTransport(retry=Retry(total=retry, backoff_factor=1)))
         log.info(f"Sending GET request to {url} with auth: {type(auth).__name__}...")
         try:
@@ -130,7 +130,7 @@ def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: i
 
 ########################################################################################################################
 
-def get_data_resources() -> pathlib.Path | None:
+def get_data_resources() -> pathlib.Path | None | SKIPPED:
     """
 
     :return:
@@ -141,17 +141,20 @@ def get_data_resources() -> pathlib.Path | None:
     data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     data_path = None
+    if (dst := get_resource_path(data_dst)) is None:
+        return None
     match get_resource_scheme(data_src):
         case 'file' | 'dir' | 'mount':
-            data_path = collect_data_from_filesystem(src=get_resource_path(data_src), dst=get_resource_path(data_dst))
+            if (src := get_resource_path(data_src)) is not None:
+                data_path = collect_data_from_filesystem(src=src, dst=dst)
         case 'http' | 'https':
             auth = DataSourceAuth.parse(CONFIG.get('data.auth'))
-            data_path = collect_data_from_url(url=data_src, dst=get_resource_path(data_dst),
-                                              auth=auth, retry=conn_retry, timeout=conn_timeout)
-        case 'ptx':
-            data_path = collect_data_from_ptx(contract_id=get_resource_path(data_src),
-                                              dst=get_resource_path(data_dst),
+            data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
                                               retry=conn_retry, timeout=conn_timeout)
+        case 'ptx':
+            if (contract_id := get_resource_path(data_src)) is not None:
+                data_path = collect_data_from_ptx(contract_id=contract_id, dst=dst,
+                                                  retry=conn_retry, timeout=conn_timeout)
         case 'skip' | None:
             data_path = SKIPPED
         case other:
