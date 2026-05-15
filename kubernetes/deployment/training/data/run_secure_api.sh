@@ -26,10 +26,11 @@ DATASOURCE_PORT=9443
 # Loaded from creds/websecure-creds.sh !
 ### DATASOURCE_USERNAME=
 ### DATASOURCE_PASSWORD=
+### GW_DOMAIN=
 
 ########################################################################################################################
 
-LOG "Initiate Datasource API..."
+LOG "Initiate Datasource API for domain: ${GW_DOMAIN}..."
 
 # Create certs
 rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
@@ -56,9 +57,15 @@ docker image ls "${DATASOURCE_IMG}"
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
 # Run datasource API server
-docker run -d -p "${DATASOURCE_PORT}:8888" -e USERNAME="${DATASOURCE_USERNAME}" -e PASSWORD="${DATASOURCE_PASSWORD}" \
-                        -v "./resource:/usr/src/api/resource" --name "${DATASOURCE_API_NAME}" "${DATASOURCE_IMG}" \
-                        --ssl-keyfile=cert/api-tls.key --ssl-certfile=cert/api-tls.cert
+docker run -d -p "${DATASOURCE_PORT}:8888" \
+        -e USERNAME="${DATASOURCE_USERNAME}" \
+        -e PASSWORD="${DATASOURCE_PASSWORD}" \
+        -e GW_DOMAIN="${GW_DOMAIN}" \
+        -v "./resource:/usr/src/api/resource" \
+        --name "${DATASOURCE_API_NAME}" \
+        "${DATASOURCE_IMG}" \
+        --ssl-keyfile=cert/api-tls.key \
+        --ssl-certfile=cert/api-tls.cert
 
 # Check running instance
 docker ps --no-trunc -l && sleep 1 && docker logs "${DATASOURCE_API_NAME}" -f

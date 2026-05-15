@@ -15,7 +15,9 @@ import enum
 import os
 import pathlib
 import secrets
+import sys
 import typing
+import warnings
 
 from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path, Request
 from fastapi.exceptions import RequestValidationError
@@ -29,7 +31,9 @@ __version__ = '1.0.0'
 # Main app
 app = FastAPI(title="DatasourceAPI", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
 
-GW_DOMAIN = os.getenv("GW_DOMAIN", "")
+if not (GW_DOMAIN := os.getenv("GW_DOMAIN", "")):
+    warnings.warn("GW_DOMAIN environment variable is not set!")
+    sys.exit(-1)
 
 # noinspection PyTypeChecker
 app.add_middleware(TrustedHostMiddleware,
@@ -50,6 +54,10 @@ app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOU
 security = HTTPBasic(realm="DataSource")
 USER = os.getenv("USERNAME", "")
 PASSWORD = os.getenv("PASSWORD", "")
+
+if not USER or PASSWORD:
+    warnings.warn("USERNAME and PASSWORD environment variable is not set!")
+    sys.exit(-1)
 
 
 # Authenticate requests based on user/pass from envvars

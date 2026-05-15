@@ -15,7 +15,7 @@
 run-simple-api:
 	./run_simple_api.sh || true
 
-deploy-protected-api:
+deploy-http-api:
 	./run_http_api.sh || true
 
 deploy-secure-api:

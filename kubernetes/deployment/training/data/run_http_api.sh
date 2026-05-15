@@ -26,10 +26,11 @@ DATASOURCE_PORT=9080
 # Loaded from creds/websecure-creds.sh !
 ### DATASOURCE_USERNAME=
 ### DATASOURCE_PASSWORD=
+### GW_DOMAIN=
 
 ########################################################################################################################
 
-LOG "Initiate Datasource API..."
+LOG "Initiate Datasource API for domain: ${GW_DOMAIN}..."
 
 # Build image
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
@@ -39,8 +40,13 @@ docker image ls "${DATASOURCE_IMG}"
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
 # Run datasource API server
-docker run -d -p "${DATASOURCE_PORT}:8888" -e USERNAME="${DATASOURCE_USERNAME}" -e PASSWORD="${DATASOURCE_PASSWORD}" \
-                        -v "./resource:/usr/src/api/resource" --name "${DATASOURCE_API_NAME}" "${DATASOURCE_IMG}"
+docker run -d -p "${DATASOURCE_PORT}:8888" \
+        -e USERNAME="${DATASOURCE_USERNAME}" \
+        -e PASSWORD="${DATASOURCE_PASSWORD}" \
+        -e GW_DOMAIN="${GW_DOMAIN}" \
+        -v "./resource:/usr/src/api/resource" \
+        --name "${DATASOURCE_API_NAME}" \
+        "${DATASOURCE_IMG}"
 
 # Check running instance
 docker ps --no-trunc -l && sleep 1 && docker logs "${DATASOURCE_API_NAME}" -f
