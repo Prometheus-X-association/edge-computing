@@ -34,13 +34,18 @@ LOG "Initiate Datasource API..."
 # Create certs
 rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
 pushd "${SCRIPT_DIR}/data/cert/"
-    openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
-        -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
-        -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-    openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
-        -out api-tls.cert -CAcreateserial -extensions SAN \
-        -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-    openssl x509 -in api-tls.cert -noout -ext subjectAltName
+    if [ -e "${CA_DIR}/ca.crt" ]; then
+            openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
+                -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
+                -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
+            openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
+                -out api-tls.cert -CAcreateserial -extensions SAN \
+                -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
+            openssl x509 -in api-tls.cert -noout -ext subjectAltName
+    else
+        openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAI}" \
+                                                    -keyout api-tls.key -out api-tls.cert
+    fi
 popd
 
 # Build image
