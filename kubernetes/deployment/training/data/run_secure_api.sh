@@ -43,7 +43,7 @@ pushd "${SCRIPT_DIR}/data/cert/"
                 -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
             openssl x509 -in api-tls.cert -noout -ext subjectAltName
     else
-        openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAI}" \
+        openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" \
                                                     -keyout api-tls.key -out api-tls.cert
     fi
 popd

@@ -39,6 +39,12 @@ spec:
               value: "${BUILD_TIMEOUT}"
             - name: BUILD_DATA_SRC
               value: "${DP1_DATA}"
+            - name: BUILD_DATA_AUTH_USER
+              value: "${DATASOURCE_USERNAME}"
+            - name: BUILD_DATA_AUTH_SECRET
+              value: "${DATASOURCE_PASSWORD}"
+            - name: BUILD_DATA_AUTH_INSECURE
+              value: "${DATASOURCE_INSECURE}"
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC

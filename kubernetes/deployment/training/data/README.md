@@ -40,7 +40,7 @@ Use basic authentication without HTTPS.
 
 ```bash
 # API listens on 0.0.0.0:9080
-$ ./run_protected_api.sh
+$ ./run_http_api.sh
 # E.g., `curl -O https://datasource.ptx.localhost:9080/static/dp2/train_data.npz`
 # E.g., `curl -u <user>:<pass> -O https://datasource.ptx.localhost:9080/dataset/dp1/train_data.npz`
 ```
