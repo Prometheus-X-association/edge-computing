@@ -50,7 +50,7 @@ pushd "${SCRIPT_DIR}/creds/cert/cluster/"
     openssl x509 -req -days 365 -in cluster-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
                                 -out cluster-tls.cert -CAcreateserial -extensions SAN \
                                 -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "${LB_DOMAIN}")
-    openssl x509 -in cluster-tls.cert -noout -text
+    openssl x509 -in cluster-tls.cert -noout -text -ext subjectAltName
     ${KCTL} -n kube-system create secret tls "${CLUSTER_TLS_SECRET}" --cert=cluster-tls.cert --key=cluster-tls.key
 popd
 

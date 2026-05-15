@@ -24,7 +24,6 @@ DATASOURCE_API_NAME="training-data-api"
 DATASOURCE_PORT=9443
 # Datasource API config
 # Loaded from creds/websecure-creds.sh !
-### DATASOURCE_API_DOMAIN=
 ### DATASOURCE_USERNAME=
 ### DATASOURCE_PASSWORD=
 
@@ -36,16 +35,16 @@ LOG "Initiate Datasource API..."
 rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
 pushd "${SCRIPT_DIR}/data/cert/"
     openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
-        -subj "/C=EU/O=PTX/OU=edge/CN=${DATASOURCE_API_DOMAIN}" -reqexts SAN \
-        -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${DATASOURCE_API_DOMAIN}" "datasource.ptx.localhost")
+        -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
+        -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
     openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
         -out api-tls.cert -CAcreateserial -extensions SAN \
-        -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${DATASOURCE_API_DOMAIN}" "datasource.ptx.localhost")
-    openssl x509 -in api-tls.cert -noout -text
+        -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
+    openssl x509 -in api-tls.cert -noout -ext subjectAltName
 popd
 
 # Build image
-docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${DATASOURCE_API_DOMAIN}" .
+docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
 docker image ls "${DATASOURCE_IMG}"
 
 # Shut down running instance

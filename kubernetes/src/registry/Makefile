@@ -57,7 +57,7 @@ cert:
 			-extensions SAN \
 			-extfile <(printf "[SAN]\nsubjectAltName=DNS:$${REGISTRY},DNS:$${LOCAL_REGISTRY}")
 	# Validate generated registry server certificate
-	openssl x509 -in "${CURDIR}/.certs/auth/server.cert" -noout -text
+	openssl x509 -in "${CURDIR}/.certs/auth/server.cert" -noout -text -ext subjectAltName
 	@#docker run --entrypoint htpasswd httpd:2 -Bbn admin admin > .certs/htpasswd
 	htpasswd -Bbn ${REGISTRY_USER} ${REGISTRY_SECRET} > "${CURDIR}/.certs/auth/htpasswd"
 	@#openssl s_client -showcerts -brief -servername registry.k3d.localhost localhost:5555 </dev/null
