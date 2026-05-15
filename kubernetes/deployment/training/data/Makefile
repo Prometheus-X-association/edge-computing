@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-simple-api:
-	./run_http_api.sh
+run-simple-api:
+	./run_simple_api.sh
 
-secure-api:
-	./run_secure_api.sh
+deploy-secure-api:
+	./run_secure_api.sh || true
 
 #.SILENT:	# Set silent mode (-s) by default
 .PHONY:		# Set all target phony
-.DEFAULT_GOAL := secure-api
+.DEFAULT_GOAL := deploy-secure-api

@@ -17,9 +17,9 @@ import pathlib
 import secrets
 import typing
 
-import uvicorn
 from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -27,7 +27,12 @@ from fastapi.staticfiles import StaticFiles
 __version__ = '1.0.0'
 
 # Main app
-app = FastAPI(title="DatasourceAPI", version=__version__, docs_url=None, redoc_url=None)
+app = FastAPI(title="DatasourceAPI", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
+
+GW_DOMAIN = os.getenv("GW_DOMAIN", "")
+
+# noinspection PyTypeChecker
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "*.localhost", GW_DOMAIN, f"*.{GW_DOMAIN}"])
 
 
 # For checking API availability
@@ -68,8 +73,8 @@ async def suppress_validation_error(request: Request, exc: RequestValidationErro
 
 
 @datasource.get("/{zone}/{data}")
-async def get_data(zone: typing.Annotated[Zone, Path()],
-                   data: typing.Annotated[str, Path(min_length=1, pattern='^([^/]+)\\.\\w+$')]):
+async def get_train_data(zone: typing.Annotated[Zone, Path()],
+                         data: typing.Annotated[str, Path(min_length=1, pattern='^([^/]+)\\.\\w+$')]):
     dataset: pathlib.Path = (pathlib.Path(__file__).parent / RESOURCE / zone.value / data).resolve()
     if not dataset.exists() or not str(dataset).startswith(str(pathlib.Path(__file__).parent)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -78,8 +83,3 @@ async def get_data(zone: typing.Annotated[Zone, Path()],
 
 # Include datasource endpoints to API
 app.include_router(datasource)
-
-if __name__ == '__main__':
-    # Run API for debugging
-    uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=8888, reload=True, access_log=True,
-                log_level="debug")
