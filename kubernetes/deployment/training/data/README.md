@@ -17,17 +17,30 @@ $ ./run_http_api.sh
 
 ## FastAPI-based multipurpose API server (protected, authorized)
 
-Use TLS with self-signed certificate and common name `datasource.ptx.localhost` for secure connections.
-
 Serving datasets directly from `./resource` directory under `/static/` path prefix.
 
 Serving datasets with basic authentication under `/dataset/` prefix using the path structure
 `/<privacy_zone>/<data_file>`.
 
-```bash
-# API listens on 0.0.0.0:8443
-$ ./run_docker_api.sh
-# E.g., `curl -k -O https://datasource.ptx.localhost:8443/static/dp2/train_data.npz`
-# E.g., `curl -k -u <user>:<pass> -O https://datasource.ptx.localhost:8443/dataset/dp1/train_data.npz`
+### Secure API
 
+Use TLS with self-signed certificate and common name `datasource.ptx.localhost` for secure connections.
+
+```bash
+# API listens on 0.0.0.0:9443
+$ ./run_secure_api.sh
+# E.g., `curl -k -O https://datasource.ptx.localhost:9443/static/dp2/train_data.npz`
+# E.g., `curl -k -u <user>:<pass> -O https://datasource.ptx.localhost:9443/dataset/dp1/train_data.npz`
+# E.g., `curl --cacert ../creds/cert/ca/ca.crt -u <user>:<pass> -O https://datasource.ptx.localhost:9443/dataset/dp1/train_data.npz`
+```
+
+### Protected API
+
+Use basic authentication without HTTPS.
+
+```bash
+# API listens on 0.0.0.0:9080
+$ ./run_protected_api.sh
+# E.g., `curl -O https://datasource.ptx.localhost:9080/static/dp2/train_data.npz`
+# E.g., `curl -u <user>:<pass> -O https://datasource.ptx.localhost:9080/dataset/dp1/train_data.npz`
 ```

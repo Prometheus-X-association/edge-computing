@@ -13,7 +13,10 @@
 # limitations under the License.
 
 run-simple-api:
-	./run_simple_api.sh
+	./run_simple_api.sh || true
+
+deploy-protected-api:
+	./run_protected_api.sh || true
 
 deploy-secure-api:
 	./run_secure_api.sh || true

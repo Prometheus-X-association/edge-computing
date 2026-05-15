@@ -10,6 +10,6 @@ ARG DOMAIN="datasource.ptx.localhost"
 #                                                            -keyout cert/api-tls.key -out cert/api-tls.cert
 COPY ./cert ./cert
 COPY api.py ./
-EXPOSE 4443
-CMD ["uvicorn", "api:app", "--host=0.0.0.0", "--port=4443", "--workers=2", "--access-log", \
-                                            "--ssl-keyfile=cert/api-tls.key", "--ssl-certfile=cert/api-tls.cert" ]
+EXPOSE 8888
+ENTRYPOINT ["uvicorn", "api:app", "--host=0.0.0.0", "--port=8888", "--workers=2", "--access-log" ]
+#CMD ["--ssl-keyfile=cert/api-tls.key", "--ssl-certfile=cert/api-tls.cert" ]

@@ -21,7 +21,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 # Datasource image config
 DATASOURCE_IMG="training/data-api:latest"
 DATASOURCE_API_NAME="training-data-api"
-DATASOURCE_PORT=9443
+DATASOURCE_PORT=9080
 # Datasource API config
 # Loaded from creds/websecure-creds.sh !
 ### DATASOURCE_USERNAME=
@@ -30,23 +30,6 @@ DATASOURCE_PORT=9443
 ########################################################################################################################
 
 LOG "Initiate Datasource API..."
-
-# Create certs
-rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
-pushd "${SCRIPT_DIR}/data/cert/"
-    if [ -e "${CA_DIR}/ca.crt" ]; then
-            openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
-                -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
-                -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-            openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
-                -out api-tls.cert -CAcreateserial -extensions SAN \
-                -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-            openssl x509 -in api-tls.cert -noout -ext subjectAltName
-    else
-        openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAI}" \
-                                                    -keyout api-tls.key -out api-tls.cert
-    fi
-popd
 
 # Build image
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
@@ -57,8 +40,7 @@ docker rm --force "${DATASOURCE_API_NAME}" || true
 
 # Run datasource API server
 docker run -d -p "${DATASOURCE_PORT}:8888" -e USERNAME="${DATASOURCE_USERNAME}" -e PASSWORD="${DATASOURCE_PASSWORD}" \
-                        -v "./resource:/usr/src/api/resource" --name "${DATASOURCE_API_NAME}" "${DATASOURCE_IMG}" \
-                        --ssl-keyfile=cert/api-tls.key --ssl-certfile=cert/api-tls.cert
+                        -v "./resource:/usr/src/api/resource" --name "${DATASOURCE_API_NAME}" "${DATASOURCE_IMG}"
 
 # Check running instance
 docker ps --no-trunc -l && sleep 1 && docker logs "${DATASOURCE_API_NAME}" -f
