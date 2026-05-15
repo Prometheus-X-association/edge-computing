@@ -19,11 +19,10 @@ import pathlib
 import sys
 import typing
 
+from kubernetes import client
 from kubernetes.client import OpenApiException, ApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
-
-from kubernetes import client
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +92,7 @@ def _load_config(token: str = PROJECTED_TOKEN_FILE, cert: str = PROJECTED_CERT_F
         sys.exit(os.EX_CONFIG)
 
 
-def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str | None]:
+def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str]:
     """
 
     :param node:
@@ -176,7 +175,7 @@ def _create_cluster_service(name: str, port: int, namespace: str, selector: dict
     return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body)
 
 
-def _create_nodeport_endpointslice(service_name: str, address: str, target_port: int, namespace: str = None,
+def _create_nodeport_endpointslice(service_name: str, address: str, target_port: int, namespace: str,
                                    app: str = None) -> client.V1EndpointSlice:
     """
 
@@ -215,7 +214,7 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
                         f"Selecting the first zone ID as default...")
         def_zone_id = sorted(map(lambda _l: _l.split('/')[-1].lower(), zones))[0]
     log.info(f"Selected default privacy zone: {def_zone_id}")
-    labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = def_zone_id
+    labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = str(def_zone_id)
     labels[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{def_zone_id}"
     pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
     log.debug(f"Created pod patch:\n{dump_k8s_obj(pod_patch.to_dict())}")
@@ -238,12 +237,13 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
     :return:
     """
     try:
-        zones = _collect_privacy_zone_labels(ip=ip)
+        zones: list[str | None] = []
+        zones.extend(_collect_privacy_zone_labels(ip=ip))
         if len(zones) == 0:
             log.warning("No privacy zone label detected!")
             if force:
                 log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
-                zones.append(None)
+                zones.append("")
         elif len(zones) > 1:
             log.warning(f"Multiple privacy zone label detected for one node[{ip}]!")
             if force:
@@ -274,7 +274,7 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
         sys.exit(os.EX_IOERR)
 
 
-def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str = None, force: bool = False,
+def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str, force: bool = False,
                                   def_zone: str = None, **kwargs):
     try:
         zones = _collect_privacy_zone_labels(node=node)
@@ -286,7 +286,7 @@ def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int
             return
         elif len(zones) < 1:
             log.info(f"Forcing to create PDC service with default name: {DEF_APP}")
-            zones.append(None)
+            zones.append("")
         elif len(zones) > 1:
             log.warning(f"Multiple privacy zone label detected for one node[{node}]!")
             log.info("Forcing to create PDC service for each privacy zone...")

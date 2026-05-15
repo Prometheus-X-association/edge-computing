@@ -37,8 +37,11 @@ def collect_worker_image_from_repo(src: str, dst: str | None, src_auth: DockerRe
     :param timeout:
     :return:
     """
-    src_path = get_resource_path(src)
+    if (src_path := get_resource_path(src)) is None:
+        return None
     img_name = get_resource_path(dst) if dst else src_path.rsplit('/', maxsplit=1)[-1]
+    if img_name is None:
+        return None
     dst_auth = DockerRegistryAuth.parse(CONFIG['registry.auth'])
     success = copy_image_to_registry(
         image=src_path, registry=dst_auth.server, with_reference=img_name,
@@ -149,8 +152,9 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
             cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
         case 'ptx':
-            result_id = collect_worker_from_ptx(contract_id=get_resource_path(worker_src), dst=worker_dst,
-                                                retry=conn_retry, timeout=conn_timeout)
+            if (contract_id := get_resource_path(worker_src)) is not None:
+                result_id = collect_worker_from_ptx(contract_id=contract_id, dst=worker_dst,
+                                                    retry=conn_retry, timeout=conn_timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")
             result_id = None

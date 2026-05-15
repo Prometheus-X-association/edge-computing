@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import email
 import http.client
 import http.server
 import json
@@ -24,6 +25,7 @@ from typing import Self
 class HandleWebHook(http.server.BaseHTTPRequestHandler):
     WEBHOOK_PATH = "/builder/webhook"
     server_version = "PTX-builder/webhook"
+    server: WebHookServer
 
     def do_GET(self):
         self.log_error("GET request received.")
@@ -39,7 +41,7 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
             self.send_error(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
             return
         self.server.webhook_headers = self.headers
-        content_length = int(self.headers.get("Content-Length"))
+        content_length = int(self.headers.get("Content-Length", 0))
         try:
             json_body = json.loads(self.rfile.read(content_length))
         except Exception as e:
@@ -63,7 +65,7 @@ class WebHookServer(http.server.HTTPServer):
         self.timeout: int = self.REQUEST_WAIT_STEP
         self.__wait_ttl: int = wait_time // self.REQUEST_WAIT_STEP
         self.__aborted: bool = False
-        self.webhook_headers: http.client.HTTPMessage | None = None
+        self.webhook_headers: email.message.Message | None = None
         self.__webhook_data: dict | None = None
         self.__received: bool = False
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -72,7 +74,7 @@ class WebHookServer(http.server.HTTPServer):
         self.__webhook_data = webhook_data
         self.__received = True
 
-    def wait_for_hook(self) -> dict:
+    def wait_for_hook(self) -> dict | None:
         self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
                                                                                    HandleWebHook.WEBHOOK_PATH))
         # self.serve_forever()
@@ -88,7 +90,8 @@ class WebHookServer(http.server.HTTPServer):
                     break
                 if self.__received:
                     self.logger.info(f"Webhook for {HandleWebHook.WEBHOOK_PATH} received.")
-                    self.logger.debug(f"Received request headers:\n{dict(self.webhook_headers)}")
+                    self.logger.debug(f"Received request headers:\n"
+                                      f"{dict(self.webhook_headers.items()) if self.webhook_headers else None}")
                     break
         return self.__webhook_data
 

@@ -33,7 +33,7 @@ def __log_stderr(stderr: bytes):
 
 def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '', on_behalf: str = None,
                               secret: str = None, insecure: bool = False, ca_dir: str = None,
-                              retry: bool = None, timeout: int = None, verbose: bool = False) -> list[str]:
+                              retry: int = None, timeout: int = None, verbose: bool = False) -> list[str]:
     """
 
     :param op:
@@ -82,7 +82,7 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
     if timeout:
         cmd.append(f"--command-timeout={timeout}s")
     cmd.append(op)
-    if all(src_auth):
+    if src_auth is not None and all(src_auth):
         if src_auth[0] == 'bearer':
             cmd.append(f"--src-registry-token={src_auth[1]}")
         else:
@@ -91,7 +91,7 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
         cmd.append(f'--src-tls-verify=false')
     if src_ca_dir:
         cmd.append(f'--src-cert-dir={src_ca_dir}')
-    if all(dst_auth):
+    if dst_auth is not None and all(dst_auth):
         if dst_auth[0] == 'bearer':
             cmd.append(f"--dest-registry-token={dst_auth[1]}")
         else:
@@ -109,7 +109,7 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
 
 
 def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str = None, secret: str = None,
-                         insecure: bool = False, ca_dir: str = None, retry: bool = None, timeout: int = None,
+                         insecure: bool = False, ca_dir: str = None, retry: int = None, timeout: int = None,
                          verbose: bool = False) -> dict | None:
     """
 
@@ -148,7 +148,7 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
 
 
 def delete_docker_image(image: str, registry: str, on_behalf: str = None, secret: str = None, insecure: bool = False,
-                        ca_dir: str = None, retry: bool = None, timeout: int = None, verbose: bool = False) -> bool:
+                        ca_dir: str = None, retry: int = None, timeout: int = None, verbose: bool = False) -> bool:
     """
 
     :param image:
