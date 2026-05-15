@@ -19,12 +19,14 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    'httpx[cli]>=0.28.1',
-    'httpx-retries~=0.5.0',
-    'httpx_auth~=0.23.1',
-    'python-benedict[toml]~=0.36.0',
+    'python-benedict[toml]~=0.37.0',
+    'requests~=2.34.2',
+    'requests-toolbelt~=1.0.0',
+    'urllib3',
+    'certifi',
+    'PyYAML~=6.0.3',
     'kubernetes~=34.1.0',
-    'PyYAML~=6.0.2'
+    'pytest~=9.0.3'
 ]
 
 [project.urls]

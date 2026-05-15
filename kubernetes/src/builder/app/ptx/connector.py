@@ -15,10 +15,10 @@ import logging
 import pprint
 import sys
 
-import httpx
+import requests
+
 from app.util.config import CONFIG
 from app.util.webhook import WebHooKManager
-from httpx import HTTPStatusError
 
 log = logging.getLogger(__name__)
 
@@ -44,8 +44,8 @@ def login_to_connector(timeout: int = None) -> dict:
            'Accept': 'application/json'}
     url = LOGIN_URL.format(host=pdc_host, port=pdc_port)
     log.info(f"Sending POST request to {url}...")
-    resp = httpx.post(url=url, json=body, headers=hdr, timeout=timeout)
-    if resp.status_code != httpx.codes.OK:
+    resp = requests.post(url=url, json=body, headers=hdr, timeout=timeout)
+    if resp.status_code != requests.codes.OK:
         log.error(f"Failed to login to PDC: {resp.status_code}")
         resp.raise_for_status()
     log.info("Login to PDC was successful!")
@@ -77,8 +77,8 @@ def make_data_exchange(contract_id: str, token: str, timeout: int = None) -> dic
     with WebHooKManager(timeout=timeout) as mgr:
         url = EXCHANGE_URL.format(host=pdc_host, port=pdc_port)
         log.info(f"Sending POST request to {url}...")
-        resp = httpx.post(url=url, json=body, headers=hdr, timeout=timeout)
-        if resp.status_code != httpx.codes.OK:
+        resp = requests.post(url=url, json=body, headers=hdr, timeout=timeout)
+        if resp.status_code != requests.codes.OK:
             log.error(f"Failed to initiate data exchange: {resp.status_code}")
             mgr.server.abort()
         else:
@@ -102,7 +102,7 @@ def perform_pdc_data_exchange(contract_id: str, timeout: int = None) -> dict | N
     log.debug(f"Trying to authenticate to the connector...")
     try:
         tokens = login_to_connector(timeout=timeout)
-    except HTTPStatusError as e:
+    except (requests.ConnectionError, requests.HTTPError) as e:
         log.error(f"Failed to login to PDC: {e}")
         return None
     bearer = tokens['token']

@@ -131,9 +131,11 @@ spec:
             name: pdc-config.env
       env:
         - name: BUILD_DATA_SRC
-          value: "file:///etc/hostname"  # collect_data_from_file
+          #value: "file:///etc/hostname"  # collect_data_from_file
           #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"  # collect_data_from_url
           #value: "http://host.k3d.internal:9000/datetime.txt" # collect_data_from_url + auth
+          value: "https://host.k3d.internal:9443/static/dp1/train_data.npz" # collect_data_from_url + https + insecure
+          #value: "https://host.k3d.internal:9443/dataset/dp1/train_data.npz" # collect_data_from_url + https + insecure + auth
           #value: "ptx://66db1a6dc29e3ba863a85e0f"
         #- name: BUILD_DATA_AUTH
         #  value: "basic:demo:demo"
@@ -143,6 +145,8 @@ spec:
         #  value: demo
         #- name: BUILD_DATA_AUTH_SECRET
         #  value: demo
+        - name: BUILD_DATA_AUTH_INSECURE
+          value: "true"
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
         #- name: BUILD_CATALOG_OFFER_PROVIDER

@@ -15,13 +15,17 @@ import logging
 import pathlib
 import tempfile
 
-import httpx
-from httpx_retries import RetryTransport, Retry
+import certifi
+import requests
+import urllib3
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests_toolbelt.downloadutils import stream
+from requests_toolbelt.exceptions import StreamingError
 
 from app.ptx.connector import perform_pdc_data_exchange
 from app.util.config import CONFIG, SKIPPED
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
-from app.util.parsers import DataSourceAuth
+from app.util.parsers import DataSourceAuth, DataSourceAuthScheme
 
 log = logging.getLogger(__name__)
 
@@ -55,39 +59,40 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     :return:
     """
     log.info(f"Downloading data from {url}...")
-    src_url, dst_path = httpx.URL(url), None
-    with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
-        match auth.scheme:
-            case None:
-                req_auth = None
-            case "basic":
-                req_auth = httpx.BasicAuth(username=auth.user, password=auth.secret)
-            case "digest":
-                req_auth = httpx.DigestAuth(username=auth.user, password=auth.secret)
-            case _:
-                raise NotImplementedError
-        client = httpx.Client(http2=True, follow_redirects=True, auth=req_auth, timeout=timeout,
-                              transport=RetryTransport(retry=Retry(total=retry, backoff_factor=1)))
-        log.info(f"Sending GET request to {url} with auth: {type(auth).__name__}...")
+    log.debug(f"Used authentication: {auth}")
+    match auth.scheme:
+        case None:
+            req_auth = None
+        case DataSourceAuthScheme.BASIC:
+            req_auth = HTTPBasicAuth(username=auth.user, password=auth.secret)
+        case DataSourceAuthScheme.DIGEST:
+            req_auth = HTTPDigestAuth(username=auth.user, password=auth.secret)
+        case _:
+            raise NotImplementedError
+    log.info(f"Sending GET request to {url} with auth method: {type(req_auth).__name__}...")
+    dst_path = None
+    verify = False if auth.insecure else certifi.where()
+    with tempfile.NamedTemporaryFile(mode='wb', prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
         try:
-            with client.stream("GET", src_url) as resp:
-                if resp.status_code != httpx.codes.OK:
-                    log.warning(f"Received response: HTTP {resp.status_code}")
-                    # log.debug(f"Received body: {resp.read().decode("utf-8")}")
-                    resp.raise_for_status()
-                for chunk in resp.iter_bytes():
-                    tmp.write(chunk)
-        except httpx.HTTPError as e:
+            with requests.Session() as session:
+                session.mount(url, requests.sessions.HTTPAdapter(max_retries=urllib3.Retry(total=retry,
+                                                                                           backoff_factor=1)))
+                with session.get(url, timeout=timeout, auth=req_auth, verify=verify, stream=True) as resp:
+                    if resp.status_code != requests.codes.ok:
+                        log.warning(f"Received response: HTTP {resp.status_code}")
+                        resp.raise_for_status()
+                    filename = stream.stream_response_to_file(resp, path=tmp)
+        except (requests.HTTPError, requests.Timeout, StreamingError) as e:
             log.error(f"Failed to collect data: {e}")
             return None
-        except httpx.ConnectError as e:
+        except (requests.ConnectionError, requests.TooManyRedirects) as e:
             log.error(f"Failed to connect to URL: {url} -- {e}")
             return None
         # Force small amount of data to be written into tmp file in any case
         tmp.flush()
-        data_path = pathlib.Path(tmp.name).resolve(strict=True)
+        data_path = pathlib.Path(filename).resolve(strict=True)
         log.debug(f"Collected data bytes: {data_path.stat().st_size}")
-        dst_path = local_copy(src=data_path, dst=dst, orig_name=src_url.path.rsplit("/", maxsplit=1)[-1])
+        dst_path = local_copy(src=data_path, dst=dst, orig_name=url.rsplit("/", maxsplit=1)[-1])
     log.info(f"Data is stored in {dst_path.as_uri()}")
     return dst_path
 
