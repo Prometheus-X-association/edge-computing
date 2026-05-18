@@ -35,15 +35,32 @@ LOG "Initiate Datasource API for domain: ${GW_DOMAIN}..."
 # Create certs
 rm -rf "${SCRIPT_DIR}/data/cert/" && mkdir -pv "${SCRIPT_DIR}/data/cert/"
 pushd "${SCRIPT_DIR}/data/cert/"
-    if [ -e "${CA_DIR}/ca.crt" ]; then
-            openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
-                -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
-                -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-            openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
-                -out api-tls.cert -CAcreateserial -extensions SAN \
-                -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
-            openssl x509 -in api-tls.cert -noout -ext subjectAltName
+    if [ -e "${ROOT_DIR}/src/registry" ]; then
+        if [ ! -f "${CA_DIR}/ca.crt" ]; then
+            log "No CA cert detected in ${CA_DIR}! Generate it manually..."
+            pushd "${ROOT_DIR}/src/registry"
+                # Generate CA
+                make ca
+            popd
+            log "Cache used registry CA files locally"
+            mkdir -p "${SCRIPT_DIR}/creds/cert/ca"
+            cp -vR "${ROOT_DIR}/src/registry/.certs/ca/ca.crt" "${SCRIPT_DIR}/creds/cert/ca/ca.crt"
+            cp -vR "${ROOT_DIR}/src/registry/.certs/ca.key" "${SCRIPT_DIR}/creds/cert/ca.key"
+        fi
+        log "Generate server cert..."
+        # Create signing request
+        openssl req -newkey rsa:4096 -noenc -keyout api-tls.key -out api-tls.csr \
+            -subj "/C=EU/O=PTX/OU=edge/CN=${GW_DOMAIN}" -reqexts SAN \
+            -config <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
+        # Generate cert
+        openssl x509 -req -days 365 -in api-tls.csr -CA "${CA_DIR}/ca.crt" -CAkey "${CA_DIR}/../ca.key" \
+            -out api-tls.cert -CAcreateserial -extensions SAN \
+            -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
+        # Validate
+        openssl x509 -in api-tls.cert -noout -ext subjectAltName
     else
+        log "No registry project detected! Generate self-signed cert..."
+        # Generate self-signed cert
         openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${GW_DOMAIN}" \
                                                     -keyout api-tls.key -out api-tls.cert
     fi

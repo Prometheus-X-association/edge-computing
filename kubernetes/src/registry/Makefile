@@ -26,9 +26,8 @@ NAME := registry
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 
-cert: SHELL := /bin/bash
-cert:
-	rm -rf "${CURDIR}/.certs" && mkdir -p "${CURDIR}/.certs/ca" && mkdir -p "${CURDIR}/.certs/auth"
+ca:
+	rm -rf "${CURDIR}/.certs/" && mkdir -p "${CURDIR}/.certs/ca"
 	# Generate CA root key
 	openssl genrsa -out "${CURDIR}/.certs/ca.key" 4096
 	# Generate CA certificate signed with root key
@@ -36,6 +35,10 @@ cert:
 			-key "${CURDIR}/.certs/ca.key" \
 			-out "${CURDIR}/.certs/ca/ca.crt" \
 			-subj '/C=EU/O=PTX/OU=dataspace/CN=dataspace.prometheus-x.org'
+
+cert: SHELL := /bin/bash
+cert: ca
+	rm -rf "${CURDIR}/.certs/auth" && mkdir -p "${CURDIR}/.certs/auth"
 	# Check created signing request
 	openssl x509 -in "${CURDIR}/.certs/ca/ca.crt" -noout -text
 	# Generate registry key and its signing request for the CA

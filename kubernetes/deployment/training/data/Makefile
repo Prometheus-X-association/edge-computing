@@ -16,10 +16,17 @@ run-simple-api:
 	./run_simple_api.sh || true
 
 deploy-http-api:
-	./run_http_api.sh || true
+	./deploy_http_api.sh || true
 
 deploy-secure-api:
-	./run_secure_api.sh || true
+	./deploy_secure_api.sh || true
+
+########################################################################################################################
+
+status:
+	docker ps --no-trunc
+
+########################################################################################################################
 
 #.SILENT:	# Set silent mode (-s) by default
 .PHONY:		# Set all target phony

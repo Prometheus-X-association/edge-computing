@@ -28,7 +28,7 @@ CONTRACT_URI = r"https://{host}:{port}/contracts/{id}"
 SERVICE_OFFER_URI = r"https://{host}:{port}/v1/catalog/serviceofferings/{id}"
 
 
-def login_to_connector(timeout: int = None) -> dict:
+def login_to_connector(timeout: int | None = None) -> dict:
     """
 
     :param timeout:
@@ -53,7 +53,7 @@ def login_to_connector(timeout: int = None) -> dict:
     return resp.json().get('content')
 
 
-def make_data_exchange(contract_id: str, token: str, timeout: int = None) -> dict | None:
+def make_data_exchange(contract_id: str, token: str, timeout: int | None = None) -> dict | None:
     """
 
     :param contract_id:
@@ -92,7 +92,7 @@ def make_data_exchange(contract_id: str, token: str, timeout: int = None) -> dic
     return webhook_data
 
 
-def perform_pdc_data_exchange(contract_id: str, timeout: int = None) -> dict | None:
+def perform_pdc_data_exchange(contract_id: str, timeout: int | None = None) -> dict | None:
     """
 
     :param contract_id:

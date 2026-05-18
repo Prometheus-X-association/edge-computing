@@ -46,7 +46,7 @@ def collect_data_from_filesystem(src: str, dst: str) -> pathlib.Path:
     return dst_path
 
 
-def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int = None,
+def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int | None = None,
                           retry: int = 1) -> pathlib.Path | None:
     """
     Download data from url.
@@ -97,7 +97,7 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     return dst_path
 
 
-def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: int = None):
+def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: int | None = None):
     """
 
     :param contract_id:
