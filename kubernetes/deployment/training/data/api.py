@@ -36,8 +36,9 @@ if not (GW_DOMAIN := os.getenv("GW_DOMAIN", "")):
     sys.exit(-1)
 
 # noinspection PyTypeChecker
-app.add_middleware(TrustedHostMiddleware,
-                   allowed_hosts=["localhost", "*.localhost", "host.k3d.internal", GW_DOMAIN, f"*.{GW_DOMAIN}"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=list({"localhost", "*.localhost",
+                                                              "host.k3d.internal",
+                                                              GW_DOMAIN, f"*.{GW_DOMAIN}"}))
 
 
 # For checking API availability
@@ -52,18 +53,17 @@ app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOU
 
 # Define basic authentication credentials
 security = HTTPBasic(realm="DataSource")
-USER = os.getenv("USERNAME", "")
-PASSWORD = os.getenv("PASSWORD", "")
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
-if not USER or not PASSWORD:
-    warnings.warn("USERNAME and PASSWORD environment variable is not set!")
-    sys.exit(-1)
+if not all((USERNAME, PASSWORD)):
+    warnings.warn("USERNAME and PASSWORD environment variable is not set! Disable basic authentication.")
 
 
 # Authenticate requests based on user/pass from envvars
-def _authenticate_user(creds: typing.Annotated[HTTPBasicCredentials, Depends(security)]):
-    if not (secrets.compare_digest(creds.username.encode(), USER.encode())
-            and secrets.compare_digest(creds.password.encode(), PASSWORD.encode())):
+def _authenticate_user(creds: typing.Annotated[HTTPBasicCredentials, Depends(security)]) -> None:
+    if all((USERNAME, PASSWORD)) and not (secrets.compare_digest(creds.username.encode(), USERNAME.encode())
+                                          and secrets.compare_digest(creds.password.encode(), PASSWORD.encode())):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             headers={"WWW-Authenticate": "Basic"})
 
