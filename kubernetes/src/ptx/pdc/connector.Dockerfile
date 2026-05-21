@@ -6,7 +6,7 @@ ENV ENV=$ENV
 WORKDIR /usr/src/app
 RUN npm install -g pnpm && apk add --no-cache gettext-envsubst git
 # Bundle app source
-COPY . .
+COPY ./ ./
 # Install app dependencies
 RUN mkdir -p /src/keys && pnpm install --frozen-lockfile
 # Build resources

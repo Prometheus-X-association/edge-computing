@@ -2,7 +2,7 @@ name: pdc
 services:
   connector:
     container_name: pdc-connector
-    image: ptx/connector:1.10.1-slim
+    image: ptx/connector:1.10.0-slim
     restart: no
     volumes:
       - './config.docker.json:/usr/src/app/dist/src/config.production.json:ro'
@@ -19,12 +19,12 @@ services:
       - catalog
   mongodb:
     container_name: pdc-mongodb
-    image: ptx/mongodb:8.0.5-slim
+    image: ptx/mongodb:8.0.23-slim
     networks:
       - local
   catalog:
     container_name: ptx-catalog
-    image: ptx-sandbox/catalog:1.10.1-slim
+    image: ptx-sandbox/catalog:1.10.0-slim
     networks:
       - core
 networks:

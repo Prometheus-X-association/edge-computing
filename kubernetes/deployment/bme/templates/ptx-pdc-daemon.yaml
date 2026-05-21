@@ -182,7 +182,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
         - name: mongodb
-          image: ${REGISTRY}/ptx/mongodb:8.0.5-slim
+          image: ${REGISTRY}/ptx/mongodb:8.0.23-slim
           imagePullPolicy: IfNotPresent
           ports:
             - name: mongo-port
