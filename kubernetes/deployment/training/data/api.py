@@ -78,7 +78,7 @@ Zone = enum.StrEnum("Zone", [p.name for p in pathlib.Path(__file__).parent.joinp
 
 @app.exception_handler(RequestValidationError)
 async def suppress_validation_error(request: Request, exc: RequestValidationError):
-    return PlainTextResponse("Validation error!", status_code=400)
+    return PlainTextResponse("Validation error!", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @datasource.get("/{zone}/{data}")

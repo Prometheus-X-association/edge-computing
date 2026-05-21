@@ -78,7 +78,7 @@ docker run -d -p "${DATASOURCE_PORT}:8888" \
         -e USERNAME="${DATASOURCE_USERNAME}" \
         -e PASSWORD="${DATASOURCE_PASSWORD}" \
         -e GW_DOMAIN="${GW_DOMAIN}" \
-        -v "./resource:/usr/src/api/resource" \
+        -v "./resource:/usr/src/api/resource:ro" \
         --name "${DATASOURCE_API_NAME}" \
         "${DATASOURCE_IMG}" \
         --ssl-keyfile=cert/api-tls.key \
