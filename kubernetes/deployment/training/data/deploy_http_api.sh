@@ -32,10 +32,12 @@ DATASOURCE_PORT=9080
 
 LOG "Initiate Datasource API for domain: ${GW_DOMAIN}..."
 
+log "Build image..."
 # Build image
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
 docker image ls "${DATASOURCE_IMG}"
 
+log "Start API container..."
 # Shut down running instance
 docker rm --force "${DATASOURCE_API_NAME}" || true
 

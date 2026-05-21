@@ -80,7 +80,7 @@ GW_WEBSECURE_PORT=443
 ################################## PDC setup
 
 PDC="pdc"
-PDC_VER="1.10.0"
+PDC_VER="1.10.1"
 PDC_NODEPORT=30003
 PDC_DEF_PORT=3000
 PDC_ID="pdc-${DEF_ZONE}"

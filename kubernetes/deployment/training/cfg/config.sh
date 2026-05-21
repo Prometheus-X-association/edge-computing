@@ -92,13 +92,13 @@ COMPONENTS=(builder controller ptx registry rest-api scheduler)
 #
 BUILD_IMG="ptx-edge/builder:1.0"
 CONTROL_IMG="ptx-edge/controller:1.0"
-PDC_IMG="ptx/connector:1.10.0-slim"
+PDC_IMG="ptx/connector:1.10.1-slim"
 MONGODB_IMG="ptx/mongodb:8.0.5-slim"
 API_IMG="ptx-edge/rest-api:1.0"
 SCHED_IMG="ptx-edge/scheduler:1.0"
 
 # PTX-core components
-CATALOG_IMG="ptx-sandbox/catalog:1.10.0-slim"
+CATALOG_IMG="ptx-sandbox/catalog:1.10.1-slim"
 SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"

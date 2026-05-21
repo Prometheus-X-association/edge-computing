@@ -57,6 +57,7 @@ pushd "${SCRIPT_DIR}/data/cert/"
             -out api-tls.cert -CAcreateserial -extensions SAN \
             -extfile <(printf "[SAN]\nsubjectAltName=DNS:%s,DNS:%s" "${GW_DOMAIN}" "datasource.ptx.localhost")
         # Validate
+        log "Validated server cert"
         openssl x509 -in api-tls.cert -noout -ext subjectAltName
     else
         log "No registry project detected! Generate self-signed cert..."
@@ -67,9 +68,11 @@ pushd "${SCRIPT_DIR}/data/cert/"
 popd
 
 # Build image
+log "Build image..."
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
 docker image ls "${DATASOURCE_IMG}"
 
+log "Start API container..."
 # Shut down running instance
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
