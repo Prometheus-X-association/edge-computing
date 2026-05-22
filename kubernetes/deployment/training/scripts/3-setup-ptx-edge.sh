@@ -69,7 +69,7 @@ log "Waiting for ingress to set up[10s]..." && sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     zone_pdc=$(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -l "${LAB_PZ}/${pz}" --no-headers --ignore-not-found)
     if [ -z "${zone_pdc}" ]; then
-        log "[WARNING] Missing PDC instance for zone: ${pz}"
+        warning "Missing PDC instance for zone: ${pz}"
         continue
     fi
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
