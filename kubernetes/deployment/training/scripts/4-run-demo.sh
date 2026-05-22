@@ -27,7 +27,7 @@ ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
 log "Waiting for worker to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) | timeout "${TIMEOUT}" grep -m1 "Uvicorn running on"
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
@@ -40,7 +40,7 @@ ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
 log "Waiting for worker to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) | timeout "${TIMEOUT}" grep -m1 "Uvicorn running on"
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
@@ -53,7 +53,7 @@ ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
 log "Waiting for worker to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) | timeout "${TIMEOUT}" grep -m1 "Uvicorn running on"
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
@@ -75,7 +75,7 @@ ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 
 log "Waiting for worker to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) | timeout "${TIMEOUT}" grep -m1 "Server started at"
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) | timeout "${TIMEOUT}" grep -m1 "Uvicorn running on"
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 

@@ -58,7 +58,7 @@ spec:
               value: ${AGG_MLFLOW_ORG}
             - name: mlflow_tracking_uri_external
               value: ${AGG_MLFLOW_EXT}
-            - name: STATIC_PREFIX
+            - name: STATIC_PREFIX_MLFLOW
               value: /worker/${AGG}
           ports:
             - name: port-mlflow
