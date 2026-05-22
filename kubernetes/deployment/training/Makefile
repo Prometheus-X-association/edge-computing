@@ -32,7 +32,7 @@ depends:
         		--port=${KUBE_OPS_VIEW_PORT} --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
 	( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
 	echo
-	echo "K8s Ops Viewer is available on http://localhost:$${KUBE_OPS_VIEW_PORT}/"
+	echo "K8s Ops Viewer is available on http://localhost:${KUBE_OPS_VIEW_PORT}/"
 	echo
 
 3-edge:

@@ -24,8 +24,8 @@ ${KCTL} cluster-info
 
 log "Create Privacy Zones: zone-tr-* for <TRAINING>"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_DATA}" --cluster="${CLUSTER}" --replicas=2 --role=agent
-${KCTL} label "node/k3d-${NODE_DATA}-0" "${LAB_WORK}" "${LAB_PDC}" "${LAB_PZ}/${PZ_DATA_0}=true"
-${KCTL} label "node/k3d-${NODE_DATA}-1" "${LAB_WORK}" "${LAB_PDC}" "${LAB_PZ}/${PZ_DATA_1}=true"
+${KCTL} label "node/k3d-${NODE_DATA}-0" "${LAB_WORK}" "${LAB_PZ}/${PZ_DATA_0}=true" "${LAB_PDC}"
+${KCTL} label "node/k3d-${NODE_DATA}-1" "${LAB_WORK}" "${LAB_PZ}/${PZ_DATA_1}=true" #"${LAB_PDC}"
 
 log "Create Privacy Zone: ${PZ_FED} for <MANAGEMENT>"
 k3d --wait --timeout="${TIMEOUT}s" node create "${NODE_FED}" --cluster="${CLUSTER}" --replicas=2 --role=agent
