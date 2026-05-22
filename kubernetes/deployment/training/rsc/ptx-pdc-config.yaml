@@ -12,14 +12,14 @@ data:
   .env: |
     NODE_ENV=production
     PORT=${PDC_PORT}
-    SESSION_SECRET=abc
+    SESSION_SECRET=${PDC_SESSION_SECRET}
     SESSION_COOKIE_EXPIRATION=24000
     MONGO_URI=mongodb://localhost:27017/dataspace-connector
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
     JWT_BEARER_TOKEN_EXPIRATION=3h
     JWT_REFRESH_TOKEN_EXPIRATION=1d
-  config.json: |
+  sandbox-config.json: |
     {
       "endpoint": "http://${PDC_ID}.${PTX}.svc.cluster.local:${PDC_PORT}/",
       "serviceKey": "${PDC_CFG_SERVICE_KEY}",
@@ -27,6 +27,16 @@ data:
       "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
       "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
+      "expressLimitSize": "10mb"
+    }
+  ptx-config.json: |
+    {
+      "endpoint": "${PDC_CFG_ENDPOINT}",
+      "serviceKey": "${PDC_CFG_SERVICE_KEY}",
+      "secretKey": "${PDC_CFG_SECRET_KEY}",
+      "contractUri": "${PTX_CONTRACT_URI}",
+      "catalogUri": "${PTX_CATALOG_URI}",
+      "consentUri": "${PTX_CONSENT_URI}",
       "expressLimitSize": "10mb"
     }
   entrypoint.sh: |

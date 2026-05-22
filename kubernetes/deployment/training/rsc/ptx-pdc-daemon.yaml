@@ -60,7 +60,7 @@ spec:
             - name: pdc-port
               containerPort: ${PDC_PORT}
               protocol: TCP
-              hostPort: ${PDC_NODE_PORT}
+              #hostPort: ${PDC_NODE_PORT}
           resources:
             requests:
               cpu: 500m
@@ -83,6 +83,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['connector.dataspace.ptx.org/id']
+            - name: PDC_DEF_PZ
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
           envFrom:
             - secretRef:
                 name: ${PDC}-secrets-env
@@ -99,7 +103,7 @@ spec:
           configMap:
             name: ${PDC}-config
             items:
-              - key: config.json
+              - key: ${USED_PDC_CONFIG}
                 path: config.json.tmp
         - name: entrypoint
           configMap:

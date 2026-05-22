@@ -18,16 +18,18 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
-LOG "Setting up PTX-core sandbox..."
-${KCTL} create namespace "${SANDBOX}"
-${KCTL} -n "${SANDBOX}" apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml")
-${KCTL} -n "${SANDBOX}" wait --for="condition=Ready" --timeout="${TIMEOUT}s" "pod/${CATALOG}"
-echo
-${KCTL} -n "${SANDBOX}" get all -o wide -l "app.kubernetes.io/name=${CATALOG}"
+if [ "${USE_SANDBOX}" == "true" ]; then
+    LOG "Setting up PTX-core sandbox..."
+    ${KCTL} create namespace "${SANDBOX}"
+    ${KCTL} -n "${SANDBOX}" apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml")
+    ${KCTL} -n "${SANDBOX}" wait --for="condition=Ready" --timeout="${TIMEOUT}s" "pod/${CATALOG}"
+    echo
+    ${KCTL} -n "${SANDBOX}" get all -o wide -l "app.kubernetes.io/name=${CATALOG}"
 
-log ">>> PTX-core catalog is reachable on ${CATALOG_DNS}"
-${KCTL} -n "${SANDBOX}" run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
+    log ">>> PTX-core catalog is reachable on ${CATALOG_DNS}"
+    ${KCTL} -n "${SANDBOX}" run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
                         sh -c "nslookup ${CATALOG_DNS}; wget -T3 -qO- http://${CATALOG_DNS}:3002/__admin/health; echo"
+fi
 
 ########################################################################################################################
 
