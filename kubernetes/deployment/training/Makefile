@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+KUBE_OPS_VIEW_IMG := "hjacobs/kube-ops-view"
+KUBE_OPS_VIEW_PORT := 8081
+
 depends:
 	cd ./scripts && ./install_deps.sh -u
 
@@ -25,11 +28,11 @@ depends:
 
 2-viewer:
 	( kubectl proxy 2>/dev/null & ) || exit 0
-	docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it hjacobs/kube-ops-view \
-        		--port=8081 --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
+	docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it ${KUBE_OPS_VIEW_IMG} \
+        		--port=${KUBE_OPS_VIEW_PORT} --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
 	( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
 	echo
-	echo "K8s Ops Viewer is available on http://localhost:8081/"
+	echo "K8s Ops Viewer is available on http://localhost:$${KUBE_OPS_VIEW_PORT}/"
 	echo
 
 3-edge:
@@ -71,8 +74,9 @@ log:
 	kubecolor logs --prefix -l tier=worker --follow
 
 cleanup:
-	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" \
-					 -f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" | xargs -r docker rmi -f
+	docker image ls -q -f "reference=ptx/*" -f "reference=ptx-edge/*" \
+					 	-f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" \
+					 	-f "reference=${KUBE_OPS_VIEW_IMG}" | xargs -r docker rmi --force
 	docker image prune -f
 
 ########################################################################################################################
