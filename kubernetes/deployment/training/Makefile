@@ -43,6 +43,11 @@ depends:
 
 setup: | 0-build 1-init 2-viewer 3-edge 4-demo
 
+datasource-api:
+	${MAKE} -C data deploy-secure-api
+
+setup-local: | 0-build 1-init 2-viewer 3-edge datasource-api 4-demo
+
 ########################################################################################################################
 
 stop-demo:

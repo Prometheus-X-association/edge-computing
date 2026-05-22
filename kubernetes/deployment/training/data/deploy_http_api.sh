@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -eou pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
@@ -27,6 +26,7 @@ DATASOURCE_PORT=9080
 ### DATASOURCE_USERNAME=
 ### DATASOURCE_PASSWORD=
 ### GW_DOMAIN=
+TIMEOUT=5
 
 ########################################################################################################################
 
@@ -51,4 +51,7 @@ docker run -d -p "${DATASOURCE_PORT}:8888" \
         "${DATASOURCE_IMG}"
 
 # Check running instance
-docker ps --no-trunc -l && sleep 1 && docker logs "${DATASOURCE_API_NAME}" -f
+docker ps --no-trunc -l && sleep 1 && echo
+
+# Wait for server startup
+(docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
