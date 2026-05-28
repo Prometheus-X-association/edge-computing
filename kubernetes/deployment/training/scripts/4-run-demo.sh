@@ -25,7 +25,7 @@ ${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
-log "Waiting for worker to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
@@ -38,7 +38,7 @@ ${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
-log "Waiting for worker to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
@@ -51,13 +51,14 @@ ${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
-log "Waiting for worker to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
-log "Waiting for ingress to set up[10s]..." && sleep 10
+log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
 _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}"
 log ">>> Aggregator is available on ${_AGG_URL}"
@@ -73,13 +74,14 @@ ${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 
-log "Waiting for worker to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${ORCH}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 
-log "Waiting for ingress to set up[10s]..." && sleep 10
+log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${ORCH}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
 _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"

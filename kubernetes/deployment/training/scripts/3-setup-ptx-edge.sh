@@ -18,10 +18,19 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
+LOG "Cluster configuration"
+
+echo "Use local cluster setup: ${LOCAL_SETUP}"
+echo "Use sandbox for PTX core: ${USE_SANDBOX}"
+
+########################################################################################################################
+
 if [ "${USE_SANDBOX}" == "true" ]; then
     LOG "Setting up PTX-core sandbox..."
     ${KCTL} create namespace "${SANDBOX}"
     ${KCTL} -n "${SANDBOX}" apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml")
+
+    log "Waiting for sandbox: $(kubectl get -A pods -l app.kubernetes.io/name="${CATALOG}" -o name) to initialize..."
     ${KCTL} -n "${SANDBOX}" wait --for="condition=Ready" --timeout="${TIMEOUT}s" "pod/${CATALOG}"
     echo
     ${KCTL} -n "${SANDBOX}" get all -o wide -l "app.kubernetes.io/name=${CATALOG}"
@@ -54,7 +63,7 @@ ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-daemon.yaml")
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
 echo
 
-log "Waiting for PDC instances to initialize..."
+log "Waiting for PDC instances:$(kubectl get pods -l app.kubernetes.io/name="${PDC}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to initialize..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
@@ -62,12 +71,13 @@ ${KCTL} wait --timeout="${TIMEOUT}s" "ds/${PDC}" \
     --for=jsonpath='.status.numberReady'="$(kubectl get "ds/${PDC}" -o=jsonpath='{.status.desiredNumberScheduled}')"
 
 
-log "Waiting for PDC instances to set up..."
+log "Waiting for PDC instances: $(kubectl get pods -l app.kubernetes.io/name="${PDC}" -o name) to set up..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
     ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
 
-log "Waiting for ingress to set up[10s]..." && sleep 10
+log "Waiting for PDC ingress:$(kubectl get ingress -l app.kubernetes.io/name="${PDC}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     zone_pdc=$(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -l "${LAB_PZ}/${pz}" --no-headers --ignore-not-found)
     if [ -z "${zone_pdc}" ]; then
@@ -92,7 +102,8 @@ ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${R
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
 
-log "Waiting for ingress to set up[10s]..." && sleep 10
+log "Waiting for API ingress:$(kubectl get ingress -l app.kubernetes.io/name="${REST_API}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
 _REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"

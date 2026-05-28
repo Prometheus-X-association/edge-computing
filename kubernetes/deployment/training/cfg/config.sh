@@ -37,6 +37,11 @@ for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
     source "${cfg}"
 done
 
+# Global settings of deployment configuration
+# Default to false, can be override from creds/0-cluster-creds.sh !
+USE_SANDBOX="${USE_SANDBOX:-false}"
+LOCAL_SETUP="${LOCAL_SETUP:-false}"
+
 ########################################################################################################################
 
 # Fundamental cluster configuration
@@ -137,11 +142,11 @@ PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
 IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 
 # Applied PDC configuration
-USE_SANDBOX="true"
-USED_PDC_CONFIG="sandbox-config.json"
-#
-#USE_SANDBOX="false"
-#USED_PDC_CONFIG="ptx-config.json"
+if [ "${USE_SANDBOX}" == "true" ]; then
+    USED_PDC_CONFIG="sandbox-config.json"
+else
+    USED_PDC_CONFIG="visions-config.json"
+fi
 
 ########################################################################################################################
 
@@ -172,19 +177,23 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/orchestrator:latest)
 #
 DP0="data-processor-0"
-DP0_DATA="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp0/train_data.npz"
-#DP0_DATA="https://host.k3d.internal:9443/dataset/dp0/train_data.npz"
-#DP0_DATA="http://host.k3d.internal:8888/dp0/train_data.npz"
-#DP0_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp0/train_data.npz"
+if [ "${LOCAL_SETUP}" == "true" ]; then
+        #DP0_DATA="http://host.k3d.internal:8888/dp0/train_data.npz"
+        DP0_DATA="https://host.k3d.internal:9443/dataset/dp0/train_data.npz"
+    else
+        DP0_DATA="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp0/train_data.npz"
+fi
 DP0_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP0_MLFLOW_INT="http://localhost:5000"
 DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 #
 DP1="data-processor-1"
-DP1_DATA="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp1/train_data.npz"
-#DP1_DATA="https://host.k3d.internal:9443/dataset/dp1/train_data.npz"
-#DP1_DATA="http://host.k3d.internal:8888/dp1/train_data.npz"
-#DP1_DATA="https://github.com/czeni/sample-datasets/blob/main/federated/dp1/train_data.npz"
+if [ "${LOCAL_SETUP}" == "true" ]; then
+        #DP1_DATA="http://host.k3d.internal:8888/dp1/train_data.npz"
+        DP1_DATA="https://host.k3d.internal:9443/dataset/dp1/train_data.npz"
+    else
+        DP1_DATA="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp1/train_data.npz"
+fi
 DP1_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP1_MLFLOW_INT="http://localhost:5000"
 DP1_MLFLOW_ORG="http://${DP1}.${PTX}.svc.cluster.local:5000"
@@ -193,8 +202,7 @@ AGG="aggregator"
 AGG_IMG="ghcr.io/alelevente/aggregator:1.0"
 AGG_MLFLOW_INT="http://localhost:5000/worker/aggregator"
 AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.cluster.local:5000"
-AGG_MLFLOW_EXT="http://vm.fured.cloud.bme.hu:11686/worker/aggregator"
-MLFLOW_API_PREFIX="api/2.0/mlflow"
+AGG_MLFLOW_EXT="https://${GW_DOMAIN}:${GW_PORT}/worker/aggregator"
 #
 ORCH="orchestrator"
 ORCH_IMG="ghcr.io/alelevente/orchestrator:1.0"

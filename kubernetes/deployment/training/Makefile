@@ -15,18 +15,18 @@
 KUBE_OPS_VIEW_IMG := "hjacobs/kube-ops-view"
 KUBE_OPS_VIEW_PORT := 8081
 
-depends:
+depends ::
 	cd ./scripts && ./install_deps.sh -u
 
 ########################################################################################################################
 
-0-build:
+0-build ::
 	bash scripts/0-build-images.sh
 
-1-init:
+1-init ::
 	bash scripts/1-start-topo.sh
 
-2-viewer:
+2-viewer ::
 	( kubectl proxy 2>/dev/null & ) || exit 0
 	docker run --rm -d -q --net=host -v ~/.kube:/kube --name kube-ops-viewer -it ${KUBE_OPS_VIEW_IMG} \
         		--port=${KUBE_OPS_VIEW_PORT} --query-interval=3 --kubeconfig-path=/kube/config >/dev/null
@@ -35,50 +35,52 @@ depends:
 	echo "K8s Ops Viewer is available on http://localhost:${KUBE_OPS_VIEW_PORT}/"
 	echo
 
-3-edge:
+3-edge ::
 	bash scripts/3-setup-ptx-edge.sh
 
-4-demo:
+4-demo ::
 	bash scripts/4-run-demo.sh
 
-setup: | 0-build 1-init 2-viewer 3-edge 4-demo
+setup :: | 0-build 1-init 2-viewer 3-edge 4-demo
 
-datasource-api:
+datasource-api ::
 	${MAKE} -C data deploy-secure-api
 
-setup-local: | 0-build 1-init 2-viewer 3-edge datasource-api 4-demo
+local-setup :: export LOCAL_SETUP=true
+local-setup :: export USE_SANDBOX=true
+local-setup :: | 0-build 1-init 2-viewer 3-edge datasource-api 4-demo
 
 ########################################################################################################################
 
-stop-demo:
+stop-demo ::
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
 	bash scripts/stop-demo.sh
 
-delete-edge:
+delete-edge ::
 	bash scripts/delete-ptx-edge.sh
 
-shutdown-cluster:
+shutdown-cluster ::
 	bash scripts/shutdown-topo.sh
 	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
 
-teardown: | stop-demo delete-edge shutdown-cluster
+teardown :: | stop-demo delete-edge shutdown-cluster
 
 ########################################################################################################################
 
-status:
+status ::
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
 	bash ./scripts/status.sh
 
-shell:
+shell ::
 	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
 
-top:
+top ::
 	watch -d -n1 kubectl top pod -l tier=worker --sum --containers
 
-log:
+log ::
 	kubecolor logs --prefix -l tier=worker --follow
 
-cleanup:
+cleanup ::
 	docker image ls -q -f "reference=ptx/*" -f "reference=ptx-edge/*" \
 					 	-f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" \
 					 	-f "reference=${KUBE_OPS_VIEW_IMG}" | xargs -r docker rmi --force
@@ -88,5 +90,5 @@ cleanup:
 
 SHELL := bash
 .SILENT:	# Set silent mode (-s) by default
-.PHONY:		# Set all target phony
+#.PHONY:		# Set all target phony
 .DEFAULT_GOAL := setup

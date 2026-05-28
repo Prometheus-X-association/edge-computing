@@ -29,7 +29,7 @@ data:
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
       "expressLimitSize": "10mb"
     }
-  ptx-config.json: |
+  visions-config.json: |
     {
       "endpoint": "${PDC_CFG_ENDPOINT}",
       "serviceKey": "${PDC_CFG_SERVICE_KEY}",

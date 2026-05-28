@@ -54,7 +54,7 @@ pushd "${SCRIPT_DIR}/creds/cert/cluster/"
     ${KCTL} -n kube-system create secret tls "${CLUSTER_TLS_SECRET}" --cert=cluster-tls.cert --key=cluster-tls.key
 popd
 
-log "Waiting for cluster networking to set up...."
+log "Waiting for cluster networking to set up..."
 ${KCTL} -n kube-system wait --for="condition=Complete" --timeout="${TIMEOUT}s" job/helm-install-traefik
 ${KCTL} -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}s" deployment/traefik
 
