@@ -21,7 +21,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 LOG "Building docker images..."
 
 log "Remove cached cert files..."
-rm -rf "${SCRIPT_DIR}/creds/cert"
+rm -rfv "${SCRIPT_DIR}/creds/cert"
 
 log "Build PTX-edge components"
 for comp in "${COMPONENTS[@]}"; do

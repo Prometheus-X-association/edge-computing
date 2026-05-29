@@ -66,9 +66,9 @@ spec:
               cpu: 500m
               memory: 250Mi
           volumeMounts:
-            - name: env
-              mountPath: "/usr/src/app/.env.production"
-              subPath: .env.production
+            - name: env-template
+              mountPath: "/usr/src/app/.env.tmp"
+              subPath: .env.tmp
               readOnly: true
             - name: config-template
               mountPath: "/usr/src/app/dist/src/config.json.tmp"
@@ -91,14 +91,14 @@ spec:
             - secretRef:
                 name: ${PDC}-secrets-env
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
-          args: [ "npm", "run", "start" ]
+          args: [ "npm", "run", "start", "--omit=dev", "--dd" ]
       volumes:
-        - name: env
+        - name: env-template
           configMap:
             name: ${PDC}-config
             items:
               - key: .env
-                path: .env.production
+                path: .env.tmp
         - name: config-template
           configMap:
             name: ${PDC}-config

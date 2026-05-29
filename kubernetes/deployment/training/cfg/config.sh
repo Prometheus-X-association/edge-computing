@@ -34,6 +34,7 @@ fi
 
 # Import additional confidential configurations from creds folder
 for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
+    echo "Load configuration from ${cfg}..."
     source "${cfg}"
 done
 
@@ -116,8 +117,9 @@ API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWO
 
 # PDC
 PDC=pdc
+PDC_ENV=production
 PDC_PORT=3000
-PDC_NODE_PORT=30003
+#PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'          # placeholder for keeping PDC's service/ingress name
 PDC_DEF_PZ='${PDC_DEF_PZ}'  # placeholder for keeping PDC's privacy zone ID
 # Loaded from creds/websecure-creds.sh !
@@ -125,8 +127,10 @@ PDC_DEF_PZ='${PDC_DEF_PZ}'  # placeholder for keeping PDC's privacy zone ID
 ### PDC_SECRET_KEY=
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder for injecting key in runtime
 PDC_CFG_SECRET_KEY='${SECRET_KEY}'  # placeholder for injecting key in runtime
+PDC_CFG_EXCHANGE_TRIGGER_API_KEY='${EXCHANGE_TRIGGER_API_KEY}'  # placeholder for injecting key in runtime
 PDC_SERVICE_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SERVICE_KEY}" | base64 -w0)
 PDC_SECRET_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_SECRET_KEY}" | base64 -w0)
+PDC_EXCHANGE_TRIGGER_API_KEY_BASE64_ENCODED=$(printf '%s' "${PDC_EXCHANGE_TRIGGER_API_KEY}" | base64 -w0)
 #
 PDC_CFG_ENDPOINT="https://${GW_DOMAIN}:${GW_PORT}/${PTX}/${PDC_DEF_PZ}/${PDC}"
 #

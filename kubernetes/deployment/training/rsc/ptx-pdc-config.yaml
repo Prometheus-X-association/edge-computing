@@ -10,15 +10,25 @@ metadata:
     tier: ptx
 data:
   .env: |
-    NODE_ENV=production
+    NODE_ENV=${PDC_ENV}
     PORT=${PDC_PORT}
+    #
     SESSION_SECRET=${PDC_SESSION_SECRET}
     SESSION_COOKIE_EXPIRATION=24000
+    #
     MONGO_URI=mongodb://localhost:27017/dataspace-connector
+    #
+    CURATOR=https://tmit.bme.hu
+    MAINTAINER=https://tmit.bme.hu
+    #
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
+    #
     JWT_BEARER_TOKEN_EXPIRATION=3h
     JWT_REFRESH_TOKEN_EXPIRATION=1d
+    #
+    EXCHANGE_TRIGGER_API_KEY=${PDC_CFG_EXCHANGE_TRIGGER_API_KEY}
+    EXCHANGE_TIMEOUT=120
   sandbox-config.json: |
     {
       "endpoint": "http://${PDC_ID}.${PTX}.svc.cluster.local:${PDC_PORT}/",
@@ -27,7 +37,8 @@ data:
       "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
       "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
-      "expressLimitSize": "10mb"
+      "expressLimitSize": "10mb",
+      "serviceChainAdapter": false
     }
   visions-config.json: |
     {
@@ -37,11 +48,13 @@ data:
       "contractUri": "${PTX_CONTRACT_URI}",
       "catalogUri": "${PTX_CATALOG_URI}",
       "consentUri": "${PTX_CONSENT_URI}",
-      "expressLimitSize": "10mb"
+      "expressLimitSize": "10mb",
+      "serviceChainAdapter": false
     }
   entrypoint.sh: |
-    #!/usr/bin/env sh
-    envsubst <dist/src/config.json.tmp >dist/src/config.production.json
+    #!/bin/bash -x
+    envsubst <dist/src/config.json.tmp >dist/src/config.${PDC_ENV}.json
+    envsubst <.env.tmp >.env.${PDC_ENV}
     exec "$@"
 immutable: true
 ---
@@ -58,6 +71,7 @@ metadata:
 data:
   SERVICE_KEY: ${PDC_SERVICE_KEY_BASE64_ENCODED}
   SECRET_KEY: ${PDC_SECRET_KEY_BASE64_ENCODED}
+  EXCHANGE_TRIGGER_API_KEY: ${PDC_EXCHANGE_TRIGGER_API_KEY_BASE64_ENCODED}
 immutable: true
 ---
 apiVersion: v1
