@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-run-simple-api:
+run-simple-api ::
 	./run_simple_api.sh || true
 
-deploy-http-api:
+deploy-http-api ::
 	./deploy_http_api.sh || true
 
-deploy-secure-api:
+deploy-secure-api ::
 	./deploy_secure_api.sh || true
 
 ########################################################################################################################
 
-status:
+status ::
 	@docker ps --no-trunc
 
 ########################################################################################################################

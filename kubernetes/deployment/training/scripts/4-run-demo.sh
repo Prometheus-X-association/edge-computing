@@ -60,10 +60,10 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
-_AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}"
+_AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
-wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-                                    --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
+wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+                                --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
 log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 >>> Aggregator is also exposed on https://${GW_HOST}/worker/${AGG}/"
 
@@ -85,8 +85,8 @@ sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
 _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"
-wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-                                --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_ORCH_URL}"
+wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+                            --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_ORCH_URL}"
 log ">>> Orchestrator is also exposed on https://${PRIMARY_HOST}/worker/${ORCH}/docs\n
 >>> Orchestrator is also exposed on https://${GW_HOST}/worker/${ORCH}/docs"
 
