@@ -11,7 +11,8 @@ COPY ./ ./
 RUN mkdir -p /src/keys && pnpm install --frozen-lockfile
 # Build resources
 RUN npm run build
+# Copy init script
+COPY ./scripts/entrypoint.pdc.sh ./entrypoint.sh
 # Expose the port on which the app will run
 EXPOSE 3000
-#CMD ["/bin/sh", "docker/scripts/start.sh"]
-CMD ["npm", "run", "start", "--omit=dev"]
+CMD ["/bin/sh", "entrypoint.sh"]

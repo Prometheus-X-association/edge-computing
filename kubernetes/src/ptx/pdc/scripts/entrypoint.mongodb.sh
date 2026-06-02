@@ -15,6 +15,8 @@
 set -eu
 
 ### Considered envvars:
+# - MONGO_BIND_IP
+# - MONGO_PORT
 # - MONGO_INITDB_ROOT_USERNAME
 # - MONGO_INITDB_ROOT_PASSWORD
 # - PDC_DB_NAME
@@ -43,15 +45,15 @@ db.getSiblingDB('${PDC_DB_NAME:-DEF_DB_NAME}').createUser({
 """
 
 # Create admin and PDC users in running mongo process
-_RAND_PORT=$(shuf -i '30000-40000' -n1 -z)
+_RAND_PORT="$(shuf -i '30000-40000' -n1)"
 mongod --dbpath=/data/db --port="${_RAND_PORT}" --fork --syslog --noauth
 mongosh --port="${_RAND_PORT}" admin --eval "${CREATE_ADMIN_USER}"
 mongosh --port="${_RAND_PORT}" admin --eval "${CREATE_PDC_USER}"
 mongod --shutdown --syslog
 
 # Use authentication if password is set, not authentication as fallback
-USE_AUTH=$(if [ -n "${PDC_DB_PASSWORD:-}" ]; then echo '--auth'; else echo '--noauth'; fi)
+AUTH=$(if [ -n "${PDC_DB_PASSWORD:-}" ]; then echo '--auth'; else echo '--noauth'; fi)
 
 # Initiate mongodb server process
 set -x
-exec mongod --dbpath=/data/db --bind_ip=127.0.0.1 --port=27017 --quiet "${USE_AUTH}" "$@"
+exec mongod --dbpath=/data/db --bind_ip="${MONGO_BIND_IP:-127.0.0.1}" --port="${MONGO_PORT:-27017}" --quiet "${AUTH}" "$@"
