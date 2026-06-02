@@ -49,8 +49,8 @@ spec:
           livenessProbe:
             httpGet:
               port: 27017
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 30
           restartPolicy: Always # Native sidecar container
       containers:
         - name: connector

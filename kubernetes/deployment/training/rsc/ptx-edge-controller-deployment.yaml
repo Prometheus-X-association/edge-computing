@@ -139,7 +139,7 @@ spec:
             httpGet:
               port: ${CNTR_PORT}
               path: /${CNTR_LIVE_PATH}
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 30
       restartPolicy: Always
 ---

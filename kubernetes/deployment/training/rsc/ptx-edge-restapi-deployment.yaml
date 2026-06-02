@@ -42,8 +42,8 @@ spec:
             httpGet:
               port: ${API_PORT}
               path: /${PREFIX}/health
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 30
       restartPolicy: Always
 ---
 apiVersion: v1
