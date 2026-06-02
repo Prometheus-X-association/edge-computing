@@ -14,7 +14,7 @@
 # limitations under the License.
 set -eux
 
-envsubst <"dist/src/config.json.tmp" >"dist/src/config.${PDC_ENV}.json"
-envsubst <".env.tmp" >".env.${PDC_ENV}"
+envsubst <"dist/src/config.json.tmp" >"dist/src/config.${PDC_ENV:-production}.json"
+envsubst <".env.tmp" >".env.${PDC_ENV:-production}"
 
 exec npm run start "$@"

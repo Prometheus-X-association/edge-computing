@@ -16,7 +16,7 @@ data:
     SESSION_SECRET=${PDC_SESSION_SECRET}
     SESSION_COOKIE_EXPIRATION=24000
     #
-    MONGO_URI=mongodb://localhost:27017/dataspace-connector
+    MONGO_URI=mongodb://${PDC_DB_USER}:${PDC_DB_PASSWORD}@127.0.0.1:27017/${PDC_DB_NAME}?authSource=${PDC_DB_NAME}&appName=PDC
     #
     CURATOR=https://tmit.bme.hu
     MAINTAINER=https://tmit.bme.hu
@@ -37,8 +37,7 @@ data:
       "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
       "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
-      "expressLimitSize": "10mb",
-      "serviceChainAdapter": false
+      "expressLimitSize": "10mb"
     }
   visions-config.json: |
     {
@@ -49,13 +48,9 @@ data:
       "catalogUri": "${PTX_CATALOG_URI}",
       "consentUri": "${PTX_CONSENT_URI}",
       "expressLimitSize": "10mb",
-      "serviceChainAdapter": false
+      "serviceChainAdapter": false,
+      "serviceChainAdapterTimeout": 3000
     }
-  entrypoint.sh: |
-    #!/bin/bash -x
-    envsubst <dist/src/config.json.tmp >dist/src/config.${PDC_ENV}.json
-    envsubst <.env.tmp >.env.${PDC_ENV}
-    exec "$@"
 immutable: true
 ---
 apiVersion: v1

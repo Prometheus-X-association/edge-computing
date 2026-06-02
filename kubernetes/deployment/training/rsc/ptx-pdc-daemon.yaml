@@ -42,15 +42,17 @@ spec:
           ports:
             - name: mongo-port
               containerPort: 27017
+          env:
+            - name: PDC_DB_NAME
+              value: ${PDC_DB_NAME}
+            - name: PDC_DB_USER
+              value: ${PDC_DB_USER}
+            - name: PDC_DB_PASSWORD
+              value: ${PDC_DB_PASSWORD}
           resources:
             requests:
               cpu: 100m
               memory: 150Mi
-          livenessProbe:
-            httpGet:
-              port: 27017
-            initialDelaySeconds: 15
-            periodSeconds: 30
           restartPolicy: Always # Native sidecar container
       containers:
         - name: connector
@@ -60,7 +62,6 @@ spec:
             - name: pdc-port
               containerPort: ${PDC_PORT}
               protocol: TCP
-              #hostPort: ${PDC_NODE_PORT}
           resources:
             requests:
               cpu: 500m
@@ -74,10 +75,6 @@ spec:
               mountPath: "/usr/src/app/dist/src/config.json.tmp"
               subPath: config.json.tmp
               readOnly: true
-            - name: entrypoint
-              mountPath: /usr/src/app/docker/scripts/entrypoint.sh
-              subPath: entrypoint.sh
-              readOnly: true
           env:
             - name: PDC_ID
               valueFrom:
@@ -90,8 +87,6 @@ spec:
           envFrom:
             - secretRef:
                 name: ${PDC}-secrets-env
-          command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
-          args: [ "npm", "run", "start", "--omit=dev", "--dd" ]
       volumes:
         - name: env-template
           configMap:
@@ -105,12 +100,6 @@ spec:
             items:
               - key: ${USED_PDC_CONFIG}
                 path: config.json.tmp
-        - name: entrypoint
-          configMap:
-            name: ${PDC}-config
-            items:
-              - key: entrypoint.sh
-                path: entrypoint.sh
         - name: kube-api-client-cfg
           projected:
             defaultMode: 420

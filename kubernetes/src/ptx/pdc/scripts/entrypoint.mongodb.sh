@@ -27,7 +27,7 @@ set -eu
 CREATE_ADMIN_USER="""
 db.createUser({
     user: '${MONGO_INITDB_ROOT_USERNAME:-admin}',
-    pwd: '${MONGO_INITDB_ROOT_PASSWORD:-admin}',
+    pwd: '${MONGO_INITDB_ROOT_PASSWORD:-$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)}',
     roles: [
         {role: 'userAdminAnyDatabase', db: 'admin'},
         {role: 'readWriteAnyDatabase', db: 'admin'}

@@ -2,7 +2,7 @@ name: pdc
 services:
   connector:
     container_name: pdc-connector
-    image: ptx/connector:1.10.0-slim
+    image: ptx/connector:1.10.1-slim
     restart: unless-stopped
     volumes:
       - './config.production.json:/usr/src/app/dist/src/config.json.tmp'
@@ -11,7 +11,7 @@ services:
       - "3333:3000"
     environment:
       # By default
-      MONGO_URI: mongodb://mongodb:27017/dataspace-connector
+      MONGO_URI: mongodb://pdc:pdcpasswd@mongodb:27017/dataspace-connector?authSource=dataspace-connector&appName=PDC
       PDC_ENV: production
     extra_hosts:
       - "gw.ptx-core.sandbox.local:host-gateway"
@@ -32,9 +32,9 @@ services:
       - "27018:27017"
     environment:
       MONGO_BIND_IP: 0.0.0.0
-      #PDC_DB_NAME: dataspace-connector
-      #PDC_DB_USER: pdc
-      #PDC_DB_PASSWORD: pdc
+      PDC_DB_NAME: dataspace-connector
+      PDC_DB_USER: pdc
+      PDC_DB_PASSWORD: pdcpasswd
     networks:
       - local
     healthcheck:
@@ -43,7 +43,7 @@ services:
       start_interval: 3s
   catalog:
     container_name: ptx-catalog
-    image: ptx-sandbox/catalog:1.10.0-slim
+    image: ptx-sandbox/catalog:1.10.1-slim
     ports:
       - "3002:8082"
     extra_hosts:
