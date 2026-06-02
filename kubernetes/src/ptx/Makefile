@@ -42,6 +42,7 @@ build-pdc:
 		git switch --detach v${PDC_VER}; \
 	popd; \
 	cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
+	cp -Rv ./pdc/scripts $${TMP_DIR}/dataspace-connector/scripts; \
 	docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
 					-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
 	docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \
@@ -54,6 +55,7 @@ build:
 		git switch --detach v${PDC_VER}; \
 	popd; \
 	cp -v ./pdc/.dockerignore $${TMP_DIR}/dataspace-connector; \
+	cp -Rv ./pdc/scripts $${TMP_DIR}/dataspace-connector/scripts; \
 	docker build -f ./pdc/connector.Dockerfile --build-arg ENV=${PDC_ENV} \
 					-t ${PTX_PREFIX}/connector:${PDC_VER}-slim $${TMP_DIR}/dataspace-connector; \
 	docker build -f ./pdc/mongodb.Dockerfile --build-arg MONGO_VER=${MONGO_VER} \

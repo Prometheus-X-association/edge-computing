@@ -34,7 +34,7 @@ fi
 
 # Import additional confidential configurations from creds folder
 for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
-    echo "Load configuration from ${cfg}..."
+    #echo "Load configuration from ${cfg}..."
     source "${cfg}"
 done
 
