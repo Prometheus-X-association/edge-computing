@@ -40,10 +40,14 @@ docker run -d --net=host \
         --url="${NGROK_DOMAIN}" \
         "${TARGET_PORT}"
 
+#docker run --rm --net=host --name ngrok-tunnel -e NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN} -it ngrok/ngrok:latest \
+#http --url=crux-rented-delirious.ngrok-free.dev 9080
 
 # Check running instance
 docker ps --no-trunc -l && sleep 1
 
 log "Waiting for completed startup..."
 # Wait for server startup
-#(docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
+sleep 2
+
+echo "Port: ${TARGET_PORT} is exposed on https://${NGROK_DOMAIN}/"
