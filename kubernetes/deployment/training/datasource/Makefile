@@ -16,10 +16,10 @@ run-simple-api ::
 	./run_simple_api.sh || true
 
 deploy-http-api ::
-	./deploy_http_api.sh || true
+	./deploy_datasource_api.sh || true
 
 deploy-secure-api ::
-	./deploy_secure_api.sh || true
+	./deploy_datasource_api.shs || true
 
 ########################################################################################################################
 

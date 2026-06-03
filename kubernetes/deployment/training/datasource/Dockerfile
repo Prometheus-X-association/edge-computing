@@ -9,7 +9,7 @@ ARG DOMAIN="datasource.ptx.localhost"
 #    openssl req -x509 -noenc -days 365 -newkey rsa:4096 -subj "/C=EU/O=PTX/OU=dataspace/CN=${DOMAIN}" \
 #                                                            -keyout cert/api-tls.key -out cert/api-tls.cert
 COPY ./cert ./cert
-COPY api.py ./
+COPY ./src/api.py ./
 EXPOSE 8888
 ENTRYPOINT ["uvicorn", "api:app", "--host=0.0.0.0", "--port=8888", "--workers=2", "--access-log" ]
 #CMD ["--ssl-keyfile=cert/api-tls.key", "--ssl-certfile=cert/api-tls.cert" ]
