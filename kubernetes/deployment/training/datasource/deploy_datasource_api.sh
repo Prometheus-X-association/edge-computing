@@ -58,7 +58,7 @@ done
 
 ########################################################################################################################
 
-LOG "Initiate Datasource API for domain: ${GW_DOMAIN}..."
+LOG "Initiate Datasource API for domain: ${GW_DOMAIN}"
 
 if [ "${TLS_ENABLED}" == "true" ]; then
     # Create certs

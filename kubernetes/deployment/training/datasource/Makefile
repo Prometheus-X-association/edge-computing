@@ -15,11 +15,22 @@
 run-simple-api ::
 	./run_simple_api.sh || true
 
-deploy-http-api ::
+deploy-api-http ::
 	./deploy_datasource_api.sh || true
 
-deploy-secure-api ::
+deploy-api-https ::
 	./deploy_datasource_api.sh -s || true
+
+########################################################################################################################
+
+ngrok-tunnel-http:
+	./create_ngrok_tunnel.sh 9080
+
+ngrok-tunnel-https:
+	./create_ngrok_tunnel.sh https://localhost:9443
+
+ngrok-tunnel-pdc:
+	./create_ngrok_tunnel.sh 3000
 
 ########################################################################################################################
 
