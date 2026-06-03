@@ -14,10 +14,10 @@ kubernetes/src/.cache
 kubernetes/src/.creds
 kubernetes/src/registry/.certs
 kubernetes/deployment/*/creds/*
-kubernetes/deployment/training/data/cert/*
+kubernetes/deployment/training/datasource/cert/*
 kubernetes/test/demos/demo1/creds/*
 # data files
 kubernetes/deployment/*/manifests/*
-kubernetes/deployment/training/data/resource/*
+kubernetes/deployment/training/datasource/resource/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml

@@ -43,8 +43,10 @@ depends ::
 
 setup :: | 0-build 1-init 2-viewer 3-edge 4-demo
 
+########################################################################################################################
+
 datasource-api ::
-	${MAKE} -C data deploy-secure-api
+	${MAKE} -C datasource deploy-secure-api
 
 local-setup :: export LOCAL_SETUP=true
 local-setup :: export USE_SANDBOX=true
