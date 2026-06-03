@@ -4,11 +4,11 @@ ARG ENV
 ENV ENV=$ENV
 # Install pnpm globally & Create app directory
 WORKDIR /usr/src/app
-RUN npm install -g pnpm && apk add --no-cache gettext-envsubst git
+RUN npm install -g pnpm@9.15.5 && apk add --no-cache gettext-envsubst git
 # Bundle app source
 COPY ./ ./
 # Install app dependencies
-RUN mkdir -p /src/keys && pnpm install --frozen-lockfile
+RUN mkdir -p ./src/keys ./docs ./src/public/uploads && pnpm install --frozen-lockfile
 # Build resources
 RUN npm run build
 # Copy init script
