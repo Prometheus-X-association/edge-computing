@@ -19,7 +19,7 @@ deploy-http-api ::
 	./deploy_datasource_api.sh || true
 
 deploy-secure-api ::
-	./deploy_datasource_api.shs || true
+	./deploy_datasource_api.sh -s || true
 
 ########################################################################################################################
 
