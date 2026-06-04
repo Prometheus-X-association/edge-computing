@@ -32,6 +32,9 @@ ngrok-tunnel-https:
 ngrok-tunnel-pdc:
 	./create_ngrok_tunnel.sh 3000
 
+stop-ngrok-tunnel:
+	docker ps -aq -f name="${NAME_PREFIX}-*" | xargs -r docker rm --force || true
+
 ########################################################################################################################
 
 status ::

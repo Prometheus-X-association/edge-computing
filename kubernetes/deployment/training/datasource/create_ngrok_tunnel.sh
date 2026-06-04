@@ -19,7 +19,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 # Loaded from creds/websecure-creds.sh !
 ### NGROK_AUTHTOKEN=
 ### NGROK_DOMAIN=
-NGROK_NAME=ngrok-tunnel
+NAME_PREFIX="ngrok-tun"
 TARGET_PORT="${1}"
 
 ########################################################################################################################
@@ -28,18 +28,18 @@ LOG "Initiate NGROK tunnel"
 
 log "Remove running container..."
 # Shut down running instance
-docker rm --force "${NGROK_NAME}" || true
+#docker rm --force "${NAME_PREFIX}" || true
+docker ps -aq -f name="${NAME_PREFIX}-*" | xargs -r docker rm --force || true
 
 log "Start tunnel to port: ${TARGET_PORT}..."
 # Run ngrok tunnel
 docker run -d --net=host \
         -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" \
-        --name "${NGROK_NAME}" \
+        --name "${NAME_PREFIX}-$(echo "${TARGET_PORT}" | grep -P -o ':?\K\d+$')" \
         ngrok/ngrok:latest \
         http \
         --url="${NGROK_DOMAIN}" \
         "${TARGET_PORT}"
-
 #docker run --rm --net=host --name ngrok-tunnel -e NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN} -it ngrok/ngrok:latest \
 #http --url=crux-rented-delirious.ngrok-free.dev 9080
 
