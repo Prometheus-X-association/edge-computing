@@ -29,6 +29,6 @@ API_BASIC_USER="admin"
 API_BASIC_PASSWORD="admin"
 
 ### Mocked datasource API default credentials
-DATASOURCE_USERNAME="admin"
-DATASOURCE_PASSWORD="admin"
-DATASOURCE_INSECURE="true"
+DS_API_USER="admin"
+DS_API_PASSWORD="admin"
+DS_API_INSECURE="true"

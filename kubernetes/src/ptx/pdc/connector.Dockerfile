@@ -1,5 +1,5 @@
 # Use the official Node.js alpine image as base image
-FROM node:23.11.0-alpine3.21
+FROM node:22-alpine
 ARG ENV
 ENV ENV=$ENV
 # Install pnpm globally & Create app directory
@@ -8,7 +8,7 @@ RUN npm install -g pnpm@9.15.5 && apk add --no-cache gettext-envsubst git
 # Bundle app source
 COPY ./ ./
 # Install app dependencies
-RUN mkdir -p ./src/keys ./docs ./src/public/uploads && pnpm install --frozen-lockfile
+RUN mkdir -p ./src/keys ./docs ./src/public/uploads && pnpm install --frozen-lockfile --ignore-scripts
 # Build resources
 RUN npm run build
 # Copy init script

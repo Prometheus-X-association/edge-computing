@@ -16,7 +16,7 @@ set -euo pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
-# Loaded from creds/websecure-creds.sh !
+# Loaded from creds/fured-cloud-creds.sh !
 ### NGROK_AUTHTOKEN=
 ### NGROK_DOMAIN=
 NAME_PREFIX="ngrok-tun"
@@ -36,6 +36,7 @@ log "Start tunnel to port: ${TARGET_PORT}..."
 docker run -d --net=host \
         -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" \
         --name "${NAME_PREFIX}-$(echo "${TARGET_PORT}" | grep -P -o ':?\K\d+$')" \
+        --label "${LAB_ROLE}=datasource" \
         ngrok/ngrok:latest \
         http \
         --url="${NGROK_DOMAIN}" \

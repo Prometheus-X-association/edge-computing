@@ -21,10 +21,11 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 # Datasource image config
 DATASOURCE_IMG="training/data-api:latest"
 DATASOURCE_API_NAME="training-data-api"
+
 # Datasource API config
-# Loaded from creds/websecure-creds.sh !
-### DATASOURCE_USERNAME=
-### DATASOURCE_PASSWORD=
+# Loaded from creds/fured-cloud-creds.sh !
+### DS_API_USER=
+### DS_API_PASSWORD=
 ### GW_DOMAIN=
 ### GW_PORT=
 TIMEOUT=5
@@ -118,12 +119,13 @@ fi
 log "Start datasource API on port: ${DATASOURCE_PORT}..."
 # Run datasource API server
 docker run -d -p "${DATASOURCE_PORT}:8888" \
-        -e USERNAME="${DATASOURCE_USERNAME}" \
-        -e PASSWORD="${DATASOURCE_PASSWORD}" \
+        -e USERNAME="${DS_API_USER}" \
+        -e PASSWORD="${DS_API_PASSWORD}" \
         -e GW_DOMAIN="${GW_DOMAIN}" \
         -e GW_PORT="${GW_PORT}" \
         -v "./resource:/usr/src/api/resource:ro" \
         --name "${DATASOURCE_API_NAME}" \
+        --label "${LAB_ROLE}=datasource" \
         "${DATASOURCE_IMG}" \
         "${SSL_ARG[@]}" # Expand ssl args to uvicorn inside container, otherwise skip parameter entirely
 

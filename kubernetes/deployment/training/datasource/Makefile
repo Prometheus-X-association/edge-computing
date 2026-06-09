@@ -23,25 +23,37 @@ deploy-api-https ::
 
 ########################################################################################################################
 
-ngrok-tunnel-http:
+ngrok-tunnel-http ::
 	./create_ngrok_tunnel.sh 9080
 
-ngrok-tunnel-https:
+ngrok-tunnel-https ::
 	./create_ngrok_tunnel.sh https://localhost:9443
 
-ngrok-tunnel-pdc:
+ngrok-tunnel-pdc ::
 	./create_ngrok_tunnel.sh 3000
 
-stop-ngrok-tunnel:
-	docker ps -aq -f name="${NAME_PREFIX}-*" | xargs -r docker rm --force || true
+stop-ngrok-tunnel ::
+	docker ps -aq -f name="ngrok-tun-*" | xargs -r docker rm --force || true
+
+########################################################################################################################
+
+start-pdc ::
+	./setup_connector.sh
+
+########################################################################################################################
+
+setup :: | deploy-api-http start-pdc ngrok-tunnel-pdc
 
 ########################################################################################################################
 
 status ::
-	@docker ps --no-trunc
+	@docker ps -f label="role.dataspace.ptx.org=datasource"
+
+cleanup ::
+	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 
 ########################################################################################################################
 
 #.SILENT:	# Set silent mode (-s) by default
 .PHONY:		# Set all target phony
-.DEFAULT_GOAL := deploy-secure-api
+.DEFAULT_GOAL := setup

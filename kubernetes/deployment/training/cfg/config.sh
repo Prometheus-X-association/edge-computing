@@ -17,8 +17,8 @@ set -o allexport    # Also export all defined variables for 'envsubst'
 ########################################################################################################################
 
 # Define base path for absolute file access
-SCRIPT_DIR=$(readlink -f "$(dirname "$0")/..")
-ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../..")
+SCRIPT_DIR=$(readlink -f "$(dirname "$0")/..")  # training/
+ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../..")   # kubernetes/
 
 # Import essentials as logging, etc.
 source "${SCRIPT_DIR}/cfg/helper.sh"
@@ -55,7 +55,7 @@ NODE_FED="node-federated"
 # Registry
 REGISTRY="registry.k3d.local"
 REGISTRY_PORT=5000
-# Loaded from creds/websecure-creds.sh !
+# Loaded from creds/fured-cloud-creds.sh !
 ### REGISTRY_USER=
 ### REGISTRY_SECRET=
 K3D_REG="registry.k3d.localhost:${REGISTRY_PORT}"
@@ -68,7 +68,7 @@ LB_WEB_PORT=8080
 LB_WEBSECURE_PORT=8443
 LB_DOMAIN="${CLUSTER}.k3d.localhost"
 CLUSTER_HOST="${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
-# Loaded from creds/websecure-creds.sh !
+# Loaded from creds/fured-cloud-creds.sh !
 ### GW_DOMAIN=
 ### GW_PORT=
 GW_HOST="${GW_DOMAIN}:${GW_PORT}"
@@ -85,6 +85,8 @@ PTX="ptx-edge"
 
 # Used PTX-related labels
 LAB_PZ="privacy-zone.dataspace.ptx.org"
+LAB_ROLE="role.dataspace.ptx.org"
+#
 LAB_WORK="node-role.kubernetes.io/worker=true"
 LAB_PDC="connector.dataspace.ptx.org/enabled=true"
 
@@ -110,7 +112,7 @@ CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
 
 # API auth
-# Loaded from creds/websecure-creds.sh !
+# Loaded from creds/fured-cloud-creds.sh !
 ### API_BASIC_USER=
 ### API_BASIC_PASSWORD=
 API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}" | openssl base64 -A)
@@ -122,7 +124,7 @@ PDC_PORT=3000
 #PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'          # placeholder for keeping PDC's service/ingress name
 PDC_DEF_PZ='${PDC_DEF_PZ}'  # placeholder for keeping PDC's privacy zone ID
-# Loaded from creds/websecure-creds.sh !
+# Loaded from creds/fured-cloud-creds.sh !
 ### PDC_SERVICE_KEY=
 ### PDC_SECRET_KEY=
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder for injecting key in runtime
