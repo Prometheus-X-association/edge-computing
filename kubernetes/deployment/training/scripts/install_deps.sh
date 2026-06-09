@@ -47,6 +47,9 @@ TEST_OK='Running'
 PZ_LAB='privacy-zone.dataspace.ptx.org'
 RET_VAL=0
 
+FS_MUI=8192
+FS_MUW=524288
+
 # Install actions --------------------------------------------------------------------------------
 
 function install_deps() {

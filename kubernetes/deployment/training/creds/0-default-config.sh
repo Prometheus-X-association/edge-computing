@@ -4,8 +4,8 @@
 ## Values can be overwritten by other scripts in ./creds !!!
 
 ### Override global settings by enabling local PTX deployment with PTX core sandbox
-#LOCAL_SETUP="true"
-#USE_SANDBOX="true"
+LOCAL_SETUP="true"
+USE_SANDBOX="true"
 
 ### Cluster Registry default credentials
 REGISTRY_USER="admin"
