@@ -52,7 +52,7 @@ cat <<'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
 FROM node:22
 ARG ENV
 ENV ENV $ENV
-LABEL ${LAB_ROLE}="datasource"
+LABEL role.dataspace.ptx.org="datasource"
 
 # Install pnpm globally
 RUN npm install -g pnpm@9.15.5
@@ -99,9 +99,9 @@ services:
     restart: unless-stopped
     tty: true
     volumes:
-      - "./src/config.${NODE_ENV}.json/:/usr/src/app/src/config.${NODE_ENV}.json"
+      - "./src/config.json/:/usr/src/app/src/config.json"
     ports:
-      - 3000:${PORT}
+      - "3000:${PORT}"
     environment:
       MONGO_URI: ${MONGO_URI}
     depends_on:
@@ -133,7 +133,7 @@ ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
 
 log "Create config files.."
-cat <<EOF >"${DS_PDC_DIR}/src/config.${PDC_ENV}.json"
+cat <<EOF >"${DS_PDC_DIR}/src/config.json"
 {
     "endpoint": "${DS_PDC_ENDPOINT}",
     "serviceKey": "${DS_PDC_SERVICE_KEY}",
@@ -146,7 +146,7 @@ cat <<EOF >"${DS_PDC_DIR}/src/config.${PDC_ENV}.json"
     "serviceChainAdapterTimeout": 3000
 }
 EOF
-ls -alht "${DS_PDC_DIR}/src/config.${PDC_ENV}.json"
+ls -alht "${DS_PDC_DIR}/src/config.json"
 
 
 cat <<EOF >"${DS_PDC_DIR}/.env"

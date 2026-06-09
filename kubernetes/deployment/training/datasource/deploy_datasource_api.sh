@@ -20,7 +20,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 # Datasource image config
 DATASOURCE_IMG="training/data-api:latest"
-DATASOURCE_API_NAME="training-data-api"
+DATASOURCE_API_NAME="data-api"
 
 # Datasource API config
 # Loaded from creds/fured-cloud-creds.sh !
