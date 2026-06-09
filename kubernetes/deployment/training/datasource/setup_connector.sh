@@ -19,7 +19,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 # Loaded from creds/fured-cloud-creds.sh !
 ### NGROK_AUTHTOKEN=
 ### NGROK_DOMAIN=
-### PDC_DIR=
+### DS_PDC_DIR=
 
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 
@@ -27,27 +27,27 @@ PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 
 LOG "Setup Dataspace Connector (PDC)"
 
-if [ -z "${PDC_DIR:-}" ]; then
-    PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
+if [ -z "${DS_PDC_DIR:-}" ]; then
+    DS_PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
 fi
-mkdir -p "${PDC_DIR}"
-echo "Used dir for PDC: ${PDC_DIR}"
+mkdir -p "${DS_PDC_DIR}"
+echo "Used dir for PDC: ${DS_PDC_DIR}"
 
 log "Remove running containers..."
-pushd "${PDC_DIR}"
+pushd "${DS_PDC_DIR}"
     docker compose down -v || true
 popd
-sudo rm -rf "${PDC_DIR}"
+sudo rm -rf "${DS_PDC_DIR}"
 
-log "Pull PDC source with version: ${PDC_VER}..."
-git clone "${PDC_REPO}" "${PDC_DIR}"
-pushd "${PDC_DIR}"
-    git switch --detach "v${PDC_VER}"
+log "Pull PDC source with version: ${DS_PDC_VER}..."
+git clone "${PDC_REPO}" "${DS_PDC_DIR}"
+pushd "${DS_PDC_DIR}"
+    git switch --detach "v${DS_PDC_VER}"
 popd
 
 
 log "Adjust docker setup.."
-cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
+cat <<'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
 # Use the official Node.js image as base image
 FROM node:22
 ARG ENV
@@ -82,10 +82,10 @@ EXPOSE 3000
 
 CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
-ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
 
 
-cat <<'EOF' >"${PDC_DIR}/docker-compose.yml"
+cat <<'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
 services:
   dataspace-connector:
     container_name: dataspace-connector
@@ -129,11 +129,11 @@ networks:
   dataspace-connector:
     external: false
 EOF
-ls -alht "${PDC_DIR}/docker-compose.yml"
+ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
 
 log "Create config files.."
-cat <<EOF >"${PDC_DIR}/src/config.${PDC_ENV}.json"
+cat <<EOF >"${DS_PDC_DIR}/src/config.${PDC_ENV}.json"
 {
     "endpoint": "${DS_PDC_ENDPOINT}",
     "serviceKey": "${DS_PDC_SERVICE_KEY}",
@@ -146,10 +146,10 @@ cat <<EOF >"${PDC_DIR}/src/config.${PDC_ENV}.json"
     "serviceChainAdapterTimeout": 3000
 }
 EOF
-ls -alht "${PDC_DIR}/src/config.${PDC_ENV}.json"
+ls -alht "${DS_PDC_DIR}/src/config.${PDC_ENV}.json"
 
 
-cat <<EOF >"${PDC_DIR}/.env"
+cat <<EOF >"${DS_PDC_DIR}/.env"
 NODE_ENV=${PDC_ENV}
 PORT=${PDC_PORT}
 
@@ -177,10 +177,10 @@ EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY}
 # Exchange Timeout in seconds
 EXCHANGE_TIMEOUT=120
 EOF
-ls -alht "${PDC_DIR}/.env"
+ls -alht "${DS_PDC_DIR}/.env"
 
 
-cat <<EOF >"${PDC_DIR}/mongo-init.js"
+cat <<EOF >"${DS_PDC_DIR}/mongo-init.js"
 db = db.getSiblingDB('${DS_PDC_DB_NAME}');
 db.createUser({
     user: '${DS_PDC_DB_USER}',
@@ -188,11 +188,11 @@ db.createUser({
     roles: [{ role: 'readWrite', db: '${DS_PDC_DB_NAME}' }]
 });
 EOF
-ls -alht "${PDC_DIR}/mongo-init.js"
+ls -alht "${DS_PDC_DIR}/mongo-init.js"
 
 
 log "Build PDC..."
-cd "${PDC_DIR}"
+cd "${DS_PDC_DIR}"
 docker compose build
 
 log "Start PDC..."
