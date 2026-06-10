@@ -212,7 +212,12 @@ log "Start PDC..."
 docker compose up -d
 
 log "Waiting for PDC instance to set up..."
-( docker logs "dataspace-connector" --timestamps --follow & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+( docker logs "dataspace-connector" -t -f 2>&1 & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+if [ "${?}" -ne 0 ]; then
+    error "PDC failed!"
+    docker logs "dataspace-connector"
+    exit 1
+fi
 
 log "Login to connector"
 LOGIN_BODY=$(jq -n --arg secret "${DS_PDC_SECRET_KEY}" \
@@ -224,11 +229,11 @@ RESP=$(curl -sX POST http://localhost:3000/login \
              -d "${LOGIN_BODY}")
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    echo -e "\n>>> Login request failed!"
+    echo -e ">>> Login request failed!"
     echo "${RESP}" | jq
     exit 1
 else
-    echo -e "\n>>> Login was successful!"
+    echo -e ">>> Login was successful!"
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
     echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
     echo -e "\nBearer token: ${TOKEN}"
