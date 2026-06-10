@@ -141,9 +141,9 @@ PDC_SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)    # Auto
 PDC_PREFIX_DATA_0="${PTX}/${PZ_DATA_0}/${PDC}"
 PDC_PREFIX_DATA_1="${PTX}/${PZ_DATA_1}/${PDC}"
 #
-PTX_CONTRACT_URI="https://contract.visionstrust.com/"
-PTX_CATALOG_URI="https://api.visionstrust.com/v1/"
-PTX_CONSENT_URI="https://consent.visionstrust.com/v1"
+PTX_CONTRACT_URI="https://contract.visionstrust.com/"   # mandatory
+PTX_CATALOG_URI="https://api.visionstrust.com/v1/"      # mandatory
+PTX_CONSENT_URI="https://consent.visionstrust.com/v1"   # optional
 
 IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 

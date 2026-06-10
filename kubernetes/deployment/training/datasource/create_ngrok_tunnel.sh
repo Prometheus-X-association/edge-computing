@@ -52,3 +52,5 @@ log "Waiting for completed startup..."
 sleep 2
 
 echo "Port: ${TARGET_PORT} is exposed on https://${NGROK_DOMAIN}/"
+
+log "Done."

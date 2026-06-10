@@ -135,3 +135,5 @@ docker ps --no-trunc -l && sleep 1
 log "Waiting for completed startup..."
 # Wait for server startup
 (docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
+
+log "Done."

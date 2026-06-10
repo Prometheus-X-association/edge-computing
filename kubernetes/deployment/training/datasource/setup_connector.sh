@@ -16,14 +16,13 @@ set -euo pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
-# Loaded from creds/fured-cloud-creds.sh !
-### NGROK_AUTHTOKEN=
-### NGROK_DOMAIN=
-### DS_PDC_DIR=
-
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 
 ########################################################################################################################
+
+# Loaded from creds/fured-datasource-creds.sh !
+### DS_PDC_DIR=
+### DS_PDC_VER=
 
 LOG "Setup Dataspace Connector (PDC)"
 
@@ -132,6 +131,11 @@ EOF
 ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
 
+# Loaded from creds/0-default-config.sh !
+### PTX_*=
+# Loaded from creds/fured-datasource-creds.sh !
+### DS_PDC_*=
+
 log "Create config files.."
 cat <<EOF >"${DS_PDC_DIR}/src/config.json"
 {
@@ -148,6 +152,12 @@ cat <<EOF >"${DS_PDC_DIR}/src/config.json"
 EOF
 ls -alht "${DS_PDC_DIR}/src/config.json"
 
+# Loaded from creds/0-default-config.sh !
+### PDC_ENV=
+### PDC_PORT=
+# Loaded from creds/fured-datasource-creds.sh !
+### DS_PDC_*=
+### DS_MONGO_*=
 
 cat <<EOF >"${DS_PDC_DIR}/.env"
 NODE_ENV=${PDC_ENV}
@@ -179,6 +189,8 @@ EXCHANGE_TIMEOUT=120
 EOF
 ls -alht "${DS_PDC_DIR}/.env"
 
+# Loaded from creds/fured-datasource-creds.sh !
+### DS_PDC_*=
 
 cat <<EOF >"${DS_PDC_DIR}/mongo-init.js"
 db = db.getSiblingDB('${DS_PDC_DB_NAME}');
@@ -200,3 +212,5 @@ docker compose up -d
 
 log "Waiting for PDC instance to set up..."
 ( docker logs "dataspace-connector" --timestamps --follow & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+
+log "Done."
