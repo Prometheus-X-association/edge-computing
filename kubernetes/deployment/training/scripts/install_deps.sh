@@ -55,7 +55,7 @@ FS_MUW=524288
 function install_deps() {
     echo -e "\n>>> Install dependencies...\n"
     sudo apt-get update && sudo apt-get install -y ca-certificates apt-transport-https wget curl gettext \
-                                                     make bash-completion apache2-utils
+                                                     make bash-completion apache2-utils jq
 }
 
 function install_docker() {

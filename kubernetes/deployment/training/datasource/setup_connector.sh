@@ -17,6 +17,7 @@ set -euo pipefail
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
+DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/creds/pdc.login.token"
 
 ########################################################################################################################
 
@@ -212,5 +213,25 @@ docker compose up -d
 
 log "Waiting for PDC instance to set up..."
 ( docker logs "dataspace-connector" --timestamps --follow & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+
+log "Login to connector"
+LOGIN_BODY=$(jq -n --arg secret "${DS_PDC_SECRET_KEY}" \
+                   --arg service "${DS_PDC_SERVICE_KEY}" \
+                   '{secretKey: $secret, serviceKey: $service}')
+
+RESP=$(curl -sX POST http://localhost:3000/login \
+             -H "Content-Type: application/json" \
+             -d "${LOGIN_BODY}")
+
+if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    echo -e "\n>>> Login request failed!"
+    echo "${RESP}" | jq
+    exit 1
+else
+    echo -e "\n>>> Login was successful!"
+    echo "${RESP}" > "${DS_PDC_LOGIN_FILE}"
+fi
+TOKEN=$(jq -r '.content.token' <<<"${RESP}")
+echo -e "\nExtracted Bearer token: ${TOKEN}"
 
 log "Done."
