@@ -229,9 +229,9 @@ if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     exit 1
 else
     echo -e "\n>>> Login was successful!"
-    echo "${RESP}" > "${DS_PDC_LOGIN_FILE}"
+    TOKEN=$(jq -r '.content.token' <<<"${RESP}")
+    echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
+    echo -e "\nExtracted Bearer token: ${TOKEN}"
 fi
-TOKEN=$(jq -r '.content.token' <<<"${RESP}")
-echo -e "\nExtracted Bearer token: ${TOKEN}"
 
 log "Done."
