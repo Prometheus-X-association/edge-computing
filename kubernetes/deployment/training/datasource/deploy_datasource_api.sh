@@ -63,8 +63,8 @@ LOG "Initiate Datasource API for domain: ${GW_DOMAIN}"
 
 if [ "${TLS_ENABLED}" == "true" ]; then
     # Create certs
-    rm -rf "${SCRIPT_DIR}/datasource/cert/" && mkdir -pv "${SCRIPT_DIR}/datasource/cert/"
-    pushd "${SCRIPT_DIR}/datasource/cert/"
+    rm -rf "${SCRIPT_DIR}/datasource/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/datasource/creds/cert/"
+    pushd "${SCRIPT_DIR}/datasource/creds/cert/"
         if [ -e "${ROOT_DIR}/src/registry" ]; then
             if [ ! -f "${CA_DIR}/ca.crt" ]; then
                 log "No CA cert detected in ${CA_DIR}! Generate it manually..."
@@ -110,8 +110,8 @@ docker rm --force "${DATASOURCE_API_NAME}" || true
 if [ "${TLS_ENABLED}" == "true" ]; then
     DATASOURCE_PORT=9443
     SSL_ARG=(
-        '--ssl-keyfile=cert/api-tls.key'
-        '--ssl-certfile=cert/api-tls.cert')
+        '--ssl-keyfile=./creds/cert/api-tls.key'
+        '--ssl-certfile=./creds/cert/api-tls.cert')
 else
     DATASOURCE_PORT=9080
 fi
@@ -136,4 +136,4 @@ log "Waiting for completed startup..."
 # Wait for server startup
 (docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
 
-log "Done."
+echo -e "\nDone."

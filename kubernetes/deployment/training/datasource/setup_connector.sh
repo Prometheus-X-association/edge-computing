@@ -17,7 +17,7 @@ set -euo pipefail
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
-DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/creds/pdc.login.token"
+DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
 ########################################################################################################################
 
@@ -231,7 +231,7 @@ else
     echo -e "\n>>> Login was successful!"
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
     echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
-    echo -e "\nExtracted Bearer token: ${TOKEN}"
+    echo -e "\nBearer token: ${TOKEN}"
 fi
 
-log "Done."
+echo -e "\nDone."
