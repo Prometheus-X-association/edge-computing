@@ -90,7 +90,7 @@ if [ "${USE_NGROK}" == "false" ]; then
     fi
     EXPOSED_PORT="3000"
 else
-    EXPOSED_PORT="localhost:3000"
+    EXPOSED_PORT="127.0.0.1:3000"
 fi
 
 cat <<'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
@@ -228,7 +228,7 @@ if [ "${?}" -ne 0 ]; then
     exit 1
 fi
 
-log "Login to connector"
+log "Validating connector..."
 LOGIN_BODY=$(jq -n --arg secret "${DS_PDC_SECRET_KEY}" \
                    --arg service "${DS_PDC_SERVICE_KEY}" \
                    '{secretKey: $secret, serviceKey: $service}')
@@ -238,14 +238,13 @@ RESP=$(curl -sX POST http://localhost:3000/login \
              -d "${LOGIN_BODY}")
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    echo -e ">>> Login request failed!"
+    log "Login request failed!"
     echo "${RESP}" | jq
     exit 1
 else
-    echo -e ">>> Login was successful!"
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
     echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
-    echo -e "\nBearer token: ${TOKEN}"
+    log "Login was successful! Received bearer token: ${TOKEN}"
 fi
 
 echo -e "\nDone."

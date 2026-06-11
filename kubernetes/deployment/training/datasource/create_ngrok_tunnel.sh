@@ -56,7 +56,7 @@ log "Waiting for completed startup..."
 (docker logs -t -f "${CONTAINER_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
 
 if [ "$(docker container inspect -f '{{.State.Status}}' "${CONTAINER_NAME}")" == "running" ]; then
-    echo "Port: ${TARGET_PORT} is exposed on https://${DS_NGROK_DOMAIN}/"
+    log "Port: ${TARGET_PORT} is exposed on https://${DS_NGROK_DOMAIN}/"
 else
     error "NGROK container creation failed!"
     docker logs "${CONTAINER_NAME}"

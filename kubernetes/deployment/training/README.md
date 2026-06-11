@@ -17,7 +17,7 @@ The currently supported training setup si the following:
 
 ## Dependencies
 
-The setup script ([install_deps.sh](scripts/install_deps.sh)) installs required system packages and dependencies 
+The setup script ([install_deps.sh](scripts/install_deps.sh)) installs required system packages and dependencies
 for the following tools:
 
 - `docker`: container manager
@@ -52,6 +52,7 @@ For this reason, the user should run the `$ newgrp docker` command after success
 ## Setup
 
 The following numbered `Makefile` targets execute the ptx-edge installation steps:
+
 ```bash
 # Build ptx-edge components delivered in this project as separate docker images
 # Build modified PDC connector for full Kubernetes (cloud-native) compatibility
@@ -72,6 +73,7 @@ $ make 4-demo
 ```
 
 To stop and remove installed setup components, use the following steps:
+
 ```bash
 # Stop and delete demo setup
 $ make stop-demo
@@ -84,6 +86,7 @@ $ make shutdown-cluster
 ```
 
 Common steps are also grouped in dedicated high-level targets:
+
 ```bash
 $ make setup    # Invoke 0-build -> 1-init -> 2-viewer -> 3-edge -> 4-demo, as a single setup step
 
@@ -91,6 +94,7 @@ $ make teardown # Invoke stop-demo -> delete-edge -> shutdown-cluster, as a sing
 ```
 
 ## Local development
+
 For local development and testing, use the dedicated targets:
 
 ```bash
