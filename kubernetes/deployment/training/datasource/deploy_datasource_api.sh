@@ -103,7 +103,7 @@ log "Build image..."
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
 docker image ls "${DATASOURCE_IMG}"
 
-log "Remove running container..."
+log "Remove remnant container..."
 # Shut down running instance
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
@@ -128,9 +128,6 @@ docker run -d -p "${DATASOURCE_PORT}:8888" \
         --label "${LAB_ROLE}=datasource" \
         "${DATASOURCE_IMG}" \
         "${SSL_ARG[@]}" # Expand ssl args to uvicorn inside container, otherwise skip parameter entirely
-
-# Check running instance
-docker ps --no-trunc -l && sleep 1
 
 log "Waiting for completed startup..."
 # Wait for server startup

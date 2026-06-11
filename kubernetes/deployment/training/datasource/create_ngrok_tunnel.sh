@@ -33,7 +33,7 @@ if [ "${USE_NGROK}" == "false" ]; then
     exit 0
 fi
 
-log "Remove running container..."
+log "Remove still running containers..."
 # Shut down running instance
 #docker rm --force "${NAME_PREFIX}" || true
 docker ps -aq -f name="${NAME_PREFIX}-*" | xargs -r docker rm --force || true

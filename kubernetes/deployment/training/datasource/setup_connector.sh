@@ -33,7 +33,7 @@ fi
 mkdir -p "${DS_PDC_DIR}"
 echo "Used dir for PDC: ${DS_PDC_DIR}"
 
-log "Remove running containers..."
+log "Remove remnant containers..."
 pushd "${DS_PDC_DIR}"
     docker compose down -v || true
 popd
