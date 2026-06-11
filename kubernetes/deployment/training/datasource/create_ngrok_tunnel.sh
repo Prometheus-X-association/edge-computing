@@ -26,6 +26,13 @@ TARGET_PORT="${1}"
 
 LOG "Initiate NGROK tunnel"
 
+if [ "${USE_NGROK}" == "false" ]; then
+    if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
+        warning "NGROK tunneling is disabled while NGROK creds are given! Skip tunnel creation anyway..."
+    fi
+    exit 0
+fi
+
 log "Remove running container..."
 # Shut down running instance
 #docker rm --force "${NAME_PREFIX}" || true

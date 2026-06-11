@@ -84,6 +84,14 @@ CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
 ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
 
+if [ "${USE_NGROK}" == "false" ]; then
+    if [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
+        warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
+    fi
+    EXPOSED_PORT="3000"
+else
+    EXPOSED_PORT="localhost:3000"
+fi
 
 cat <<'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
 services:
@@ -101,7 +109,7 @@ services:
     volumes:
       - "./src/config.json/:/usr/src/app/src/config.json"
     ports:
-      - "3000:${PORT}"
+      - "${EXPOSED_PORT}:${PORT}"
     environment:
       MONGO_URI: ${MONGO_URI}
     depends_on:
@@ -163,6 +171,7 @@ ls -alht "${DS_PDC_DIR}/src/config.json"
 cat <<EOF >"${DS_PDC_DIR}/.env"
 NODE_ENV=${PDC_ENV}
 PORT=${PDC_PORT}
+EXPOSED_PORT=${EXPOSED_PORT}
 
 SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
 SESSION_COOKIE_EXPIRATION=24000

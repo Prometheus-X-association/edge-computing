@@ -3,7 +3,7 @@
 ########################################################################################################################
 ## Values can be overwritten by other scripts in ./creds !!!
 
-### Override global settings to disable local PTX deployment with PTX core sandbox or use NGROK reverse tunnel
+### Global settings to enable local PTX deployment and PTX core sandbox without NGROK reverse tunnel
 LOCAL_SETUP="true"
 USE_SANDBOX="true"
 USE_NGROK="false"

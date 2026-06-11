@@ -101,7 +101,7 @@ if [ "${USE_NGROK}" == "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]
     (docker logs -t -f ngrok-tun-3000 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
     #
     if [ "$(docker container inspect -f '{{.State.Status}}' "${NGROK_CONTAINER_NAME}")" == "running" ]; then
-        echo -e "\nPort: ${LB_WEBSECURE_PORT} is exposed on https://${NGROK_DOMAIN}/"
+        echo "Port: ${LB_WEBSECURE_PORT} is exposed on https://${NGROK_DOMAIN}/"
     else
         docker logs "${NGROK_CONTAINER_NAME}"
         error "NGROK container creation failed!"
