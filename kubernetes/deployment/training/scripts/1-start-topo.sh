@@ -83,6 +83,32 @@ ${KCTL} get nodes -L "${LAB_PZ}/${PZ_DATA_0}" -L "${LAB_PZ}/${PZ_DATA_1}" -L "${
 log "Configured DNS entries"
 ${KCTL} -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 
+if [ "${USE_NGROK}" == "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
+    log "Setup NGROK reversed HTTP proxy tunnel..."
+    # Shut down running instance
+    docker ps -aq -f name="ngrok-tun-*" | xargs -r docker rm --force || true
+    # Run ngrok tunnel
+    NGROK_CONTAINER_NAME="ngrok-tun-${LB_WEBSECURE_PORT}"
+    docker run -d --net=host \
+            -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" \
+            --name "${NGROK_CONTAINER_NAME}" \
+            --label "${LAB_ROLE}=cluster" \
+            ngrok/ngrok:latest \
+            http "https://127.0.0.1:${LB_WEBSECURE_PORT}" --url="${NGROK_DOMAIN}" --log=stdout
+    log "Waiting for completed startup..."
+    # Wait for server startup
+    #sleep 3
+    (docker logs -t -f ngrok-tun-3000 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
+    #
+    if [ "$(docker container inspect -f '{{.State.Status}}' "${NGROK_CONTAINER_NAME}")" == "running" ]; then
+        echo -e "\nPort: ${LB_WEBSECURE_PORT} is exposed on https://${NGROK_DOMAIN}/"
+    else
+        docker logs "${NGROK_CONTAINER_NAME}"
+        error "NGROK container creation failed!"
+        exit 1
+    fi
+fi
+
 ########################################################################################################################
 
 echo -e "\nDone."

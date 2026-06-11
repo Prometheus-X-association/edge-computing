@@ -3,9 +3,14 @@
 ########################################################################################################################
 ## Values can be overwritten by other scripts in ./creds !!!
 
-### Override global settings by enabling local PTX deployment with PTX core sandbox
+### Override global settings to disable local PTX deployment with PTX core sandbox or use NGROK reverse tunnel
 LOCAL_SETUP="true"
 USE_SANDBOX="true"
+USE_NGROK="false"
+
+### NGROK tunneling
+#NGROK_AUTHTOKEN=
+#NGROK_DOMAIN=
 
 ### Cluster Registry default credentials
 REGISTRY_USER="admin"

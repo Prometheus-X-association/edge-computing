@@ -30,13 +30,13 @@ _NC='\033[0m' # No Color
 
 function warning() {
     printf -v sep '%*s' 80 ""; echo -e "\n${_YELLOW}${sep// /-}"
-    echo "[WARNING]   $1"
+    echo "### [WARNING]   $1"
     printf -v sep '%*s' 80 ""; echo -e "${sep// /-}${_NC}\n"
 }
 
 function error() {
     printf -v sep '%*s' 80 ""; echo -e "\n${_RED}${sep// /#}"
-    echo "[ERROR]   $1"
+    echo "### [ERROR]   $1"
     printf -v sep '%*s' 80 ""; echo -e "${sep// /#}${_NC}\n"
 }
 
