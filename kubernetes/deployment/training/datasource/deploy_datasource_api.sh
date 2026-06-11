@@ -110,8 +110,8 @@ docker rm --force "${DATASOURCE_API_NAME}" || true
 if [ "${TLS_ENABLED}" == "true" ]; then
     DATASOURCE_PORT=9443
     SSL_ARG=(
-        '--ssl-keyfile=./creds/cert/api-tls.key'
-        '--ssl-certfile=./creds/cert/api-tls.cert')
+        '--ssl-keyfile=./cert/api-tls.key'
+        '--ssl-certfile=./cert/api-tls.cert')
 else
     DATASOURCE_PORT=9080
 fi
