@@ -17,7 +17,7 @@ set -o allexport    # Also export all defined variables for 'envsubst'
 ########################################################################################################################
 
 # Define base path for absolute file access
-SCRIPT_DIR=$(readlink -f "$(dirname "$0")/..")  # training/
+SCRIPT_DIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")  # training/
 ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/../..")   # kubernetes/
 
 # Import essentials as logging, etc.
