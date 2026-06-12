@@ -38,16 +38,20 @@ Usage: ${0} [OPTIONS]
 
 Options:
     -s  Run secured API with HTTPS.
+    -x  Dry run. Only perform configuration without execution.
     -h  Display help.
 EOF
 }
 
 TLS_ENABLED="false"
+DRY_RUN="false"
 
-while getopts ":sh" flag; do
+while getopts ":sxh" flag; do
 	case "${flag}" in
         s)
             TLS_ENABLED=true;;
+        x)
+            DRY_RUN=true;;
         h)
             display_help
             exit;;
@@ -61,7 +65,7 @@ done
 
 LOG "Initiate Datasource API for domain: ${GW_DOMAIN}"
 
-if [ "${TLS_ENABLED}" == "true" ]; then
+if [ "${TLS_ENABLED}" = "true" ]; then
     # Create certs
     rm -rf "${SCRIPT_DIR}/datasource/creds/cert/" && mkdir -pv "${SCRIPT_DIR}/datasource/creds/cert/"
     pushd "${SCRIPT_DIR}/datasource/creds/cert/"
@@ -103,11 +107,15 @@ log "Build image..."
 docker build -t "${DATASOURCE_IMG}" --build-arg DOMAIN="${GW_DOMAIN}" .
 docker image ls "${DATASOURCE_IMG}"
 
+if [ "${DRY_RUN}" = "true" ]; then
+    exit 0
+fi
+
 log "Remove remnant container..."
 # Shut down running instance
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
-if [ "${TLS_ENABLED}" == "true" ]; then
+if [ "${TLS_ENABLED}" = "true" ]; then
     DATASOURCE_PORT=9443
     SSL_ARG=(
         '--ssl-keyfile=./cert/api-tls.key'

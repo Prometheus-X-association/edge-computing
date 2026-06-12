@@ -73,7 +73,7 @@ CLUSTER_HOST="${LB_DOMAIN}:${LB_WEBSECURE_PORT}"
 ### GW_PORT=
 ### USE_NGROK=
 ### NGROK_DOMAIN=
-if [ "${USE_NGROK}" == "true" ] && [ -v NGROK_DOMAIN ] ; then
+if [ "${USE_NGROK}" = "true" ] && [ -v NGROK_DOMAIN ] ; then
     GW_HOST="${NGROK_DOMAIN}"
 else
     GW_HOST="${GW_DOMAIN}:${GW_PORT}"
@@ -154,7 +154,7 @@ PTX_CONSENT_URI="https://consent.visionstrust.com/v1"   # optional
 IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 
 # Applied PDC configuration
-if [ "${USE_SANDBOX}" == "true" ]; then
+if [ "${USE_SANDBOX}" = "true" ]; then
     USED_PDC_CONFIG="sandbox-config.json"
 else
     USED_PDC_CONFIG="visions-config.json"
@@ -189,7 +189,7 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/orchestrator:latest)
 #
 DP0="data-processor-0"
-if [ "${LOCAL_SETUP}" == "true" ]; then
+if [ "${LOCAL_SETUP}" = "true" ]; then
         #DP0_DATA="http://host.k3d.internal:8888/dp0/train_data.npz"
         DP0_DATA="https://host.k3d.internal:9443/dataset/dp0/train_data.npz"
     else
@@ -200,7 +200,7 @@ DP0_MLFLOW_INT="http://localhost:5000"
 DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 #
 DP1="data-processor-1"
-if [ "${LOCAL_SETUP}" == "true" ]; then
+if [ "${LOCAL_SETUP}" = "true" ]; then
         #DP1_DATA="http://host.k3d.internal:8888/dp1/train_data.npz"
         DP1_DATA="https://host.k3d.internal:9443/dataset/dp1/train_data.npz"
     else

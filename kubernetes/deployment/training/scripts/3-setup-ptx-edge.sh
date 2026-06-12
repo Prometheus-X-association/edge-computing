@@ -25,7 +25,7 @@ echo "Use sandbox for PTX core: ${USE_SANDBOX}"
 
 ########################################################################################################################
 
-if [ "${USE_SANDBOX}" == "true" ]; then
+if [ "${USE_SANDBOX}" = "true" ]; then
     LOG "Setting up PTX-core sandbox..."
     ${KCTL} create namespace "${SANDBOX}"
     ${KCTL} -n "${SANDBOX}" apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml")

@@ -26,7 +26,7 @@ TARGET_PORT="${1}"
 
 LOG "Initiate NGROK tunnel"
 
-if [ "${USE_NGROK}" == "false" ]; then
+if [ "${USE_NGROK}" = "false" ]; then
     if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
         warning "NGROK tunneling is disabled while NGROK creds are given! Skip tunnel creation anyway..."
     fi
@@ -55,7 +55,7 @@ log "Waiting for completed startup..."
 #sleep 3
 (docker logs -t -f "${CONTAINER_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
 
-if [ "$(docker container inspect -f '{{.State.Status}}' "${CONTAINER_NAME}")" == "running" ]; then
+if [ "$(docker container inspect -f '{{.State.Status}}' "${CONTAINER_NAME}")" = "running" ]; then
     log "Port: ${TARGET_PORT} is exposed on https://${DS_NGROK_DOMAIN}/"
 else
     error "NGROK container creation failed!"

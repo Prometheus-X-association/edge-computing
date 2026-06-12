@@ -21,6 +21,33 @@ DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
 ########################################################################################################################
 
+function display_help() {
+    cat <<EOF
+Usage: ${0} [OPTIONS]
+
+Options:
+    -x  Dry run. Only perform configuration without execution.
+    -h  Display help.
+EOF
+}
+
+DRY_RUN="false"
+
+while getopts ":xh" flag; do
+	case "${flag}" in
+        x)
+            DRY_RUN=true;;
+        h)
+            display_help
+            exit;;
+        ?)
+            echo -e "${0##*/}: invalid option -- '${OPTARG}'\nTry '${0} -h' for more information." 1>&2
+            exit 1
+    esac
+done
+
+########################################################################################################################
+
 # Loaded from creds/fured-datasource-creds.sh !
 ### DS_PDC_DIR=
 ### DS_PDC_VER=
@@ -84,7 +111,7 @@ CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
 ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
 
-if [ "${USE_NGROK}" == "false" ]; then
+if [ "${USE_NGROK}" = "false" ]; then
     if [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
         warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
     fi
@@ -103,7 +130,7 @@ services:
       args:
         ENV: ${NODE_ENV}
     labels:
-      role.dataspace.ptx.org: "datasource"
+      role.dataspace.ptx.org: datasource
     restart: unless-stopped
     tty: true
     volumes:
@@ -121,7 +148,7 @@ services:
     container_name: mongodb
     image: mongo:latest
     labels:
-      role.dataspace.ptx.org: "datasource"
+      role.dataspace.ptx.org: datasource
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -216,6 +243,10 @@ ls -alht "${DS_PDC_DIR}/mongo-init.js"
 log "Build PDC..."
 cd "${DS_PDC_DIR}"
 docker compose build
+
+if [ "${DRY_RUN}" = "true" ]; then
+    exit 0
+fi
 
 log "Start PDC..."
 docker compose up -d

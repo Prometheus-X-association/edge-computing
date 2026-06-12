@@ -217,7 +217,7 @@ function perform_test_deployment() {
     kubecolor -n ${TEST_NS} wait --for="condition=Ready" --timeout="${TIMEOUT}s" pod/${TEST_ID}
     kubecolor -n ${TEST_NS} get pod/${TEST_ID} -o wide
     echo
-    if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" == "${TEST_OK}" ]]; then
+    if [[ "$(kubectl -n ${TEST_NS} get pod/${TEST_ID} -o jsonpath=\{.status.phase\})" = "${TEST_OK}" ]]; then
         echo -e "\n>>> Validation result: OK!\n"
     else
         echo -e "\n>>> Validation result: FAILED!\n"

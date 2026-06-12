@@ -83,7 +83,7 @@ ${KCTL} get nodes -L "${LAB_PZ}/${PZ_DATA_0}" -L "${LAB_PZ}/${PZ_DATA_1}" -L "${
 log "Configured DNS entries"
 ${KCTL} -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 
-if [ "${USE_NGROK}" == "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
+if [ "${USE_NGROK}" = "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
     log "Setup NGROK reversed HTTP proxy tunnel..."
     # Shut down running instance
     docker ps -aq -f name="ngrok-tun-*" | xargs -r docker rm --force || true
@@ -100,7 +100,7 @@ if [ "${USE_NGROK}" == "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]
     #sleep 3
     (docker logs -t -f ngrok-tun-3000 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
     #
-    if [ "$(docker container inspect -f '{{.State.Status}}' "${NGROK_CONTAINER_NAME}")" == "running" ]; then
+    if [ "$(docker container inspect -f '{{.State.Status}}' "${NGROK_CONTAINER_NAME}")" = "running" ]; then
         echo "Port: ${LB_WEBSECURE_PORT} is exposed on https://${NGROK_DOMAIN}/"
     else
         docker logs "${NGROK_CONTAINER_NAME}"
