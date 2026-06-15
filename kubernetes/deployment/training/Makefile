@@ -64,7 +64,7 @@ delete-edge ::
 
 shutdown-cluster ::
 	bash scripts/shutdown-topo.sh
-	docker kill kube-ops-viewer >/dev/null 2>&1 || exit 0
+	docker rm --force kube-ops-viewer "${NGROK_CONTAINER_NAME}" >/dev/null 2>&1 || exit 0
 
 teardown :: | stop-demo delete-edge shutdown-cluster
 
@@ -86,7 +86,7 @@ log ::
 cleanup ::
 	docker image ls -q -f "reference=ptx/*" -f "reference=ptx-edge/*" \
 					 	-f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" \
-					 	-f "reference=${KUBE_OPS_VIEW_IMG}" | xargs -r docker rmi --force
+					 	-f "reference=${KUBE_OPS_VIEW_IMG}" -f "reference=ngrok/ngrok" | xargs -r docker rmi --force
 	docker image prune -f
 
 ########################################################################################################################
