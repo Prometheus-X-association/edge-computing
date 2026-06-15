@@ -23,7 +23,7 @@ from typing import Self
 
 
 class HandleWebHook(http.server.BaseHTTPRequestHandler):
-    WEBHOOK_PATH = "/builder/webhook"
+    WEBHOOK_PATH = "/webhook"
     server_version = "PTX-builder/webhook"
     server: WebHookServer
 

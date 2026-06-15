@@ -11,7 +11,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
     configs:
-      - source: cfg-mongo-init
+      - source: cfg-mongo-init.js
         target: /docker-entrypoint-initdb.d/mongo-init.js
         mode: 0444
     volumes:
@@ -38,7 +38,7 @@ services:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-provider?authSource=pdc-provider&appName=pdc-provider
       EXCHANGE_TRIGGER_API_KEY: ${DS_PDC_EXCHANGE_TRIGGER_API_KEY:?}
     configs:
-      - source: cfg-pdc-provider
+      - source: cfg-pdc-provider.json
         target: /usr/src/app/src/config.json
     networks:
       - nw-mongo
@@ -65,7 +65,7 @@ services:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-consumer?authSource=pdc-consumer&appName=pdc-consumer
       EXCHANGE_TRIGGER_API_KEY: ${PDC_EXCHANGE_TRIGGER_API_KEY:?}
     configs:
-      - source: cfg-pdc-consumer
+      - source: cfg-pdc-consumer.json
         target: /usr/src/app/src/config.json
     networks:
       - nw-mongo
@@ -78,7 +78,7 @@ services:
       mongodb:
         condition: service_healthy
 
-  # Reverse HTTP(S) tunnel to local PDC ports
+  # Reverse HTTP(S) tunnels to local PDC instances
   ngrok-tun-provider:
     container_name: ngrok-tun-provider
     image: ngrok/ngrok:latest
@@ -113,9 +113,59 @@ services:
       pdc-consumer:
         condition: service_healthy
 
+  # Main datasource API serving data descriptors (JSON) and data files (TXT)
+  provider-api:
+    container_name: provider-api
+    image: busybox:latest
+    restart: no # fail fast
+    labels:
+      setup: exchange
+    init: true
+    command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
+    configs:
+      - source: dp0.json
+        target: /usr/src/app/static/dp0.json
+        uid: '1001'
+        gid: '1001'
+        mode: 0444
+      - source: dp0-data.txt
+        target: /usr/src/app/static/dp0/data.txt
+        uid: '1001'
+        gid: '1001'
+        mode: 0444
+      - source: dp1.json
+        target: /usr/src/app/static/dp1.json
+        uid: '1001'
+        gid: '1001'
+        mode: 0444
+      - source: dp1-data.txt
+        target: /usr/src/app/static/dp1/data.csv
+        uid: '1001'
+        gid: '1001'
+        mode: 0444
+    networks:
+      - nw-provider
+    depends_on:
+      pdc-provider:
+        condition: service_healthy
+
+  # Main data consumer API accepting PDC callbacks
+  consumer-api:
+    container_name: consumer-api
+    image: traefik/whoami:latest
+    restart: no # fail fast
+    labels:
+      setup: exchange
+    command: [ '--port=8080', '--name=consumer', '--verbose' ]
+    networks:
+      - nw-consumer
+    depends_on:
+      pdc-consumer:
+        condition: service_healthy
+
 configs:
   # Define users for PDC's own collection
-  cfg-mongo-init:
+  cfg-mongo-init.js:
     content: |
       db.getSiblingDB('pdc-provider').createUser({
         user: 'pdc',
@@ -131,7 +181,7 @@ configs:
       });
 
   # Define provider PDC's main configuration
-  cfg-pdc-provider:
+  cfg-pdc-provider.json:
     content: |
       {
         "endpoint": "https://${DS_NGROK_DOMAIN:?}",
@@ -146,7 +196,7 @@ configs:
       }
 
   # Define consumer PDC's main configuration
-  cfg-pdc-consumer:
+  cfg-pdc-consumer.json:
     content: |
       {
         "endpoint": "https://${NGROK_DOMAIN:?}",
@@ -159,6 +209,42 @@ configs:
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
+
+  # Dataset and resource descriptor for provider (Datasource)
+  dp0.json:
+    content: |
+      {
+        "type": "REST",
+        "content": {
+          "url": "http://provider-api:8080/dp0/data.txt",
+          "auth": {
+            "scheme": "http",
+            "user": "",
+            "secret": "",
+            "insecure": false,
+          }
+        }
+      }
+  dp0-data.txt:
+    content: |
+      lorem ipsum dolor sit amet
+  dp1.json:
+    content: |
+      {
+        "type": "REST",
+        "content": {
+          "url": "http://provider-api:8080/dp1/data.csv",
+          "auth": {
+            "scheme": "http",
+            "user": "",
+            "secret": "",
+            "insecure": false,
+          }
+        }
+      }
+  dp1-data.csv:
+    content: |
+      2,3,5,7,11,13,17,19
 
 volumes:
   # Persisted db volume

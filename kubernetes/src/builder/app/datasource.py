@@ -116,14 +116,14 @@ def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: i
     ##########################################################################################
     data_type, data_content = data['type'], data['content']
     log.info(f"Process received data as type: {data_type}")
-    match data_type:
+    match str(data_type).lower():
         case 'raw' | 'file':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
                 tmp.write(data_content.encode(encoding=data.get("encoding", "utf-8")))
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
-        case 'url':
-            url, auth = data['url'], DataSourceAuth.parse(data.get('auth'))
+        case 'url' | 'rest':
+            url, auth = data_content['url'], DataSourceAuth.parse(data_content.get('auth'))
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth, retry=retry, timeout=timeout)
         case 'docker':
             raise NotImplementedError

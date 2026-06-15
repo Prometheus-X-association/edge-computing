@@ -24,4 +24,4 @@ kubernetes/deployment/training/datasource/pdc/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
 kubernetes/deployment/exchange/creds/
-kubernetes/deployment/exchange/pdc
+kubernetes/deployment/exchange/pdc/
