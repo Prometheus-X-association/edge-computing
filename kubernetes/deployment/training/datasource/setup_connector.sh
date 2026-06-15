@@ -73,7 +73,7 @@ pushd "${DS_PDC_DIR}"
 popd
 
 
-log "Adjust docker setup.."
+log "Adjust docker setup..."
 cat <<'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
 # Use the official Node.js image as base image
 FROM node:22
@@ -124,6 +124,8 @@ cat <<'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
 services:
   dataspace-connector:
     container_name: dataspace-connector
+    image: dataspace-connector:latest
+    pull_policy: build
     build:
       context: .
       dockerfile: docker/app/Dockerfile
@@ -132,6 +134,7 @@ services:
     labels:
       role.dataspace.ptx.org: datasource
     restart: unless-stopped
+    stop_signal: SIGKILL
     tty: true
     volumes:
       - "./src/config.json/:/usr/src/app/src/config.json"
@@ -172,7 +175,7 @@ ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 # Loaded from creds/fured-datasource-creds.sh !
 ### DS_PDC_*=
 
-log "Create config files.."
+log "Create config files..."
 cat <<EOF >"${DS_PDC_DIR}/src/config.json"
 {
     "endpoint": "${DS_PDC_ENDPOINT}",
