@@ -19,6 +19,9 @@ kubernetes/test/demos/demo1/creds/*
 # data files
 kubernetes/deployment/*/manifests/*
 kubernetes/deployment/training/datasource/resource/*
+/kubernetes/deployment/training/datasource/creds/*
 kubernetes/deployment/training/datasource/pdc/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
+kubernetes/deployment/exchange/creds/
+kubernetes/deployment/exchange/pdc
