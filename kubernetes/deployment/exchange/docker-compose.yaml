@@ -36,10 +36,11 @@ services:
       setup: exchange
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-provider?authSource=pdc-provider&appName=pdc-provider
-      EXCHANGE_TRIGGER_API_KEY: ${DS_PDC_EXCHANGE_TRIGGER_API_KEY:?}
     configs:
       - source: cfg-pdc-provider.json
         target: /usr/src/app/src/config.json
+      - source: cfg-pdc-provider.env
+        target: /usr/src/app/.env
     networks:
       - nw-mongo
       - nw-provider
@@ -63,10 +64,11 @@ services:
       setup: exchange
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-consumer?authSource=pdc-consumer&appName=pdc-consumer
-      EXCHANGE_TRIGGER_API_KEY: ${PDC_EXCHANGE_TRIGGER_API_KEY:?}
     configs:
       - source: cfg-pdc-consumer.json
         target: /usr/src/app/src/config.json
+      - source: cfg-pdc-consumer.env
+        target: /usr/src/app/.env
     networks:
       - nw-mongo
       - nw-consumer
@@ -194,6 +196,18 @@ configs:
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
+  cfg-pdc-provider.env:
+    content: |
+      NODE_ENV=production
+      PORT=3000
+      SESSION_SECRET=6OEVPVF73INhElUq
+      SESSION_COOKIE_EXPIRATION=24000
+      WINSTON_LOGS_MAX_FILES=14d
+      WINSTON_LOGS_MAX_SIZE=20m
+      JWT_BEARER_TOKEN_EXPIRATION=3h
+      JWT_REFRESH_TOKEN_EXPIRATION=1d
+      EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY:-}
+      EXCHANGE_TIMEOUT=60
 
   # Define consumer PDC's main configuration
   cfg-pdc-consumer.json:
@@ -209,6 +223,18 @@ configs:
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
+  cfg-pdc-consumer.env:
+    content: |
+      NODE_ENV=production
+      PORT=3000
+      SESSION_SECRET=6OEVPVF73INhElUq
+      SESSION_COOKIE_EXPIRATION=24000
+      WINSTON_LOGS_MAX_FILES=14d
+      WINSTON_LOGS_MAX_SIZE=20m
+      JWT_BEARER_TOKEN_EXPIRATION=3h
+      JWT_REFRESH_TOKEN_EXPIRATION=1d
+      EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
+      EXCHANGE_TIMEOUT=60
 
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
