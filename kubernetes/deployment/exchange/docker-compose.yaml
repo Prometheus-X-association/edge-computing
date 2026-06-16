@@ -125,6 +125,8 @@ services:
     init: true
     command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
     configs:
+      - source: cfg-httpd.conf
+        target: /etc/httpd.conf
       - source: dp0.json
         target: /usr/src/app/static/dp0.json
         uid: '1001'
@@ -236,6 +238,11 @@ configs:
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
+  # Provider API config
+  # - set proper mime type for JSON responses
+  cfg-httpd.conf:
+    content: |
+      .json:application/json;charset=utf-8
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
     content: |
