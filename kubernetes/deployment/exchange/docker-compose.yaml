@@ -138,7 +138,7 @@ services:
         uid: '1001'
         gid: '1001'
         mode: 0444
-      - source: dp1-data.txt
+      - source: dp1-data.csv
         target: /usr/src/app/static/dp1/data.csv
         uid: '1001'
         gid: '1001'
