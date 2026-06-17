@@ -14,6 +14,10 @@
 # limitations under the License.
 set -euo pipefail
 
+source "$(readlink -f "$(dirname "$0")/helper.sh")"
+
+########################################################################################################################
+
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 PDC_VERSION="1.10.1"
 PDC_IMG="dataspace-connector"
@@ -21,7 +25,7 @@ PDC_IMG="dataspace-connector"
 
 ########################################################################################################################
 
-printf "\nSetup Dataspace Connector (PDC):\n"
+LOG "Setup Dataspace Connector (PDC)"
 
 if [ -z "${PDC_DIR:-}" ]; then
     PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
@@ -29,13 +33,15 @@ fi
 rm -rf "${PDC_DIR}" && mkdir -vp "${PDC_DIR}"
 echo "Used dir for PDC: ${PDC_DIR}"
 
-printf "\nPull PDC source with version: %s...\n" "${PDC_VERSION}"
+log "Pull PDC source with version: ${PDC_VERSION}..."
 git clone "${PDC_REPO}" "${PDC_DIR}"
 pushd "${PDC_DIR}"
     git switch --detach "v${PDC_VERSION}"
 popd
 
-printf "\nAdjust docker setup...\n"
+########################################################################################################################
+
+log "Adjust docker setup..."
 cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
 # Use the official Node.js image as base image
 FROM node:22
@@ -72,7 +78,7 @@ CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
 ls -alht "${PDC_DIR}/docker/app/Dockerfile"
 
-printf "\nCreate config files...\n"
+log "Create config files..."
 cat <<EOF >"${PDC_DIR}/src/config.json"
 {
     "endpoint": "",
@@ -116,7 +122,9 @@ EXCHANGE_TIMEOUT=120
 EOF
 ls -alht "${PDC_DIR}/.env"
 
-printf "\nBuild PDC...\n"
+########################################################################################################################
+
+log "Build PDC..."
 docker build -f "${PDC_DIR}/docker/app/Dockerfile" \
              -t "${PDC_IMG}:${PDC_VERSION}" \
              -t "${PDC_IMG}:latest" \
@@ -126,4 +134,6 @@ docker build -f "${PDC_DIR}/docker/app/Dockerfile" \
 
 docker images -f "reference=*dataspace-connector*" --no-trunc
 
-printf "\nDone.\n"
+########################################################################################################################
+
+echo -e "\nDone."

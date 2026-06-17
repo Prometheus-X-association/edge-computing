@@ -45,12 +45,12 @@ start-pdc ::
 status ::
 	@docker ps -f label="role.dataspace.ptx.org=datasource"
 
-cleanup ::
+teardown ::
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 
 ########################################################################################################################
 
-setup :: | cleanup deploy-api-https start-pdc ngrok-tunnel-pdc status
+setup :: | teardown deploy-api-https start-pdc ngrok-tunnel-pdc status
 
 ########################################################################################################################
 

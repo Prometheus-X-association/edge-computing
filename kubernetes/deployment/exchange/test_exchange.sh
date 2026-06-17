@@ -14,12 +14,14 @@
 # limitations under the License.
 set -euo pipefail
 
-source creds/test-exchange.env
+source "$(readlink -f "$(dirname "$0")/helper.sh")"
+source "$(readlink -f "$(dirname "$0")/creds/test-exchange.env")"
 
 ########################################################################################################################
 
-echo -e "Test exchange...\n"
+LOG "Test Exchange"
 
+log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
     "secretKey": "${PDC_SECRET_KEY}",
@@ -28,36 +30,51 @@ LOGIN_BODY=$(jq -n "$(cat <<EOF
 EOF
 )")
 
-echo -e "Prepared login body:"
-echo -e "${LOGIN_BODY}"
+_URL="https://${NGROK_DOMAIN}/login"
+echo "Used URL: ${_URL}"
+echo -e "\nPrepared login body:"
+echo "${LOGIN_BODY}"
 
-RESP=$(curl -s -X POST "https://${NGROK_DOMAIN}/login" \
-                 -H "Content-Type: application/json" \
-                 -d "${LOGIN_BODY}")
+RESP=$(curl -s -X POST \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -d "${LOGIN_BODY}")
+
+echo -e "\nReceived tokens:"
+echo "${RESP}" | jq
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    echo -e "\nLogin request failed!"
-    echo "${RESP}" | jq
-    exit 1
+    error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
     echo "${TOKEN}" >creds/consumer.login.token
     echo -e "\nLogin was successful!"
 fi
 
-echo -e "\nReceived bearer token: ${TOKEN}"
-
 ########################################################################################################################
 
-RESP=$(curl -s -X GET "https://${NGROK_DOMAIN}/private/configuration" \
-                 -H "Content-Type: application/json" \
-                 -H "Authorization: Bearer ${TOKEN}")
+log "Validate PDC configuration..."
+
+_URL="https://${NGROK_DOMAIN}/private/configuration"
+echo "Used URL: ${_URL}"
+
+RESP=$(curl -s -X GET \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived PDC configuration:"
-echo -e "${RESP}"
+echo "${RESP}" | jq
+
+if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config request failed!" && exit 1
+else
+    echo -e "\nToken validation was successful!"
+fi
 
 ########################################################################################################################
 
+log "Initiate consumer exchange for descriptor (JSON)..."
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
     "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
@@ -65,27 +82,40 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
-            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DATA_TXT_ID}"
+            #"resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DESC_JSON_ID}"
+            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DATA_CSV_ID}"
         }
     ],
     "purposes": [
         {
-             "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_TXT_ID}"
+             #"resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_JSON_ID}"
+             "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_CSV_ID}"
         }
     ]
 }
 EOF
 )")
 
+_URL="https://${NGROK_DOMAIN}/consumer/exchange"
+echo "Used URL: ${_URL}"
 echo -e "\nPrepared exchange body:"
-echo -e "${EXCHANGE_BODY}"
+echo "${EXCHANGE_BODY}" | jq
 
-RESP=$(curl -s -X POST "https://${NGROK_DOMAIN}/consumer/exchange" \
-                 -H "Content-Type: application/json" \
-                 -H "Authorization: Bearer ${TOKEN}" \
-                 -d "${EXCHANGE_BODY}")
+RESP=$(curl -s -X POST \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -d "${EXCHANGE_BODY}")
 
 echo -e "\nReceived exchange response:"
-echo "${RESP}"
+echo "${RESP}" | jq
+
+if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then
+    error "Exchange request failed!" && exit 1
+else
+    echo -e "\nConsumer exchange was successful!"
+fi
+
+########################################################################################################################
 
 echo -e "\nDone."
