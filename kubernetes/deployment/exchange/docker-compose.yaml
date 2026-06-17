@@ -132,8 +132,8 @@ services:
         uid: '1001'
         gid: '1001'
         mode: 0444
-      - source: dp0-data.txt
-        target: /usr/src/app/static/dp0/data.txt
+      - source: dp0-data.csv
+        target: /usr/src/app/static/dp0/data.csv
         uid: '1001'
         gid: '1001'
         mode: 0444
@@ -142,8 +142,8 @@ services:
         uid: '1001'
         gid: '1001'
         mode: 0444
-      - source: dp1-data.csv
-        target: /usr/src/app/static/dp1/data.csv
+      - source: dp1-data.txt
+        target: /usr/src/app/static/dp1/data.txt
         uid: '1001'
         gid: '1001'
         mode: 0444
@@ -204,10 +204,10 @@ configs:
       PORT=3000
       SESSION_SECRET=6OEVPVF73INhElUq
       SESSION_COOKIE_EXPIRATION=24000
-      WINSTON_LOGS_MAX_FILES=14d
+      WINSTON_LOGS_MAX_FILES=1d
       WINSTON_LOGS_MAX_SIZE=20m
-      JWT_BEARER_TOKEN_EXPIRATION=3h
-      JWT_REFRESH_TOKEN_EXPIRATION=1d
+      JWT_BEARER_TOKEN_EXPIRATION=1h
+      JWT_REFRESH_TOKEN_EXPIRATION=3h
       EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
@@ -233,8 +233,8 @@ configs:
       SESSION_COOKIE_EXPIRATION=24000
       WINSTON_LOGS_MAX_FILES=14d
       WINSTON_LOGS_MAX_SIZE=20m
-      JWT_BEARER_TOKEN_EXPIRATION=3h
-      JWT_REFRESH_TOKEN_EXPIRATION=1d
+      JWT_BEARER_TOKEN_EXPIRATION=1h
+      JWT_REFRESH_TOKEN_EXPIRATION=3h
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
@@ -243,13 +243,14 @@ configs:
   cfg-httpd.conf:
     content: |
       .json:application/json;charset=utf-8
+      .csv:text/csv;charset=utf-8
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
     content: |
       {
         "type": "REST",
         "content": {
-          "url": "http://provider-api:8080/dp0/data.txt",
+          "url": "http://provider-api:8080/dp0/data.csv",
           "auth": {
             "scheme": "http",
             "user": "",
@@ -258,15 +259,18 @@ configs:
           }
         }
       }
-  dp0-data.txt:
+  dp0-data.csv:
     content: |
-      lorem ipsum dolor sit amet
+      Name,Age,Department
+      Alice,30,Engineering
+      Bob,25,Marketing
+      Charlie,35,Sales
   dp1.json:
     content: |
       {
         "type": "REST",
         "content": {
-          "url": "http://provider-api:8080/dp1/data.csv",
+          "url": "http://provider-api:8080/dp1/data.txt",
           "auth": {
             "scheme": "http",
             "user": "",
@@ -275,10 +279,10 @@ configs:
           }
         }
       }
-  dp1-data.csv:
+  dp1-data.txt:
     content: |
-      2,3,5,7,11,13,17,19
-
+      lorem ipsum dolor sit amet,
+      consectetur adipiscing elit,
 volumes:
   # Persisted db volume
   vol-mongo:
