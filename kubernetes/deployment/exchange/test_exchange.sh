@@ -32,6 +32,7 @@ EOF
 
 _URL="https://${NGROK_DOMAIN}/login"
 echo "Used URL: ${_URL}"
+
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}"
 
@@ -75,6 +76,8 @@ fi
 ########################################################################################################################
 
 log "Initiate consumer exchange for descriptor (JSON)..."
+
+echo "Used consumer parameter: ${PARAM=$(date +%s)}"
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
     "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
@@ -83,21 +86,39 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
     "resources": [
         {
             #"resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DESC_JSON_ID}"
-            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DATA_CSV_ID}"
+            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DATA_CSV_ID}",
+            "params": {
+                "query": [
+                    {
+                        "test": "true"
+                    },
+                    {
+                        "param": "${PARAM}"
+                    }
+                ]
+            }
         }
     ],
     "purposes": [
         {
-             #"resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_JSON_ID}"
+             #"resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_JSON_ID}",
              "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_CSV_ID}"
         }
-    ]
+    ],
+    "consumerParams": {
+        "query": [
+            {
+                "test": "true"
+            }
+        ]
+    }
 }
 EOF
 )")
 
 _URL="https://${NGROK_DOMAIN}/consumer/exchange"
 echo "Used URL: ${_URL}"
+
 echo -e "\nPrepared exchange body:"
 echo "${EXCHANGE_BODY}" | jq
 
