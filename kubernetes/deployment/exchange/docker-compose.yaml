@@ -172,6 +172,48 @@ services:
       pdc-consumer:
         condition: service_healthy
 
+  #Additional packet profilers
+  sniffer-provider:
+    container_name: sniffer-provider
+    image: alpine/tshark:latest
+    pull_policy: never
+    build:
+      dockerfile_inline: |
+        FROM alpine:latest
+        RUN apk --no-cache add tshark
+    restart: no # fail fast
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      setup: exchange
+    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http' ]
+    network_mode: service:api-provider
+    depends_on:
+      - api-provider
+    profiles:
+      - extra
+
+  sniffer-consumer:
+    container_name: sniffer-consumer
+    image: alpine/tshark:latest
+    pull_policy: never
+    build:
+      additional_contexts:
+        alpine/tshark: "service:sniffer-provider"
+    restart: no # fail fast
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      setup: exchange
+    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http' ]
+    network_mode: service:api-consumer
+    depends_on:
+      - api-consumer
+    profiles:
+      - extra
+
 configs:
   # Define users for PDC's own collection
   cfg-mongo-init.js:

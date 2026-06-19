@@ -22,7 +22,10 @@ build ::
 	${DOCK_COMP} build
 
 setup ::
-	${DOCK_COMP} up --force-recreate
+	${DOCK_COMP} up --force-recreate --abort-on-container-exit
+
+setup-all ::
+	${DOCK_COMP} --profile extra up --force-recreate --abort-on-container-exit
 
 teardown ::
 	${DOCK_COMP} down -v
