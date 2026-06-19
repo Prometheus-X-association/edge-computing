@@ -115,17 +115,15 @@ services:
       pdc-consumer:
         condition: service_healthy
 
-  # Main datasource API serving data descriptors (JSON) and data files (TXT)
+  # Main datasource API serving data
   api-provider:
-    container_name: provider-api
+    container_name: api-provider
     image: busybox:latest
-    #image: python:3.14-alpine
     #image: joseluisq/static-web-server:2
     restart: no # fail fast
     labels:
       setup: exchange
     init: true
-    #tty: true
     command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
     #command: [ 'python3.14', '-m', 'http.server', '-b', '0.0.0.0', '-d', '/usr/src/app/static/', '8080' ]
     #command: [ '-a=0.0.0.0', '-p=8080', '-d=/usr/src/app/static/', '-g=info', '--log-remote-address' ]
@@ -142,16 +140,6 @@ services:
         uid: '1001'
         gid: '1001'
         mode: 0444
-      - source: dp1.json
-        target: /usr/src/app/static/dp1.json
-        uid: '1001'
-        gid: '1001'
-        mode: 0444
-      - source: dp1-data.txt
-        target: /usr/src/app/static/dp1/data.txt
-        uid: '1001'
-        gid: '1001'
-        mode: 0444
     networks:
       - nw-provider
     depends_on:
@@ -160,7 +148,7 @@ services:
 
   # Main data consumer API accepting PDC callbacks
   api-consumer:
-    container_name: consumer-api
+    container_name: api-consumer
     image: traefik/whoami:latest
     restart: no # fail fast
     labels:
@@ -307,7 +295,7 @@ configs:
     content: |
       .json:application/json;charset=utf-8
       .csv:text/csv;charset=utf-8
-      /:admin:admin
+      /dp0/:admin:admin
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
     content: |
@@ -329,24 +317,6 @@ configs:
       Alice,30,Engineering
       Bob,25,Marketing
       Charlie,35,Sales
-  dp1.json:
-    content: |
-      {
-        "type": "REST",
-        "content": {
-          "url": "http://provider-api:8080/dp1/data.txt",
-          "auth": {
-            "scheme": "http",
-            "user": "",
-            "secret": "",
-            "insecure": false,
-          }
-        }
-      }
-  dp1-data.txt:
-    content: |
-      lorem ipsum dolor sit amet,
-      consectetur adipiscing elit,
 volumes:
   # Persisted db volume
   vol-mongo:

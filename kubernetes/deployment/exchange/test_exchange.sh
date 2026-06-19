@@ -140,8 +140,7 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
-            #"resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DESC_JSON_ID}"
-            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_DATA_CSV_ID}",
+            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_RESOURCE_ID}",
             "params": {
                 "query": [
                     {
@@ -156,8 +155,7 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
     ],
     "purposes": [
         {
-             #"resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_JSON_ID}",
-             "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_URL_CSV_ID}"
+             "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_RESOURCE_ID}"
         }
     ],
     "consumerParams": {
@@ -191,6 +189,8 @@ if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || [ "$(jq '.content.success' <<<"${
 else
     echo -e "\nConsumer exchange was successful!"
 fi
+
+echo -e "\nExchange status: $(jq -r '.content.dataExchange.status' <<<"${RESP}")"
 
 ########################################################################################################################
 
