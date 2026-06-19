@@ -243,10 +243,10 @@ configs:
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [
           {
-            "_id": "test-key",
+            "_id": "test-auth-basic",
             "type": "api-key",
-            "key": "Bearer",
-            "value": "test"
+            "key": "Authorization",
+            "value": "Basic ${PROVIDER_AUTH_BASIC}"
           }
         ],
         "expressLimitSize": "10mb",
@@ -278,10 +278,10 @@ configs:
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [
           {
-            "_id": "test-key",
+            "_id": "test-auth-basic",
             "type": "api-key",
-            "key": "Bearer",
-            "value": "test"
+            "key": "Authorization",
+            "value": "Basic ${PROVIDER_AUTH_BASIC}"
           }
         ],
         "expressLimitSize": "10mb",
@@ -307,6 +307,7 @@ configs:
     content: |
       .json:application/json;charset=utf-8
       .csv:text/csv;charset=utf-8
+      /:admin:admin
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
     content: |
