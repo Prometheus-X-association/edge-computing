@@ -34,14 +34,14 @@ _URL="https://${NGROK_DOMAIN}/login"
 echo "Used URL: ${_URL}"
 
 echo -e "\nPrepared login body:"
-echo "${LOGIN_BODY}"
+echo "${LOGIN_BODY}" | jq
 
-RESP=$(curl -s -X POST \
+RESP=$(curl -Ssf -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
                 -d "${LOGIN_BODY}")
 
-echo -e "\nReceived tokens:"
+echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
@@ -52,6 +52,46 @@ else
     echo -e "\nLogin was successful!"
 fi
 
+echo -e "\nBearer token: ${TOKEN}"
+
+########################################################################################################################
+
+log "Register credential..."
+
+CREDENTIAL_BODY=$(jq -n "$(cat <<EOF
+{
+    "type": "api-key",
+    "key": "Bearer",
+    "value": "xxx"
+}
+EOF
+)")
+
+_URL="https://${NGROK_DOMAIN}/private/credentials"
+echo "Used URL: ${_URL}"
+
+echo -e "\nPrepared credential body:"
+echo "${CREDENTIAL_BODY}" | jq
+
+RESP=$(curl -Ssf -X POST \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -d "${CREDENTIAL_BODY}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
+    error "Credential request failed!" && exit 1
+else
+    CRED_ID=$(jq -r '.content._id' <<<"${RESP}")
+    echo "${CRED_ID}" >creds/credential.id
+    echo -e "\nCredential registration was successful!"
+fi
+
+echo -e "\nCredential ID: ${CRED_ID}"
+
 ########################################################################################################################
 
 log "Validate PDC configuration..."
@@ -59,18 +99,33 @@ log "Validate PDC configuration..."
 _URL="https://${NGROK_DOMAIN}/private/configuration"
 echo "Used URL: ${_URL}"
 
-RESP=$(curl -s -X GET \
+RESP=$(curl -Ssf -X GET \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
                 -H "Authorization: Bearer ${TOKEN}")
 
-echo -e "\nReceived PDC configuration:"
+echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    error "Config request failed!" && exit 1
+    error "Config validation failed!" && exit 1
+fi
+
+_URL="https://${NGROK_DOMAIN}/private/credentials"
+echo -e "\nUsed URL: ${_URL}"
+
+RESP=$(curl -Ssf -X GET \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config config failed!" && exit 1
 else
-    echo -e "\nToken validation was successful!"
+    echo -e "\nConfig validation was successful!"
 fi
 
 ########################################################################################################################
@@ -128,7 +183,7 @@ RESP=$(curl -s -X POST \
                 -H "Authorization: Bearer ${TOKEN}" \
                 -d "${EXCHANGE_BODY}")
 
-echo -e "\nReceived exchange response:"
+echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then

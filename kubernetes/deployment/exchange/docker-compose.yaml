@@ -116,19 +116,19 @@ services:
         condition: service_healthy
 
   # Main datasource API serving data descriptors (JSON) and data files (TXT)
-  provider-api:
+  api-provider:
     container_name: provider-api
-    #image: busybox:latest
+    image: busybox:latest
     #image: python:3.14-alpine
-    image: joseluisq/static-web-server:2
+    #image: joseluisq/static-web-server:2
     restart: no # fail fast
     labels:
       setup: exchange
     init: true
-#    tty: true
-    #command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
+    #tty: true
+    command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
     #command: [ 'python3.14', '-m', 'http.server', '-b', '0.0.0.0', '-d', '/usr/src/app/static/', '8080' ]
-    command: [ '-a=0.0.0.0', '-p=8080', '-d=/usr/src/app/static/', '-g=info', '--log-remote-address' ]
+    #command: [ '-a=0.0.0.0', '-p=8080', '-d=/usr/src/app/static/', '-g=info', '--log-remote-address' ]
     configs:
       - source: cfg-httpd.conf
         target: /etc/httpd.conf
@@ -159,7 +159,7 @@ services:
         condition: service_healthy
 
   # Main data consumer API accepting PDC callbacks
-  consumer-api:
+  api-consumer:
     container_name: consumer-api
     image: traefik/whoami:latest
     restart: no # fail fast
@@ -199,6 +199,14 @@ configs:
         "catalogUri": "https://api.visionstrust.com/v1/",
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
+        "credentials": [
+          {
+            "_id": "test-key",
+            "type": "api-key",
+            "key": "Bearer",
+            "value": "test"
+          }
+        ],
         "expressLimitSize": "10mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
@@ -226,6 +234,14 @@ configs:
         "catalogUri": "https://api.visionstrust.com/v1/",
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
+        "credentials": [
+          {
+            "_id": "test-key",
+            "type": "api-key",
+            "key": "Bearer",
+            "value": "test"
+          }
+        ],
         "expressLimitSize": "10mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000

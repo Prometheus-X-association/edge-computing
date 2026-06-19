@@ -19,12 +19,15 @@ DOCK_COMP := docker compose -f ${ROOT_DIR}/docker-compose.yaml --env-file=${ROOT
 
 build ::
 	./setup_pdc.sh
+	${DOCK_COMP} build
 
 setup ::
 	${DOCK_COMP} up --force-recreate
 
 teardown ::
 	${DOCK_COMP} down -v
+
+restart :: | teardown setup
 
 ########################################################################################################################
 
