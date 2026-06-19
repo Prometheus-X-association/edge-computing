@@ -13,7 +13,8 @@
 # limitations under the License.
 
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-DOCK_COMP := docker compose -f ${ROOT_DIR}/docker-compose.yaml --env-file=${ROOT_DIR}/creds/test-exchange.env
+CREDS := exchange.env
+DOCK_COMP := docker compose -f ${ROOT_DIR}/docker-compose.yaml --env-file=${ROOT_DIR}/creds/${CREDS}
 
 ########################################################################################################################
 

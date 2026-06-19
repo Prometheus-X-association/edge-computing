@@ -234,7 +234,7 @@ configs:
             "_id": "test-auth-basic",
             "type": "api-key",
             "key": "Authorization",
-            "value": "Basic ${PROVIDER_AUTH_BASIC}"
+            "value": "Basic YWRtaW46YWRtaW4="
           }
         ],
         "expressLimitSize": "10mb",
@@ -264,14 +264,7 @@ configs:
         "catalogUri": "https://api.visionstrust.com/v1/",
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
-        "credentials": [
-          {
-            "_id": "test-auth-basic",
-            "type": "api-key",
-            "key": "Authorization",
-            "value": "Basic ${PROVIDER_AUTH_BASIC}"
-          }
-        ],
+        "credentials": [],
         "expressLimitSize": "10mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
