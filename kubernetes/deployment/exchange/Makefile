@@ -28,9 +28,6 @@ setup ::
 setup-all ::
 	${DOCK_COMP} --profile extra up --force-recreate --abort-on-container-exit
 
-teardown ::
-	${DOCK_COMP} down -v
-
 restart :: | teardown setup
 
 ########################################################################################################################
@@ -48,6 +45,9 @@ credential ::
 
 status ::
 	${DOCK_COMP} ps -a
+
+teardown ::
+	${DOCK_COMP} down -v
 
 ########################################################################################################################
 
