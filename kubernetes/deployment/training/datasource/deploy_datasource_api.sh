@@ -144,6 +144,8 @@ if [ "${?}" -ne 0 ]; then
     error "${DATASOURCE_API_NAME} failed!"
     docker logs "${DATASOURCE_API_NAME}"
     exit 1
+else
+    echo "${DATASOURCE_API_NAME} is initiated successfully!"
 fi
 
 echo -e "\nDone."

@@ -47,17 +47,22 @@ async def version():
     return {"name": app.title, "version": app.version}
 
 
+@app.api_route("/healthz", methods=["GET", "HEAD"], status_code=status.HTTP_200_OK)
+async def healthz():
+    pass
+
+
 # Include datasets from /resource unauthorized to API as fallback static routes
 RESOURCE = os.getenv("RESOURCE", "resource")
 app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOURCE), name="static")
 
 # Define basic authentication credentials
-security = HTTPBasic(realm="DataSource")
+security = HTTPBasic(realm="Datasource API")
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 
 if not all((USERNAME, PASSWORD)):
-    warnings.warn("USERNAME and PASSWORD environment variable is not set! Disable basic authentication.")
+    warnings.warn("USERNAME and/or PASSWORD environment variable is not set! Disable basic authentication.")
 
 
 # Authenticate requests based on user/pass from envvars

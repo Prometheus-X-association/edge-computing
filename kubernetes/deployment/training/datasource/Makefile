@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-run-simple-api ::
-	./run_simple_api.sh || true
+deploy-simple-api ::
+	./deploy_simple_api.sh || true
 
 deploy-api-http ::
 	./deploy_datasource_api.sh || true
@@ -50,7 +50,7 @@ teardown ::
 
 ########################################################################################################################
 
-setup :: | teardown deploy-api-https start-pdc ngrok-tunnel-pdc status
+setup :: | teardown deploy-api-https deploy-simple-api start-pdc ngrok-tunnel-pdc status
 
 ########################################################################################################################
 

@@ -260,6 +260,8 @@ if [ "${?}" -ne 0 ]; then
     error "PDC failed!"
     docker logs "dataspace-connector"
     exit 1
+else
+    echo -e "\nPDC is initiated successfully!"
 fi
 
 log "Validating connector..."
