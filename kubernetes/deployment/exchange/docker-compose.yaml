@@ -23,6 +23,8 @@ services:
       start_period: 15s
       interval: 1m
 
+########################################################################################################################
+
   # PDC instances
   pdc-provider:
     container_name: pdc-provider
@@ -78,6 +80,8 @@ services:
       mongodb:
         condition: service_healthy
 
+########################################################################################################################
+
   # Reverse HTTP(S) tunnels to local PDC instances
   ngrok-tun-provider:
     container_name: ngrok-tun-provider
@@ -121,6 +125,8 @@ services:
       pdc-consumer:
         condition: service_healthy
 
+########################################################################################################################
+
   # Main datasource API serving data
   api-provider:
     container_name: api-provider
@@ -130,7 +136,8 @@ services:
     labels:
       setup: exchange
     init: true
-    command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', '/usr/src/app/static/' ]
+    working_dir: /usr/src/app/static
+    command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     #command: [ 'python3.14', '-m', 'http.server', '-b', '0.0.0.0', '-d', '/usr/src/app/static/', '8080' ]
     #command: [ '-a=0.0.0.0', '-p=8080', '-d=/usr/src/app/static/', '-g=info', '--log-remote-address' ]
     configs:
@@ -171,6 +178,8 @@ services:
     depends_on:
       pdc-consumer:
         condition: service_healthy
+
+########################################################################################################################
 
   #Additional packet profilers
   sniffer-provider:
@@ -213,6 +222,8 @@ services:
       - api-consumer
     profiles:
       - extra
+
+########################################################################################################################
 
 configs:
   # Define users for PDC's own collection
@@ -326,10 +337,14 @@ configs:
       Bob,25,Marketing
       Charlie,35,Sales
 
+########################################################################################################################
+
 volumes:
   # Persisted db volume
   vol-mongo:
     external: false
+
+########################################################################################################################
 
 networks:
   # MongoDB local network without external access
