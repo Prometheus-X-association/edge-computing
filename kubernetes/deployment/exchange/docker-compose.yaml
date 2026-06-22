@@ -1,4 +1,4 @@
-name: test
+name: exchange
 services:
   # Shared DB for PDC instances
   mongodb:
@@ -20,7 +20,7 @@ services:
       - nw-mongo
     healthcheck:
       test: [ 'CMD', 'mongosh', '-u=admin', '-p=admin', '--authenticationDatabase=admin', "--eval=db.adminCommand('ping')" ]
-      start_period: 30s
+      start_period: 15s
       interval: 1m
 
   # PDC instances
@@ -31,7 +31,6 @@ services:
     restart: no # fail fast
     #stop_signal: SIGKILL
     init: true  # handle signals
-    tty: true
     labels:
       setup: exchange
     environment:
@@ -46,7 +45,7 @@ services:
       - nw-provider
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
-      start_period: 30s
+      start_period: 15s
       interval: 1m
     depends_on:
       mongodb:
@@ -59,7 +58,6 @@ services:
     restart: no # fail fast
     #stop_signal: SIGKILL
     init: true # handle signals
-    tty: true
     labels:
       setup: exchange
     environment:
@@ -74,7 +72,7 @@ services:
       - nw-consumer
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
-      start_period: 30s
+      start_period: 15s
       interval: 1m
     depends_on:
       mongodb:
@@ -96,6 +94,8 @@ services:
       - nw-provider
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
+      start_period: 10s
+      interval: 3m
     depends_on:
       pdc-provider:
         condition: service_healthy
@@ -115,6 +115,8 @@ services:
       - nw-consumer
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
+      start_period: 10s
+      interval: 3m
     depends_on:
       pdc-consumer:
         condition: service_healthy
@@ -134,6 +136,8 @@ services:
     configs:
       - source: cfg-httpd.conf
         target: /etc/httpd.conf
+      - source: cfg-hz
+        target: /usr/src/app/static/healthz
       - source: dp0.json
         target: /usr/src/app/static/dp0.json
         uid: '1001'
@@ -146,6 +150,10 @@ services:
         mode: 0444
     networks:
       - nw-provider
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 3m
     depends_on:
       pdc-provider:
         condition: service_healthy
@@ -287,6 +295,8 @@ configs:
       EXCHANGE_TIMEOUT=60
 
   # Provider API config
+  cfg-hz:
+    content: "OK"
   # - set proper mime type for non-HTML responses
   # - set basic authentication for specific path
   cfg-httpd.conf:
