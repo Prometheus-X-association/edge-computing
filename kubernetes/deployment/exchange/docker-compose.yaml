@@ -94,6 +94,8 @@ services:
       - "4041:4040" # debug web interface
     networks:
       - nw-provider
+    healthcheck:
+      test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
     depends_on:
       pdc-provider:
         condition: service_healthy
@@ -111,6 +113,8 @@ services:
       - "4042:4040" # debug web interface
     networks:
       - nw-consumer
+    healthcheck:
+      test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
     depends_on:
       pdc-consumer:
         condition: service_healthy
@@ -283,7 +287,8 @@ configs:
       EXCHANGE_TIMEOUT=60
 
   # Provider API config
-  # - set proper mime type for JSON responses
+  # - set proper mime type for non-HTML responses
+  # - set basic authentication for specific path
   cfg-httpd.conf:
     content: |
       .json:application/json;charset=utf-8
@@ -310,6 +315,7 @@ configs:
       Alice,30,Engineering
       Bob,25,Marketing
       Charlie,35,Sales
+
 volumes:
   # Persisted db volume
   vol-mongo:
@@ -319,6 +325,6 @@ networks:
   # MongoDB local network without external access
   nw-mongo:
     internal: true
-  # Provider local networks
+  # Participants' local networks
   nw-provider: { }
   nw-consumer: { }
