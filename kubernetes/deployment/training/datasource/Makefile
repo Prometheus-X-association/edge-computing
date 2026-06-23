@@ -51,7 +51,7 @@ stop-pdc ::
 status ::
 	@docker ps -f label="role.dataspace.ptx.org=datasource"
 
-teardown ::
+teardown :: stop-ngrok-tunnel stop-pdc
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 
 ########################################################################################################################
