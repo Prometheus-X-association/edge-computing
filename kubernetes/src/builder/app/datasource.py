@@ -97,17 +97,17 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     return dst_path
 
 
-def collect_data_from_ptx(contract_id: str, dst: str, retry: int = 1, timeout: int | None = None):
+def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int | None = None):
     """
 
-    :param contract_id:
+    :param exchange:
     :param dst:
     :param retry:
     :param timeout:
     :return:
     """
-    log.info(f"Acquiring private data based on contract[{contract_id}]...")
-    data = perform_pdc_data_exchange(contract_id=contract_id, timeout=timeout)
+    log.info(f"Acquiring private data based on contract[{exchange}]...")
+    data = perform_pdc_data_exchange(exchange=exchange, timeout=timeout)
     if data is None:
         log.error("Private data exchange failed!")
         return None
@@ -157,8 +157,8 @@ def get_data_resources() -> pathlib.Path | None | SKIPPED:
             data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
                                               retry=conn_retry, timeout=conn_timeout)
         case 'ptx':
-            if (contract_id := get_resource_path(data_src)) is not None:
-                data_path = collect_data_from_ptx(contract_id=contract_id, dst=dst,
+            if (exchange := get_resource_path(data_src)) is not None:
+                data_path = collect_data_from_ptx(exchange=exchange, dst=dst,
                                                   retry=conn_retry, timeout=conn_timeout)
         case 'skip' | None:
             data_path = SKIPPED

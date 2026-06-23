@@ -85,7 +85,7 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
     :return:
     """
     log.info(f"Acquiring worker resources based on contract[{contract_id}]...")
-    data = perform_pdc_data_exchange(contract_id=contract_id, timeout=timeout)
+    data = perform_pdc_data_exchange(exchange=contract_id, timeout=timeout)
     if data is None:
         log.error("Worker data exchange failed!")
         return None

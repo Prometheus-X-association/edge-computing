@@ -24,8 +24,6 @@ log = logging.getLogger(__name__)
 
 LOGIN_URL = r"http://{host}:{port}/login"
 EXCHANGE_URL = r"http://{host}:{port}/consumer/exchange"
-CONTRACT_URI = r"https://{host}:{port}/contracts/{id}"
-SERVICE_OFFER_URI = r"https://{host}:{port}/v1/catalog/serviceofferings/{id}"
 
 
 def login_to_connector(timeout: int | None = None) -> dict:
@@ -34,7 +32,7 @@ def login_to_connector(timeout: int | None = None) -> dict:
     :param timeout:
     :return:
     """
-    pdc_host, pdc_port = CONFIG['pdc.host'], CONFIG['pdc.port']
+    pdc_host, pdc_port = CONFIG['pdc.host'], int(CONFIG['pdc.port'])
     log.debug(f"Connecting to PDC[{pdc_host}:{pdc_port}]...")
     service_key, secret_key = CONFIG['pdc.key.service'], CONFIG['pdc.key.secret']
     body = {'serviceKey': service_key,
@@ -53,25 +51,24 @@ def login_to_connector(timeout: int | None = None) -> dict:
     return resp.json().get('content')
 
 
-def make_data_exchange(contract_id: str, token: str, timeout: int | None = None) -> dict | None:
+def make_data_exchange(exchange: str, token: str, timeout: int | None = None) -> dict | None:
     """
 
-    :param contract_id:
+    :param exchange:
     :param token:
     :param timeout:
     :return:
     """
-    pdc_host, pdc_port = CONFIG['pdc.host'], CONFIG['pdc.port']
+    pdc_host, pdc_port = CONFIG['pdc.host'], int(CONFIG['pdc.port'])
     log.debug(f"Connecting to PDC[{pdc_host}:{pdc_port}]...")
-    contract_host, contract_port = CONFIG['contract.host'], CONFIG['contract.port']
-    catalog_host, catalog_port = CONFIG['catalog.host'], CONFIG['catalog.port']
-    provider_offer_id, consumer_offer_id = CONFIG['catalog.offer.provider'], CONFIG['catalog.offer.consumer']
-    body = {'contract': CONTRACT_URI.format(host=contract_host, port=contract_port, id=contract_id),
-            'purposeId': SERVICE_OFFER_URI.format(host=catalog_host, port=catalog_port, id=consumer_offer_id),
-            'resourceId': SERVICE_OFFER_URI.format(host=catalog_host, port=catalog_port, id=provider_offer_id)}
+    body = {"contract": CONFIG[f"ptx.{exchange}.contract"],
+            "resourceId": CONFIG[f"ptx.{exchange}.data.offer"],
+            "resources": [{"resource": CONFIG[f"ptx.{exchange}.data.resource"]}],
+            "purposeId": CONFIG[f"ptx.{exchange}.service.offer"],
+            "purposes": [{"resource": CONFIG[f"ptx.{exchange}.service.resource"]}]}
     log.debug(f"Assembled request body:\n{pprint.pformat(body)}")
     hdr = {'Content-Type': 'application/json',
-           'Accept': '*/*',
+           'Accept': 'application/json',
            'Authorization': f"Bearer {token}"}
     webhook_data = None
     with WebHooKManager(timeout=timeout) as mgr:
@@ -92,10 +89,10 @@ def make_data_exchange(contract_id: str, token: str, timeout: int | None = None)
     return webhook_data
 
 
-def perform_pdc_data_exchange(contract_id: str, timeout: int | None = None) -> dict | None:
+def perform_pdc_data_exchange(exchange: str, timeout: int | None = None) -> dict | None:
     """
 
-    :param contract_id:
+    :param exchange:
     :param timeout:
     :return:
     """
@@ -109,4 +106,4 @@ def perform_pdc_data_exchange(contract_id: str, timeout: int | None = None) -> d
     log.debug(f"Assigned token: {bearer}")
     log.info(f"Login to connector was successful!")
     log.info("Initiate data exchange...")
-    return make_data_exchange(contract_id=contract_id, token=bearer, timeout=timeout)
+    return make_data_exchange(exchange=exchange, token=bearer, timeout=timeout)
