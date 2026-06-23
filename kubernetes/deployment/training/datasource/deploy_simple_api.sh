@@ -22,7 +22,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 FILES="${1:-descriptor}"
 SIMPLE_API_NAME="simple-api"
-SIMPLE_API_PORT=9888
+SIMPLE_API_PORT=9080
 DS_API_PREFIX="dataset"
 
 ########################################################################################################################
