@@ -256,6 +256,7 @@ docker compose up -d
 
 log "Waiting for PDC instance to set up..."
 ( docker logs "dataspace-connector" -t -f 2>&1 & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
+# shellcheck disable=SC2181
 if [ "${?}" -ne 0 ]; then
     error "PDC failed!"
     docker logs "dataspace-connector"

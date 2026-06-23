@@ -16,10 +16,10 @@ deploy-simple-api ::
 	./deploy_simple_api.sh || true
 
 deploy-api-http ::
-	./deploy_datasource_api.sh || true
+	./deploy_datasource_api.sh -u || true
 
 deploy-api-https ::
-	./deploy_datasource_api.sh -s || true
+	./deploy_datasource_api.sh || true
 
 ########################################################################################################################
 
@@ -50,7 +50,7 @@ teardown ::
 
 ########################################################################################################################
 
-setup :: | teardown deploy-api-https deploy-simple-api start-pdc ngrok-tunnel-pdc status
+setup :: | teardown deploy-api-https start-pdc deploy-simple-api ngrok-tunnel-pdc status
 
 ########################################################################################################################
 

@@ -37,19 +37,19 @@ function display_help() {
 Usage: ${0} [OPTIONS]
 
 Options:
-    -s  Run secured API with HTTPS.
+    -u  Run unsecured API with HTTP.
     -x  Dry run. Only perform configuration without execution.
     -h  Display help.
 EOF
 }
 
-TLS_ENABLED="false"
+TLS_ENABLED="true"
 DRY_RUN="false"
 
-while getopts ":sxh" flag; do
+while getopts ":uxh" flag; do
 	case "${flag}" in
-        s)
-            TLS_ENABLED=true;;
+        u)
+            TLS_ENABLED=false;;
         x)
             DRY_RUN=true;;
         h)
@@ -116,12 +116,12 @@ log "Remove remnant container..."
 docker rm --force "${DATASOURCE_API_NAME}" || true
 
 if [ "${TLS_ENABLED}" = "true" ]; then
-    DATASOURCE_PORT=9443
+    DATASOURCE_PORT="${GW_PORT:-9443}"
     SSL_ARG=(
         '--ssl-keyfile=./cert/api-tls.key'
         '--ssl-certfile=./cert/api-tls.cert')
 else
-    DATASOURCE_PORT=9080
+    DATASOURCE_PORT="${GW_PORT:-9080}"
 fi
 
 log "Start datasource API on port: ${DATASOURCE_PORT}..."
@@ -140,12 +140,13 @@ docker run -d -p "${DATASOURCE_PORT}:8888" \
 log "Waiting for completed startup..."
 # Wait for server startup
 (docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
+# shellcheck disable=SC2181
 if [ "${?}" -ne 0 ]; then
     error "${DATASOURCE_API_NAME} failed!"
     docker logs "${DATASOURCE_API_NAME}"
     exit 1
 else
-    echo "${DATASOURCE_API_NAME} is initiated successfully!"
+    echo -e "\n${DATASOURCE_API_NAME} is initiated successfully!"
 fi
 
 echo -e "\nDone."
