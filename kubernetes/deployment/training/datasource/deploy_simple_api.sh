@@ -39,6 +39,12 @@ else
     NW_SETUP="-p ${SIMPLE_API_PORT}:8080"
 fi
 
+log "Generate resource descriptors..."
+
+for tmp in "${SCRIPT_DIR}"/datasource/descriptor/*.tmp; do
+    envsubst <"${tmp}" >"${tmp%.*}"
+done
+
 log "Start simple API on port: ${SIMPLE_API_PORT}..."
 # Run datasource API server
 # shellcheck disable=SC2086
