@@ -83,7 +83,7 @@ spec:
             #  value: "worker/${DP0}:latest"
           ports:
             - name: webhook-port
-              containerPort: 8888
+              containerPort: 9999
               protocol: TCP
       containers:
         - name: worker
@@ -170,6 +170,7 @@ spec:
   ports:
     - name: webhook-port
       protocol: TCP
-      port: 8888
-      targetPort: webhook-port
+      port: 9999
+      targetPort: 9999
+  publishNotReadyAddresses: true
 ---
