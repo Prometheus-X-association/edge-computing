@@ -52,9 +52,9 @@ async def healthz():
     pass
 
 
-# Include datasets from /resource unauthorized to API as fallback static routes
 RESOURCE = os.getenv("RESOURCE", "resource")
-app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOURCE), name="static")
+# Include datasets from /resource unauthorized to API as fallback static routes
+# app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent / RESOURCE), name="static")
 
 # Define basic authentication credentials
 security = HTTPBasic(realm="Datasource API")

@@ -1,7 +1,7 @@
 {
   "type": "REST",
   "content": {
-    "url": "https://${GW_DOMAIN}:${GW_PORT}/dp0/train_data.npz",
+    "url": "https://${GW_DOMAIN}:${GW_PORT}/${DS_API_PREFIX}/dp0/train_data.npz",
     "auth": {
       "scheme": "https",
       "user": "${DS_API_USER}",

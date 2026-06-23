@@ -23,6 +23,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 FILES="${1:-descriptor}"
 SIMPLE_API_NAME="simple-api"
 SIMPLE_API_PORT=9888
+DS_API_PREFIX="dataset"
 
 ########################################################################################################################
 
@@ -56,7 +57,7 @@ docker run -d \
         --name "${SIMPLE_API_NAME}" \
         --label "${LAB_ROLE}=datasource" \
         busybox:latest \
-        httpd -vv -f -p 0.0.0.0:8080 -h "/usr/src/api/descriptor"
+        httpd -vv -f -p 0.0.0.0:8080 -h "/usr/src/api"
 
 log "Waiting for completed startup..."
 # Wait for server startup
