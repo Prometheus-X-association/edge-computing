@@ -108,7 +108,7 @@ class WebHookServer(http.server.HTTPServer):
 
 class WebHooKManager(object):
 
-    def __init__(self, host: str = '0.0.0.0', port: int = 8080, timeout: int = None):
+    def __init__(self, host: str = '0.0.0.0', port: int = 8888, timeout: int = None):
         self.server: WebHookServer = WebHookServer(host, port, timeout)
         self.__timeout = timeout
         self.__executor: Executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self.server.__class__.__name__)
@@ -137,9 +137,9 @@ class WebHooKManager(object):
 
 if __name__ == "__main__":
     # curl -X POST -H "Content-Type: application/json" -d '{"type": "raw": "content": "xxxxxxxxx"}' \
-    # http://127.0.0.1:8080/builder/webhook
+    # http://127.0.0.1:8888/builder/webhook
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    with WebHooKManager(timeout=5) as mgr:
+    with WebHooKManager(timeout=60) as mgr:
         print("waiting for webhook...")
         data = mgr.wait()
     print(f"{data = }")

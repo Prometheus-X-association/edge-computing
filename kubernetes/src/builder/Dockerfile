@@ -6,4 +6,5 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
 COPY ./app ./app
+EXPOSE 8888
 CMD ["python3", "-m", "app"]
