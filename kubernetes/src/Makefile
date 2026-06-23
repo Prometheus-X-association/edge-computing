@@ -185,11 +185,11 @@ run-api:
 
 run-builder:
 	envsubst <${ASSETS}/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-
-	kubectl wait --for="condition=Ready" --timeout=30s pod/builder
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=30s pod/builder
 	@echo
 	kubectl get all -o wide
 	@echo
-	-kubectl exec -ti pod/builder -- sh
+	-kubectl exec -ti pod/builder -c builder -- sh
 	kubectl delete pods/builder --now --wait
 	kubectl delete pods,secrets -l app=builder -l app=worker --now --wait
 
@@ -336,7 +336,7 @@ clear-test:
 	@echo && ${MAKE} -s status
 
 
-tear-down:
+teardown:
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	-k3d cluster delete dev
 

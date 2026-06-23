@@ -45,8 +45,9 @@ spec:
   ports:
     - name: webhook-port
       protocol: TCP
-      port: 8888
-      targetPort: webhook-port
+      port: 9999
+      targetPort: 9999  # Required port reference by number, as port names does not propagate into endpoint slice
+  publishNotReadyAddresses: true  # Required for service to consider non-ready pods in endpoint slice
 --- ####################################################################################################################
 # kubectl create serviceaccount builder
 # kubectl config set-credentials builder --token=$(kubectl create token builder)
@@ -99,7 +100,7 @@ metadata:
     env: test
 spec:
   serviceAccountName: builder
-  containers:
+  initContainers:
     - name: builder
       image: registry.k3d.local:5000/ptx-edge/builder:1.0
       imagePullPolicy: IfNotPresent
@@ -122,7 +123,7 @@ spec:
           readOnly: true
       ports:
         - name: webhook-port
-          containerPort: 8888
+          containerPort: 9999
           protocol: TCP
       envFrom:
         - secretRef:
@@ -208,4 +209,7 @@ spec:
                     apiVersion: v1
                     fieldPath: metadata.namespace
                   path: namespace
+  containers:
+    - name: worker
+      image: k8s.gcr.io/pause
   restartPolicy: Never
