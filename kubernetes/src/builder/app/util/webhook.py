@@ -43,7 +43,7 @@ class WebHookServer(http.server.HTTPServer):
     def set_data(self, webhook_data: dict):
         self.__webhook_data = webhook_data
         self.__received = True
-        self.logger.debug("Webhook data received.")
+        self.logger.debug(f"Webhook data received with size: {sys.getsizeof(self.__webhook_data)}.")
 
     def wait_for_hook(self) -> dict | None:
         self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
@@ -120,14 +120,15 @@ class WebHooKManager(object):
 
     def start(self):
         if self.__future:
-            raise RuntimeError("WebHooKManager already started!")
+            raise RuntimeError(f"{self.__class__.__name__} already started!")
         self.__future = self.__executor.submit(self.server.wait_for_hook)
 
-    def wait(self) -> dict | None:
+    def wait(self, timeout: int | None = None) -> dict | None:
         if not self.__future:
             raise RuntimeError(f"{self.__class__.__name__} has not yet started!")
+        timeout = timeout if timeout else self.__timeout * 2 if self.__timeout else None
         try:
-            return self.__future.result(timeout=self.__timeout * 2 if self.__timeout else None)
+            return self.__future.result(timeout=timeout)
         except TimeoutError:
             pass
         finally:

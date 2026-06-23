@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
 import logging
 import pathlib
 import tempfile
@@ -120,7 +121,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int 
         case 'raw' | 'file':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
-                tmp.write(data_content.encode(encoding=data.get("encoding", "utf-8")))
+                tmp.write(base64.b64decode(data_content.encode(encoding=data.get("encoding", "utf-8"))))
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'url' | 'rest':
             url, auth = data_content['url'], DataSourceAuth.parse(data_content.get('auth'))

@@ -75,18 +75,19 @@ def make_data_exchange(exchange: str, token: str, timeout: int | None = None) ->
         url = EXCHANGE_URL.format(host=pdc_host, port=pdc_port)
         log.info(f"Sending POST request to {url}...")
         resp = requests.post(url=url, json=body, headers=hdr, timeout=timeout)
+        resp_json = resp.json()
+        log.debug(f"Response body:\n{pprint.pformat(resp_json)}")
         if resp.status_code != requests.codes.OK:
             log.error(f"Failed to initiate data exchange: {resp.status_code}")
             mgr.server.abort()
-        resp_json = resp.json()
-        log.debug(f"Response body:\n{pprint.pformat(resp_json)}")
-        if resp_json['content']['success']:
-            log.info(f"Data exchange initiated successfully with status: {resp_json['content']['status']}!")
-            log.info("Waiting for connector response...")
-            webhook_data = mgr.wait()
-        else:
+        elif not resp_json['content']['success']:
             log.error(f"Failed to initiate data exchange: {resp_json['content']['dataExchange']['status']}")
             mgr.server.abort()
+        else:
+            log.info(f"Data exchange initiated successfully!")
+            log.info(f"Status: {resp_json['content']['dataExchange']['status']}!")
+            log.info("Processing connector response...")
+            webhook_data = mgr.wait()
     if webhook_data:
         log.info("Webhook received successfully!")
         log.debug(f"Received data size: {sys.getsizeof(webhook_data)}")
