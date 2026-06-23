@@ -34,19 +34,49 @@ spec:
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
+          #envFrom:
+          #  - secretRef:
+          #      name: ${PDC}-secrets-env
+          #    prefix: BUILD_PDC_
           env:
+            - name: BUILD_PDC_HOST
+              value: ${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local
+            - name: BUILD_PDC_PORT
+              value: "${PDC_PORT}"
+            - name: BUILD_PDC_KEY_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: ${PDC}-secrets-env
+                  key: SERVICE_KEY
+            - name: BUILD_PDC_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${PDC}-secrets-env
+                  key: SECRET_KEY
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            - name: BUILD_PTX_EXCHANGE_CONTRACT
+              value: "https://contract.visionstrust.com/contracts/${PTX_CONTRACT_ID}"
+            - name: BUILD_PTX_EXCHANGE_DATA_OFFER
+              value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_DATA_OFFER_ID}"
+            - name: BUILD_PTX_EXCHANGE_DATA_RESOURCE
+              value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_ID}"
+            - name: BUILD_PTX_EXCHANGE_SERVICE_OFFER
+              value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
+            - name: BUILD_PTX_EXCHANGE_SERVICE_RESOURCE
+              value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_ID}"
             - name: BUILD_DATA_SRC
-              value: "${DP0_DATA}"
-            - name: BUILD_DATA_AUTH_USER
-              value: "${DS_API_USER}"
-            - name: BUILD_DATA_AUTH_SECRET
-              value: "${DS_API_PASSWORD}"
-            - name: BUILD_DATA_AUTH_INSECURE
-              value: "${DS_API_INSECURE}"
-            - name: BUILD_DATA_DST
-              value: "/var/cache/data/"
+              value: "ptx://exchange"
+            #- name: BUILD_DATA_SRC
+            #  value: "${DP0_DATA}"
+            #- name: BUILD_DATA_AUTH_USER
+            #  value: "${DS_API_USER}"
+            #- name: BUILD_DATA_AUTH_SECRET
+            #  value: "${DS_API_PASSWORD}"
+            #- name: BUILD_DATA_AUTH_INSECURE
+            #  value: "${DS_API_INSECURE}"
+            #- name: BUILD_DATA_DST
+            #  value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
               #value: "docker://${DP0_IMG}"
             #- name: BUILD_WORKER_DST
