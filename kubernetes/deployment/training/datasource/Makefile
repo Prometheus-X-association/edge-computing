@@ -53,7 +53,7 @@ status ::
 
 teardown :: stop-ngrok-tunnel
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
-	{MAKE} stop-pdc
+	${MAKE} stop-pdc
 
 ########################################################################################################################
 
