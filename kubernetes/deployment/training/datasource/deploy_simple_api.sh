@@ -44,6 +44,7 @@ log "Generate resource descriptors..."
 for tmp in "${SCRIPT_DIR}"/datasource/descriptor/*.tmp; do
     envsubst <"${tmp}" >"${tmp%.*}"
 done
+ls -alth "${SCRIPT_DIR}"/datasource/descriptor/*.json
 
 log "Start simple API on port: ${SIMPLE_API_PORT}..."
 # Run datasource API server

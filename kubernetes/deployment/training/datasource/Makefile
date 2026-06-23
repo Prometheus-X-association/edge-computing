@@ -40,6 +40,12 @@ stop-ngrok-tunnel ::
 start-pdc ::
 	./setup_connector.sh
 
+restart-pdc ::
+	./setup_connector.sh -f
+
+stop-pdc ::
+	./setup_connector.sh -x
+
 ########################################################################################################################
 
 status ::
