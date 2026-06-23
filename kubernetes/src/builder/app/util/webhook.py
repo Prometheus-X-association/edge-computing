@@ -17,14 +17,70 @@ import http.client
 import http.server
 import json
 import logging
+import sys
+import typing
 from concurrent.futures import Executor, Future
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Self
+
+
+class WebHookServer(http.server.HTTPServer):
+    DEF_SERVER_ADDR = "0.0.0.0"
+    DEF_SERVER_PORT = 9999
+    REQUEST_WAIT_STEP = 1
+
+    def __init__(self, address: str = DEF_SERVER_ADDR, port: int = DEF_SERVER_PORT, wait_time: int | None = None):
+        # noinspection PyTypeChecker
+        super().__init__((address, port), HandleWebHook)
+        self.timeout: int = self.REQUEST_WAIT_STEP
+        self.__wait_ttl: int | None = wait_time // self.REQUEST_WAIT_STEP if wait_time else None
+        self.__aborted: bool = False
+        self.webhook_headers: email.message.Message | None = None
+        self.__webhook_data: dict | None = None
+        self.__received: bool = False
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Webhook server initialized.")
+
+    def set_data(self, webhook_data: dict):
+        self.__webhook_data = webhook_data
+        self.__received = True
+        self.logger.debug("Webhook data received.")
+
+    def wait_for_hook(self) -> dict | None:
+        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
+                                                                                   HandleWebHook.WEBHOOK_PATH))
+        # self.serve_forever()
+        while True:
+            try:
+                self.handle_request()
+            except TimeoutError:
+                self.logger.warning(f"{self.__class__.__name__} timed out!")
+                break
+            else:
+                if self.__aborted:
+                    self.logger.warning(f"{self.__class__.__name__} aborted!")
+                    break
+                if self.__received:
+                    self.logger.info(f"Webhook for {HandleWebHook.WEBHOOK_PATH} received.")
+                    self.logger.debug(f"Received request headers:\n"
+                                      f"{dict(self.webhook_headers.items()) if self.webhook_headers else None}")
+                    break
+        return self.__webhook_data
+
+    def handle_timeout(self) -> None:
+        if self.__wait_ttl is not None:
+            if self.__wait_ttl <= 0:
+                raise TimeoutError
+            else:
+                self.__wait_ttl -= 1
+
+    def abort(self):
+        self.logger.warning("Aborting webhook server...")
+        self.__aborted = True
 
 
 class HandleWebHook(http.server.BaseHTTPRequestHandler):
     WEBHOOK_PATH = "/webhook"
-    server_version = "PTX-builder/webhook"
+    server_version = f"{WebHookServer.__name__}/webhook"
     server: WebHookServer
 
     def do_GET(self):
@@ -54,70 +110,22 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
         self.server.set_data(json_body)
 
 
-class WebHookServer(http.server.HTTPServer):
-    DEF_SERVER_ADDR = "0.0.0.0"
-    DEF_SERVER_PORT = 8888
-    REQUEST_WAIT_STEP = 1
-
-    def __init__(self, address: str = DEF_SERVER_ADDR, port: int = DEF_SERVER_PORT, wait_time: int = None):
-        # noinspection PyTypeChecker
-        super().__init__((address, port), HandleWebHook)
-        self.timeout: int = self.REQUEST_WAIT_STEP
-        self.__wait_ttl: int = wait_time // self.REQUEST_WAIT_STEP
-        self.__aborted: bool = False
-        self.webhook_headers: email.message.Message | None = None
-        self.__webhook_data: dict | None = None
-        self.__received: bool = False
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-
-    def set_data(self, webhook_data: dict):
-        self.__webhook_data = webhook_data
-        self.__received = True
-
-    def wait_for_hook(self) -> dict | None:
-        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
-                                                                                   HandleWebHook.WEBHOOK_PATH))
-        # self.serve_forever()
-        while True:
-            try:
-                self.handle_request()
-            except TimeoutError:
-                self.logger.warning(f"{self.__class__.__name__} timed out!")
-                break
-            else:
-                if self.__aborted:
-                    self.logger.warning(f"{self.__class__.__name__} aborted!")
-                    break
-                if self.__received:
-                    self.logger.info(f"Webhook for {HandleWebHook.WEBHOOK_PATH} received.")
-                    self.logger.debug(f"Received request headers:\n"
-                                      f"{dict(self.webhook_headers.items()) if self.webhook_headers else None}")
-                    break
-        return self.__webhook_data
-
-    def handle_timeout(self) -> int:
-        if self.__wait_ttl <= 0:
-            raise TimeoutError
-        self.__wait_ttl -= 1
-        return self.__wait_ttl
-
-    def abort(self):
-        self.logger.warning("Aborting webhook server...")
-        self.__aborted = True
-
-
 class WebHooKManager(object):
 
-    def __init__(self, host: str = '0.0.0.0', port: int = 8888, timeout: int = None):
+    def __init__(self, host: str = '0.0.0.0', port: int = 9999, timeout: int | None = None):
         self.server: WebHookServer = WebHookServer(host, port, timeout)
         self.__timeout = timeout
         self.__executor: Executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self.server.__class__.__name__)
         self.__future: Future | None = None
 
     def start(self):
+        if self.__future:
+            raise RuntimeError("WebHooKManager already started!")
         self.__future = self.__executor.submit(self.server.wait_for_hook)
 
     def wait(self) -> dict | None:
+        if not self.__future:
+            raise RuntimeError(f"{self.__class__.__name__} has not yet started!")
         try:
             return self.__future.result(timeout=self.__timeout * 2 if self.__timeout else None)
         except TimeoutError:
@@ -125,7 +133,7 @@ class WebHooKManager(object):
         finally:
             self.__executor.shutdown(wait=True, cancel_futures=True)
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> typing.Self:
         self.start()
         return self
 
@@ -135,11 +143,19 @@ class WebHooKManager(object):
         self.__executor.shutdown(wait=True, cancel_futures=True)
 
 
-if __name__ == "__main__":
-    # curl -X POST -H "Content-Type: application/json" -d '{"type": "raw": "content": "xxxxxxxxx"}' \
-    # http://127.0.0.1:8888/builder/webhook
+def test_webhook(timeout: int | None = None):
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    with WebHooKManager(timeout=60) as mgr:
-        print("waiting for webhook...")
+    with WebHooKManager(timeout=timeout if timeout else None) as mgr:
+        logging.info(f"Waiting for webhook[{timeout=}]...")
         data = mgr.wait()
-    print(f"{data = }")
+        logging.info("Webhook wait finished.")
+    print(f"Received {data = }")
+
+
+if __name__ == "__main__":
+    # For example:
+    # python3 webhook.py
+    # python3 webhook.py 10
+    #
+    # curl -X POST -H "Content-Type: application/json" -d '{"xyz": 42}' http://127.0.0.1:9999/webhook
+    test_webhook(timeout=int(sys.argv[1]) if len(sys.argv) > 1 else None)

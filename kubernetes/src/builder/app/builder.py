@@ -25,6 +25,7 @@ from app.datasource import get_data_resources
 from app.util.config import load_configuration, SKIPPED
 from app.util.dummy import wait_and_exit
 from app.util.logger import set_logging_level
+from app.util.webhook import test_webhook
 from app.worker import get_worker_resources
 
 log = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ def main():
                         help=f"Configuration file to be appended to the default config.")
     parser.add_argument("-v", "--verbose", action='count', default=0, required=False,
                         help="Increase verbosity.")
+    parser.add_argument("-t", "--test", type=int, default=None, help="Test webhook.")
     parser.add_argument("-V", "--version", action='version',
                         version=f"{parser.description} v{__version__}")
     args = parser.parse_args()
@@ -80,9 +82,12 @@ def main():
     log.debug("Configuration arguments: %s", args)
     # Load configuration
     load_configuration(cfg_file=args.config, from_env=True)
+    print(args)
     if args.dummy:
         # Testing builder
         return wait_and_exit()
+    elif args.test is not None:
+        return test_webhook(args.test)
     try:
         # Invoke building functionality
         success = build()
