@@ -51,6 +51,10 @@ spec:
               #value: "docker://${DP0_IMG}"
             #- name: BUILD_WORKER_DST
             #  value: "worker/${DP0}:latest"
+          ports:
+            - name: webhook-port
+              containerPort: 8888
+              protocol: TCP
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
@@ -117,4 +121,25 @@ spec:
     - name: port-api
       port: 8000
       targetPort: port-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${BUILDER}-${DP0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+    tier: worker
+spec:
+  selector:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+    tier: worker
+  type: ClusterIP
+  ports:
+    - name: webhook-port
+      protocol: TCP
+      port: 8888
+      targetPort: webhook-port
 ---
