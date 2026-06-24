@@ -3,7 +3,7 @@
   "content": {
     "url": "https://${GW_DOMAIN}:${GW_PORT}/${DS_API_PREFIX}/dp1/train_data.npz",
     "auth": {
-      "scheme": "https",
+      "scheme": "basic",
       "user": "${DS_API_USER}",
       "secret": "${DS_API_PASSWORD}",
       "insecure": ${DS_API_INSECURE}
