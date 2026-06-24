@@ -26,12 +26,16 @@ from concurrent.futures.thread import ThreadPoolExecutor
 class WebHookServer(http.server.HTTPServer):
     DEF_SERVER_ADDR = "0.0.0.0"
     DEF_SERVER_PORT = 9999
+    DEF_WEBHOOK_PATH = "/webhook"
     REQUEST_WAIT_STEP = 1
+    __version__ = '0.1.0'
 
-    def __init__(self, address: str = DEF_SERVER_ADDR, port: int = DEF_SERVER_PORT, wait_time: int | None = None):
+    def __init__(self, address: str = DEF_SERVER_ADDR, port: int = DEF_SERVER_PORT,
+                 webhook_path: str | None = None, wait_time: int | None = None):
         # noinspection PyTypeChecker
         super().__init__((address, port), HandleWebHook)
         self.timeout: int = self.REQUEST_WAIT_STEP
+        self.webhook = webhook_path if webhook_path else self.DEF_WEBHOOK_PATH
         self.__wait_ttl: int | None = wait_time // self.REQUEST_WAIT_STEP if wait_time else None
         self.__aborted: bool = False
         self.webhook_headers: email.message.Message | None = None
@@ -40,14 +44,13 @@ class WebHookServer(http.server.HTTPServer):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.logger.debug("Webhook server initialized.")
 
-    def set_data(self, webhook_data: dict):
-        self.__webhook_data = webhook_data
+    def set_data(self, data: dict):
+        self.__webhook_data = data
         self.__received = True
         self.logger.debug(f"Webhook data received with size: {sys.getsizeof(self.__webhook_data)}.")
 
     def wait_for_hook(self) -> dict | None:
-        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address,
-                                                                                   HandleWebHook.WEBHOOK_PATH))
+        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address, self.webhook))
         # self.serve_forever()
         while True:
             try:
@@ -60,13 +63,13 @@ class WebHookServer(http.server.HTTPServer):
                     self.logger.warning(f"{self.__class__.__name__} aborted!")
                     break
                 if self.__received:
-                    self.logger.info(f"Webhook for {HandleWebHook.WEBHOOK_PATH} received.")
+                    self.logger.info(f"Webhook received.")
                     self.logger.debug(f"Received request headers:\n"
                                       f"{dict(self.webhook_headers.items()) if self.webhook_headers else None}")
                     break
         return self.__webhook_data
 
-    def handle_timeout(self) -> None:
+    def handle_timeout(self):
         if self.__wait_ttl is not None:
             if self.__wait_ttl <= 0:
                 raise TimeoutError
@@ -74,25 +77,27 @@ class WebHookServer(http.server.HTTPServer):
                 self.__wait_ttl -= 1
 
     def abort(self):
-        self.logger.warning("Aborting webhook server...")
-        self.__aborted = True
+        if not self.__aborted:
+            self.logger.warning("Aborting webhook server...")
+            self.__aborted = True
 
 
 class HandleWebHook(http.server.BaseHTTPRequestHandler):
-    WEBHOOK_PATH = "/webhook"
-    server_version = f"{WebHookServer.__name__}/webhook"
     server: WebHookServer
+    server_version = f"{WebHookServer.__name__}/{WebHookServer.__version__}"
+    error_content_type = "application/json;charset=utf-8"
+    error_message_format = r'{"code": %(code)d, "content": {"message": "%(message)s", "explain": "%(explain)s"}}'
 
     def do_GET(self):
         self.log_error("GET request received.")
         self.send_error(http.HTTPStatus.METHOD_NOT_ALLOWED)
 
     def do_POST(self):
-        if self.path != self.WEBHOOK_PATH:
+        if self.path != self.server.webhook:
             self.log_error(f"Not a valid webhook request path: {self.path}")
             self.send_error(http.HTTPStatus.NOT_FOUND)
             return
-        if self.headers.get("Content-Type") != "application/json":
+        if not self.headers.get("Content-Type", "").startswith("application/json"):
             self.log_error(f"Invalid Content-Type: {self.headers.get("Content-Type")}")
             self.send_error(http.HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
             return
@@ -113,7 +118,7 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
 class WebHooKManager(object):
 
     def __init__(self, host: str = '0.0.0.0', port: int = 9999, timeout: int | None = None):
-        self.server: WebHookServer = WebHookServer(host, port, timeout)
+        self.server: WebHookServer = WebHookServer(address=host, port=port, wait_time=timeout)
         self.__timeout = timeout
         self.__executor: Executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self.server.__class__.__name__)
         self.__future: Future | None = None
@@ -126,7 +131,7 @@ class WebHooKManager(object):
     def wait(self, timeout: int | None = None) -> dict | None:
         if not self.__future:
             raise RuntimeError(f"{self.__class__.__name__} has not yet started!")
-        timeout = timeout if timeout else self.__timeout * 2 if self.__timeout else None
+        timeout = timeout if timeout is not None else self.__timeout * 2 if self.__timeout else None
         try:
             return self.__future.result(timeout=timeout)
         except TimeoutError:
@@ -144,9 +149,10 @@ class WebHooKManager(object):
         self.__executor.shutdown(wait=True, cancel_futures=True)
 
 
-def test_webhook(timeout: int | None = None):
+def validate_webhook(timeout: int | None = None):
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     with WebHooKManager(timeout=timeout if timeout else None) as mgr:
+        print(HandleWebHook.error_message_format)
         logging.info(f"Waiting for webhook[{timeout=}]...")
         data = mgr.wait()
         logging.info("Webhook wait finished.")
@@ -159,4 +165,4 @@ if __name__ == "__main__":
     # python3 webhook.py 10
     #
     # curl -X POST -H "Content-Type: application/json" -d '{"xyz": 42}' http://127.0.0.1:9999/webhook
-    test_webhook(timeout=int(sys.argv[1]) if len(sys.argv) > 1 else None)
+    validate_webhook(timeout=int(sys.argv[1]) if len(sys.argv) > 1 else None)

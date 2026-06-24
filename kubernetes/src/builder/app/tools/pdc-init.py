@@ -92,7 +92,7 @@ def _load_config(token: str = PROJECTED_TOKEN_FILE, cert: str = PROJECTED_CERT_F
         sys.exit(os.EX_CONFIG)
 
 
-def _collect_privacy_zone_labels(node: str = None, ip: str = None) -> list[str]:
+def _collect_privacy_zone_labels(node: str | None = None, ip: str | None = None) -> list[str]:
     """
 
     :param node:
@@ -132,7 +132,7 @@ def _delete_endpointslice(name: str, namespace: str, ) -> client.V1Status:
     return client.DiscoveryV1Api().delete_namespaced_endpoint_slice(name=name, namespace=namespace)
 
 
-def _create_headless_service(name: str, port: int, namespace: str, app: str = None) -> client.V1Service:
+def _create_headless_service(name: str, port: int, namespace: str, app: str | None = None) -> client.V1Service:
     """
 
     :param name:
@@ -155,7 +155,7 @@ def _create_headless_service(name: str, port: int, namespace: str, app: str = No
 
 
 def _create_cluster_service(name: str, port: int, namespace: str, selector: dict[str, str],
-                            app: str = None) -> client.V1Service:
+                            app: str | None = None) -> client.V1Service:
     """
 
     :param name:
@@ -176,7 +176,7 @@ def _create_cluster_service(name: str, port: int, namespace: str, selector: dict
 
 
 def _create_nodeport_endpointslice(service_name: str, address: str, target_port: int, namespace: str,
-                                   app: str = None) -> client.V1EndpointSlice:
+                                   app: str | None = None) -> client.V1EndpointSlice:
     """
 
     :param service_name:
@@ -225,7 +225,8 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
 
 ########################################################################################################################
 
-def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = None, force: bool = False, **kwargs):
+def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str | None = None, force: bool = False,
+                                 **kwargs):
     """
 
     :param port:
@@ -275,7 +276,7 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str = 
 
 
 def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str, force: bool = False,
-                                  def_zone: str = None, **kwargs):
+                                  **kwargs):
     try:
         zones = _collect_privacy_zone_labels(node=node)
         if len(zones) == 0 and not force:
