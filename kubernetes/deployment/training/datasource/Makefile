@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy-simple-api ::
-	./deploy_simple_api.sh || true
+deploy-endpoint-api ::
+	./deploy_endpoint_api.sh
 
 deploy-api-http ::
-	./deploy_datasource_api.sh -u || true
+	./deploy_datasource_api.sh -u
 
 deploy-api-https ::
-	./deploy_datasource_api.sh || true
+	./deploy_datasource_api.sh
 
 ########################################################################################################################
 
@@ -55,9 +55,14 @@ teardown :: stop-ngrok-tunnel
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 	${MAKE} stop-pdc
 
+log ::
+	@docker logs dataspace-connector
+	@docker logs endpoint-api -t
+	@docker logs datasource-api -t
+
 ########################################################################################################################
 
-setup :: | teardown deploy-api-https start-pdc deploy-simple-api ngrok-tunnel-pdc status
+setup :: | teardown deploy-api-https start-pdc deploy-endpoint-api ngrok-tunnel-pdc status
 
 ########################################################################################################################
 
