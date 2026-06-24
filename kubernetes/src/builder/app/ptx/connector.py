@@ -14,6 +14,7 @@
 import logging
 import pprint
 import sys
+import typing
 
 import requests
 
@@ -26,29 +27,44 @@ LOGIN_URL = r"http://{host}:{port}/login"
 EXCHANGE_URL = r"http://{host}:{port}/consumer/exchange"
 
 
+def _construct_login_request(service_key: str, secret_key: str) -> dict[str, str]:
+    """
+
+    :param service_key:
+    :param secret_key:
+    :return:
+    """
+    return {'serviceKey': service_key, 'secretKey': secret_key}
+
+
 def login_to_connector(timeout: int | None = None) -> dict:
     """
 
     :param timeout:
     :return:
     """
-    pdc_host, pdc_port = CONFIG['pdc.host'], int(CONFIG['pdc.port'])
-    log.debug(f"Connecting to PDC[{pdc_host}:{pdc_port}]...")
-    service_key, secret_key = CONFIG['pdc.key.service'], CONFIG['pdc.key.secret']
-    body = {'serviceKey': service_key,
-            'secretKey': secret_key}
+    url = LOGIN_URL.format(host=CONFIG['pdc.host'], port=CONFIG['pdc.port'])
+    log.debug(f"Connecting to PDC[{url}]...")
+    body = _construct_login_request(service_key=CONFIG['pdc.key.service'], secret_key=CONFIG['pdc.key.secret'])
     log.debug(f"Assembled request body:\n{pprint.pformat(body)}")
-    hdr = {'Content-Type': 'application/json',
-           'Accept': 'application/json'}
-    url = LOGIN_URL.format(host=pdc_host, port=pdc_port)
     log.info(f"Sending POST request to {url}...")
-    resp = requests.post(url=url, json=body, headers=hdr, timeout=timeout)
+    resp = requests.post(url=url, json=body, timeout=timeout,
+                         headers={'Content-Type': 'application/json',
+                                  'Accept': 'application/json'})
     if resp.status_code != requests.codes.OK:
         log.error(f"Failed to login to PDC: {resp.status_code}")
         resp.raise_for_status()
     log.info("Login to PDC was successful!")
     log.debug(f"Response body:\n{pprint.pformat(resp.json())}")
     return resp.json().get('content')
+
+
+def _construct_exchange_request(exchange: str) -> dict[str, typing.Any]:
+    return {"contract": CONFIG[f"ptx.{exchange}.contract"],
+            "resourceId": CONFIG[f"ptx.{exchange}.data.offer"],
+            "resources": [{"resource": CONFIG[f"ptx.{exchange}.data.resource"]}],
+            "purposeId": CONFIG[f"ptx.{exchange}.service.offer"],
+            "purposes": [{"resource": CONFIG[f"ptx.{exchange}.service.resource"]}]}
 
 
 def make_data_exchange(exchange: str, token: str, timeout: int | None = None) -> dict | None:
@@ -59,33 +75,28 @@ def make_data_exchange(exchange: str, token: str, timeout: int | None = None) ->
     :param timeout:
     :return:
     """
-    pdc_host, pdc_port = CONFIG['pdc.host'], int(CONFIG['pdc.port'])
-    log.debug(f"Connecting to PDC[{pdc_host}:{pdc_port}]...")
-    body = {"contract": CONFIG[f"ptx.{exchange}.contract"],
-            "resourceId": CONFIG[f"ptx.{exchange}.data.offer"],
-            "resources": [{"resource": CONFIG[f"ptx.{exchange}.data.resource"]}],
-            "purposeId": CONFIG[f"ptx.{exchange}.service.offer"],
-            "purposes": [{"resource": CONFIG[f"ptx.{exchange}.service.resource"]}]}
+    url = EXCHANGE_URL.format(host=CONFIG['pdc.host'], port=CONFIG['pdc.port'])
+    log.debug(f"Connecting to PDC[{url}]...")
+    body = _construct_exchange_request(exchange=exchange)
     log.debug(f"Assembled request body:\n{pprint.pformat(body)}")
-    hdr = {'Content-Type': 'application/json',
-           'Accept': 'application/json',
-           'Authorization': f"Bearer {token}"}
     webhook_data = None
     with WebHooKManager(timeout=timeout) as mgr:
-        url = EXCHANGE_URL.format(host=pdc_host, port=pdc_port)
         log.info(f"Sending POST request to {url}...")
-        resp = requests.post(url=url, json=body, headers=hdr, timeout=timeout)
+        resp = requests.post(url=url, json=body, timeout=timeout,
+                             headers={'Content-Type': 'application/json',
+                                      'Accept': 'application/json',
+                                      'Authorization': f"Bearer {token}"})
         resp_json = resp.json()
         log.debug(f"Response body:\n{pprint.pformat(resp_json)}")
         if resp.status_code != requests.codes.OK:
             log.error(f"Failed to initiate data exchange: {resp.status_code}")
             mgr.server.abort()
         elif not resp_json['content']['success']:
-            log.error(f"Failed to initiate data exchange: {resp_json['content']['dataExchange']['status']}")
+            log.error(f"Failed to initiate data exchange with status: {resp_json['content']['dataExchange']['status']}")
             mgr.server.abort()
         else:
             log.info(f"Data exchange initiated successfully!")
-            log.info(f"Status: {resp_json['content']['dataExchange']['status']}!")
+            log.info(f"Exchange status: {resp_json['content']['dataExchange']['status']}")
             log.info("Processing connector response...")
             webhook_data = mgr.wait()
     if webhook_data:
