@@ -17,6 +17,7 @@ import http.client
 import http.server
 import json
 import logging
+import pprint
 import sys
 import typing
 from concurrent.futures import Executor, Future
@@ -65,7 +66,8 @@ class WebHookServer(http.server.HTTPServer):
                 if self.__received:
                     self.logger.info(f"Webhook received.")
                     self.logger.debug(f"Received request headers:\n"
-                                      f"{dict(self.webhook_headers.items()) if self.webhook_headers else None}")
+                                      f"{pprint.pformat(dict(self.webhook_headers.items()))
+                                      if self.webhook_headers else None}")
                     break
         return self.__webhook_data
 
@@ -87,6 +89,14 @@ class HandleWebHook(http.server.BaseHTTPRequestHandler):
     server_version = f"{WebHookServer.__name__}/{WebHookServer.__version__}"
     error_content_type = "application/json;charset=utf-8"
     error_message_format = r'{"code": %(code)d, "content": {"message": "%(message)s", "explain": "%(explain)s"}}'
+
+    def do_HEAD(self):
+        self.log_error("HEAD request received.")
+        self.send_error(http.HTTPStatus.METHOD_NOT_ALLOWED)
+
+    def do_PUT(self):
+        self.log_error("PUT request received.")
+        self.send_error(http.HTTPStatus.METHOD_NOT_ALLOWED)
 
     def do_GET(self):
         self.log_error("GET request received.")

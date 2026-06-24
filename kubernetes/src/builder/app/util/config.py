@@ -43,7 +43,8 @@ def isections(data: dict, sep: str = '.') -> typing.Generator[str, None, None]:
             yield str(key)
 
 
-def load_configuration(base: dict = None, cfg_file: pathlib.Path = None, from_env: bool = False) -> benedict:
+def load_configuration(base: dict | None = None, cfg_file: pathlib.Path | None = None,
+                       from_env: bool = False) -> benedict:
     """
     Load configuration form multiple sources.
 

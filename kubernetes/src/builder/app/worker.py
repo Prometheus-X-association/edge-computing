@@ -15,8 +15,9 @@ import json
 import logging
 import pathlib
 import pprint
+import typing
 
-from app.ptx.connector import perform_pdc_data_exchange
+from app.ptx.connector import perform_pdc_consumer_exchange
 from app.util.config import CONFIG, load_configuration, SKIPPED
 from app.util.helper import get_resource_path, get_resource_scheme
 from app.util.k8s import create_image_pull_secret
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
 
 
 def collect_worker_image_from_repo(src: str, dst: str | None, src_auth: DockerRegistryAuth,
-                                   retry: int = None, timeout: int = None) -> str | None:
+                                   retry: int | None = None, timeout: int | None = None) -> str | None:
     """
 
     :param src:
@@ -58,8 +59,8 @@ def collect_worker_image_from_repo(src: str, dst: str | None, src_auth: DockerRe
     return image.get('Digest') if image else None
 
 
-def configure_worker_pull_credential(name: str, cred: DockerRegistryAuth, app: str, namespace: str = None,
-                                     timeout: int = None) -> str | None:
+def configure_worker_pull_credential(name: str, cred: DockerRegistryAuth, app: str, namespace: str | None = None,
+                                     timeout: int | None = None) -> str | None:
     """
 
     :param name:
@@ -75,17 +76,18 @@ def configure_worker_pull_credential(name: str, cred: DockerRegistryAuth, app: s
     return secret.metadata.uid if secret else None
 
 
-def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeout: int = None) -> str | None:
+def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
+                            timeout: int | None = None) -> str | None:
     """
 
-    :param contract_id:
+    :param exchange:
     :param dst:
     :param retry:
     :param timeout:
     :return:
     """
-    log.info(f"Acquiring worker resources based on contract[{contract_id}]...")
-    data = perform_pdc_data_exchange(exchange=contract_id, timeout=timeout)
+    log.info(f"Acquiring worker resources based on contract[{exchange}]...")
+    data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
     if data is None:
         log.error("Worker data exchange failed!")
         return None
@@ -116,7 +118,7 @@ def collect_worker_from_ptx(contract_id: str, dst: str, retry: int = None, timeo
 
 ########################################################################################################################
 
-def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
+def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) -> str | None:
     """
 
     :param data_path:
@@ -132,9 +134,16 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
         CONFIG['worker.src'] = SKIPPED
     elif worker_src.upper() in ('INLINE', 'DATASOURCE'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
-        with open(data_path, 'r') as f:
-            worker_cfg = json.load(f)
-        load_configuration(base=worker_cfg['worker'])
+        if isinstance(data_path, (pathlib.Path, str)):
+            try:
+                with open(data_path, 'r') as f:
+                    worker_cfg = json.load(f).get('worker')
+            except:
+                log.error(f"Failed to load worker configuration from {data_path}!")
+                worker_cfg = None
+        elif isinstance(data_path, dict):
+            worker_cfg = data_path.get('content', {}).get('worker')
+        load_configuration(base=worker_cfg)
     worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     result_id = None
@@ -152,8 +161,8 @@ def get_worker_resources(data_path: str | pathlib.Path) -> str | None:
             cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
         case 'ptx':
-            if (contract_id := get_resource_path(worker_src)) is not None:
-                result_id = collect_worker_from_ptx(contract_id=contract_id, dst=worker_dst,
+            if (exchange := get_resource_path(worker_src)) is not None:
+                result_id = collect_worker_from_ptx(exchange=exchange, dst=worker_dst,
                                                     retry=conn_retry, timeout=conn_timeout)
         case other:
             log.error(f"Unknown data source protocol: {other}")

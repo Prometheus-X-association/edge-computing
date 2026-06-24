@@ -99,13 +99,13 @@ def make_data_exchange(exchange: str, token: str, timeout: int | None = None) ->
             log.info(f"Exchange status: {resp_json['content']['dataExchange']['status']}")
             log.info("Processing connector response...")
             webhook_data = mgr.wait()
-    if webhook_data:
-        log.info("Webhook received successfully!")
+    if webhook_data is not None:
+        log.info("Webhook data received successfully!")
         log.debug(f"Received data size: {sys.getsizeof(webhook_data)}")
     return webhook_data
 
 
-def perform_pdc_data_exchange(exchange: str, timeout: int | None = None) -> dict | None:
+def perform_pdc_consumer_exchange(exchange: str, timeout: int | None = None) -> dict | None:
     """
 
     :param exchange:

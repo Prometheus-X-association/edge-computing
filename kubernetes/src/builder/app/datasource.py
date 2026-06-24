@@ -15,6 +15,7 @@ import base64
 import logging
 import pathlib
 import tempfile
+import typing
 
 import certifi
 import requests
@@ -23,7 +24,7 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests_toolbelt.downloadutils import stream
 from requests_toolbelt.exceptions import StreamingError
 
-from app.ptx.connector import perform_pdc_data_exchange
+from app.ptx.connector import perform_pdc_consumer_exchange
 from app.util.config import CONFIG, SKIPPED
 from app.util.helper import local_copy, get_resource_scheme, get_resource_path
 from app.util.parsers import DataSourceAuth, DataSourceAuthScheme
@@ -98,7 +99,8 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     return dst_path
 
 
-def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int | None = None):
+def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
+                          timeout: int | None = None) -> dict[str, typing.Any] | None:
     """
 
     :param exchange:
@@ -108,7 +110,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int 
     :return:
     """
     log.info(f"Acquiring private data based on contract[{exchange}]...")
-    data = perform_pdc_data_exchange(exchange=exchange, timeout=timeout)
+    data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
     if data is None:
         log.error("Private data exchange failed!")
         return None
@@ -119,9 +121,10 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int 
     log.info(f"Process received data as type: {data_type}")
     match str(data_type).lower():
         case 'raw' | 'file':
-            with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=False) as tmp:
+            with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=True) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
                 tmp.write(base64.b64decode(data_content.encode(encoding=data.get("encoding", "utf-8"))))
+                tmp.flush()
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'url' | 'rest':
             url, auth = data_content['url'], DataSourceAuth.parse(data_content.get('auth'))
@@ -131,7 +134,8 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1, timeout: int 
             # TODO - manage authentication params defined in 'data'
         case other:
             raise Exception(f"Unsupported data type: {other}")
-    return dst_path
+    data['content']['data'] = {"path": str(dst_path) if dst_path is not None else None}
+    return data
 
 
 ########################################################################################################################
