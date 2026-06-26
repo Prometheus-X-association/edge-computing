@@ -111,15 +111,27 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
     """
     log.info(f"Acquiring private data based on contract[{exchange}]...")
     data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
+    # {
+    #     "type": ...,
+    #     "content": {
+    #         "url": ...,
+    #         "auth": {
+    #             "scheme": ...,
+    #             "user": ...,
+    #             "secret": ...,
+    #             "insecure": ...
+    #         }
+    #      }
+    # }
     if data is None:
         log.error("Private data exchange failed!")
         return None
     else:
         log.info(f"Private data exchange was successful!")
     ##########################################################################################
-    data_type, data_content = data['type'], data['content']
+    data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")
-    match str(data_type).lower():
+    match data_type.lower():
         case 'raw' | 'file':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=True) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")

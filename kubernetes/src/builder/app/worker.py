@@ -88,27 +88,40 @@ def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
     """
     log.info(f"Acquiring worker resources based on contract[{exchange}]...")
     data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
+    # {
+    #     "type": ...,
+    #     "content": {
+    #         "image": ...,
+    #         "auth": {
+    #             "server": ...,
+    #             "user": ...,
+    #             "secret": ...,
+    #             "insecure": ...,
+    #             "ca_dir": ...
+    #          },
+    #        "dst": ...
+    #     }
+    # }
     if data is None:
         log.error("Worker data exchange failed!")
         return None
     else:
         log.info(f"Worker data exchange was successful!")
     ##########################################################################################
-    data_type, data_content = data['type'], data['content']
+    data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")
-    match data_type:
+    result_id = None
+    match data_type.lower():
         case 'raw' | 'file':
             raise NotImplementedError
         case 'docker' | 'remote':
-            docker_src, src_auth = data_content['image'], data_content.get('auth')
-            docker_dst = data_content.get('dst', default=dst)
-            src_insecure = src_auth.get('insecure', False) if src_auth else False
-            result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst,
-                                                       src_auth=src_auth, src_insecure=src_insecure, src_ca_dir=None,
+            docker_src, docker_dst = data_content['image'], data_content.get('dst', default=dst)
+            src_auth = DockerRegistryAuth.parse(data_content.get('auth'))
+            result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst, src_auth=src_auth,
                                                        retry=retry, timeout=timeout)
         case 'auth' | 'secret':
             name = CONFIG.get('worker.pull-secret', data_content.get('worker.dst'))
-            cred = data_content.get('credentials')
+            cred = DockerRegistryAuth.parse(data_content.get('auth'))
             app = CONFIG.get('worker.app', default='worker')
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=timeout)
         case other:
