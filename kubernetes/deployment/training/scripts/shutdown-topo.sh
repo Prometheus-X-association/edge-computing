@@ -19,6 +19,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ########################################################################################################################
 
 LOG "Shutting down cluster environment..."
+docker ps -aq -f name="ngrok-tun-*" | xargs -r docker rm --force || true
 k3d cluster delete "${CLUSTER}"
 sudo rm -rf .cache
 
