@@ -32,22 +32,37 @@ restart :: | teardown setup
 
 ########################################################################################################################
 
-exchange ::
-	./test_exchange.sh
-
-config ::
+test-config ::
 	./test_config.sh
 
-credential ::
+test-credential ::
 	./test_credential.sh
 
+test-exchange ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${TS}"
+	./test_exchange.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
 ########################################################################################################################
+
+logs ::
+	${DOCK_COMP} logs api-provider pdc-provider pdc-consumer api-consumer --since="${SINCE}"
 
 status ::
 	${DOCK_COMP} ps -a
 
 teardown ::
 	${DOCK_COMP} --profile extra down -v
+
+purge ::
+	docker rmi mongo:latest
+	docker rmi dataspace-connector:latest
+	docker rmi ngrok/ngrok:latest
+	docker rmi busybox:latest
+	docker rmi traefik/whoami:latest
+	docker rmi alpine/tshark:latest
 
 ########################################################################################################################
 
