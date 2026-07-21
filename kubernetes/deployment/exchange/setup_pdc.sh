@@ -41,6 +41,11 @@ popd
 
 ########################################################################################################################
 
+log "Remove old PDC images..."
+docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f
+
+########################################################################################################################
+
 if ! grep -q "install -g pnpm@" <"${PDC_DIR}/docker/app/Dockerfile"; then
     log "Adjust docker setup..."
     cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
