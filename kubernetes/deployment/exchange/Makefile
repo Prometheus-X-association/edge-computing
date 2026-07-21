@@ -57,12 +57,12 @@ teardown ::
 	${DOCK_COMP} --profile extra down -v
 
 purge ::
-	docker rmi mongo:latest
-	docker rmi dataspace-connector:latest
-	docker rmi ngrok/ngrok:latest
-	docker rmi busybox:latest
-	docker rmi traefik/whoami:latest
-	docker rmi alpine/tshark:latest
+	docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f || true
+	docker rmi mongo:latest \
+				ngrok/ngrok:latest \
+				busybox:latest \
+				traefik/whoami:latest \
+				alpine/tshark:latest || true
 
 ########################################################################################################################
 
