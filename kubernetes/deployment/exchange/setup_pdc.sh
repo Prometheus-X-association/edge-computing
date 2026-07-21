@@ -41,8 +41,10 @@ popd
 
 ########################################################################################################################
 
-log "Adjust docker setup..."
-cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
+if ! grep -q "install -g pnpm@" <"${PDC_DIR}/docker/app/Dockerfile"; then
+    log "Adjust docker setup..."
+    cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
+################ Changed for exchange deployment ################
 # Use the official Node.js image as base image
 FROM node:22
 ARG ENV
@@ -76,7 +78,8 @@ EXPOSE 3000
 
 CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
-ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+    ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+fi
 
 log "Create config files..."
 cat <<EOF >"${PDC_DIR}/src/config.json"
