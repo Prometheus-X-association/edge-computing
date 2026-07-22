@@ -35,10 +35,16 @@ $ cp creds/exchange.env.sample creds/exchange.env
 Execute test using Makefile targets or directly with helper scripts:
 
 ```bash
-$ make config
-$ make credential
-$ make exchange
+$ make test-config
+$ make test-credential
+$ make test-exchange
 ...
+```
+
+To see logs, use the target:
+
+```bash
+make logs
 ```
 
 ## Tearing down
