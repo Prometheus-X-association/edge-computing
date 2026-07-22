@@ -40,7 +40,7 @@ test-credential ::
 
 test-exchange ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
-	@echo "Test start time: ${TS}"
+	@echo "Test start time: ${SINCE}"
 	./test_exchange.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
@@ -48,7 +48,13 @@ test-exchange ::
 ########################################################################################################################
 
 logs ::
-	${DOCK_COMP} logs api-provider pdc-provider pdc-consumer api-consumer --since="${SINCE}"
+	${DOCK_COMP} logs api-provider --since="${SINCE}"
+	@echo
+	${DOCK_COMP} logs pdc-provider --since="${SINCE}"
+	@echo
+	${DOCK_COMP} logs pdc-consumer --since="${SINCE}"
+	@echo
+	${DOCK_COMP} logs api-consumer --since="${SINCE}"
 
 status ::
 	${DOCK_COMP} ps -a

@@ -23,7 +23,7 @@ services:
       start_period: 15s
       interval: 1m
 
-########################################################################################################################
+  ########################################################################################################################
 
   # PDC instances
   pdc-provider:
@@ -80,7 +80,7 @@ services:
       mongodb:
         condition: service_healthy
 
-########################################################################################################################
+  ########################################################################################################################
 
   # Reverse HTTP(S) tunnels to local PDC instances
   ngrok-tun-provider:
@@ -125,7 +125,7 @@ services:
       pdc-consumer:
         condition: service_healthy
 
-########################################################################################################################
+  ########################################################################################################################
 
   # Main datasource API serving data
   api-provider:
@@ -166,22 +166,40 @@ services:
         condition: service_healthy
 
   # Main data consumer API accepting PDC callbacks
+  #  api-consumer:
+  #    container_name: api-consumer
+  #    image: traefik/whoami:latest
+  #    restart: no # fail fast
+  #    labels:
+  #      setup: exchange
+  #    command: [ '--port=8080', '--name=consumer', '--verbose' ]
+  #    networks:
+  #      - nw-consumer
+  #    depends_on:
+  #      pdc-consumer:
+  #        condition: service_healthy
+
   api-consumer:
     container_name: api-consumer
-    image: traefik/whoami:latest
+    image: busybox:latest
     restart: no # fail fast
     labels:
       setup: exchange
-    command: [ '--port=8080', '--name=consumer', '--verbose' ]
+    configs:
+      - source: consumer-server.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
     networks:
       - nw-consumer
     depends_on:
       pdc-consumer:
         condition: service_healthy
 
-########################################################################################################################
+  ########################################################################################################################
 
-  #Additional packet profilers
+  # Additional packet profilers
   sniffer-provider:
     container_name: sniffer-provider
     image: alpine/tshark:latest
@@ -196,7 +214,7 @@ services:
       - NET_ADMIN
     labels:
       setup: exchange
-    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http' ]
+    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-provider
     depends_on:
       - api-provider
@@ -216,7 +234,7 @@ services:
       - NET_ADMIN
     labels:
       setup: exchange
-    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http' ]
+    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-consumer
     depends_on:
       - api-consumer
@@ -336,6 +354,18 @@ configs:
       Alice,30,Engineering
       Bob,25,Marketing
       Charlie,35,Sales
+
+  # Consumer API config
+  consumer-server.sh:
+    content: |
+      #!/usr/bin/env sh
+      while true; do
+        printf '\nWaiting for connections...'
+        body="{\"timestamp\": \"$$(date +%s)\", \"code\": 200, \"status\": \"OK\"}\n";
+        len="$$(printf '%s' "$${body}" | wc -c)";
+        resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
+        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;
+      done
 
 ########################################################################################################################
 
