@@ -38,74 +38,44 @@ services:
       pdc-provider:
         condition: service_healthy
 
-  ## Main datasource API accepting GET/POST with fixed path and returning env data
-  #api-provider:
-  #  container_name: api-provider
-  #  image: traefik/whoami:latest
-  #  restart: no # fail fast
-  #  labels:
-  #    setup: exchange
-  #  command: [ '--port=8080', '--name=provider', '--verbose' ]
-  #  networks:
-  #    - nw-provider
-  #  depends_on:
-  #    pdc-provider:
-  #      condition: service_healthy
-
-  ## Main datasource API accepting any GET/POST and returning static JSON
-  #api-provider:
-  #  container_name: api-provider
-  #  image: busybox:latest
-  #  restart: no # fail fast
-  #  labels:
-  #    setup: exchange
-  #  configs:
-  #    - source: provider-server.sh
-  #      target: /usr/app/entrypoint.sh
-  #      mode: 0555
-  #  entrypoint: /usr/app/entrypoint.sh
-  #  stop_signal: SIGKILL
-  #  networks:
-  #    - nw-provider
-  #  healthcheck:
-  #    test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
-  #    start_period: 5s
-  #    interval: 3m
-  #  depends_on:
-  #    pdc-provider:
-  #      condition: service_healthy
-
-  ######################################################################################################################
-
-  ## Main data consumer API accepting any callbacks and returning static JSON
-  #api-consumer:
-  #  container_name: api-consumer
-  #  image: busybox:latest
-  #  restart: no # fail fast
-  #  labels:
-  #    setup: exchange
-  #  configs:
-  #    - source: consumer-server.sh
-  #      target: /usr/app/entrypoint.sh
-  #      mode: 0555
-  #  entrypoint: /usr/app/entrypoint.sh
-  #  stop_signal: SIGKILL
-  #  networks:
-  #    - nw-consumer
-  #  depends_on:
-  #    pdc-consumer:
-  #      condition: service_healthy
-  #    api-provider:
-  #      condition: service_healthy
-
-  # Main data consumer API accepting any PDC callbacks and returning env data
-  api-consumer:
-    container_name: api-consumer
-    image: traefik/whoami:latest
+  # Main API accepting any GET/POST and returning static JSON
+  api-provider-status:
+    container_name: api-provider-status
+    image: busybox:latest
     restart: no # fail fast
     labels:
       setup: exchange
-    command: [ '--port=8080', '--name=consumer', '--verbose' ]
+    configs:
+      - source: provider-status-hook.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
+    networks:
+      - nw-provider
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 3m
+    depends_on:
+      api-provider:
+        condition: service_healthy
+
+  ######################################################################################################################
+
+  # Main data consumer API accepting any callbacks and returning static JSON
+  api-consumer:
+    container_name: api-consumer
+    image: busybox:latest
+    restart: no # fail fast
+    labels:
+      setup: exchange
+    configs:
+      - source: consumer-server.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
     networks:
       - nw-consumer
     depends_on:
@@ -113,6 +83,22 @@ services:
         condition: service_healthy
       api-provider:
         condition: service_healthy
+
+  ## Main data consumer API accepting any PDC callbacks and returning env data
+  #api-consumer:
+  #  container_name: api-consumer
+  #  image: traefik/whoami:latest
+  #  restart: no # fail fast
+  #  labels:
+  #    setup: exchange
+  #  command: [ '--port=8080', '--name=consumer', '--verbose' ]
+  #  networks:
+  #    - nw-consumer
+  #  depends_on:
+  #    pdc-consumer:
+  #      condition: service_healthy
+  #    api-provider:
+  #      condition: service_healthy
 
 ########################################################################################################################
 
@@ -149,16 +135,13 @@ configs:
       Bob,25,Marketing
       Charlie,35,Sales
 
-  # Simple provider API config
-  provider-server.sh:
+  # Simple consumer API config
+  provider-status-hook.sh:
     content: |
       #!/usr/bin/env sh
       while true; do
-        echo -e 'Waiting for connections...'
-        body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"PROVIDER\", \"data\": \"$${HOSTNAME}\"}\n";
-        len="$$(printf '%s' "$${body}" | wc -c)";
-        resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
-        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;
+        echo -e '\nWaiting for connections...'
+        printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080;
       done
 
   # Simple consumer API config
@@ -166,8 +149,8 @@ configs:
     content: |
       #!/usr/bin/env sh
       while true; do
-        echo -e 'Waiting for connections...'
-        body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\"}\n";
+        echo -e '\nWaiting for connections...'
+        body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\"}";
         len="$$(printf '%s' "$${body}" | wc -c)";
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;
