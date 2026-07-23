@@ -67,44 +67,52 @@ services:
   #  stop_signal: SIGKILL
   #  networks:
   #    - nw-provider
+  #  healthcheck:
+  #    test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+  #    start_period: 5s
+  #    interval: 3m
   #  depends_on:
   #    pdc-provider:
   #      condition: service_healthy
 
   ######################################################################################################################
 
-  # Main data consumer API accepting any callbacks and returning static JSON
-  api-consumer:
-    container_name: api-consumer
-    image: busybox:latest
-    restart: no # fail fast
-    labels:
-      setup: exchange
-    configs:
-      - source: consumer-server.sh
-        target: /usr/app/entrypoint.sh
-        mode: 0555
-    entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
-    networks:
-      - nw-consumer
-    depends_on:
-      pdc-consumer:
-        condition: service_healthy
-
-  ## Main data consumer API accepting any PDC callbacks and returning env data
+  ## Main data consumer API accepting any callbacks and returning static JSON
   #api-consumer:
   #  container_name: api-consumer
-  #  image: traefik/whoami:latest
+  #  image: busybox:latest
   #  restart: no # fail fast
   #  labels:
   #    setup: exchange
-  #  command: [ '--port=8080', '--name=consumer', '--verbose' ]
+  #  configs:
+  #    - source: consumer-server.sh
+  #      target: /usr/app/entrypoint.sh
+  #      mode: 0555
+  #  entrypoint: /usr/app/entrypoint.sh
+  #  stop_signal: SIGKILL
   #  networks:
   #    - nw-consumer
   #  depends_on:
   #    pdc-consumer:
   #      condition: service_healthy
+  #    api-provider:
+  #      condition: service_healthy
+
+  # Main data consumer API accepting any PDC callbacks and returning env data
+  api-consumer:
+    container_name: api-consumer
+    image: traefik/whoami:latest
+    restart: no # fail fast
+    labels:
+      setup: exchange
+    command: [ '--port=8080', '--name=consumer', '--verbose' ]
+    networks:
+      - nw-consumer
+    depends_on:
+      pdc-consumer:
+        condition: service_healthy
+      api-provider:
+        condition: service_healthy
 
 ########################################################################################################################
 
@@ -146,7 +154,7 @@ configs:
     content: |
       #!/usr/bin/env sh
       while true; do
-        printf '\nWaiting for connections...'
+        echo -e 'Waiting for connections...'
         body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"PROVIDER\", \"data\": \"$${HOSTNAME}\"}\n";
         len="$$(printf '%s' "$${body}" | wc -c)";
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
@@ -158,7 +166,7 @@ configs:
     content: |
       #!/usr/bin/env sh
       while true; do
-        printf '\nWaiting for connections...'
+        echo -e 'Waiting for connections...'
         body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\"}\n";
         len="$$(printf '%s' "$${body}" | wc -c)";
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'

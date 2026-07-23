@@ -12,7 +12,7 @@ $ make build
 $ make setup
 ```
 
-To initiate packet sniffers and examine PDC -> API invocations, use the following target:
+To initiate packet sniffers and examine PDC --> API invocations, use the following target:
 
 ```bash
 $ make setup-all
