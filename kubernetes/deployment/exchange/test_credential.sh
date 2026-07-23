@@ -14,7 +14,7 @@
 # limitations under the License.
 set -euo pipefail
 
-source "$(readlink -f "$(dirname "$0")/helper.sh")"
+source "$(readlink -f "$(dirname "$0")/scripts/helper.sh")"
 source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
 
 ########################################################################################################################
@@ -108,9 +108,9 @@ echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
 if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    error "Config config failed!" && exit 1
+    error "Credential validation failed!" && exit 1
 else
-    echo -e "\nConfig validation was successful!"
+    echo -e "\nCredential validation was successful!"
 fi
 
 ########################################################################################################################

@@ -11,22 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CREDS := exchange.env
-DOCK_COMP := docker compose -f ${ROOT_DIR}/docker-compose.yaml --env-file=${ROOT_DIR}/creds/${CREDS}
+DOCKER_INFRA := docker compose --env-file=${ROOT_DIR}/creds/${CREDS}
+COMPOSE_BASE := $(DOCKER_INFRA) -f ${ROOT_DIR}/basic-infra.yaml
+COMPOSE_EXCHANGE := $(DOCKER_INFRA) -f ${ROOT_DIR}/docker-compose.yaml
 
 ########################################################################################################################
 
 build ::
-	./setup_pdc.sh
-	${DOCK_COMP} build
+	./scripts/setup_pdc.sh
+	${COMPOSE_BASE} build
+
+setup-base ::
+	${COMPOSE_BASE} up --force-recreate --abort-on-container-exit
 
 setup ::
-	${DOCK_COMP} up --force-recreate --abort-on-container-exit
+	${COMPOSE_EXCHANGE} up --force-recreate --abort-on-container-exit
 
 setup-all ::
-	${DOCK_COMP} --profile extra up --force-recreate --abort-on-container-exit
+	${COMPOSE_EXCHANGE} --profile extra up --force-recreate --abort-on-container-exit
 
 restart :: | teardown setup
 
@@ -48,19 +52,19 @@ test-exchange ::
 ########################################################################################################################
 
 logs ::
-	${DOCK_COMP} logs api-provider --since="${SINCE}"
+	${COMPOSE_EXCHANGE} logs api-provider --since="${SINCE}"
 	@echo
-	${DOCK_COMP} logs pdc-provider --since="${SINCE}"
+	${COMPOSE_EXCHANGE} logs pdc-provider --since="${SINCE}"
 	@echo
-	${DOCK_COMP} logs pdc-consumer --since="${SINCE}"
+	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
 	@echo
-	${DOCK_COMP} logs api-consumer --since="${SINCE}"
+	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
 
 status ::
-	${DOCK_COMP} ps -a
+	${COMPOSE_EXCHANGE} ps -a
 
 teardown ::
-	${DOCK_COMP} --profile extra down -v
+	${COMPOSE_EXCHANGE} --profile extra down -v
 
 purge ::
 	docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f || true

@@ -14,7 +14,7 @@
 # limitations under the License.
 set -euo pipefail
 
-source "$(readlink -f "$(dirname "$0")/helper.sh")"
+source "$(readlink -f "$(dirname "$0")/scripts/helper.sh")"
 source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
 
 ########################################################################################################################

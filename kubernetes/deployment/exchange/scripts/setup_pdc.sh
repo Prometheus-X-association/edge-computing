@@ -28,7 +28,7 @@ PDC_IMG="dataspace-connector"
 LOG "Setup Dataspace Connector (PDC)"
 
 if [ -z "${PDC_DIR:-}" ]; then
-    PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
+    PDC_DIR=$(readlink -f "$(dirname "$0")/../pdc")
 fi
 rm -rf "${PDC_DIR}" && mkdir -vp "${PDC_DIR}"
 echo "Used dir for PDC: ${PDC_DIR}"

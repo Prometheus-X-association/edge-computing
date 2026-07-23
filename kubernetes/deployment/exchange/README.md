@@ -12,6 +12,12 @@ $ make build
 $ make setup
 ```
 
+To only initiate basic infrastructure components without provider/consumer APIs, use the dedicated target:
+
+```bash
+$ make setup-base
+```
+
 To initiate packet sniffers and examine PDC --> API invocations, use the following target:
 
 ```bash
@@ -31,6 +37,9 @@ Copy the sample exchange config file and fill out the PDC / tunnel / contract se
 ```bash
 $ cp creds/exchange.env.sample creds/exchange.env 
 ```
+
+Test exchange configuration can be given in `exchange.env` or in a separate env file
+that is directly used by a `test_<...>.sh` script.
 
 Execute test using Makefile targets or directly with helper scripts:
 
