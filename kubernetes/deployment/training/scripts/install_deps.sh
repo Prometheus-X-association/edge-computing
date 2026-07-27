@@ -21,11 +21,11 @@ DEPS=(docker k3d kubectl kubecolor helm skopeo)
 
 TIMEOUT=120
 
-DOCKER_VER='29.2.0'
-K3D_VER='v5.8.3'
-KUBECTL_VER='v1.31.5'	# used by k3d v5.8.3 / k3s v1.31.5
+DOCKER_VER='29.6.2'
+K3D_VER='v5.9.0'
+KUBECTL_VER='v1.35.5'	# used by k3d v5.9.0 / k3s v1.35.5
 HELM_VER='v4.1.0'
-SKOPEO_VER='v1.21.0'
+SKOPEO_VER='v1.23.0'
 KCOLOR_VER='0.6.0'
 
 PKG_FREEZE=false
@@ -96,8 +96,8 @@ function install_kubectl() {
 function install_kubecolor() {
     #KCOLOR_VER="$(wget -q -O- https://kubecolor.github.io/packages/deb/version)_$(dpkg --print-architecture)"
     echo -e "\n>>> Install kubecolor binary[${KCOLOR_VER}]...\n"
-    curl -fsSL -O "https://github.com/kubecolor/kubecolor/releases/download/v0.6.0/kubecolor_${KCOLOR_VER}_linux_amd64.deb" && \
-        sudo dpkg -i "kubecolor_${KCOLOR_VER}.deb" && rm "kubecolor_${KCOLOR_VER}.deb"
+    curl -fsSL -O "https://github.com/kubecolor/kubecolor/releases/download/v${KCOLOR_VER}/kubecolor_${KCOLOR_VER}_linux_amd64.deb" && \
+        sudo dpkg -i "kubecolor_${KCOLOR_VER}_linux_amd64.deb" && rm kubecolor_*.deb
     (set -x; kubecolor version --client)
 }
 
@@ -229,7 +229,7 @@ function cleanup_test_cluster() {
     echo -e "\n>>> Cleanup...\n"
     #kubectl delete pod ${TEST_ID} -n ${TEST_NS} --grace-period=0 #--force
     k3d cluster delete ${TEST_K8S}
-    docker rmi -f "${TEST_IMG}"
+    docker rmi -f "${TEST_IMG}" || true
 }
 
 function post_install() {

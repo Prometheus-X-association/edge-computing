@@ -19,11 +19,11 @@ set -eou pipefail
 ## Dependencies
 DEPS=(docker k3d kubectl helm skopeo)
 
-DOCKER_VER='29.2.0'
-K3D_VER='v5.8.3'
-KUBECTL_VER='v1.31.5'	# used by k3d v5.8.3 / k3s v1.31.5
+DOCKER_VER='29.6.2'
+K3D_VER='v5.9.0'
+KUBECTL_VER='v1.35.5'	# used by k3d v5.9.0 / k3s v1.35.5
 HELM_VER='v4.1.0'
-SKOPEO_VER='v1.21.0'
+SKOPEO_VER='v1.23.0'
 
 ## Install parameters
 PKG_FREEZE=false
