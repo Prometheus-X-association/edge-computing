@@ -55,6 +55,9 @@ spec:
                   key: SECRET_KEY
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            - name: BUILD_DATA_SRC
+              value: "${DP0_DATA_SRC}"
+            # PTX configuration
             - name: BUILD_PTX_EXCHANGE_CONTRACT
               value: "https://contract.visionstrust.com/contracts/${PTX_CONTRACT_ID}"
             - name: BUILD_PTX_EXCHANGE_DATA_OFFER
@@ -65,18 +68,15 @@ spec:
               value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
             - name: BUILD_PTX_EXCHANGE_SERVICE_RESOURCE
               value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_ID}"
-            - name: BUILD_DATA_SRC
-              value: "ptx://exchange"
-            #- name: BUILD_DATA_SRC
-            #  value: "${DP0_DATA}"
-            #- name: BUILD_DATA_AUTH_USER
-            #  value: "${DS_API_USER}"
-            #- name: BUILD_DATA_AUTH_SECRET
-            #  value: "${DS_API_PASSWORD}"
-            #- name: BUILD_DATA_AUTH_INSECURE
-            #  value: "${DS_API_INSECURE}"
-            #- name: BUILD_DATA_DST
-            #  value: "/var/cache/data/"
+            # Direct datasource configuration
+            - name: BUILD_DATA_AUTH_USER
+              value: "${DS_API_USER}"
+            - name: BUILD_DATA_AUTH_SECRET
+              value: "${DS_API_PASSWORD}"
+            - name: BUILD_DATA_AUTH_INSECURE
+              value: "${DS_API_INSECURE}"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data/"
             - name: BUILD_WORKER_SRC
               #value: "docker://${DP0_IMG}"
             #- name: BUILD_WORKER_DST

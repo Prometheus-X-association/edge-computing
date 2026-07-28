@@ -38,7 +38,8 @@ spec:
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
             - name: BUILD_DATA_SRC
-              value: "${DP1_DATA}"
+              value: "${DP1_DATA_SRC}"
+            # Direct datasource configuration
             - name: BUILD_DATA_AUTH_USER
               value: "${DS_API_USER}"
             - name: BUILD_DATA_AUTH_SECRET
