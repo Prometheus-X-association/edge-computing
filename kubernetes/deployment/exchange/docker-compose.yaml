@@ -38,28 +38,28 @@ services:
       pdc-provider:
         condition: service_healthy
 
-  # Main API accepting any GET/POST and returning static JSON
-  api-provider-status:
-    container_name: api-provider-status
-    image: busybox:latest
-    restart: no # fail fast
-    labels:
-      setup: exchange
-    configs:
-      - source: provider-status-hook.sh
-        target: /usr/app/entrypoint.sh
-        mode: 0555
-    entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
-    networks:
-      - nw-provider
-    healthcheck:
-      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
-      start_period: 5s
-      interval: 3m
-    depends_on:
-      api-provider:
-        condition: service_healthy
+  #  # Main API accepting any GET/POST and returning static JSON
+  #  api-provider-status:
+  #    container_name: api-provider-status
+  #    image: busybox:latest
+  #    restart: no # fail fast
+  #    labels:
+  #      setup: exchange
+  #    configs:
+  #      - source: provider-status-hook.sh
+  #        target: /usr/app/entrypoint.sh
+  #        mode: 0555
+  #    entrypoint: /usr/app/entrypoint.sh
+  #    stop_signal: SIGKILL
+  #    networks:
+  #      - nw-provider
+  #    healthcheck:
+  #      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+  #      start_period: 5s
+  #      interval: 3m
+  #    depends_on:
+  #      api-provider:
+  #        condition: service_healthy
 
   ######################################################################################################################
 
@@ -78,6 +78,10 @@ services:
     stop_signal: SIGKILL
     networks:
       - nw-consumer
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 3m
     depends_on:
       pdc-consumer:
         condition: service_healthy

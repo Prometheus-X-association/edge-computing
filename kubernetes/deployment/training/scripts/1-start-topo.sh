@@ -93,7 +93,7 @@ if [ "${USE_NGROK}" = "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ];
             -e NGROK_AUTHTOKEN="${NGROK_AUTHTOKEN}" \
             --name "${NGROK_CONTAINER_NAME}" \
             --label "${LAB_ROLE}=cluster" \
-            ngrok/ngrok:latest \
+            ngrok/ngrok:alpine \
             http "https://127.0.0.1:${LB_WEBSECURE_PORT}" --url="${NGROK_DOMAIN}" --log=stdout
     log "Waiting for completed startup..."
     # Wait for server startup

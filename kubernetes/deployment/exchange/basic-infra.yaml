@@ -42,6 +42,8 @@ services:
         target: /usr/src/app/src/config.json
       - source: cfg-pdc-provider.env
         target: /usr/src/app/.env
+      - source: cfg-npmrc
+        target: /root/.npmrc
     networks:
       - nw-mongo
       - nw-provider
@@ -69,6 +71,8 @@ services:
         target: /usr/src/app/src/config.json
       - source: cfg-pdc-consumer.env
         target: /usr/src/app/.env
+      - source: cfg-npmrc
+        target: /root/.npmrc
     networks:
       - nw-mongo
       - nw-consumer
@@ -85,7 +89,7 @@ services:
   # Reverse HTTP(S) tunnels to local PDC instances
   ngrok-tun-provider:
     container_name: ngrok-tun-provider
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:alpine
     restart: no # fail fast
     labels:
       setup: exchange
@@ -106,7 +110,7 @@ services:
 
   ngrok-tun-consumer:
     container_name: ngrok-tun-consumer
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:alpine
     restart: no # fail fast
     labels:
       setup: exchange
@@ -250,6 +254,10 @@ configs:
       JWT_REFRESH_TOKEN_EXPIRATION=3h
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
+
+  cfg-npmrc:
+    content: |
+      update-notifier=false
 
 ########################################################################################################################
 

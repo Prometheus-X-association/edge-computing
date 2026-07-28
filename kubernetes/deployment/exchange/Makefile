@@ -69,7 +69,7 @@ teardown ::
 purge ::
 	docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f || true
 	docker rmi mongo:latest \
-				ngrok/ngrok:latest \
+				ngrok/ngrok:alpine \
 				busybox:latest \
 				traefik/whoami:latest \
 				alpine/tshark:latest || true

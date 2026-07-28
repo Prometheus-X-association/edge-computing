@@ -45,9 +45,9 @@ docker run -d --net=host \
         -e NGROK_AUTHTOKEN="${DS_NGROK_AUTHTOKEN}" \
         --name "${CONTAINER_NAME}" \
         --label "${LAB_ROLE}=datasource" \
-        ngrok/ngrok:latest \
+        ngrok/ngrok:alpine \
         http "${TARGET_PORT}" --url="${DS_NGROK_DOMAIN}" --log=stdout
-#docker run --rm --net=host --name ngrok-tunnel -e NGROK_AUTHTOKEN=${DS_NGROK_AUTHTOKEN} -it ngrok/ngrok:latest \
+#docker run --rm --net=host --name ngrok-tunnel -e NGROK_AUTHTOKEN=${DS_NGROK_AUTHTOKEN} -it ngrok/ngrok:alpine \
 #http --url=crux-rented-delirious.ngrok-free.dev 9080
 
 log "Waiting for completed startup..."
