@@ -27,7 +27,7 @@ PDC_EXCHANGE_TRIGGER_API_KEY="eab121f2b8df177ea0d5c53d764be1007dfdbd1043dd710332
 
 ### Local VM gateway setup
 GW_DOMAIN="training.k3d.localhost"
-GW_PORT=9443
+GW_PORT=4443
 
 ### PTX-edge API default credentials
 API_BASIC_USER="admin"
