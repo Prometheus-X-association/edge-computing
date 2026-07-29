@@ -1,15 +1,16 @@
 name: exchange
 services:
+  ######################################################################################################################
+
   # Shared DB for PDC instances
   mongodb:
     container_name: mongodb
     image: mongo:latest
     restart: no # fail fast
-    labels:
-      setup: exchange
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+    command: [ "--logpath", "/var/log/mongodb/mongod.log" ]
     configs:
       - source: cfg-mongo-init.js
         target: /docker-entrypoint-initdb.d/mongo-init.js
@@ -31,22 +32,27 @@ services:
     image: dataspace-connector:latest
     pull_policy: never
     restart: no # fail fast
-    #stop_signal: SIGKILL
     init: true  # handle signals
     labels:
-      setup: exchange
+      - "setup=exchange"
+      - "traefik.enable=true"
+      - "traefik.http.services.pdc-provider.loadbalancer.server.port=3000"
+      - "traefik.http.routers.pdc-provider.entrypoints=web"
+      - "traefik.http.routers.pdc-provider.rule=PathPrefix(`/pdc/provider`)"
+      - "traefik.http.routers.pdc-provider.middlewares=remove-prefix@file"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-provider?authSource=pdc-provider&appName=pdc-provider
     configs:
+      - source: cfg-npmrc
+        target: /root/.npmrc
       - source: cfg-pdc-provider.json
         target: /usr/src/app/src/config.json
       - source: cfg-pdc-provider.env
         target: /usr/src/app/.env
-      - source: cfg-npmrc
-        target: /root/.npmrc
     networks:
       - nw-mongo
       - nw-provider
+      - nw-proxy
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
@@ -60,22 +66,27 @@ services:
     image: dataspace-connector:latest
     pull_policy: never
     restart: no # fail fast
-    #stop_signal: SIGKILL
     init: true # handle signals
     labels:
-      setup: exchange
+      - "setup=exchange"
+      - "traefik.enable=true"
+      - "traefik.http.services.pdc-consumer.loadbalancer.server.port=3000"
+      - "traefik.http.routers.pdc-consumer.entrypoints=web"
+      - "traefik.http.routers.pdc-consumer.rule=PathPrefix(`/pdc/consumer`)"
+      - "traefik.http.routers.pdc-consumer.middlewares=remove-prefix@file"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-consumer?authSource=pdc-consumer&appName=pdc-consumer
     configs:
+      - source: cfg-npmrc
+        target: /root/.npmrc
       - source: cfg-pdc-consumer.json
         target: /usr/src/app/src/config.json
       - source: cfg-pdc-consumer.env
         target: /usr/src/app/.env
-      - source: cfg-npmrc
-        target: /root/.npmrc
     networks:
       - nw-mongo
       - nw-consumer
+      - nw-proxy
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
@@ -86,47 +97,61 @@ services:
 
   ######################################################################################################################
 
-  # Reverse HTTP(S) tunnels to local PDC instances
-  ngrok-tun-provider:
-    container_name: ngrok-tun-provider
-    image: ngrok/ngrok:alpine
+  traefik-proxy:
+    image: traefik:v3.7
+    container_name: traefik-proxy
     restart: no # fail fast
-    labels:
-      setup: exchange
-    environment:
-      NGROK_AUTHTOKEN: ${DS_NGROK_AUTHTOKEN:?}
-    command: [ 'http', "--url=${DS_NGROK_DOMAIN:?}", '--log=stdout', 'pdc-provider:3000' ]
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      - "--ping=true"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=nw-proxy"
+      - "--providers.file.filename=/etc/traefik/config.yaml"
+      - "--entryPoints.web.address=:80"
+    configs:
+      - source: cfg-traefik.yaml
+        target: /etc/traefik/config.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - "4041:4040" # debug web interface
+      - "8080:8080"  # debug web dashboard
     networks:
-      - nw-provider
+      - nw-proxy
     healthcheck:
-      test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
-      start_period: 10s
-      interval: 3m
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
+      start_period: 15s
+      interval: 1m
     depends_on:
       pdc-provider:
         condition: service_healthy
+      pdc-consumer:
+        condition: service_healthy
 
-  ngrok-tun-consumer:
-    container_name: ngrok-tun-consumer
+  # Reverse HTTP(S) tunnels to local PDC instances
+  ngrok-tunnel:
+    container_name: ngrok-tunnel
     image: ngrok/ngrok:alpine
     restart: no # fail fast
-    labels:
-      setup: exchange
     environment:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?}
-    command: [ 'http', "--url=${NGROK_DOMAIN:?}", '--log=stdout', 'pdc-consumer:3000' ]
+    command: [ 'http', 'http://traefik-proxy:80', "--url=${NGROK_DOMAIN:?}", '--log=stdout' ]
     ports:
-      - "4042:4040" # debug web interface
+      - "4040:4040" # debug web dashboard
     networks:
-      - nw-consumer
+      - nw-proxy
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
       start_period: 10s
       interval: 3m
     depends_on:
-      pdc-consumer:
+      traefik-proxy:
         condition: service_healthy
 
   ######################################################################################################################
@@ -144,8 +169,6 @@ services:
     cap_add:
       - NET_RAW
       - NET_ADMIN
-    labels:
-      setup: exchange
     command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-provider
     depends_on:
@@ -164,8 +187,6 @@ services:
     cap_add:
       - NET_RAW
       - NET_ADMIN
-    labels:
-      setup: exchange
     command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-consumer
     depends_on:
@@ -196,7 +217,7 @@ configs:
   cfg-pdc-provider.json:
     content: |
       {
-        "endpoint": "https://${DS_NGROK_DOMAIN:?}",
+        "endpoint": "https://${NGROK_DOMAIN:?}/pdc/provider",
         "serviceKey": "${DS_PDC_SERVICE_KEY:?}",
         "secretKey": "${DS_PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
@@ -214,6 +235,7 @@ configs:
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
+
   cfg-pdc-provider.env:
     content: |
       NODE_ENV=production
@@ -228,10 +250,14 @@ configs:
       EXCHANGE_TIMEOUT=60
 
   # Define consumer PDC's main configuration
+  cfg-npmrc:
+    content: |
+      update-notifier=false
+
   cfg-pdc-consumer.json:
     content: |
       {
-        "endpoint": "https://${NGROK_DOMAIN:?}",
+        "endpoint": "https://${NGROK_DOMAIN:?}/pdc/consumer",
         "serviceKey": "${PDC_SERVICE_KEY:?}",
         "secretKey": "${PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
@@ -242,6 +268,7 @@ configs:
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
+
   cfg-pdc-consumer.env:
     content: |
       NODE_ENV=production
@@ -255,15 +282,22 @@ configs:
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
-  cfg-npmrc:
+  cfg-traefik.yaml:
     content: |
-      update-notifier=false
+      http:
+        middlewares:
+          remove-prefix:
+            stripPrefix:
+              prefixes:
+                - "/pdc/provider"
+                - "/pdc/consumer"
 
 ########################################################################################################################
 
 volumes:
   # Persisted db volume
   vol-mongo:
+    name: vol-mongo
     external: false
 
 ########################################################################################################################
@@ -271,7 +305,12 @@ volumes:
 networks:
   # MongoDB local network without external access
   nw-mongo:
+    name: nw-mongo
     internal: true
   # Participants' local networks
-  nw-provider: { }
-  nw-consumer: { }
+  nw-provider:
+    name: nw-provider
+  nw-consumer:
+    name: nw-consumer
+  nw-proxy:
+    name: nw-proxy

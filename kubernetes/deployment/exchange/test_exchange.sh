@@ -21,6 +21,8 @@ source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
 
 LOG "Test Exchange"
 
+_BASE_URL="https://${NGROK_DOMAIN}/pdc/consumer"
+
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
@@ -30,7 +32,7 @@ LOGIN_BODY=$(jq -n "$(cat <<EOF
 EOF
 )")
 
-_URL="https://${NGROK_DOMAIN}/login"
+_URL="${_BASE_URL}/login"
 echo "Used URL: ${_URL}"
 
 echo -e "\nPrepared login body:"
@@ -95,7 +97,7 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 EOF
 )")
 
-_URL="https://${NGROK_DOMAIN}/consumer/exchange"
+_URL="${_BASE_URL}/consumer/exchange"
 echo "Used URL: ${_URL}"
 
 echo -e "\nPrepared exchange body:"

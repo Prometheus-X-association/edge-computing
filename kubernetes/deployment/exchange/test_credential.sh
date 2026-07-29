@@ -21,16 +21,18 @@ source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
 
 LOG "Test Credential"
 
+_BASE_URL="https://${NGROK_DOMAIN}/pdc/provider"
+
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${PDC_SECRET_KEY}",
-    "serviceKey": "${PDC_SERVICE_KEY}"
+    "secretKey": "${DS_PDC_SECRET_KEY}",
+    "serviceKey": "${DS_PDC_SERVICE_KEY}"
 }
 EOF
 )")
 
-_URL="https://${NGROK_DOMAIN}/login"
+_URL="${_BASE_URL}/login"
 echo "Used URL: ${_URL}"
 
 echo -e "\nPrepared login body:"
@@ -67,7 +69,7 @@ CREDENTIAL_BODY=$(jq -n "$(cat <<EOF
 EOF
 )")
 
-_URL="https://${NGROK_DOMAIN}/private/credentials"
+_URL="${_BASE_URL}/private/credentials"
 echo "Used URL: ${_URL}"
 
 echo -e "\nPrepared credential body:"
@@ -96,7 +98,7 @@ echo -e "\nCredential ID: ${CRED_ID}"
 
 log "Validate PDC configuration..."
 
-_URL="https://${NGROK_DOMAIN}/private/credentials"
+_URL="${_BASE_URL}/private/credentials"
 echo -e "\nUsed URL: ${_URL}"
 
 RESP=$(curl -Ssf -X GET \
