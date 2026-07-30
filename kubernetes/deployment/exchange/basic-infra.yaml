@@ -51,8 +51,8 @@ services:
         target: /usr/src/app/.env
     networks:
       - nw-mongo
-      - nw-provider
       - nw-proxy
+      - nw-provider
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
@@ -85,8 +85,8 @@ services:
         target: /usr/src/app/.env
     networks:
       - nw-mongo
-      - nw-consumer
       - nw-proxy
+      - nw-consumer
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s

@@ -38,28 +38,28 @@ services:
       ngrok-tunnel:
         condition: service_healthy
 
-  #  # Main API accepting any GET/POST and returning static JSON
-  #  api-provider-status:
-  #    container_name: api-provider-status
-  #    image: busybox:latest
-  #    restart: no # fail fast
-  #    labels:
-  #      setup: exchange
-  #    configs:
-  #      - source: provider-status-hook.sh
-  #        target: /usr/app/entrypoint.sh
-  #        mode: 0555
-  #    entrypoint: /usr/app/entrypoint.sh
-  #    stop_signal: SIGKILL
-  #    networks:
-  #      - nw-provider
-  #    healthcheck:
-  #      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
-  #      start_period: 5s
-  #      interval: 3m
-  #    depends_on:
-  #      api-provider:
-  #        condition: service_healthy
+  # Main API accepting any GET/POST and returning static JSON
+  api-provider-status:
+    container_name: api-provider-status
+    image: busybox:latest
+    restart: no # fail fast
+    labels:
+      setup: exchange
+    configs:
+      - source: provider-status-hook.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
+    networks:
+      - nw-provider
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 5m
+    depends_on:
+      api-provider:
+        condition: service_healthy
 
   ######################################################################################################################
 
@@ -154,7 +154,7 @@ configs:
       #!/usr/bin/env sh
       while true; do
         echo -e '\nWaiting for connections...'
-        body="{\"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\"}";
+        body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }";
         len="$$(printf '%s' "$${body}" | wc -c)";
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;

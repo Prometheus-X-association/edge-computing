@@ -66,6 +66,8 @@ logs ::
 	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
 	@echo
 	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
+	@echo
+	${COMPOSE_EXCHANGE} logs api-provider-status --since="${SINCE}"
 
 status ::
 	${COMPOSE_EXCHANGE} ps -a
