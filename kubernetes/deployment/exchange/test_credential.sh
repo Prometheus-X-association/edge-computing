@@ -33,12 +33,12 @@ EOF
 )")
 
 _URL="${_BASE_URL}/login"
-echo "Used URL: ${_URL}"
+echo "Used URL: [PORT] ${_URL}"
 
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
 
-RESP=$(curl -Ssf -X POST \
+RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
                 -d "${LOGIN_BODY}")
@@ -46,7 +46,7 @@ RESP=$(curl -Ssf -X POST \
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -70,12 +70,12 @@ EOF
 )")
 
 _URL="${_BASE_URL}/private/credentials"
-echo "Used URL: ${_URL}"
+echo "Used URL: [POST] ${_URL}"
 
 echo -e "\nPrepared credential body:"
 echo "${CREDENTIAL_BODY}" | jq
 
-RESP=$(curl -Ssf -X POST \
+RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
                 -H "Authorization: Bearer ${TOKEN}" \
@@ -84,7 +84,7 @@ RESP=$(curl -Ssf -X POST \
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
     error "Credential request failed!" && exit 1
 else
     CRED_ID=$(jq -r '.content._id' <<<"${RESP}")
@@ -99,17 +99,16 @@ echo -e "\nCredential ID: ${CRED_ID}"
 log "Validate PDC configuration..."
 
 _URL="${_BASE_URL}/private/credentials"
-echo -e "\nUsed URL: ${_URL}"
+echo -e "\nUsed URL: [GET] ${_URL}"
 
-RESP=$(curl -Ssf -X GET \
+RESP=$(curl -Ss -X GET \
                 "${_URL}" \
-                -H "Content-Type: application/json" \
                 -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Credential validation failed!" && exit 1
 else
     echo -e "\nCredential validation was successful!"

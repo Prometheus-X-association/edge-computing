@@ -33,7 +33,7 @@ EOF
 )")
 
 _URL="${_BASE_URL}/login"
-echo "Used URL: ${_URL}"
+echo "Used URL: [POST] ${_URL}"
 
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
@@ -46,7 +46,7 @@ RESP=$(curl -Ssf -X POST \
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -98,7 +98,7 @@ EOF
 )")
 
 _URL="${_BASE_URL}/consumer/exchange"
-echo "Used URL: ${_URL}"
+echo "Used URL: [POST] ${_URL}"
 
 echo -e "\nPrepared exchange body:"
 echo "${EXCHANGE_BODY}" | jq
@@ -112,7 +112,9 @@ RESP=$(curl -s -X POST \
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || \
+        [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || \
+        [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then
     error "Exchange request failed!" && exit 1
 else
     echo -e "\nConsumer exchange was successful!"

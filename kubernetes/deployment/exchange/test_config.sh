@@ -33,12 +33,12 @@ EOF
 )")
 
 _URL="${_BASE_URL}/login"
-echo "Used URL: ${_URL}"
+echo "Used URL: [POST] ${_URL}"
 
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
 
-RESP=$(curl -Ssf -X POST \
+RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
                 -d "${LOGIN_BODY}")
@@ -46,7 +46,7 @@ RESP=$(curl -Ssf -X POST \
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -58,23 +58,74 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Validate PDC configuration..."
+log "Request PDC configuration..."
 
 _URL="${_BASE_URL}/private/configuration"
-echo "Used URL: ${_URL}"
+echo "Used URL: [GET] ${_URL}"
 
-RESP=$(curl -Ssf -X GET \
+RESP=$(curl -Ss -X GET \
                 "${_URL}" \
-                -H "Content-Type: application/json" \
                 -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Config config failed!" && exit 1
 else
-    echo -e "\nConfig validation was successful!"
+    echo -e "\nConfig request was successful!"
+fi
+
+########################################################################################################################
+
+log "Adjust PDC configuration..."
+
+CFG_BODY=$(jq -n "$(cat <<EOF
+{
+    "catalogUri": $(jq '.content.catalogUri' <<<"${RESP}"), # remain unchanged
+    "registrationUri": "https://example.com/register/"      # set new url (BUG: PDC requires trailing '/')
+}
+EOF
+)")
+
+echo -e "Prepared config body:"
+echo "${CFG_BODY}" | jq
+
+echo "Used URL: [PUT] ${_URL}"
+
+RESP=$(curl -Ss -X PUT \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -d "${CFG_BODY}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config update failed!" && exit 1
+else
+    echo -e "\nConfig update was successful!"
+fi
+
+########################################################################################################################
+
+log "Reload PDC..."
+
+_URL="${_BASE_URL}/private/configuration/reload"
+echo "Used URL: [POST] ${_URL}"
+
+RESP=$(curl -Ss -X POST \
+                "${_URL}" \
+                -H "Authorization: Bearer ${TOKEN}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config reload failed!" && exit 1
+else
+    echo -e "\nConfig reload was successful!"
 fi
 
 ########################################################################################################################
