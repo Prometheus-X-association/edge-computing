@@ -22,7 +22,7 @@ services:
     healthcheck:
       test: [ 'CMD', 'mongosh', '-u=admin', '-p=admin', '--authenticationDatabase=admin', "--eval=db.adminCommand('ping')" ]
       start_period: 15s
-      interval: 1m
+      interval: 5m
 
   ######################################################################################################################
 
@@ -34,12 +34,12 @@ services:
     restart: no # fail fast
     init: true  # handle signals
     labels:
-      - "setup=exchange"
       - "traefik.enable=true"
       - "traefik.http.services.pdc-provider.loadbalancer.server.port=3000"
-      - "traefik.http.routers.pdc-provider.entrypoints=web"
-      - "traefik.http.routers.pdc-provider.rule=PathPrefix(`/pdc/provider`)"
-      - "traefik.http.routers.pdc-provider.middlewares=remove-prefix@file"
+      - "traefik.http.routers.datasource.entrypoints=web"
+      - "traefik.http.routers.datasource.rule=PathPrefix(`/datasource/pdc`)"
+      - "traefik.http.routers.datasource.middlewares=no-data-path@docker"
+      - "traefik.http.middlewares.no-data-path.stripprefix.prefixes=/datasource/pdc"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-provider?authSource=pdc-provider&appName=pdc-provider
     configs:
@@ -56,7 +56,7 @@ services:
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
-      interval: 1m
+      interval: 5m
     depends_on:
       mongodb:
         condition: service_healthy
@@ -68,12 +68,12 @@ services:
     restart: no # fail fast
     init: true # handle signals
     labels:
-      - "setup=exchange"
       - "traefik.enable=true"
       - "traefik.http.services.pdc-consumer.loadbalancer.server.port=3000"
-      - "traefik.http.routers.pdc-consumer.entrypoints=web"
-      - "traefik.http.routers.pdc-consumer.rule=PathPrefix(`/pdc/consumer`)"
-      - "traefik.http.routers.pdc-consumer.middlewares=remove-prefix@file"
+      - "traefik.http.routers.consumer.entrypoints=web"
+      - "traefik.http.routers.consumer.rule=PathPrefix(`/service/pdc`)"
+      - "traefik.http.routers.consumer.middlewares=no-service-path@docker"
+      - "traefik.http.middlewares.no-service-path.stripprefix.prefixes=/service/pdc"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-consumer?authSource=pdc-consumer&appName=pdc-consumer
     configs:
@@ -90,7 +90,7 @@ services:
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
-      interval: 1m
+      interval: 5m
     depends_on:
       mongodb:
         condition: service_healthy
@@ -113,11 +113,7 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=nw-proxy"
-      - "--providers.file.filename=/etc/traefik/config.yaml"
       - "--entryPoints.web.address=:80"
-    configs:
-      - source: cfg-traefik.yaml
-        target: /etc/traefik/config.yaml
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
@@ -126,7 +122,7 @@ services:
       - nw-proxy
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck", "--ping" ]
-      start_period: 15s
+      start_period: 5s
       interval: 1m
     depends_on:
       pdc-provider:
@@ -148,8 +144,8 @@ services:
       - nw-proxy
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
-      start_period: 10s
-      interval: 3m
+      start_period: 5s
+      interval: 1m
     depends_on:
       traefik-proxy:
         condition: service_healthy
@@ -217,7 +213,7 @@ configs:
   cfg-pdc-provider.json:
     content: |
       {
-        "endpoint": "https://${NGROK_DOMAIN:?}/pdc/provider",
+        "endpoint": "https://${NGROK_DOMAIN:?}/datasource/pdc",
         "serviceKey": "${DS_PDC_SERVICE_KEY:?}",
         "secretKey": "${DS_PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
@@ -257,7 +253,7 @@ configs:
   cfg-pdc-consumer.json:
     content: |
       {
-        "endpoint": "https://${NGROK_DOMAIN:?}/pdc/consumer",
+        "endpoint": "https://${NGROK_DOMAIN:?}/service/pdc",
         "serviceKey": "${PDC_SERVICE_KEY:?}",
         "secretKey": "${PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
@@ -281,16 +277,6 @@ configs:
       JWT_REFRESH_TOKEN_EXPIRATION=3h
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
-
-  cfg-traefik.yaml:
-    content: |
-      http:
-        middlewares:
-          remove-prefix:
-            stripPrefix:
-              prefixes:
-                - "/pdc/provider"
-                - "/pdc/consumer"
 
 ########################################################################################################################
 

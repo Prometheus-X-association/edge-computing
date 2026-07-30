@@ -21,7 +21,7 @@ source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
 
 LOG "Test Credential"
 
-_BASE_URL="https://${NGROK_DOMAIN}/pdc/provider"
+_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF

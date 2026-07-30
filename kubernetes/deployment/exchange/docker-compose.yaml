@@ -33,9 +33,9 @@ services:
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
       start_period: 5s
-      interval: 3m
+      interval: 5m
     depends_on:
-      pdc-provider:
+      ngrok-tunnel:
         condition: service_healthy
 
   #  # Main API accepting any GET/POST and returning static JSON
@@ -81,9 +81,9 @@ services:
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
       start_period: 5s
-      interval: 3m
+      interval: 5m
     depends_on:
-      pdc-consumer:
+      ngrok-tunnel:
         condition: service_healthy
       api-provider:
         condition: service_healthy
