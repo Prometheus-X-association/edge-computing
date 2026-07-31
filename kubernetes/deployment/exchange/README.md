@@ -29,6 +29,7 @@ To check component status, use the following target:
 ```bash
 $ make status
 ```
+![Setup](figures/setup.png)
 
 ## Testing
 
