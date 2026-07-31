@@ -158,6 +158,7 @@ services:
     image: alpine/tshark:latest
     pull_policy: never
     build:
+      context: .
       dockerfile_inline: |
         FROM alpine:latest
         RUN apk --no-cache add tshark
@@ -177,6 +178,9 @@ services:
     image: alpine/tshark:latest
     pull_policy: never
     build:
+      context: .
+      no_cache: true
+      dockerfile_inline: "FROM alpine/tshark:latest"
       additional_contexts:
         alpine/tshark: "service:sniffer-provider"
     restart: no # fail fast

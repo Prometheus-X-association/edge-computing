@@ -21,7 +21,7 @@ COMPOSE_EXCHANGE := $(DOCKER_INFRA) -f ${ROOT_DIR}/docker-compose.yaml
 
 build ::
 	./scripts/setup_pdc.sh
-	${COMPOSE_BASE} build
+	${COMPOSE_BASE} build sniffer-provider sniffer-provider
 
 setup-base ::
 	${COMPOSE_BASE} up --force-recreate --abort-on-container-exit
