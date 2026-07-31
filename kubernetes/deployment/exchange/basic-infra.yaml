@@ -33,13 +33,13 @@ services:
     pull_policy: never
     restart: no # fail fast
     init: true  # handle signals
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.pdc-provider.loadbalancer.server.port=3000"
-      - "traefik.http.routers.datasource.entrypoints=web"
-      - "traefik.http.routers.datasource.rule=PathPrefix(`/datasource/pdc`)"
-      - "traefik.http.routers.datasource.middlewares=no-data-path@docker"
-      - "traefik.http.middlewares.no-data-path.stripprefix.prefixes=/datasource/pdc"
+    #labels:
+    #  - "traefik.enable=true"
+    #  - "traefik.http.services.pdc-provider.loadbalancer.server.port=3000"
+    #  - "traefik.http.routers.datasource.entrypoints=web"
+    #  - "traefik.http.routers.datasource.rule=PathPrefix(`/datasource/pdc`)"
+    #  - "traefik.http.routers.datasource.middlewares=no-data-path@docker"
+    #  - "traefik.http.middlewares.no-data-path.stripprefix.prefixes=/datasource/pdc"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-provider?authSource=pdc-provider&appName=pdc-provider
     configs:
@@ -67,13 +67,13 @@ services:
     pull_policy: never
     restart: no # fail fast
     init: true # handle signals
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.pdc-consumer.loadbalancer.server.port=3000"
-      - "traefik.http.routers.consumer.entrypoints=web"
-      - "traefik.http.routers.consumer.rule=PathPrefix(`/service/pdc`)"
-      - "traefik.http.routers.consumer.middlewares=no-service-path@docker"
-      - "traefik.http.middlewares.no-service-path.stripprefix.prefixes=/service/pdc"
+    #labels:
+    #  - "traefik.enable=true"
+    #  - "traefik.http.services.pdc-consumer.loadbalancer.server.port=3000"
+    #  - "traefik.http.routers.consumer.entrypoints=web"
+    #  - "traefik.http.routers.consumer.rule=PathPrefix(`/service/pdc`)"
+    #  - "traefik.http.routers.consumer.middlewares=no-service-path@docker"
+    #  - "traefik.http.middlewares.no-service-path.stripprefix.prefixes=/service/pdc"
     environment:
       MONGO_URI: mongodb://pdc:pdc@mongodb:27017/pdc-consumer?authSource=pdc-consumer&appName=pdc-consumer
     configs:
@@ -98,8 +98,9 @@ services:
   ######################################################################################################################
 
   traefik-proxy:
-    image: traefik:v3.7
     container_name: traefik-proxy
+    image: traefik:v3.7
+    #read_only: true
     restart: no # fail fast
     security_opt:
       - no-new-privileges:true
@@ -110,16 +111,22 @@ services:
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=nw-proxy"
       - "--entryPoints.web.address=:80"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "--providers.file.filename=/etc/traefik/routes.yml"
+      - "--providers.file.watch=false"
+      #- "--providers.docker=true"
+      #- "--providers.docker.exposedbydefault=false"
+      #- "--providers.docker.network=nw-proxy"
+    configs:
+      - source: cfg-traefik-routers.yaml
+        target: /etc/traefik/routes.yml
+    #volumes:
+    #  - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "8080:8080"  # debug web dashboard
     networks:
       - nw-proxy
+      - nw-tunnel
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck", "--ping" ]
       start_period: 5s
@@ -141,7 +148,7 @@ services:
     ports:
       - "4040:4040" # debug web dashboard
     networks:
-      - nw-proxy
+      - nw-tunnel
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
       start_period: 5s
@@ -282,6 +289,38 @@ configs:
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
+  cfg-traefik-routers.yaml:
+    content: |
+      http:
+        routers:
+          datasource:
+            service: pdc-provider
+            rule: PathPrefix(`/datasource/pdc`)
+            middlewares: no-pdc-prefix@file
+            entrypoints:
+              - web
+          consumer:
+            service: pdc-consumer
+            rule: PathPrefix(`/service/pdc`)
+            middlewares: no-pdc-prefix@file
+            entrypoints:
+              - web
+        services:
+          pdc-provider:
+            loadbalancer:
+              servers:
+                - url: http://pdc-provider:3000
+          pdc-consumer:
+            loadbalancer:
+              servers:
+                - url: http://pdc-consumer:3000
+        middlewares:
+          no-pdc-prefix:
+            stripprefix:
+              prefixes:
+                - /datasource/pdc
+                - /service/pdc
+
 ########################################################################################################################
 
 volumes:
@@ -300,7 +339,11 @@ networks:
   # Participants' local networks
   nw-provider:
     name: nw-provider
+    internal: true
   nw-consumer:
     name: nw-consumer
+    internal: true
   nw-proxy:
     name: nw-proxy
+  nw-tunnel:
+    name: nw-tunnel

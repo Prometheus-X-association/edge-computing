@@ -68,6 +68,8 @@ logs ::
 	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
 	@echo
 	${COMPOSE_EXCHANGE} logs api-provider-status --since="${SINCE}"
+	@echo
+	${COMPOSE_EXCHANGE} logs traefik-proxy --since="${SINCE}"
 
 status ::
 	${COMPOSE_EXCHANGE} ps -a
