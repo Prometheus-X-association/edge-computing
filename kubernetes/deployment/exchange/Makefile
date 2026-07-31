@@ -81,6 +81,7 @@ purge ::
 				ngrok/ngrok:alpine \
 				busybox:latest \
 				traefik/whoami:latest \
+				traefik:v3.7 \
 				alpine/tshark:latest || true
 
 ########################################################################################################################
