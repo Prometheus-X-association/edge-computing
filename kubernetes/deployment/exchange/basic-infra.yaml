@@ -7,6 +7,8 @@ services:
     container_name: mongodb
     image: mongo:latest
     restart: no # fail fast
+    security_opt:
+      - no-new-privileges:true
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -100,8 +102,8 @@ services:
   traefik-proxy:
     container_name: traefik-proxy
     image: traefik:v3.7
-    #read_only: true
     restart: no # fail fast
+    user: 1001:1001
     security_opt:
       - no-new-privileges:true
     command:
@@ -142,6 +144,9 @@ services:
     container_name: ngrok-tunnel
     image: ngrok/ngrok:alpine
     restart: no # fail fast
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
     environment:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?}
     command: [ 'http', 'http://traefik-proxy:80', "--url=${NGROK_DOMAIN:?}", '--log=stdout' ]
@@ -164,6 +169,11 @@ services:
     container_name: sniffer-provider
     image: alpine/tshark:latest
     pull_policy: never
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp  # Enable temporary file creation in read-only file system
     build:
       context: .
       dockerfile_inline: |
@@ -184,6 +194,11 @@ services:
     container_name: sniffer-consumer
     image: alpine/tshark:latest
     pull_policy: never
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp  # Enable temporary file creation in read-only file system
     build:
       context: .
       no_cache: true

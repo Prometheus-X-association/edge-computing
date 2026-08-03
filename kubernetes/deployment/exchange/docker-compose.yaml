@@ -5,14 +5,14 @@ services:
   api-provider:
     container_name: api-provider
     image: busybox:latest
-    #image: joseluisq/static-web-server:2
     restart: no # fail fast
-    labels:
-      setup: exchange
     init: true
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
     working_dir: /usr/src/app/static
-    command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
-    #command: [ '-a=0.0.0.0', '-p=8080', '-d=/usr/src/app/static/', '-g=info', '--log-remote-address' ]
+    #command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
+    command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     configs:
       - source: cfg-httpd.conf
         target: /etc/httpd.conf
@@ -43,8 +43,9 @@ services:
     container_name: api-provider-status
     image: busybox:latest
     restart: no # fail fast
-    labels:
-      setup: exchange
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
     configs:
       - source: provider-status-hook.sh
         target: /usr/app/entrypoint.sh
@@ -68,14 +69,15 @@ services:
     container_name: api-consumer
     image: busybox:latest
     restart: no # fail fast
-    labels:
-      setup: exchange
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
+    stop_signal: SIGKILL
+    entrypoint: /usr/app/entrypoint.sh
     configs:
       - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
-    entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
     networks:
       - nw-consumer
     healthcheck:
