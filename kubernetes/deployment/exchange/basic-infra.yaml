@@ -21,6 +21,11 @@ services:
       - vol-mongo:/data/db
     networks:
       - nw-mongo
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 500m
     healthcheck:
       test: [ 'CMD', 'mongosh', '-u=admin', '-p=admin', '--authenticationDatabase=admin', "--eval=db.adminCommand('ping')" ]
       start_period: 15s
@@ -55,6 +60,11 @@ services:
       - nw-mongo
       - nw-proxy
       - nw-provider
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 700m
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
@@ -89,6 +99,11 @@ services:
       - nw-mongo
       - nw-proxy
       - nw-consumer
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 700m
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
       start_period: 15s
@@ -129,6 +144,11 @@ services:
     networks:
       - nw-proxy
       - nw-tunnel
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 50m
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck", "--ping" ]
       start_period: 5s
@@ -154,6 +174,11 @@ services:
       - "4040:4040" # debug web dashboard
     networks:
       - nw-tunnel
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 50m
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
       start_period: 5s
@@ -185,6 +210,11 @@ services:
       - NET_ADMIN
     command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-provider
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 100m
     depends_on:
       - api-provider
     profiles:
@@ -211,6 +241,11 @@ services:
       - NET_ADMIN
     command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-consumer
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 100m
     depends_on:
       - api-consumer
     profiles:

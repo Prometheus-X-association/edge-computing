@@ -30,6 +30,11 @@ services:
         mode: 0444
     networks:
       - nw-provider
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
       start_period: 5s
@@ -54,6 +59,11 @@ services:
     stop_signal: SIGKILL
     networks:
       - nw-provider
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
       start_period: 5s
@@ -80,6 +90,11 @@ services:
         mode: 0555
     networks:
       - nw-consumer
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
       start_period: 5s
