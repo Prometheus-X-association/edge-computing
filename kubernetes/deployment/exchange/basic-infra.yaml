@@ -189,7 +189,7 @@ services:
       no_cache: true
       dockerfile_inline: "FROM alpine/tshark:latest"
       additional_contexts:
-        alpine/tshark: "service:sniffer-provider"
+        alpine/tshark: service:sniffer-provider
     restart: no # fail fast
     cap_add:
       - NET_RAW

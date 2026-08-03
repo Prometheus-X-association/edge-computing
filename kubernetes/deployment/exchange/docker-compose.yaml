@@ -126,8 +126,8 @@ configs:
           "url": "http://provider-api:8080/dp0/data.csv",
           "auth": {
             "scheme": "http",
-            "user": "",
-            "secret": "",
+            "user": "admin",
+            "secret": "admin",
             "insecure": false,
           }
         }
@@ -144,7 +144,7 @@ configs:
     content: |
       #!/usr/bin/env sh
       while true; do
-        echo -e '\nWaiting for webhooks...'
+        echo -e '\n\nWaiting for webhooks...'
         printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080;
       done
 
@@ -153,9 +153,9 @@ configs:
     content: |
       #!/usr/bin/env sh
       while true; do
-        echo -e '\nWaiting for connections...'
+        echo -e '\n\nWaiting for connections...'
         body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }";
-        len="$$(printf '%s' "$${body}" | wc -c)";
+        len="$$(printf '%s\n' "$${body}" | wc -c)";
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;
       done
