@@ -14,26 +14,27 @@
 # limitations under the License.
 set -euo pipefail
 
-source "$(readlink -f "$(dirname "$0")/scripts/helper.sh")"
-source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
+ROOT_DIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")
+source "${ROOT_DIR}/scripts/helper.sh"
+source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Credential"
+LOG "Test Configuration"
 
-_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
+_BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${DS_PDC_SECRET_KEY}",
-    "serviceKey": "${DS_PDC_SERVICE_KEY}"
+    "secretKey": "${PDC_SECRET_KEY}",
+    "serviceKey": "${PDC_SERVICE_KEY}"
 }
 EOF
 )")
 
 _URL="${_BASE_URL}/login"
-echo "Used URL: [PORT] ${_URL}"
+echo "Used URL: [POST] ${_URL}"
 
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
@@ -58,48 +59,10 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Register credential..."
+log "Request PDC configuration..."
 
-CREDENTIAL_BODY=$(jq -n "$(cat <<EOF
-{
-    "type": "api-key",
-    "key": "Bearer",
-    "value": "xxx"
-}
-EOF
-)")
-
-_URL="${_BASE_URL}/private/credentials"
-echo "Used URL: [POST] ${_URL}"
-
-echo -e "\nPrepared credential body:"
-echo "${CREDENTIAL_BODY}" | jq
-
-RESP=$(curl -Ss -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer ${TOKEN}" \
-                -d "${CREDENTIAL_BODY}")
-
-echo -e "\nReceived response:"
-echo "${RESP}" | jq
-
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
-    error "Credential request failed!" && exit 1
-else
-    CRED_ID=$(jq -r '.content._id' <<<"${RESP}")
-    echo "${CRED_ID}" >creds/credential.id
-    echo -e "\nCredential registration was successful!"
-fi
-
-echo -e "\nCredential ID: ${CRED_ID}"
-
-########################################################################################################################
-
-log "Validate PDC configuration..."
-
-_URL="${_BASE_URL}/private/credentials"
-echo -e "\nUsed URL: [GET] ${_URL}"
+_URL="${_BASE_URL}/private/configuration"
+echo "Used URL: [GET] ${_URL}"
 
 RESP=$(curl -Ss -X GET \
                 "${_URL}" \
@@ -109,9 +72,61 @@ echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
 if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    error "Credential validation failed!" && exit 1
+    error "Config config failed!" && exit 1
 else
-    echo -e "\nCredential validation was successful!"
+    echo -e "\nConfig request was successful!"
+fi
+
+########################################################################################################################
+
+log "Adjust PDC configuration..."
+
+CFG_BODY=$(jq -n "$(cat <<EOF
+{
+    "catalogUri": $(jq '.content.catalogUri' <<<"${RESP}"), # remain unchanged
+    "registrationUri": "https://example.com/register/"      # set new url (BUG: PDC requires trailing '/')
+}
+EOF
+)")
+
+echo -e "Prepared config body:"
+echo "${CFG_BODY}" | jq
+
+echo "Used URL: [PUT] ${_URL}"
+
+RESP=$(curl -Ss -X PUT \
+                "${_URL}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -d "${CFG_BODY}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config update failed!" && exit 1
+else
+    echo -e "\nConfig update was successful!"
+fi
+
+########################################################################################################################
+
+log "Reload PDC..."
+
+_URL="${_BASE_URL}/private/configuration/reload"
+echo "Used URL: [POST] ${_URL}"
+
+RESP=$(curl -Ss -X POST \
+                "${_URL}" \
+                -H "Authorization: Bearer ${TOKEN}")
+
+echo -e "\nReceived response:"
+echo "${RESP}" | jq
+
+if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+    error "Config reload failed!" && exit 1
+else
+    echo -e "\nConfig reload was successful!"
 fi
 
 ########################################################################################################################

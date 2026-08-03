@@ -14,20 +14,21 @@
 # limitations under the License.
 set -euo pipefail
 
-source "$(readlink -f "$(dirname "$0")/scripts/helper.sh")"
-source "$(readlink -f "$(dirname "$0")/creds/exchange.env")"
+ROOT_DIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")
+source "${ROOT_DIR}/scripts/helper.sh"
+source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
 LOG "Test Exchange"
 
-_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
+_BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${DS_PDC_SECRET_KEY}",
-    "serviceKey": "${DS_PDC_SERVICE_KEY}"
+    "secretKey": "${PDC_SECRET_KEY}",
+    "serviceKey": "${PDC_SERVICE_KEY}"
 }
 EOF
 )")
