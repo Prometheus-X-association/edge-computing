@@ -18,13 +18,30 @@ TEMPLATE_DIR=$(readlink -f "$(dirname "$0")")
 #PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 PY_VER='3.14'
 
-datamodel-codegen --input="${1}" --input-file-type="openapi" --openapi-scopes="schemas" \
-                --formatter="ruff-format" --keep-model-order --schema-version="3.0" --schema-version-mode="strict" \
-                --field-constraints --use-annotated --use-union-operator --use-standard-collections \
-                --skip-root-model --use-generic-base-class --extra-fields="ignore" \
-                --naming-strategy="full-path" --field-type-collision-strategy="rename-type" \
-                --use-specialized-enum --enum-field-as-literal="one" --capitalize-enum-members \
-                --use-field-description --use-field-description-example --use-double-quotes \
-                --enable-version-header --target-python-version="${PY_VER}" \
-                --custom-template-dir="${TEMPLATE_DIR}/template" --additional-imports="typing.ClassVar" \
-                --disable-warnings --output "${2}"
+datamodel-codegen --input="${1}" --output "${2}" \
+                --input-file-type="openapi" \
+                --openapi-scopes="schemas" \
+                --schema-version="3.0" \
+                --schema-version-mode="strict" \
+                --skip-root-model \
+                --keep-model-order \
+                --enable-version-header \
+                --formatter="ruff-format" \
+                --use-generic-base-class \
+                --use-annotated \
+                --use-union-operator \
+                --use-specialized-enum \
+                --use-standard-collections \
+                --use-field-description \
+                --use-field-description-example \
+                --use-double-quotes \
+                --field-constraints \
+                --extra-fields="ignore" \
+                --field-type-collision-strategy="rename-type" \
+                --naming-strategy="full-path" \
+                --enum-field-as-literal="one" \
+                --capitalize-enum-members \
+                --target-python-version="${PY_VER}" \
+                --custom-template-dir="${TEMPLATE_DIR}/template" \
+                --additional-imports="typing.ClassVar" \
+                --disable-warnings

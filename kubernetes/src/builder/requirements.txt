@@ -1,8 +1,8 @@
-python-benedict[toml]~=0.37.0
+python-benedict[toml]~=0.38.0
 requests~=2.34.2
 requests-toolbelt~=1.0.0
 certifi
-kubernetes~=34.1.0
+kubernetes~=35.0.0
 PyYAML~=6.0.3
-pytest~=9.0.3
+pytest~=9.1.1
 urllib3
