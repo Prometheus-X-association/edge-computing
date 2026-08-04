@@ -24,7 +24,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 2
+          cpus: 2.0
           memory: 500m
     healthcheck:
       test: [ 'CMD', 'mongosh', '-u=admin', '-p=admin', '--authenticationDatabase=admin', "--eval=db.adminCommand('ping')" ]
@@ -63,7 +63,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 2
+          cpus: 2.0
           memory: 700m
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
@@ -102,7 +102,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 2
+          cpus: 2.0
           memory: 700m
     healthcheck:
       test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
@@ -127,6 +127,7 @@ services:
       - "--ping=true"
       - "--log.level=INFO"
       - "--accesslog=true"
+      - "--api.dashboard=true"
       - "--api.insecure=true"
       - "--entryPoints.web.address=:80"
       - "--providers.file.filename=/etc/traefik/routes.yml"
@@ -147,7 +148,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 50m
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck", "--ping" ]
@@ -177,7 +178,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 50m
     healthcheck:
       test: [ 'CMD-SHELL', 'ngrok diagnose >/dev/null' ]
@@ -213,7 +214,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 100m
     depends_on:
       - api-provider
@@ -244,7 +245,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 100m
     depends_on:
       - api-consumer

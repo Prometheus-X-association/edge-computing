@@ -33,7 +33,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
@@ -62,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
@@ -93,7 +93,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
+          cpus: 1.0
           memory: 100m
     healthcheck:
       test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]

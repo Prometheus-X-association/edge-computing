@@ -98,7 +98,7 @@ Resource configuration defines the representation of the datasource's data-provi
 - URL: `http://api-provider:8080/dp0/data.csv`
 - Query Parameters: _(optional, for testing purposes)_
     - `test` _(defined as a constant value `true` in the exchange request)_
-    - `param` _(take the dynamic value of epoch time)_
+    - `param` _(takes the dynamic value of epoch time)_
 - Security: `API-key`
     - Credential identifier: `test-auth-basic` _(predefined in provider's PDC configuration)_
 - Select MIME type: `text/csv` _(Testing non-JSON data format)_
