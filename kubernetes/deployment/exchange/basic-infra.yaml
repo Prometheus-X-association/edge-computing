@@ -128,7 +128,7 @@ services:
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--api.dashboard=true"
-      - "--api.insecure=true"
+      #- "--api.insecure=true"
       - "--entryPoints.web.address=:80"
       - "--providers.file.filename=/etc/traefik/routes.yml"
       - "--providers.file.watch=false"
@@ -171,8 +171,8 @@ services:
     environment:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?}
     command: [ 'http', 'http://traefik-proxy:80', "--url=${NGROK_DOMAIN:?}", '--log=stdout' ]
-    ports:
-      - "4040:4040" # debug web dashboard
+    #ports:
+    #  - "4040:4040" # debug web dashboard
     networks:
       - nw-tunnel
     deploy:
@@ -346,16 +346,32 @@ configs:
         routers:
           datasource:
             service: pdc-provider
-            rule: PathPrefix(`/datasource/pdc`)
-            middlewares: no-pdc-prefix@file
+            rule: Host(`${NGROK_DOMAIN:?}`) && PathPrefix(`/datasource/pdc`)
+            middlewares: 
+              - no-pdc-prefix@file
             entrypoints:
               - web
           consumer:
             service: pdc-consumer
-            rule: PathPrefix(`/service/pdc`)
-            middlewares: no-pdc-prefix@file
+            rule: Host(`${NGROK_DOMAIN:?}`) && PathPrefix(`/service/pdc`)
+            middlewares:
+              - no-pdc-prefix@file
             entrypoints:
               - web
+          dashboard:
+            service: api@internal
+            rule: Host(`traefik.exchange.localhost`)
+            middlewares:
+              - no-pdc-prefix@file
+            entrypoints:
+              - traefik
+          ngrok:
+            service: ngrok-tunnel
+            rule: Host(`ngrok.exchange.localhost`)
+            middlewares:
+              - no-pdc-prefix@file
+            entrypoints:
+              - traefik
         services:
           pdc-provider:
             loadbalancer:
@@ -365,6 +381,10 @@ configs:
             loadbalancer:
               servers:
                 - url: http://pdc-consumer:3000
+          ngrok-tunnel:
+            loadbalancer:
+              servers:
+                - url: http://ngrok-tunnel:4040
         middlewares:
           no-pdc-prefix:
             stripprefix:
