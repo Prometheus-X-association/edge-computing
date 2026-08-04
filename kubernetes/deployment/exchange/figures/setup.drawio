@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="NF3DkTT4sjdw8q4fngAz">
-    <mxGraphModel dx="1414" dy="862" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1664" dy="1014" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,13 +22,7 @@
         <mxCell id="BUP2wiHfVv-0br0b4hcX-35" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="BUP2wiHfVv-0br0b4hcX-22">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="BUP2wiHfVv-0br0b4hcX-53" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" target="BUP2wiHfVv-0br0b4hcX-51">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="BUP2wiHfVv-0br0b4hcX-36" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="BUP2wiHfVv-0br0b4hcX-23">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="BUP2wiHfVv-0br0b4hcX-54" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;strokeWidth=3;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" target="BUP2wiHfVv-0br0b4hcX-52">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="BUP2wiHfVv-0br0b4hcX-46" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=box;endFill=0;" target="BUP2wiHfVv-0br0b4hcX-9">
@@ -98,9 +92,6 @@
         </mxCell>
         <mxCell id="BUP2wiHfVv-0br0b4hcX-51" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" value=":8080" vertex="1">
           <mxGeometry height="20" width="40" x="524" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="BUP2wiHfVv-0br0b4hcX-52" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value=":4040" vertex="1">
-          <mxGeometry height="20" width="40" x="844" y="80" as="geometry" />
         </mxCell>
         <mxCell id="BUP2wiHfVv-0br0b4hcX-65" connectable="0" parent="1" style="group;" value="" vertex="1">
           <mxGeometry height="80" width="120" x="884" y="480" as="geometry" />
@@ -206,6 +197,9 @@
         </mxCell>
         <mxCell id="D0E3gQygFrKuP1H7ACu--12" parent="1" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=30;position=0.67;flipV=1;legacyAnchorPoints=0;base=20;position2=1;flipH=1;spacingLeft=2;spacingRight=2;" value="Simple HTTP server serving static files with basic auth" vertex="1">
           <mxGeometry height="80" width="120" x="334" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="BUP2wiHfVv-0br0b4hcX-53" edge="1" parent="1" source="BUP2wiHfVv-0br0b4hcX-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" target="BUP2wiHfVv-0br0b4hcX-51">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

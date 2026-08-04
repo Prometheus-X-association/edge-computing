@@ -39,21 +39,27 @@ Mandatory variables, that need to be given:
   [here](https://dashboard.ngrok.com/get-started/your-authtoken) and [here](https://dashboard.ngrok.com/domains).
 - The signed **contract ID** , which consolidates and designates the test data exchange and its participants.
 - The **offer IDs** of the designated data provider and data consumer participating in the contract.
-- The exact **resource IDs** in the provider's data offer and the consumer's service offer participating
-  in the test exchange.
+- The exact **resource IDs** in the provider's data offer and the consumer's service offer participating in the test
+  exchange.
 
-Other setup configurations, such as exchange trigger keys or authentication secrets, can be also given here,
-which are used by specific test cases or other test methods.
+Other setup configurations, such as exchange trigger keys or authentication secrets, can be also given here, which are
+used by specific test cases or other test methods.
 
 ### Configuration
 
 Dataspace components, i.e., PDC instances (provider and consumer), mongodb, and connected REST APIs, are configured
-based on the PDC's [wiki](https://github.com/Prometheus-X-association/dataspace-connector/wiki).
+based on the PDC's [wiki](https://github.com/Prometheus-X-association/dataspace-connector/wiki) adn fixed for this
+infrastructure setup.
 
-Other infrastructure-related components, e.g., proxy, tunnel, etc., have a static configuration tailored to this setup.
+Other infrastructure-related components, e.g., proxy, tunnel, etc., have a static configuration tailored to this setup
+as well.
 
-For the specific configurations, check the infrastructure descriptor file [basic-infra.yaml](basic-infra.yaml),
+For the configuration details, check the infrastructure descriptor file [basic-infra.yaml](basic-infra.yaml),
 specifically the inline config entries under the `configs:` key.
+
+As an extension, packet sniffer containers can be directly attached to the APIs network stack to collect and display
+HTTP traefik routed to the API containers. To initiate these extra components along with the API containers, use the
+dedicated setup configuration by executing `make setup-all` and check the containers' output using `make logs`.
 
 ### Infrastructure
 
@@ -81,12 +87,29 @@ To check component status, use the following target:
 $ make status
 ```
 
+The container architecture, used networks, and communication patters are illustrated in the figure below.
+
 ![Setup](figures/setup.png)
+
+The `traefik` (HTTP traffik steering) and `ngrok` (global HTTPS access) components also provides a web-based debug
+interface for validating configuration and examining request-response pairs.
+
+For security reasons, both interfaces are served via the traefik's dashboard port (**8080**) and can be accessed only
+through a specific hostname bound to **localhost**.
+However, the auxiliary port 8080 is not bound to any localhost IP, thus these interfaces can be accessed from
+host machine in case the infrastructure is set up on a VM.
+To access to ngrok's web interface on port **4040** directly, the relevant port expose setting should be uncommented
+in the base setup file.
+
+The following URLs can be used for accessing the web interfaces:
+
+- Reverse tunneling (`ngrok-tunnel`): http://ngrok.exchange.localhost:8080
+- HTTP request routing (`traefik-proxy`): http://traefik.exchange.localhost:8080
 
 ### Dataspace contract
 
-To create data/service offers and resources, as well as negotiating and signing a contract for the test exchange,
-follow the related steps in VisionTrust's [Documentation](https://docs.visionstrust.com/application/onboarding.html).
+To create data/service offers and resources, as well as negotiating and signing a contract for the test exchange, follow
+the related steps in VisionTrust's [Documentation](https://docs.visionstrust.com/application/onboarding.html).
 
 Infrastructure-related configurations in the resource descriptions are the following:
 
@@ -139,7 +162,7 @@ $ make test-exchange
 To see relevant logs, use the specific target:
 
 ```bash
-make logs
+$ make logs
 ```
 
 ## Tearing down
