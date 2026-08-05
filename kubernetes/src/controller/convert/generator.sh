@@ -23,25 +23,28 @@ datamodel-codegen --input="${1}" --output "${2}" \
                 --openapi-scopes="schemas" \
                 --schema-version="3.0" \
                 --schema-version-mode="strict" \
-                --skip-root-model \
-                --keep-model-order \
-                --enable-version-header \
                 --formatter="ruff-format" \
                 --use-generic-base-class \
                 --use-annotated \
                 --use-union-operator \
                 --use-specialized-enum \
                 --use-standard-collections \
+                --use-schema-description \
                 --use-field-description \
                 --use-field-description-example \
                 --use-double-quotes \
                 --field-constraints \
+                --reuse-model \
                 --extra-fields="ignore" \
                 --field-type-collision-strategy="rename-type" \
                 --naming-strategy="full-path" \
-                --enum-field-as-literal="one" \
+                --enum-field-as-literal="none" \
+                --set-default-enum-member \
                 --capitalize-enum-members \
                 --target-python-version="${PY_VER}" \
                 --custom-template-dir="${TEMPLATE_DIR}/template" \
                 --additional-imports="typing.ClassVar" \
+                --enable-version-header \
+                --enable-generated-header-marker \
+                --disable-timestamp \
                 --disable-warnings
