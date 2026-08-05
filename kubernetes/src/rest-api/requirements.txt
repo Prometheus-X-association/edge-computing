@@ -1,5 +1,5 @@
-fastapi~=0.121.0
-uvicorn~=0.38.0
+fastapi~=0.141.0
+uvicorn
 pydantic-settings~=2.11.0
 #hypercorn~=0.17.3              # Optional ASGI server
 #granian~=1.6.3                 # Optional ASGI server
