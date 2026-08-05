@@ -16,48 +16,56 @@ NAME := controller
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 
-build:
+build ::
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}
 
-run: build
+run :: build
 	docker run --rm --name ${NAME}  -v ./app/templates:/usr/src/controller/app/templates -ti ${IMG} sh
 
-clean:
+clean ::
 	docker rmi -f ${IMG}
 	py3clean -v .
 	rm -rf .venv
 
 ########################################################################################################################
 
-extract:
+extract ::
 	. .venv/bin/activate && \
 	for crd in crd/ptx-edge-*.yaml; do \
     	python3 convert/extractor.py "$${crd}" "./convert/schema/" --served; \
 	done
 
-generate:
+generate ::
 	. .venv/bin/activate && \
 	for schema in convert/schema/*.json; do \
 		sh convert/generator.sh "$${schema}" "app/model/$$(basename $${schema} .json).py"; \
 	done
 
-convert: | extract generate
+convert :: | extract generate
 
 ########################################################################################################################
 
-status:
+status ::
 	kubectl get all,ewts
 
 ########################################################################################################################
 
-docker-test-setup: build
+add-test-ewt ::
+	kubectl apply -f test/ewt_example.yaml
 
-docker-unit-tests: docker-test-setup
+del-test-ewt:
+	kubectl delete -f test/ewt_example.yaml
+
+########################################################################################################################
+
+docker-test-setup :: build
+
+docker-unit-tests :: docker-test-setup
 	@echo ">>> No unit test is defined for controller!"
 
-unit-tests:
+unit-tests ::
 	@echo ">>> No unit test is defined for controller!"
 
-.PHONY: *
+.PHONY:
 .DEFAULT_GOAL := build
