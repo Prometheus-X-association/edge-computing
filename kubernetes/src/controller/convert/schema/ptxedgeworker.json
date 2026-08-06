@@ -1,22 +1,22 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "edgeworkertasks.dataspace.ptx.org",
+    "title": "ptxedgeworkers.dataspace.ptx.org",
     "version": "v1alpha1"
   },
   "paths": {},
   "components": {
     "schemas": {
-      "EWT": {
+      "PEW": {
         "type": "object",
-        "description": "Edge Worker Task description",
+        "description": "PTX Edge Worker description",
         "required": [
           "spec"
         ],
         "properties": {
           "spec": {
             "type": "object",
-            "description": "Specification of PTX Edge Task",
+            "description": "Specification of PTX Edge Worker",
             "required": [
               "data",
               "worker"
@@ -374,9 +374,9 @@
         "x-database-model": {
           "group": "dataspace.ptx.org",
           "version": "v1alpha1",
-          "kind": "EdgeWorkerTask",
-          "singular": "edgeworkertask",
-          "plural": "edgeworkertasks"
+          "kind": "PtxEdgeWorker",
+          "singular": "ptxedgeworker",
+          "plural": "ptxedgeworkers"
         }
       }
     }

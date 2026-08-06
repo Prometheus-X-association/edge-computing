@@ -51,11 +51,11 @@ status ::
 
 ########################################################################################################################
 
-add-test-ewt ::
-	kubectl apply -f test/ewt_example.yaml
+add-test-pew ::
+	kubectl apply -f test/pew_example.yaml
 
-del-test-ewt:
-	kubectl delete -f test/ewt_example.yaml
+del-test-pew:
+	kubectl delete -f test/pew_example.yaml
 
 ########################################################################################################################
 

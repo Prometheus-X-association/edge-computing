@@ -14,7 +14,7 @@
 # limitations under the License.
 import pprint
 
-from model.edgeworkertask import EWT, EWTSpec
+from model.ptxedgeworker import PEW, PEWSpec
 
 raw_kopf_obj = {
     'data': {
@@ -44,7 +44,7 @@ raw_kopf_obj = {
 
 
 def test_ewt_spec_parsing():
-    pprint.pprint(EWT(spec=EWTSpec(**raw_kopf_obj)))
+    pprint.pprint(PEW(spec=PEWSpec(**raw_kopf_obj)))
 
 
 raw_k8s_obj = r"""
@@ -145,7 +145,7 @@ raw_k8s_obj = r"""
 
 
 def test_k8s_raw_parsing():
-    k8s_model = EWT.model_validate_json(raw_k8s_obj)
+    k8s_model = PEW.model_validate_json(raw_k8s_obj)
     pprint.pprint(k8s_model)
 
     print("Parsed datasource:", k8s_model.spec.data.src.path)

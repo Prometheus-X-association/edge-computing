@@ -24,7 +24,7 @@ import kopf
 import yaml
 from kubernetes import client
 
-from model.edgeworkertask import EWT
+from model.ptxedgeworker import PEW
 from utils import sanitize_model, ExcludeProbesFilter
 
 ########################################################################################################################
@@ -41,7 +41,7 @@ DEF_TEMP_DIR = "templates"
 
 ########################################################################################################################
 
-async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger) -> None:
+async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
     logger.info(f"Loading controller configuration...")
     # PTX-edge/controller related configurations
     # Read config items from envvars dynamically using global default values
@@ -51,16 +51,16 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
         raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {memo.CONFIG}!")
     logger.debug(f"Loaded configuration: {memo.CONFIG}")
     # Kopf-internal configurations
-    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=EWT.group)
-    settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=EWT.group,
+    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=PEW.group)
+    settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=PEW.group,
                                                                             key='last-handled-configuration')
-    settings.persistence.finalizer = f"{EWT.group}/ewt-finalizer"  # Specify own finalizer
+    settings.persistence.finalizer = f"{PEW.group}/ewt-finalizer"  # Specify own finalizer
     settings.posting.loggers = False  # No auto-creating events from logs
     logging.getLogger('kubernetes.client.rest').setLevel(logging.WARNING)  # Disable k8s client dump logs
     logging.getLogger('aiohttp.access').addFilter(ExcludeProbesFilter())  # Disable access logging
 
 
-async def load_templates(memo: kopf.Memo, logger: kopf.Logger) -> None:
+async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
     logger.info("Loading manifest templates...")
     memo.TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
         loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent / memo.CONFIG["temp_dir"]),
@@ -79,21 +79,21 @@ async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.L
 
 ########################################################################################################################
 
-def is_service(spec: kopf.Spec, **_: Any) -> bool:
+def _is_service(spec: kopf.Spec, **_: Any) -> bool:
     return spec.get("service", {}).get("enabled", False)
 
 
-@kopf.on.create(*EWT.SELECTOR, when=is_service, id="create")
-def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
+@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="create/service")
+def create_service(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
-    logger.info(f"Parsing {EWT.__name__} model...")
-    ewt = EWT.model_validate(body)
-    logger.debug(f"Parsed model:\n{ewt.model_dump_json(indent=4)}")
+    logger.info(f"Parsing {PEW.kind} model...")
+    pew = PEW.model_validate(body)
+    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=4)}")
     ####
     logger.info(f"Rendering manifest...")
     worker_temp: jinja2.Template = memo.TEMPLATES.get_template("worker_pod.yaml.jinja2")
-    manifest = worker_temp.render(ewt.spec.model_dump())
+    manifest = worker_temp.render(pew.spec.model_dump())
     new_body = yaml.safe_load(manifest)
     kopf.adopt(new_body, forced=True)
     logger.debug(f"New object:\n{sanitize_model(new_body)}")
@@ -106,9 +106,9 @@ def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: k
         logging.debug(f"Received response: HTTP/{status}")
         if (status := http.HTTPStatus(status)).is_success:
             logger.debug(f"Invocation status: {status.name}")
-            kopf.info(body, reason="Starting", message=f"{EWT.__name__} {pod.metadata.name} initiated successfully!")
+            kopf.info(body, reason="Starting", message=f"{PEW.__name__} {pod.metadata.name} initiated successfully!")
         else:
-            raise kopf.TemporaryError(f"Kube API response: {status!r}")
+            raise kopf.TemporaryError(f"Kube API response: {status}")
     except client.ApiException as e:
         logger.error(f"Error received:\n{e}")
         raise kopf.TemporaryError(str(e)) from e
@@ -116,6 +116,6 @@ def create_ewt_pod(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: k
     return {'initialized': True}
 
 
-@kopf.on.create(*EWT.SELECTOR, when=kopf.not_(is_service), id="create")
-def create_ewt_job(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
+@kopf.on.create(*PEW.SELECTOR, when=kopf.not_(_is_service), id="create/task")
+def create_task(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     raise kopf.PermanentError("Not implemented yet!")

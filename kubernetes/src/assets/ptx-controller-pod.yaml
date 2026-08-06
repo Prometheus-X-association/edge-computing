@@ -48,7 +48,7 @@ rules:
     verbs: [ create ]
   ### Application: watching & handling for the custom resource.
   - apiGroups: [ dataspace.ptx.org ]
-    resources: [ edgeworkertasks, edgeworkertasks/status ]
+    resources: [ ptxedgeworkers, ptxedgeworkers/status ]
     verbs: [ list, watch, patch ]
   ### Application: other resources it produces and manipulates.
   - apiGroups: [ batch, extensions ]
