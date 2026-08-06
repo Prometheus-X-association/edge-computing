@@ -84,9 +84,15 @@ raw_k8s_obj = r"""
             }
         },
         "dataspace": {
-            "offer": {
-                "consumer": "66d18b79ee71f9f096baecb1",
-                "provider": "66d187f4ee71f9f096bae8ca"
+            "exchange": {
+                "contract": "66db1a6dc29e3ba863a85e0f",
+                "provider": {
+                    "offer": "66d187f4ee71f9f096bae8ca",
+                    "resource": "66d18bf6ee71f9f096baed58"
+                },
+                "consumer": {
+                    "offer": "66d18b79ee71f9f096baecb1"
+                }
             }
         },
         "service": {

@@ -333,25 +333,70 @@
               },
               "dataspace": {
                 "type": "object",
-                "description": "Attributes of data exchange via PTX dataspace",
+                "description": "PTX dataspace-related configuration",
+                "required": [
+                  "exchange"
+                ],
                 "properties": {
-                  "offer": {
+                  "exchange": {
                     "type": "object",
-                    "description": "PTX dataspace contract info",
+                    "description": "Attributes of data exchange via PTX dataspace",
                     "required": [
-                      "provider",
-                      "consumer"
+                      "contract"
                     ],
                     "properties": {
-                      "provider": {
+                      "contract": {
                         "type": "string",
-                        "description": "Data provider ID",
-                        "minLength": 1
+                        "description": "Dataspace contract ID",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-fA-F]+$",
+                        "example": "66db1a6dc29e3ba863a85e0f"
+                      },
+                      "provider": {
+                        "type": "object",
+                        "description": "Data provider configuration",
+                        "required": [
+                          "offer"
+                        ],
+                        "properties": {
+                          "offer": {
+                            "type": "string",
+                            "description": "Data offering ID",
+                            "minLength": 1,
+                            "pattern": "^[0-9a-fA-F]+$",
+                            "example": "66d187f4ee71f9f096bae8ca"
+                          },
+                          "resource": {
+                            "type": "string",
+                            "description": "Data resource ID",
+                            "minLength": 1,
+                            "pattern": "^[0-9a-fA-F]+$",
+                            "example": "66d1889cee71f9f096bae98b"
+                          }
+                        }
                       },
                       "consumer": {
-                        "type": "string",
-                        "description": "Data consumer ID",
-                        "minLength": 1
+                        "type": "object",
+                        "description": "Data consumer configuration",
+                        "required": [
+                          "offer"
+                        ],
+                        "properties": {
+                          "offer": {
+                            "type": "string",
+                            "description": "Service offering ID",
+                            "minLength": 1,
+                            "pattern": "^[0-9a-fA-F]+$",
+                            "example": "66d18b79ee71f9f096baecb1"
+                          },
+                          "resource": {
+                            "type": "string",
+                            "description": "Software resource ID",
+                            "minLength": 1,
+                            "pattern": "^[0-9a-fA-F]+$",
+                            "example": "66d18bf6ee71f9f096baed58"
+                          }
+                        }
                       }
                     }
                   }

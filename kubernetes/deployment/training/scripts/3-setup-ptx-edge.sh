@@ -120,7 +120,7 @@ log ">>> ${REST_API} is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/\n
 log "Deploy Controller"
 #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
 #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-task-crd.yaml")
+${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml")
 ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml")
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
 echo

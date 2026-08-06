@@ -352,29 +352,108 @@ class PEWSpecWorker(BaseModel):
     """
 
 
-class PEWSpecDataspaceOffer(BaseModel):
+class PEWSpecDataspaceExchangeProvider(BaseModel):
     """
-    PTX dataspace contract info
+    Data provider configuration
     """
 
-    provider: Annotated[str, Field(min_length=1)]
+    offer: Annotated[
+        str,
+        Field(
+            examples=["66d187f4ee71f9f096bae8ca"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ]
     """
-    Data provider ID
+    Data offering ID
+
+    Example: '66d187f4ee71f9f096bae8ca'
     """
-    consumer: Annotated[str, Field(min_length=1)]
+    resource: Annotated[
+        str | None,
+        Field(
+            examples=["66d1889cee71f9f096bae98b"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ] = None
     """
-    Data consumer ID
+    Data resource ID
+
+    Example: '66d1889cee71f9f096bae98b'
+    """
+
+
+class PEWSpecDataspaceExchangeConsumer(BaseModel):
+    """
+    Data consumer configuration
+    """
+
+    offer: Annotated[
+        str,
+        Field(
+            examples=["66d18b79ee71f9f096baecb1"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ]
+    """
+    Service offering ID
+
+    Example: '66d18b79ee71f9f096baecb1'
+    """
+    resource: Annotated[
+        str | None,
+        Field(
+            examples=["66d18bf6ee71f9f096baed58"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ] = None
+    """
+    Software resource ID
+
+    Example: '66d18bf6ee71f9f096baed58'
+    """
+
+
+class PEWSpecDataspaceExchange(BaseModel):
+    """
+    Attributes of data exchange via PTX dataspace
+    """
+
+    contract: Annotated[
+        str,
+        Field(
+            examples=["66db1a6dc29e3ba863a85e0f"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ]
+    """
+    Dataspace contract ID
+
+    Example: '66db1a6dc29e3ba863a85e0f'
+    """
+    provider: PEWSpecDataspaceExchangeProvider | None = None
+    """
+    Data provider configuration
+    """
+    consumer: PEWSpecDataspaceExchangeConsumer | None = None
+    """
+    Data consumer configuration
     """
 
 
 class PEWSpecDataspace(BaseModel):
     """
-    Attributes of data exchange via PTX dataspace
+    PTX dataspace-related configuration
     """
 
-    offer: PEWSpecDataspaceOffer | None = None
+    exchange: PEWSpecDataspaceExchange
     """
-    PTX dataspace contract info
+    Attributes of data exchange via PTX dataspace
     """
 
 
@@ -397,7 +476,7 @@ class PEWSpec(BaseModel):
     """
     dataspace: PEWSpecDataspace | None = None
     """
-    Attributes of data exchange via PTX dataspace
+    PTX dataspace-related configuration
     """
 
 
