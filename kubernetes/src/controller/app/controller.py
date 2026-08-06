@@ -68,6 +68,8 @@ async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
         autoescape=False,
         auto_reload=False,
         optimized=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
         enable_async=True)
     logger.debug(f"Loaded templates: {','.join(memo.TEMPLATES.list_templates())}")
 
