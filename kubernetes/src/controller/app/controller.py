@@ -22,6 +22,7 @@ import jinja2
 import jinja2.sandbox
 import kopf
 import yaml
+from asyncer import asyncify
 from kubernetes import client
 
 from model.ptxedgeworker import PEW
@@ -67,7 +68,7 @@ async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
         autoescape=False,
         auto_reload=False,
         optimized=True,
-        enable_async=False)
+        enable_async=True)
     logger.debug(f"Loaded templates: {','.join(memo.TEMPLATES.list_templates())}")
 
 
@@ -84,26 +85,28 @@ def _is_service(spec: kopf.Spec, **_: Any) -> bool:
 
 
 @kopf.on.create(*PEW.SELECTOR, when=_is_service, id="create/service")
-def create_service(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
+async def create_service(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
+                         **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
     logger.info(f"Parsing {PEW.kind} model...")
-    pew = PEW.model_validate(body)
+    pew = PEW.model_validate(body, strict=False)
     logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=4)}")
     ####
     logger.info(f"Rendering manifest...")
-    worker_temp: jinja2.Template = memo.TEMPLATES.get_template("worker_pod.yaml.jinja2")
-    manifest = worker_temp.render(pew.spec.model_dump())
-    new_body = yaml.safe_load(manifest)
+    worker_temp: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_pod.yaml.jinja2")
+    manifest: str = await worker_temp.render_async(pew.spec.model_dump())
+    new_body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(new_body, forced=True)
     logger.debug(f"New object:\n{sanitize_model(new_body)}")
     ####
     try:
         logger.info("Invoke k8s API...")
-        pod, status, _ = client.CoreV1Api().create_namespaced_pod_with_http_info(body=new_body,
-                                                                                 namespace=namespace,
-                                                                                 _preload_content=True)
-        logging.debug(f"Received response: HTTP/{status}")
+        k8s = client.CoreV1Api()
+        pod, status, _ = await asyncify(k8s.create_namespaced_pod_with_http_info)(body=new_body,
+                                                                                  namespace=namespace,
+                                                                                  _preload_content=True)
+        logger.debug(f"Received response: HTTP/{status}")
         if (status := http.HTTPStatus(status)).is_success:
             logger.debug(f"Invocation status: {status.name}")
             kopf.info(body, reason="Starting", message=f"{PEW.__name__} {pod.metadata.name} initiated successfully!")
