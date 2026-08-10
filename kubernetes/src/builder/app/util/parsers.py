@@ -26,8 +26,8 @@ class DataSourceAuthScheme(enum.StrEnum):
 @dataclass(frozen=True)
 class DataSourceAuth(object):
     scheme: DataSourceAuthScheme = DataSourceAuthScheme.BASIC
-    user: str = None
-    secret: str = None
+    user: str | None = None
+    secret: str | None = None
     insecure: bool = False
 
     @classmethod
@@ -61,10 +61,10 @@ class DataSourceAuth(object):
 @dataclass(frozen=True)
 class DockerRegistryAuth(object):
     server: str = 'https://index.docker.io/v1/'
-    user: str = None
-    secret: str = None
+    user: str | None = None
+    secret: str | None = None
     insecure: bool = False
-    ca_dir: str = None
+    ca_dir: str | None = None
 
     @classmethod
     def parse(cls, cfg: str | dict | None) -> Self:
@@ -93,5 +93,5 @@ class DockerRegistryAuth(object):
         return (f"{self.__class__.__name__}[server={self.server},user={self.user},secret=*****,"
                 f"insecure={self.insecure},ca_dir={self.ca_dir}]")
 
-    def get_creds(self) -> tuple[str, str]:
+    def get_creds(self) -> tuple[str | None, str | None]:
         return self.user, self.secret

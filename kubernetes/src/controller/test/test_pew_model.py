@@ -19,6 +19,7 @@ from model.ptxedgeworker import PEW, PEWSpec
 raw_kopf_obj = {
     'data': {
         'src': {
+            'method': "HTTPS",
             'path': 'https://github.com:80/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz'
         },
         'dst': {
@@ -27,7 +28,7 @@ raw_kopf_obj = {
     },
     'worker': {
         'location': {
-            'protocol': 'docker',
+            'method': 'DOCKER',
             'image': 'busybox:latest',
         },
         'name': 'myworker:latest',
@@ -71,16 +72,16 @@ raw_k8s_obj = r"""
         "data": {
             "dst": {
                 "path": "/var/cache/data/",
-                "scheme": "local"
+                "method": "LOCAL"
             },
             "src": {
                 "auth": {
-                    "method": "basic",
+                    "scheme": "BASIC",
                     "secret": "admin",
                     "user": "admin"
                 },
                 "path": "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz",
-                "scheme": "https"
+                "method": "HTTPS"
             }
         },
         "dataspace": {
@@ -136,7 +137,7 @@ raw_k8s_obj = r"""
                     "user": "admin"
                 },
                 "image": "busybox:latest",
-                "protocol": "docker"
+                "method": "DOCKER"
             },
             "name": "myworker:latest"
         }

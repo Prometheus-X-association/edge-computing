@@ -1,0 +1,223 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {# name: autofilled #}
+  {# namespace: autofilled #}
+  labels:
+    tier: worker
+    {# autofilled #}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: worker
+  template:
+    metadata:
+      labels:
+        tier: worker
+    spec:
+      terminationGracePeriodSeconds: 10
+      initContainers:
+        - name: builder
+          image: registry.k3d.local:5000/ptx-edge/builder:1.0
+          imagePullPolicy: IfNotPresent
+          command: [ "python3", "-m", "app", "-v" ]
+          volumeMounts:
+            - name: data-dir
+              mountPath: /var/cache/data/
+              readOnly: false
+            - name: registry-ca
+              mountPath: /usr/share/ca-certificates/ptx-edge
+              readOnly: true
+          env:
+            # PDC configuration
+            - name: BUILD_PDC_HOST
+              {# value: ${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local#}
+            - name: BUILD_PDC_PORT
+              value: "3000"
+            - name: BUILD_PDC_KEY_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: pdc-secrets-env
+                  key: SERVICE_KEY
+            - name: BUILD_PDC_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pdc-secrets-env
+                  key: SECRET_KEY
+            # Basic builder configuration
+            - name: BUILD_CONNECTION_TIMEOUT
+              value: "600"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data/"
+            # Datasource configuration
+            - name: BUILD_DATA_METHOD
+              value: {{ data.src.method }}
+            {% if data.src.method != 'SKIP' %}
+            - name: BUILD_DATA_SRC
+              value: {{ data.src.path }}
+            {% endif %}
+            # Direct datasource configuration
+            {% if data.src.auth is defined %}
+            - name: BUILD_DATA_AUTH_SCHEME
+              value: {{ data.src.auth.scheme }}
+            - name: BUILD_DATA_AUTH_USER
+              value: {{ data.src.auth.user }}
+            - name: BUILD_DATA_AUTH_SECRET
+              value: {{ data.src.auth.secret.get_secret_value() }}
+            - name: BUILD_DATA_AUTH_INSECURE
+              value: {{ data.src.auth.insecure }}
+            {% endif %}
+            # PTX configuration
+            {% if dataspace.exchange is defined %}
+            - name: BUILD_PTX_EXCHANGE_CONTRACT
+              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.contract }}
+            - name: BUILD_PTX_EXCHANGE_DATA_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.provider.offer }}
+            {% if dataspace.exchange.provider.resource is defined %}
+            - name: BUILD_PTX_EXCHANGE_DATA_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.provider.resource }}
+            {% endif %}
+            - name: BUILD_PTX_EXCHANGE_SERVICE_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.consumer.offer }}
+            {% if dataspace.exchange.consumer.resource is defined %}
+            - name: BUILD_PTX_EXCHANGE_SERVICE_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.consumer.resource }}
+            {% endif %}
+            {% endif %}
+            # Worker configuration
+            - name: BUILD_WORKER_METHOD
+              value: {{ worker.location.method }}
+            {% if worker.location.method != 'SKIP' %}
+            - name: BUILD_WORKER_SRC
+              value: {{ worker.location.image if worker.cached is true else undefined }}
+            {% endif %}
+            {% if worker.location.cred is defined %}
+            - name: BUILD_WORKER_AUTH_SERVER
+              value: {{ worker.location.cred.server }}
+            - name: BUILD_WORKER_AUTH_USER
+              value: {{ worker.location.cred.user }}
+            - name: BUILD_WORKER_AUTH_SECRET
+              value: {{ worker.location.cred.secret.get_secret_value() }}
+            - name: BUILD_WORKER_AUTH_INSECURE
+              value: {{ worker.location.cred.insecure }}
+            {% endif %}
+            {% if worker.cached is true %}
+            - name: BUILD_WORKER_DST
+              value: worker/{{ worker.name }}
+            {% endif %}
+          ports:
+            - name: webhook-port
+              containerPort: 9999
+              protocol: TCP
+      containers:
+        - name: worker
+          image: {{ "registry.k3d.local:5000/worker/" + worker.name
+                    if worker.cached is true
+                    else worker.location.image }}
+          imagePullPolicy: IfNotPresent
+          {% if worker.command is defined %}
+          command:
+          {% for cmd in worker.command %}
+            - {{ cmd }}
+          {% endfor %}
+          {% endif %}
+              #resources:
+              #  requests:
+              #    cpu: 1000m
+              #    memory: 3000Mi
+          # Data destination configuration
+          {% if data.dst is defined %}
+          volumeMounts:
+          {% if data.dst.scheme is undefined or data.dst.scheme == 'local'  %}
+            - name: data-dir
+              mountPath: {{ data.dst.path or '/var/cache/data' }}
+              readOnly: true
+          {% endif %}
+          {% endif %}
+          {% if worker.config.env is defined %}
+          env:
+          {% for envvar in worker.config.env %}
+            - name: {{ envvar.key }}
+              value: "{{ envvar.value }}"
+          {% endfor %}
+          {% endif %}
+          {% if service.interfaces is defined %}
+          ports:
+          {% for interface in service.interfaces %}
+            - name: port-{{ interface.port }}
+              containerPort: {{ interface.port }}
+              protocol: TCP
+          {% endfor %}
+          {% endif %}
+      schedulerName: {{ 'ptx-edge-scheduler'
+                        if dataspace.privacy is defined and dataspace.privacy.required is true
+                        else 'default' }}
+      {% if dataspace.privacy.zones is defined %}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              {% for zone in dataspace.privacy.zones %}
+              - matchExpressions:
+                  - key: privacy-zone.dataspace.ptx.org/{{ zone }}
+                    operator: In
+                    values:
+                      - "true"
+              {% endfor %}
+      {% endif %}
+      volumes:
+        - name: data-dir
+          emptyDir:
+            sizeLimit: {{ data.src.size }}Mi
+        - name: registry-ca
+          configMap:
+            name: registry-root-ca.crt
+            items:
+              - key: ca.crt
+                path: registry_CA.crt
+{#---#}
+{#apiVersion: v1#}
+{#kind: Service#}
+{#metadata:#}
+{#  name: ${DP0}#}
+{#  namespace: ${PTX}#}
+{#  labels:#}
+{#    app.kubernetes.io/name: ${DP0}#}
+{#    env: ${ENV}#}
+{#    tier: worker#}
+{#spec:#}
+{#  selector:#}
+{#    app.kubernetes.io/name: ${DP0}#}
+{#    env: ${ENV}#}
+{#    tier: worker#}
+{#  type: ClusterIP#}
+{#  ports:#}
+{#    - name: port-mlflow#}
+{#      port: 5000#}
+{#      targetPort: port-mlflow#}
+{#    - name: port-api#}
+{#      port: 8000#}
+{#      targetPort: port-api#}
+{#---#}
+{#apiVersion: v1#}
+{#kind: Service#}
+{#metadata:#}
+{#  name: ${BUILDER}-${DP0}#}
+{#  namespace: ${PTX}#}
+{#  labels:#}
+{#    app.kubernetes.io/name: ${DP0}#}
+{#    env: ${ENV}#}
+{#    tier: worker#}
+{#spec:#}
+{#  selector:#}
+{#    app.kubernetes.io/name: ${DP0}#}
+{#    env: ${ENV}#}
+{#    tier: worker#}
+{#  type: ClusterIP#}
+{#  ports:#}
+{#    - name: webhook-port#}
+{#      protocol: TCP#}
+{#      port: 9999#}
+{#      targetPort: 9999#}
+{#  publishNotReadyAddresses: true#}

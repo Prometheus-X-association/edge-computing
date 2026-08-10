@@ -37,6 +37,7 @@
                   "interfaces": {
                     "type": "array",
                     "description": "Exposed worker interfaces",
+                    "minItems": 1,
                     "items": {
                       "type": "object",
                       "required": [
@@ -76,45 +77,53 @@
                     "type": "object",
                     "description": "Data source location",
                     "required": [
-                      "path"
+                      "method"
                     ],
                     "properties": {
-                      "scheme": {
+                      "method": {
                         "type": "string",
-                        "description": "Data collection scheme",
+                        "description": "Data collection method",
                         "enum": [
-                          "file",
-                          "dir",
-                          "http",
-                          "https",
-                          "ptx"
+                          "FILE",
+                          "DIR",
+                          "HTTP",
+                          "HTTPS",
+                          "PTX",
+                          "SKIP"
                         ],
-                        "example": "https"
+                        "example": "HTTPS"
                       },
                       "path": {
                         "type": "string",
                         "description": "Data resource location",
+                        "minLength": 1,
                         "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$",
                         "example": "https://my.api.localhost:8080/data/example.csv"
+                      },
+                      "size": {
+                        "type": "integer",
+                        "description": "Requested data size in Mi",
+                        "minimum": 1,
+                        "default": 100
                       },
                       "auth": {
                         "type": "object",
                         "description": "Authentication parameters for remote data collection",
                         "required": [
-                          "method",
+                          "scheme",
                           "user",
                           "secret"
                         ],
                         "properties": {
-                          "method": {
+                          "scheme": {
                             "type": "string",
                             "description": "Used authentication method",
                             "enum": [
-                              "basic",
-                              "digest",
-                              "bearer"
+                              "BASIC",
+                              "DIGEST",
+                              "BEARER"
                             ],
-                            "example": "basic"
+                            "example": "BASIC"
                           },
                           "user": {
                             "type": "string",
@@ -128,6 +137,11 @@
                             "minLength": 1,
                             "format": "password",
                             "example": "myPasswd!007"
+                          },
+                          "insecure": {
+                            "type": "boolean",
+                            "description": "Disable verification of data server's TLS certificate",
+                            "default": false
                           }
                         }
                       }
@@ -137,18 +151,19 @@
                     "type": "object",
                     "description": "Data destination location",
                     "properties": {
-                      "scheme": {
+                      "method": {
                         "type": "string",
                         "description": "Data propagation scheme",
                         "enum": [
-                          "local"
+                          "LOCAL"
                         ],
-                        "default": "local"
+                        "default": "LOCAL"
                       },
                       "path": {
                         "type": "string",
                         "description": "Data resource location",
-                        "pattern": "^((/[a-zA-Z0-9-_]+)+)$",
+                        "minLength": 1,
+                        "pattern": "^((/[a-zA-Z0-9-_]+)+)/?$",
                         "default": "/var/cache/data"
                       }
                     }
@@ -166,22 +181,26 @@
                     "type": "object",
                     "description": "Worker image location",
                     "required": [
-                      "image"
+                      "method"
                     ],
                     "properties": {
-                      "protocol": {
+                      "method": {
                         "type": "string",
                         "description": "Image pull approach",
                         "enum": [
-                          "docker",
-                          "secret",
-                          "ptx"
+                          "DOCKER",
+                          "PTX",
+                          "INLINE",
+                          "DATASOURCE",
+                          "SECRET",
+                          "SKIP"
                         ],
-                        "default": "docker"
+                        "example": "DOCKER"
                       },
                       "image": {
                         "type": "string",
                         "description": "Image resource location",
+                        "minLength": 1,
                         "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
                         "example": "busybox:latest"
                       },
@@ -196,6 +215,7 @@
                           "server": {
                             "type": "string",
                             "description": "Image server prefix",
+                            "minLength": 1,
                             "pattern": "^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$",
                             "default": "https://index.docker.io/v1/"
                           },
@@ -229,6 +249,7 @@
                   "name": {
                     "type": "string",
                     "description": "Cached image name, otherwise autogenerated from source image",
+                    "minLength": 1,
                     "pattern": "^([^:]+):([^:/]+)$",
                     "example": "myworker:latest"
                   },
@@ -238,7 +259,8 @@
                     "minItems": 1,
                     "items": {
                       "type": "string",
-                      "description": "command & args"
+                      "description": "command & args",
+                      "minLength": 1
                     }
                   },
                   "config": {
@@ -256,6 +278,7 @@
                           "path": {
                             "type": "string",
                             "description": "Mount path of configuration file",
+                            "minLength": 1,
                             "pattern": "^((/[a-zA-Z0-9-_\\.]+)+)$",
                             "example": "/var/cache/worker/cfg.ini"
                           },
@@ -268,6 +291,7 @@
                       "env": {
                         "type": "array",
                         "description": "Environment variables",
+                        "minItems": 1,
                         "items": {
                           "type": "object",
                           "description": "Key-value pairs",
@@ -297,15 +321,14 @@
               "dataspace": {
                 "type": "object",
                 "description": "PTX dataspace-related configuration",
-                "required": [
-                  "exchange"
-                ],
                 "properties": {
                   "exchange": {
                     "type": "object",
                     "description": "Attributes of data exchange via PTX dataspace",
                     "required": [
-                      "contract"
+                      "contract",
+                      "provider",
+                      "consumer"
                     ],
                     "properties": {
                       "contract": {
@@ -359,6 +382,28 @@
                             "pattern": "^[0-9a-fA-F]+$",
                             "example": "66d18bf6ee71f9f096baed58"
                           }
+                        }
+                      }
+                    }
+                  },
+                  "privacy": {
+                    "type": "object",
+                    "description": "Privacy zone restriction policies",
+                    "properties": {
+                      "required": {
+                        "type": "boolean",
+                        "description": "Demands PTX-edge specific scheduler",
+                        "default": true
+                      },
+                      "zones": {
+                        "type": "array",
+                        "description": "List of privacy zones as node selection criteria",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string",
+                          "description": "Privacy zone ID",
+                          "minLength": 1,
+                          "patters": "^[^:/]+$"
                         }
                       }
                     }

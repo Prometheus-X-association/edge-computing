@@ -26,7 +26,7 @@ from requests_toolbelt.exceptions import StreamingError
 
 from app.ptx.connector import perform_pdc_consumer_exchange
 from app.util.config import CONFIG, SKIPPED
-from app.util.helper import local_copy, get_resource_scheme, get_resource_path
+from app.util.helper import local_copy, get_resource_scheme_from_uri, get_resource_path
 from app.util.parsers import DataSourceAuth, DataSourceAuthScheme
 
 log = logging.getLogger(__name__)
@@ -63,8 +63,6 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     log.info(f"Downloading data from {url}...")
     log.debug(f"Used authentication: {auth}")
     match auth.scheme:
-        case None:
-            req_auth = None
         case DataSourceAuthScheme.BASIC:
             req_auth = HTTPBasicAuth(username=auth.user, password=auth.secret)
         case DataSourceAuthScheme.DIGEST:
@@ -131,17 +129,17 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
     ##########################################################################################
     data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")
-    match data_type.lower():
-        case 'raw' | 'file':
+    match data_type.upper():
+        case 'RAW' | 'FILE':
             with tempfile.NamedTemporaryFile(prefix="builder-data-", dir="/tmp", delete_on_close=True) as tmp:
                 log.debug(f"Cache content into {tmp.name}...")
                 tmp.write(base64.b64decode(data_content.encode(encoding=data.get("encoding", "utf-8"))))
                 tmp.flush()
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
-        case 'url' | 'rest':
+        case 'URL' | 'REST':
             url, auth = data_content['url'], DataSourceAuth.parse(data_content.get('auth'))
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth, retry=retry, timeout=timeout)
-        case 'docker':
+        case 'DOCKER':
             raise NotImplementedError
             # TODO - manage authentication params defined in 'data'
         case other:
@@ -165,22 +163,27 @@ def get_data_resources() -> pathlib.Path | None | SKIPPED:
     data_path = None
     if (dst := get_resource_path(data_dst)) is None:
         return None
-    match get_resource_scheme(data_src):
-        case 'file' | 'dir' | 'mount':
+    if (data_method := CONFIG.get('data.method')) is None:
+        data_method = get_resource_scheme_from_uri(data_src)
+    if data_method is None:
+        log.error("Undefined data collection method!")
+        return None
+    match data_method.upper():
+        case 'FILE' | 'DIR':
             if (src := get_resource_path(data_src)) is not None:
                 data_path = collect_data_from_filesystem(src=src, dst=dst)
-        case 'http' | 'https':
+        case 'HTTP' | 'HTTPS':
             auth = DataSourceAuth.parse(CONFIG.get('data.auth'))
             data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
                                               retry=conn_retry, timeout=conn_timeout)
-        case 'ptx':
+        case 'PTX':
             if (exchange := get_resource_path(data_src)) is not None:
                 data_path = collect_data_from_ptx(exchange=exchange, dst=dst,
                                                   retry=conn_retry, timeout=conn_timeout)
-        case 'skip' | None:
+        case 'SKIP' | None:
             data_path = SKIPPED
         case other:
-            log.error(f"Unknown data source protocol: {other}")
+            log.error(f"Unknown data source method: {other}")
             data_path = None
     return data_path
 

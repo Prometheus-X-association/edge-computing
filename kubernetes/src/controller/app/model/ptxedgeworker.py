@@ -4,7 +4,7 @@
 
 from typing import ClassVar
 from typing import Annotated
-from pydantic import BaseModel as _BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel as _BaseModel, ConfigDict, Field, RootModel, SecretStr
 from enum import StrEnum
 
 
@@ -40,32 +40,35 @@ class PEWSpecService(BaseModel):
     """
     Enable service creation
     """
-    interfaces: list[PEWSpecServiceInterface] | None = None
+    interfaces: Annotated[list[PEWSpecServiceInterface] | None, Field(min_length=1)] = (
+        None
+    )
     """
     Exposed worker interfaces
     """
 
 
-class PEWSpecDataSrcScheme(StrEnum):
+class PEWSpecDataSrcMethod(StrEnum):
     """
-    Data collection scheme
+    Data collection method
     """
 
-    FILE = "file"
-    DIR = "dir"
-    HTTP = "http"
-    HTTPS = "https"
-    PTX = "ptx"
+    FILE = "FILE"
+    DIR = "DIR"
+    HTTP = "HTTP"
+    HTTPS = "HTTPS"
+    PTX = "PTX"
+    SKIP = "SKIP"
 
 
-class PEWSpecDataSrcAuthMethod(StrEnum):
+class PEWSpecDataSrcAuthScheme(StrEnum):
     """
     Used authentication method
     """
 
-    BASIC = "basic"
-    DIGEST = "digest"
-    BEARER = "bearer"
+    BASIC = "BASIC"
+    DIGEST = "DIGEST"
+    BEARER = "BEARER"
 
 
 class PEWSpecDataSrcAuth(BaseModel):
@@ -73,11 +76,11 @@ class PEWSpecDataSrcAuth(BaseModel):
     Authentication parameters for remote data collection
     """
 
-    method: Annotated[PEWSpecDataSrcAuthMethod, Field(examples=["basic"])]
+    scheme: Annotated[PEWSpecDataSrcAuthScheme, Field(examples=["BASIC"])]
     """
     Used authentication method
 
-    Example: 'basic'
+    Example: 'BASIC'
     """
     user: Annotated[str, Field(examples=["admin"], min_length=1)]
     """
@@ -91,6 +94,10 @@ class PEWSpecDataSrcAuth(BaseModel):
 
     Example: 'myPasswd!007'
     """
+    insecure: bool | None = False
+    """
+    Disable verification of data server's TLS certificate
+    """
 
 
 class PEWSpecDataSrc(BaseModel):
@@ -98,23 +105,28 @@ class PEWSpecDataSrc(BaseModel):
     Data source location
     """
 
-    scheme: Annotated[PEWSpecDataSrcScheme | None, Field(examples=["https"])] = None
+    method: Annotated[PEWSpecDataSrcMethod, Field(examples=["HTTPS"])]
     """
-    Data collection scheme
+    Data collection method
 
-    Example: 'https'
+    Example: 'HTTPS'
     """
     path: Annotated[
-        str,
+        str | None,
         Field(
             examples=["https://my.api.localhost:8080/data/example.csv"],
+            min_length=1,
             pattern="^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$",
         ),
-    ]
+    ] = None
     """
     Data resource location
 
     Example: 'https://my.api.localhost:8080/data/example.csv'
+    """
+    size: Annotated[int | None, Field(ge=1)] = 100
+    """
+    Requested data size in Mi
     """
     auth: PEWSpecDataSrcAuth | None = None
     """
@@ -122,12 +134,12 @@ class PEWSpecDataSrc(BaseModel):
     """
 
 
-class PEWSpecDataDstScheme(StrEnum):
+class PEWSpecDataDstMethod(StrEnum):
     """
     Data propagation scheme
     """
 
-    LOCAL = "local"
+    LOCAL = "LOCAL"
 
 
 class PEWSpecDataDst(BaseModel):
@@ -135,13 +147,13 @@ class PEWSpecDataDst(BaseModel):
     Data destination location
     """
 
-    scheme: PEWSpecDataDstScheme | None = PEWSpecDataDstScheme.LOCAL
+    method: PEWSpecDataDstMethod | None = PEWSpecDataDstMethod.LOCAL
     """
     Data propagation scheme
     """
-    path: Annotated[str | None, Field(pattern="^((/[a-zA-Z0-9-_]+)+)$")] = (
-        "/var/cache/data"
-    )
+    path: Annotated[
+        str | None, Field(min_length=1, pattern="^((/[a-zA-Z0-9-_]+)+)/?$")
+    ] = "/var/cache/data"
     """
     Data resource location
     """
@@ -162,14 +174,17 @@ class PEWSpecData(BaseModel):
     """
 
 
-class PEWSpecWorkerLocationProtocol(StrEnum):
+class PEWSpecWorkerLocationMethod(StrEnum):
     """
     Image pull approach
     """
 
-    DOCKER = "docker"
-    SECRET = "secret"
-    PTX = "ptx"
+    DOCKER = "DOCKER"
+    PTX = "PTX"
+    INLINE = "INLINE"
+    DATASOURCE = "DATASOURCE"
+    SECRET = "SECRET"
+    SKIP = "SKIP"
 
 
 class PEWSpecWorkerLocationCred(BaseModel):
@@ -178,7 +193,10 @@ class PEWSpecWorkerLocationCred(BaseModel):
     """
 
     server: Annotated[
-        str | None, Field(pattern="^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$")
+        str | None,
+        Field(
+            min_length=1, pattern="^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$"
+        ),
     ] = "https://index.docker.io/v1/"
     """
     Image server prefix
@@ -206,19 +224,20 @@ class PEWSpecWorkerLocation(BaseModel):
     Worker image location
     """
 
-    protocol: PEWSpecWorkerLocationProtocol | None = (
-        PEWSpecWorkerLocationProtocol.DOCKER
-    )
+    method: Annotated[PEWSpecWorkerLocationMethod, Field(examples=["DOCKER"])]
     """
     Image pull approach
+
+    Example: 'DOCKER'
     """
     image: Annotated[
-        str,
+        str | None,
         Field(
             examples=["busybox:latest"],
+            min_length=1,
             pattern="^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
         ),
-    ]
+    ] = None
     """
     Image resource location
 
@@ -230,6 +249,13 @@ class PEWSpecWorkerLocation(BaseModel):
     """
 
 
+class PEWSpecWorkerCommandItem(RootModel[str]):
+    root: Annotated[str, Field(min_length=1)]
+    """
+    command & args
+    """
+
+
 class PEWSpecWorkerConfigFile(BaseModel):
     """
     Configuration file
@@ -238,7 +264,9 @@ class PEWSpecWorkerConfigFile(BaseModel):
     path: Annotated[
         str,
         Field(
-            examples=["/var/cache/worker/cfg.ini"], pattern="^((/[a-zA-Z0-9-_\\.]+)+)$"
+            examples=["/var/cache/worker/cfg.ini"],
+            min_length=1,
+            pattern="^((/[a-zA-Z0-9-_\\.]+)+)$",
         ),
     ]
     """
@@ -280,7 +308,7 @@ class PEWSpecWorkerConfig(BaseModel):
     """
     Configuration file
     """
-    env: list[PEWSpecWorkerConfigEnvItem] | None = None
+    env: Annotated[list[PEWSpecWorkerConfigEnvItem] | None, Field(min_length=1)] = None
     """
     Environment variables
     """
@@ -300,14 +328,17 @@ class PEWSpecWorker(BaseModel):
     Worker cached in local registry, otherwise pull secret is used with auth
     """
     name: Annotated[
-        str | None, Field(examples=["myworker:latest"], pattern="^([^:]+):([^:/]+)$")
+        str | None,
+        Field(examples=["myworker:latest"], min_length=1, pattern="^([^:]+):([^:/]+)$"),
     ] = None
     """
     Cached image name, otherwise autogenerated from source image
 
     Example: 'myworker:latest'
     """
-    command: Annotated[list[str] | None, Field(min_length=1)] = None
+    command: Annotated[list[PEWSpecWorkerCommandItem] | None, Field(min_length=1)] = (
+        None
+    )
     """
     Override image start command
     """
@@ -401,13 +432,37 @@ class PEWSpecDataspaceExchange(BaseModel):
 
     Example: '66db1a6dc29e3ba863a85e0f'
     """
-    provider: PEWSpecDataspaceExchangeProvider | None = None
+    provider: PEWSpecDataspaceExchangeProvider
     """
     Data provider configuration
     """
-    consumer: PEWSpecDataspaceExchangeConsumer | None = None
+    consumer: PEWSpecDataspaceExchangeConsumer
     """
     Data consumer configuration
+    """
+
+
+class PEWSpecDataspacePrivacyZone(RootModel[str]):
+    root: Annotated[str, Field(min_length=1)]
+    """
+    Privacy zone ID
+    """
+
+
+class PEWSpecDataspacePrivacy(BaseModel):
+    """
+    Privacy zone restriction policies
+    """
+
+    required: bool | None = True
+    """
+    Demands PTX-edge specific scheduler
+    """
+    zones: Annotated[list[PEWSpecDataspacePrivacyZone] | None, Field(min_length=1)] = (
+        None
+    )
+    """
+    List of privacy zones as node selection criteria
     """
 
 
@@ -416,9 +471,13 @@ class PEWSpecDataspace(BaseModel):
     PTX dataspace-related configuration
     """
 
-    exchange: PEWSpecDataspaceExchange
+    exchange: PEWSpecDataspaceExchange | None = None
     """
     Attributes of data exchange via PTX dataspace
+    """
+    privacy: PEWSpecDataspacePrivacy | None = None
+    """
+    Privacy zone restriction policies
     """
 
 

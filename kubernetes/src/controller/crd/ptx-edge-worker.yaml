@@ -47,6 +47,7 @@ spec:
                     interfaces:
                       type: array
                       description: "Exposed worker interfaces"
+                      minItems: 1
                       items:
                         type: object
                         required:
@@ -76,32 +77,39 @@ spec:
                       type: object
                       description: "Data source location"
                       required:
-                        - path
+                        - method
                       properties:
-                        scheme:
+                        method:
                           type: string
-                          description: "Data collection scheme"
-                          enum: [ file, dir, http, https, ptx ]
-                          example: https
+                          description: "Data collection method"
+                          enum: [ FILE, DIR, HTTP, HTTPS, PTX, SKIP ]
+                          example: HTTPS
                         path:
                           type: string
                           description: "Data resource location"
+                          minLength: 1
                           #format: "([scheme]://)([host][:port])/[path]"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
                           example: https://my.api.localhost:8080/data/example.csv
+                        size:
+                          type: integer
+                          description: "Requested data size in Mi"
+                          minimum: 1
+                          #maximum: 10240
+                          default: 100
                         auth:
                           type: object
                           description: "Authentication parameters for remote data collection"
                           required:
-                            - method
+                            - scheme
                             - user
                             - secret
                           properties:
-                            method:
+                            scheme:
                               type: string
                               description: "Used authentication method"
-                              enum: [ basic, digest, bearer ]
-                              example: basic
+                              enum: [ BASIC, DIGEST, BEARER ]
+                              example: BASIC
                             user:
                               type: string
                               description: "User identification"
@@ -113,20 +121,25 @@ spec:
                               minLength: 1
                               format: password
                               example: myPasswd!007
+                            insecure:
+                              type: boolean
+                              description: "Disable verification of data server's TLS certificate"
+                              default: false
                     dst:
                       type: object
                       description: "Data destination location"
                       properties:
-                        scheme:
+                        method:
                           type: string
                           description: "Data propagation scheme"
-                          enum: [ local ]
-                          default: local
+                          enum: [ LOCAL ]
+                          default: LOCAL
                         path:
                           type: string
                           description: "Data resource location"
-                          #format: "([scheme]://)([host][:port])/[path]"
-                          pattern: ^((/[a-zA-Z0-9-_]+)+)$
+                          minLength: 1
+                          #format: "/[path]/"
+                          pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
                           default: /var/cache/data
                 worker:
                   type: object
@@ -138,17 +151,18 @@ spec:
                       type: object
                       description: "Worker image location"
                       required:
-                        - image
+                        - method
                       properties:
-                        protocol:
+                        method:
                           type: string
                           description: "Image pull approach"
-                          enum: [ docker, secret, ptx ]
-                          default: docker
+                          enum: [ DOCKER, PTX, INLINE, DATASOURCE, SECRET, SKIP ]
+                          example: DOCKER
                         image:
                           type: string
-                          #format: "([scheme]://)([host][:port]/)[name][:version]"
                           description: "Image resource location"
+                          minLength: 1
+                          #format: "([scheme]://)([host][:port]/)[name][:version]"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
                           example: busybox:latest
                         cred:
@@ -161,6 +175,7 @@ spec:
                             server:
                               type: string
                               description: "Image server prefix"
+                              minLength: 1
                               #format: "[scheme]://[host][:port]/[path]/"
                               pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
                               default: https://index.docker.io/v1/
@@ -186,6 +201,7 @@ spec:
                     name:
                       type: string
                       description: "Cached image name, otherwise autogenerated from source image"
+                      minLength: 1
                       #format: "[name][:version]"
                       pattern: ^([^:]+):([^:/]+)$
                       example: myworker:latest
@@ -196,6 +212,7 @@ spec:
                       items:
                         type: string
                         description: "command & args"
+                        minLength: 1
                     config:
                       type: object
                       description: "Worker image configuration parameters"
@@ -210,6 +227,7 @@ spec:
                             path:
                               type: string
                               description: "Mount path of configuration file"
+                              minLength: 1
                               pattern: ^((/[a-zA-Z0-9-_\.]+)+)$
                               example: /var/cache/worker/cfg.ini
                             data:
@@ -218,6 +236,7 @@ spec:
                         env:
                           type: array
                           description: "Environment variables"
+                          minItems: 1
                           items:
                             type: object
                             description: "Key-value pairs"
@@ -237,14 +256,14 @@ spec:
                 dataspace:
                   type: object
                   description: "PTX dataspace-related configuration"
-                  required:
-                    - exchange
                   properties:
                     exchange:
                       type: object
                       description: "Attributes of data exchange via PTX dataspace"
                       required:
                         - contract
+                        - provider
+                        - consumer
                       properties:
                         contract:
                           type: string
@@ -288,6 +307,23 @@ spec:
                               minLength: 1
                               pattern: ^[0-9a-fA-F]+$
                               example: "66d18bf6ee71f9f096baed58"
+                    privacy:
+                      type: object
+                      description: "Privacy zone restriction policies"
+                      properties:
+                        required:
+                          type: boolean
+                          description: "Demands PTX-edge specific scheduler"
+                          default: true
+                        zones:
+                          type: array
+                          description: "List of privacy zones as node selection criteria"
+                          minItems: 1
+                          items:
+                            type: string
+                            description: "Privacy zone ID"
+                            minLength: 1
+                            patters: ^[^:/]+$
             status:
               type: object
               description: "Runtime information"

@@ -20,6 +20,11 @@ spec:
       volumeMounts:
         - mountPath: "/data"  # Mounts the volume at the "/data" directory inside the container
           name: data
+      ports:
+      {% for i in service.interfaces %}
+        - name: port-{{ i.port }}
+          containerPort: {{ i.port }}
+      {% endfor %}
   volumes:
     - name: data
       emptyDir:

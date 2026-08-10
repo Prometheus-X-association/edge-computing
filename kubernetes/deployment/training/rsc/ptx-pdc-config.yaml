@@ -37,7 +37,7 @@ data:
       "contractUri": "http://contract.${SANDBOX}.svc.cluster.local:3001/",
       "catalogUri": "http://catalog.${SANDBOX}.svc.cluster.local:3002/v1/",
       "consentUri": "http://consent.${SANDBOX}.svc.cluster.local:3003/v1/",
-      "expressLimitSize": "10mb"
+      "expressLimitSize": "100mb"
     }
   visions-config.json: |
     {

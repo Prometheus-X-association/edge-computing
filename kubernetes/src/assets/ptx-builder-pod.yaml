@@ -131,6 +131,22 @@ spec:
         - configMapRef:
             name: pdc-config.env
       env:
+        #- name: BUILD_PDC_HOST
+        #  value: ${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local
+        #- name: BUILD_PDC_PORT
+        #  value: "${PDC_PORT}"
+        #- name: BUILD_PDC_KEY_SERVICE
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: ${PDC}-secrets-env
+        #      key: SERVICE_KEY
+        #- name: BUILD_PDC_KEY_SECRET
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: ${PDC}-secrets-env
+        #      key: SECRET_KEY
+        #- name: BUILD_CONNECTION_TIMEOUT
+        #  value: "${BUILD_TIMEOUT}"
         - name: BUILD_DATA_SRC
           #value: "file:///etc/hostname"  # collect_data_from_file
           #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"  # collect_data_from_url
@@ -150,10 +166,6 @@ spec:
           value: "true"
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
-        #- name: BUILD_CATALOG_OFFER_PROVIDER
-        #  value: "66d187f4ee71f9f096bae8ca"
-        #- name: BUILD_CATALOG_OFFER_CONSUMER
-        #  value: "66d18b79ee71f9f096baecb1"
         - name: BUILD_WORKER_SRC
           value: "docker://busybox:latest"  # collect_worker_image_from_repo
           #value: "docker://host.k3d.internal:5555/busybox:latest" # collect_worker_image_from_repo + auth

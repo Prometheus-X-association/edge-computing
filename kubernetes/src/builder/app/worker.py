@@ -19,7 +19,7 @@ import typing
 
 from app.ptx.connector import perform_pdc_consumer_exchange
 from app.util.config import CONFIG, load_configuration, SKIPPED
-from app.util.helper import get_resource_path, get_resource_scheme
+from app.util.helper import get_resource_path, get_resource_scheme_from_uri
 from app.util.k8s import create_image_pull_secret
 from app.util.parsers import DockerRegistryAuth
 from app.util.skopeo import copy_image_to_registry, inspect_docker_image
@@ -111,15 +111,15 @@ def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
     data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")
     result_id = None
-    match data_type.lower():
-        case 'raw' | 'file':
+    match data_type.upper():
+        case 'RAW' | 'FILE':
             raise NotImplementedError
-        case 'docker' | 'remote':
+        case 'DOCKER' | 'REMOTE':
             docker_src, docker_dst = data_content['image'], data_content.get('dst', default=dst)
             src_auth = DockerRegistryAuth.parse(data_content.get('auth'))
             result_id = collect_worker_image_from_repo(src=docker_src, dst=docker_dst, src_auth=src_auth,
                                                        retry=retry, timeout=timeout)
-        case 'auth' | 'secret':
+        case 'SECRET' | 'AUTH':
             name = CONFIG.get('worker.pull-secret', data_content.get('worker.dst'))
             cred = DockerRegistryAuth.parse(data_content.get('auth'))
             app = CONFIG.get('worker.app', default='worker')
@@ -141,11 +141,12 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
     conn_timeout = int(CONFIG.get('connection.timeout', default=30))
     conn_retry = int(CONFIG.get('connection.retry', default=3))
     log.debug(f"Check worker setup in configuration...")
-    worker_src = CONFIG.get('worker.src')
-    if worker_src is None:
-        log.warning("Worker source configuration is missing! Skipping...")
-        CONFIG['worker.src'] = SKIPPED
-    elif worker_src.upper() in ('INLINE', 'DATASOURCE'):
+    if (worker_method := CONFIG.get('worker.method')) is None:
+        worker_method = get_resource_scheme_from_uri(CONFIG.get('worker.src'))
+    if worker_method is None:
+        log.error("Undefined worker collection method!")
+        return None
+    elif worker_method.upper() in ('INLINE', 'DATASOURCE'):
         log.debug(f"Trying to load worker configuration from {data_path}...")
         if isinstance(data_path, (pathlib.Path, str)):
             try:
@@ -157,27 +158,31 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
         elif isinstance(data_path, dict):
             worker_cfg = data_path.get('content', {}).get('worker')
         load_configuration(base=worker_cfg)
+    elif not CONFIG.get('worker.src'):
+        log.warning("Worker source configuration is missing! Set collection skipping...")
+        worker_method = 'SKIP'
     worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     result_id = None
-    match get_resource_scheme(worker_src):
-        case 'skip' | None:
+    match worker_method.upper():
+        case 'SKIP' | None:
+            log.warning("Worker collection is skipped!")
             result_id = SKIPPED
-        case 'git':
-            raise NotImplementedError
-        case 'docker' | 'remote':
+        case 'DOCKER' | 'REMOTE':
             src_auth = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, src_auth=src_auth,
                                                        retry=conn_retry, timeout=conn_timeout)
-        case 'auth' | 'secret':
+        case 'AUTH' | 'SECRET':
             name, app = CONFIG.get('worker.pull-secret', default=worker_dst), CONFIG.get('worker.app', default='worker')
             cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
-        case 'ptx':
+        case 'PTX':
             if (exchange := get_resource_path(worker_src)) is not None:
                 result_id = collect_worker_from_ptx(exchange=exchange, dst=worker_dst,
                                                     retry=conn_retry, timeout=conn_timeout)
+        case 'GIT':
+            raise NotImplementedError
         case other:
-            log.error(f"Unknown data source protocol: {other}")
+            log.error(f"Unknown worker method: {other}")
             result_id = None
     return result_id

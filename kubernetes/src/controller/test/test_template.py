@@ -21,7 +21,7 @@ from model.ptxedgeworker import PEW
 
 
 def test_template(template: str, values: str | pathlib.Path):
-    env = jinja2.Environment(loader=jinja2.PackageLoader(package_name="app.controller", package_path="templates"),
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent),
                              autoescape=False,
                              auto_reload=False,
                              optimized=True,
@@ -35,7 +35,7 @@ def test_template(template: str, values: str | pathlib.Path):
     pew = PEW.model_validate(pew_example)
     print(f"Loaded value model:\n{pew.model_dump_json(indent=2)}")
     print('=' * 80)
-    manifest = template.render(pew.spec)
+    manifest = template.render(pew.spec, **{"meta": {"name": pew_example['metadata']['name']}})
     print(f"Generated raw manifest:\n---\n{manifest}\n---")
     print('=' * 80)
     manifest = yaml.safe_load(manifest)
@@ -43,4 +43,4 @@ def test_template(template: str, values: str | pathlib.Path):
 
 
 if __name__ == '__main__':
-    test_template("worker.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("test_template.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")

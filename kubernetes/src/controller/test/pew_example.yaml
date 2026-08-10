@@ -15,18 +15,20 @@ spec:
         secured: true
   data:
     src:
-      scheme: https
+      method: HTTPS
       path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+      size: 50
       auth:
-        method: basic
+        scheme: BASIC
         user: admin
         secret: admin
+        insecure: true
     dst:
-      scheme: local
+      scheme: LOCAL
       path: "/data"
   worker:
     location:
-      protocol: docker
+      method: DOCKER
       image: "busybox:latest"
       cred:
         server: "https://index.docker.io/v1/"
@@ -35,7 +37,9 @@ spec:
         insecure: false
     cached: true
     name: "myworker:latest"
-    command: [ "/bin/bash", "date" ]
+    command:
+      - "/bin/bash"
+      - "date"
     config:
       file:
         path: "/var/cache/worker/config.json"
@@ -55,3 +59,7 @@ spec:
       consumer:
         offer: 66d18b79ee71f9f096baecb1
         resource: 66d18bf6ee71f9f096baed58
+    privacy:
+      required: true
+      zones:
+        - zone1

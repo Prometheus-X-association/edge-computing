@@ -97,7 +97,7 @@ async def create_service(body: kopf.Body, namespace: str, logger: kopf.Logger, m
     ####
     logger.info(f"Rendering manifest...")
     worker_temp: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_pod.yaml.jinja2")
-    manifest: str = await worker_temp.render_async(pew.spec.model_dump())
+    manifest: str = await worker_temp.render_async(pew.spec)
     new_body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(new_body, forced=True)
     logger.debug(f"New object:\n{sanitize_model(new_body)}")
