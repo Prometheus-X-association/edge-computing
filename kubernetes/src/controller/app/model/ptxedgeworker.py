@@ -130,31 +130,6 @@ class PEWSpecDataDstScheme(StrEnum):
     LOCAL = "local"
 
 
-class PEWSpecDataDstAuth(BaseModel):
-    """
-    Authentication parameters for remote data storage
-    """
-
-    method: Annotated[PEWSpecDataSrcAuthMethod, Field(examples=["basic"])]
-    """
-    Used authentication method
-
-    Example: 'basic'
-    """
-    user: Annotated[str, Field(examples=["admin"], min_length=1)]
-    """
-    User identification
-
-    Example: 'admin'
-    """
-    secret: Annotated[SecretStr, Field(examples=["myPasswd!007"], min_length=1)]
-    """
-    Secret token or password
-
-    Example: 'myPasswd!007'
-    """
-
-
 class PEWSpecDataDst(BaseModel):
     """
     Data destination location
@@ -164,21 +139,11 @@ class PEWSpecDataDst(BaseModel):
     """
     Data propagation scheme
     """
-    path: Annotated[
-        str,
-        Field(
-            examples=["https://my.api.localhost:8080/data/example.csv"],
-            pattern="^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$",
-        ),
-    ]
+    path: Annotated[str | None, Field(pattern="^((/[a-zA-Z0-9-_]+)+)$")] = (
+        "/var/cache/data"
+    )
     """
     Data resource location
-
-    Example: 'https://my.api.localhost:8080/data/example.csv'
-    """
-    auth: PEWSpecDataDstAuth | None = None
-    """
-    Authentication parameters for remote data storage
     """
 
 

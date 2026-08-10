@@ -23,7 +23,7 @@ spec:
         secret: admin
     dst:
       scheme: local
-      path: "/var/cache/data/"
+      path: "/data"
   worker:
     location:
       protocol: docker

@@ -136,9 +136,6 @@
                   "dst": {
                     "type": "object",
                     "description": "Data destination location",
-                    "required": [
-                      "path"
-                    ],
                     "properties": {
                       "scheme": {
                         "type": "string",
@@ -151,42 +148,8 @@
                       "path": {
                         "type": "string",
                         "description": "Data resource location",
-                        "pattern": "^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$",
-                        "example": "https://my.api.localhost:8080/data/example.csv"
-                      },
-                      "auth": {
-                        "type": "object",
-                        "description": "Authentication parameters for remote data storage",
-                        "required": [
-                          "method",
-                          "user",
-                          "secret"
-                        ],
-                        "properties": {
-                          "method": {
-                            "type": "string",
-                            "description": "Used authentication method",
-                            "enum": [
-                              "basic",
-                              "digest",
-                              "bearer"
-                            ],
-                            "example": "basic"
-                          },
-                          "user": {
-                            "type": "string",
-                            "description": "User identification",
-                            "minLength": 1,
-                            "example": "admin"
-                          },
-                          "secret": {
-                            "type": "string",
-                            "description": "Secret token or password",
-                            "minLength": 1,
-                            "format": "password",
-                            "example": "myPasswd!007"
-                          }
-                        }
+                        "pattern": "^((/[a-zA-Z0-9-_]+)+)$",
+                        "default": "/var/cache/data"
                       }
                     }
                   }
