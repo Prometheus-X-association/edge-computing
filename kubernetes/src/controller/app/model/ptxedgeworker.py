@@ -390,13 +390,13 @@ class PEWSpecDataspaceExchangeDataProvider(BaseModel):
     Example: '66d187f4ee71f9f096bae8ca'
     """
     resource: Annotated[
-        str | None,
+        str,
         Field(
             examples=["66d1889cee71f9f096bae98b"],
             min_length=1,
             pattern="^[0-9a-fA-F]+$",
         ),
-    ] = None
+    ]
     """
     Data resource ID
 
@@ -423,13 +423,13 @@ class PEWSpecDataspaceExchangeDataConsumer(BaseModel):
     Example: '66d18b79ee71f9f096baecb1'
     """
     resource: Annotated[
-        str | None,
+        str,
         Field(
             examples=["66d18bf6ee71f9f096baed58"],
             min_length=1,
             pattern="^[0-9a-fA-F]+$",
         ),
-    ] = None
+    ]
     """
     Software resource ID
 

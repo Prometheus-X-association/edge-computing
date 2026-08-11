@@ -135,7 +135,7 @@ spec:
           {% if worker.command is defined %}
           command:
           {% for cmd in worker.command %}
-            - {{ cmd }}
+            - "{{ cmd.model_dump() }}"
           {% endfor %}
           {% endif %}
           {% if worker.demands.cpu is defined or worker.demands.memory is defined %}
@@ -182,7 +182,7 @@ spec:
             nodeSelectorTerms:
               {% for zone in dataspace.privacy.zones %}
               - matchExpressions:
-                  - key: privacy-zone.dataspace.ptx.org/{{ zone }}
+                  - key: privacy-zone.dataspace.ptx.org/{{ zone.model_dump() }}
                     operator: In
                     values:
                       - "true"

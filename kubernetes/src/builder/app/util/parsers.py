@@ -19,8 +19,8 @@ from app.util.helper import str2bool
 
 
 class DataSourceAuthScheme(enum.StrEnum):
-    BASIC = 'basic'
-    DIGEST = 'digest'
+    BASIC = 'BASIC'
+    DIGEST = 'DIGEST'
 
 
 @dataclass(frozen=True)

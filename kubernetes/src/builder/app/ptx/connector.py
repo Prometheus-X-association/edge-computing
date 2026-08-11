@@ -14,7 +14,6 @@
 import logging
 import pprint
 import sys
-import typing
 
 import requests
 
@@ -59,12 +58,12 @@ def login_to_connector(timeout: int | None = None) -> dict:
     return resp.json().get('content')
 
 
-def _construct_exchange_request(exchange: str) -> dict[str, typing.Any]:
-    return {"contract": CONFIG[f"ptx.{exchange}.contract"],
-            "resourceId": CONFIG[f"ptx.{exchange}.data.offer"],
-            "resources": [{"resource": CONFIG[f"ptx.{exchange}.data.resource"]}],
-            "purposeId": CONFIG[f"ptx.{exchange}.service.offer"],
-            "purposes": [{"resource": CONFIG[f"ptx.{exchange}.service.resource"]}]}
+def _construct_exchange_request(exchange: str) -> dict[str, str | list[dict[str, str]]]:
+    return {"contract": CONFIG[f"ptx.{exchange}.exchange.contract"],
+            "resourceId": CONFIG[f"ptx.{exchange}.exchange.data.offer"],
+            "resources": [{"resource": CONFIG[f"ptx.{exchange}.exchange.data.resource"]}],
+            "purposeId": CONFIG[f"ptx.{exchange}.exchange.service.offer"],
+            "purposes": [{"resource": CONFIG[f"ptx.{exchange}.exchange.service.resource"]}]}
 
 
 def make_data_exchange(exchange: str, token: str, timeout: int | None = None) -> dict | None:
@@ -121,5 +120,5 @@ def perform_pdc_consumer_exchange(exchange: str, timeout: int | None = None) -> 
     bearer = tokens['token']
     log.debug(f"Assigned token: {bearer}")
     log.info(f"Login to connector was successful!")
-    log.info("Initiate data exchange...")
+    log.info(f"Initiate data exchange[{exchange}]...")
     return make_data_exchange(exchange=exchange, token=bearer, timeout=timeout)

@@ -181,9 +181,8 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
             cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=conn_timeout)
         case 'PTX':
-            if (exchange := get_resource_path(worker_src)) is not None:
-                result_id = collect_worker_from_ptx(exchange=exchange, dst=worker_dst,
-                                                    retry=conn_retry, timeout=conn_timeout)
+            result_id = collect_worker_from_ptx(exchange="worker", dst=worker_dst,
+                                                retry=conn_retry, timeout=conn_timeout)
         case 'GIT':
             raise NotImplementedError
         case other:

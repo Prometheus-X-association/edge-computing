@@ -14,7 +14,7 @@
 # limitations under the License.
 import pprint
 
-from model.ptxedgeworker import PEW, PEWSpec
+from model.ptxedgeworker import PEW, PEWSpec, PEWSpecWorkerCommandItem
 
 raw_kopf_obj = {
     'data': {

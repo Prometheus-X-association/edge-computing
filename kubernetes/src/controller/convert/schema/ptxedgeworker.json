@@ -365,7 +365,8 @@
                             "type": "object",
                             "description": "Data provider configuration",
                             "required": [
-                              "offer"
+                              "offer",
+                              "resource"
                             ],
                             "properties": {
                               "offer": {
@@ -388,7 +389,8 @@
                             "type": "object",
                             "description": "Data consumer configuration",
                             "required": [
-                              "offer"
+                              "offer",
+                              "resource"
                             ],
                             "properties": {
                               "offer": {
@@ -429,7 +431,8 @@
                             "type": "object",
                             "description": "Data provider configuration",
                             "required": [
-                              "offer"
+                              "offer",
+                              "resource"
                             ],
                             "properties": {
                               "offer": {
@@ -452,7 +455,8 @@
                             "type": "object",
                             "description": "Data consumer configuration",
                             "required": [
-                              "offer"
+                              "offer",
+                              "resource"
                             ],
                             "properties": {
                               "offer": {

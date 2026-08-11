@@ -295,6 +295,7 @@ spec:
                               description: "Data provider configuration"
                               required:
                                 - offer
+                                - resource
                               properties:
                                 offer:
                                   type: string
@@ -313,6 +314,7 @@ spec:
                               description: "Data consumer configuration"
                               required:
                                 - offer
+                                - resource
                               properties:
                                 offer:
                                   type: string
@@ -345,6 +347,7 @@ spec:
                               description: "Data provider configuration"
                               required:
                                 - offer
+                                - resource
                               properties:
                                 offer:
                                   type: string
@@ -363,6 +366,7 @@ spec:
                               description: "Data consumer configuration"
                               required:
                                 - offer
+                                - resource
                               properties:
                                 offer:
                                   type: string

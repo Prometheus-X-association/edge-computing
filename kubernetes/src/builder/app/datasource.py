@@ -107,7 +107,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
     :param timeout:
     :return:
     """
-    log.info(f"Acquiring private data based on contract[{exchange}]...")
+    log.info(f"Acquiring private data based on PTX contract[{exchange}]...")
     data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
     # {
     #     "type": ...,
@@ -177,9 +177,8 @@ def get_data_resources() -> pathlib.Path | None | SKIPPED:
             data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
                                               retry=conn_retry, timeout=conn_timeout)
         case 'PTX':
-            if (exchange := get_resource_path(data_src)) is not None:
-                data_path = collect_data_from_ptx(exchange=exchange, dst=dst,
-                                                  retry=conn_retry, timeout=conn_timeout)
+            data_path = collect_data_from_ptx(exchange="data", dst=dst,
+                                              retry=conn_retry, timeout=conn_timeout)
         case 'SKIP' | None:
             data_path = SKIPPED
         case other:
