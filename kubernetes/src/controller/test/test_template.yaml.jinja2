@@ -69,20 +69,36 @@ spec:
               value: {{ data.src.auth.insecure }}
             {% endif %}
             # PTX configuration
-            {% if dataspace.exchange is defined %}
-            - name: BUILD_PTX_EXCHANGE_CONTRACT
-              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.contract }}
-            - name: BUILD_PTX_EXCHANGE_DATA_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.provider.offer }}
-            {% if dataspace.exchange.provider.resource is defined %}
-            - name: BUILD_PTX_EXCHANGE_DATA_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.provider.resource }}
+            {% if dataspace.exchange.data is defined %}
+            - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
+              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.data.contract }}
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.data.provider.offer }}
+            {% if dataspace.exchange.data.provider.resource is defined %}
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.data.provider.resource }}
             {% endif %}
-            - name: BUILD_PTX_EXCHANGE_SERVICE_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.consumer.offer }}
-            {% if dataspace.exchange.consumer.resource is defined %}
-            - name: BUILD_PTX_EXCHANGE_SERVICE_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.consumer.resource }}
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.data.consumer.offer }}
+            {% if dataspace.exchange.data.consumer.resource is defined %}
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.data.consumer.resource }}
+            {% endif %}
+            {% endif %}
+            {% if dataspace.exchange.worker is defined %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
+              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.worker.contract }}
+            - name: BUILD_PTX_WORKER_EXCHANGE_DATA_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.worker.provider.offer }}
+            {% if dataspace.exchange.worker.provider.resource is defined %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_DATA_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.worker.provider.resource }}
+            {% endif %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_OFFER
+              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.worker.consumer.offer }}
+            {% if dataspace.exchange.worker.consumer.resource is defined %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_RESOURCE
+              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.worker.consumer.resource }}
             {% endif %}
             {% endif %}
             # Worker configuration
@@ -122,10 +138,16 @@ spec:
             - {{ cmd }}
           {% endfor %}
           {% endif %}
-              #resources:
-              #  requests:
-              #    cpu: 1000m
-              #    memory: 3000Mi
+          {% if worker.demands.cpu is defined or worker.demands.memory is defined %}
+          resources:
+            requests:
+              {% if worker.demands.cpu is defined %}
+              cpu: {{ (1000 * worker.demands.cpu) | int }}m
+              {% endif %}
+              {% if worker.demands.memory is defined %}
+              memory: {{ worker.demands.memory }}Mi
+              {% endif %}
+          {% endif %}
           # Data destination configuration
           {% if data.dst is defined %}
           volumeMounts:

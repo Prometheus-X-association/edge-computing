@@ -16,12 +16,12 @@ import json
 import logging
 import pathlib
 
-from app.util.helper import deep_filter
+from kubernetes import config, client
 from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
 
-from kubernetes import config, client
+from app.util.helper import deep_filter
 
 log = logging.getLogger(__name__)
 
@@ -70,8 +70,8 @@ PROJECTED_NS_FILE = "/var/run/secrets/projected/namespace"
 
 
 def create_image_pull_secret(name: str, user: str, passwd: str, server: str = "https://index.docker.io/v1/",
-                             namespace: str = None, app: str = None, projected: bool = True,
-                             timeout: int = None) -> client.V1Secret | None:
+                             namespace: str | None = None, app: str | None = None, projected: bool = True,
+                             timeout: int | None = None) -> client.V1Secret | None:
     """
 
     :param name:

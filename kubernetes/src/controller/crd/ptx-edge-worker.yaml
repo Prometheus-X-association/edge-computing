@@ -93,7 +93,7 @@ spec:
                           example: https://my.api.localhost:8080/data/example.csv
                         size:
                           type: integer
-                          description: "Requested data size in Mi"
+                          description: "Requested data size in Mebibyte (Mi)"
                           minimum: 1
                           #maximum: 10240
                           default: 100
@@ -194,6 +194,21 @@ spec:
                               type: boolean
                               description: "Disable verification of image server's TLS certificate"
                               default: false
+                    demands:
+                      type: object
+                      description: "Operating resource demands"
+                      properties:
+                        cpu:
+                          type: number
+                          description: "Number of requested vCPU cores"
+                          format: float
+                          minimum: 0.5
+                          example: 1.5
+                        memory:
+                          type: integer
+                          description: "Amount of requested memory in Mebibyte (Mi)"
+                          minimum: 1
+                          example: 1024
                     cached:
                       type: boolean
                       description: "Worker cached in local registry, otherwise pull secret is used with auth"
@@ -260,53 +275,107 @@ spec:
                     exchange:
                       type: object
                       description: "Attributes of data exchange via PTX dataspace"
-                      required:
-                        - contract
-                        - provider
-                        - consumer
                       properties:
-                        contract:
-                          type: string
-                          description: "Dataspace contract ID"
-                          minLength: 1
-                          pattern: ^[0-9a-fA-F]+$
-                          example: "66db1a6dc29e3ba863a85e0f"
-                        provider:
+                        data:
                           type: object
-                          description: "Data provider configuration"
+                          description: "Dataspace contract information for data exchange"
                           required:
-                            - offer
+                            - contract
+                            - provider
+                            - consumer
                           properties:
-                            offer:
+                            contract:
                               type: string
-                              description: "Data offering ID"
+                              description: "Dataspace contract ID"
                               minLength: 1
                               pattern: ^[0-9a-fA-F]+$
-                              example: "66d187f4ee71f9f096bae8ca"
-                            resource:
-                              type: string
-                              description: "Data resource ID"
-                              minLength: 1
-                              pattern: ^[0-9a-fA-F]+$
-                              example: "66d1889cee71f9f096bae98b"
-                        consumer:
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
+                        worker:
                           type: object
-                          description: "Data consumer configuration"
+                          description: "Dataspace contract information for worker exchange"
                           required:
-                            - offer
+                            - contract
+                            - provider
+                            - consumer
                           properties:
-                            offer:
+                            contract:
                               type: string
-                              description: "Service offering ID"
+                              description: "Dataspace contract ID"
                               minLength: 1
                               pattern: ^[0-9a-fA-F]+$
-                              example: "66d18b79ee71f9f096baecb1"
-                            resource:
-                              type: string
-                              description: "Software resource ID"
-                              minLength: 1
-                              pattern: ^[0-9a-fA-F]+$
-                              example: "66d18bf6ee71f9f096baed58"
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
                     privacy:
                       type: object
                       description: "Privacy zone restriction policies"

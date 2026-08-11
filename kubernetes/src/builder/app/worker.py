@@ -70,7 +70,11 @@ def configure_worker_pull_credential(name: str, cred: DockerRegistryAuth, app: s
     :param timeout:
     :return:
     """
-    secret = create_image_pull_secret(name=name, user=cred.user, passwd=cred.secret, server=cred.server,
+    user, secret = cred.get_creds()
+    if user is None or secret is None:
+        log.error("Undefined worker pull credentials!")
+        return None
+    secret = create_image_pull_secret(name=name, user=user, passwd=secret, server=cred.server,
                                       namespace=namespace, app=app, projected=True, timeout=timeout)
     log.debug(f"Created secret description:\n{pprint.pformat(secret.to_dict()) if secret else None}")
     return secret.metadata.uid if secret else None

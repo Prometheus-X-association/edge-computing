@@ -126,7 +126,7 @@ class PEWSpecDataSrc(BaseModel):
     """
     size: Annotated[int | None, Field(ge=1)] = 100
     """
-    Requested data size in Mi
+    Requested data size in Mebibyte (Mi)
     """
     auth: PEWSpecDataSrcAuth | None = None
     """
@@ -249,6 +249,25 @@ class PEWSpecWorkerLocation(BaseModel):
     """
 
 
+class PEWSpecWorkerDemands(BaseModel):
+    """
+    Operating resource demands
+    """
+
+    cpu: Annotated[float | None, Field(examples=[1.5], ge=0.5)] = None
+    """
+    Number of requested vCPU cores
+
+    Example: 1.5
+    """
+    memory: Annotated[int | None, Field(examples=[1024], ge=1)] = None
+    """
+    Amount of requested memory in Mebibyte (Mi)
+
+    Example: 1024
+    """
+
+
 class PEWSpecWorkerCommandItem(RootModel[str]):
     root: Annotated[str, Field(min_length=1)]
     """
@@ -323,6 +342,10 @@ class PEWSpecWorker(BaseModel):
     """
     Worker image location
     """
+    demands: PEWSpecWorkerDemands | None = None
+    """
+    Operating resource demands
+    """
     cached: bool | None = True
     """
     Worker cached in local registry, otherwise pull secret is used with auth
@@ -348,7 +371,7 @@ class PEWSpecWorker(BaseModel):
     """
 
 
-class PEWSpecDataspaceExchangeProvider(BaseModel):
+class PEWSpecDataspaceExchangeDataProvider(BaseModel):
     """
     Data provider configuration
     """
@@ -381,7 +404,7 @@ class PEWSpecDataspaceExchangeProvider(BaseModel):
     """
 
 
-class PEWSpecDataspaceExchangeConsumer(BaseModel):
+class PEWSpecDataspaceExchangeDataConsumer(BaseModel):
     """
     Data consumer configuration
     """
@@ -414,9 +437,9 @@ class PEWSpecDataspaceExchangeConsumer(BaseModel):
     """
 
 
-class PEWSpecDataspaceExchange(BaseModel):
+class PEWSpecDataspaceExchangeData(BaseModel):
     """
-    Attributes of data exchange via PTX dataspace
+    Dataspace contract information for data exchange
     """
 
     contract: Annotated[
@@ -432,13 +455,68 @@ class PEWSpecDataspaceExchange(BaseModel):
 
     Example: '66db1a6dc29e3ba863a85e0f'
     """
-    provider: PEWSpecDataspaceExchangeProvider
+    provider: PEWSpecDataspaceExchangeDataProvider
     """
     Data provider configuration
     """
-    consumer: PEWSpecDataspaceExchangeConsumer
+    consumer: PEWSpecDataspaceExchangeDataConsumer
     """
     Data consumer configuration
+    """
+
+
+class PEWSpecDataspaceExchangeWorkerProvider(PEWSpecDataspaceExchangeDataProvider):
+    """
+    Data provider configuration
+    """
+
+
+class PEWSpecDataspaceExchangeWorkerConsumer(PEWSpecDataspaceExchangeDataConsumer):
+    """
+    Data consumer configuration
+    """
+
+
+class PEWSpecDataspaceExchangeWorker(BaseModel):
+    """
+    Dataspace contract information for worker exchange
+    """
+
+    contract: Annotated[
+        str,
+        Field(
+            examples=["66db1a6dc29e3ba863a85e0f"],
+            min_length=1,
+            pattern="^[0-9a-fA-F]+$",
+        ),
+    ]
+    """
+    Dataspace contract ID
+
+    Example: '66db1a6dc29e3ba863a85e0f'
+    """
+    provider: PEWSpecDataspaceExchangeWorkerProvider
+    """
+    Data provider configuration
+    """
+    consumer: PEWSpecDataspaceExchangeWorkerConsumer
+    """
+    Data consumer configuration
+    """
+
+
+class PEWSpecDataspaceExchange(BaseModel):
+    """
+    Attributes of data exchange via PTX dataspace
+    """
+
+    data: PEWSpecDataspaceExchangeData | None = None
+    """
+    Dataspace contract information for data exchange
+    """
+    worker: PEWSpecDataspaceExchangeWorker | None = None
+    """
+    Dataspace contract information for worker exchange
     """
 
 

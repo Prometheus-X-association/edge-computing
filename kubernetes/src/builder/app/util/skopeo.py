@@ -31,9 +31,9 @@ def __log_stderr(stderr: bytes):
         log.debug("[%s] - %s", *line.split(" ", maxsplit=2)[1:])
 
 
-def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '', on_behalf: str = None,
-                              secret: str = None, insecure: bool = False, ca_dir: str = None,
-                              retry: int = None, timeout: int = None, verbose: bool = False) -> list[str]:
+def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '', on_behalf: str | None = None,
+                              secret: str | None = None, insecure: bool = False, ca_dir: str | None = None,
+                              retry: int | None = None, timeout: int | None = None, verbose: bool = False) -> list[str]:
     """
 
     :param op:
@@ -73,9 +73,14 @@ def get_direct_skopeo_command(op: str, mode: str, path: str = '', ref: str = '',
 
 def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
                                 src_path: str = '', src_ref: str = '', dst_path: str = '', dst_ref: str = '',
-                                src_auth: tuple[str, str] = None, src_insecure: bool = False, src_ca_dir: str = None,
-                                dst_auth: tuple[str, str] = None, dst_insecure: bool = False, dst_ca_dir: str = None,
-                                retry: int = None, timeout: int = None, verbose: bool = False) -> list[str]:
+                                src_auth: tuple[str | None, str | None] | None = None,
+                                src_insecure: bool = False,
+                                src_ca_dir: str | None = None,
+                                dst_auth: tuple[str | None, str | None] | None = None,
+                                dst_insecure: bool = False,
+                                dst_ca_dir: str | None = None,
+                                retry: int | None = None, timeout: int | None = None,
+                                verbose: bool = False) -> list[str]:
     cmd = ['skopeo']
     if verbose:
         cmd.append(f'--debug')
@@ -108,9 +113,9 @@ def get_bidirect_skopeo_command(op: str, src_mode: str, dst_mode: str,
     return cmd
 
 
-def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str = None, secret: str = None,
-                         insecure: bool = False, ca_dir: str = None, retry: int = None, timeout: int = None,
-                         verbose: bool = False) -> dict | None:
+def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str | None = None,
+                         secret: str | None = None, insecure: bool = False, ca_dir: str | None = None,
+                         retry: int | None = None, timeout: int | None = None, verbose: bool = False) -> dict | None:
     """
 
     :param image:
@@ -147,8 +152,9 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
         log.error(f"Failed to decode received image description!")
 
 
-def delete_docker_image(image: str, registry: str, on_behalf: str = None, secret: str = None, insecure: bool = False,
-                        ca_dir: str = None, retry: int = None, timeout: int = None, verbose: bool = False) -> bool:
+def delete_docker_image(image: str, registry: str, on_behalf: str | None = None, secret: str | None = None,
+                        insecure: bool = False, ca_dir: str | None = None, retry: int | None = None,
+                        timeout: int | None = None, verbose: bool = False) -> bool:
     """
 
     :param image:
@@ -183,10 +189,11 @@ def delete_docker_image(image: str, registry: str, on_behalf: str = None, secret
     return True
 
 
-def copy_image_to_registry(image: str, registry: str, src_repo: str = '', with_reference: str = None,
-                           src_auth: tuple[str, str] = None, src_insecure: bool = False, src_ca_dir: str = None,
-                           dst_auth: tuple[str, str] = None, dst_insecure: bool = False, dst_ca_dir: str = None,
-                           retry: int = None, timeout: int = None, verbose: bool = False) -> bool:
+def copy_image_to_registry(image: str, registry: str, src_repo: str = '', with_reference: str | None = None,
+                           src_auth: tuple[str | None, str | None] | None = None, src_insecure: bool = False,
+                           src_ca_dir: str | None = None, dst_auth: tuple[str | None, str | None] | None = None,
+                           dst_insecure: bool = False, dst_ca_dir: str | None = None, retry: int | None = None,
+                           timeout: int | None = None, verbose: bool = False) -> bool:
     """
 
     :param image:
