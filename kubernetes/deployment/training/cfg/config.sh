@@ -106,13 +106,13 @@ COMPONENTS=(builder controller ptx registry rest-api scheduler)
 #
 BUILD_IMG="ptx-edge/builder:1.0"
 CONTROL_IMG="ptx-edge/controller:1.0"
-PDC_IMG="ptx/connector:1.10.1-slim"
+PDC_IMG="ptx/connector:1.11.0-slim"
 MONGODB_IMG="ptx/mongodb:8.0.23-slim"
 API_IMG="ptx-edge/rest-api:1.0"
 SCHED_IMG="ptx-edge/scheduler:1.0"
 
 # PTX-sandbox components
-CATALOG_IMG="ptx-sandbox/catalog:1.10.1-slim"
+CATALOG_IMG="ptx-sandbox/catalog:1.11.0-slim"
 SANDBOX="ptx-sandbox"
 CATALOG="catalog"
 CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
@@ -191,10 +191,12 @@ FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
 DP0="data-processor-0"
 if [ "${LOCAL_SETUP}" = "true" ]; then
         #DP0_DATA_SRC="http://host.k3d.internal:8888/dp0/train_data.npz"
-        DP0_DATA_SRC="https://host.k3d.internal:9443/dataset/dp0/train_data.npz"
+        DP0_DATA_METHOD="HTTPS"
+        DP0_DATA_SRC="https://host.k3d.internal:4443/dataset/dp0/train_data.npz"
     else
         #DP0_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp0/train_data.npz"
-        DP0_DATA_SRC="ptx://exchange"
+        DP0_DATA_METHOD="PTX"
+        DP0_DATA_SRC=""
 fi
 DP0_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP0_MLFLOW_INT="http://localhost:5000"
@@ -203,9 +205,11 @@ DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 DP1="data-processor-1"
 if [ "${LOCAL_SETUP}" = "true" ]; then
         #DP1_DATA_SRC="http://host.k3d.internal:8888/dp1/train_data.npz"
-        DP1_DATA_SRC="https://host.k3d.internal:9443/dataset/dp1/train_data.npz"
+        DP1_DATA_SRC="https://host.k3d.internal:4443/dataset/dp1/train_data.npz"
+        DP1_DATA_METHOD="HTTPS"
     else
         DP1_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp1/train_data.npz"
+        DP1_DATA_METHOD="HTTPS"
 fi
 DP1_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP1_MLFLOW_INT="http://localhost:5000"
