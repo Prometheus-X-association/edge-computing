@@ -24,7 +24,7 @@ spec:
     spec:
       initContainers:
         - name: ${BUILDER}
-          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
+          image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
@@ -37,9 +37,13 @@ spec:
           env:
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            - name: BUILD_DATA_METHOD
+              value: "${DP1_DATA_METHOD}"
             - name: BUILD_DATA_SRC
               value: "${DP1_DATA_SRC}"
             # Direct datasource configuration
+            - name: BUILD_DATA_AUTH_SCHEME
+              value: "BASIC"
             - name: BUILD_DATA_AUTH_USER
               value: "${DS_API_USER}"
             - name: BUILD_DATA_AUTH_SECRET
@@ -48,6 +52,8 @@ spec:
               value: "${DS_API_INSECURE}"
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
+            - name: BUILD_WORKER_METHOD
+              value: "SKIP"
             - name: BUILD_WORKER_SRC
               #value: "docker://${DP1_IMG}"
             #- name: BUILD_WORKER_DST
@@ -55,7 +61,7 @@ spec:
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP1}:latest
-          image: ${DP1_IMG}
+          image: "${DP1_IMG}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -67,9 +73,9 @@ spec:
               readOnly: true
           env:
             - name: mlflow_tracking_uri_internal
-              value: ${DP1_MLFLOW_INT}
+              value: "${DP1_MLFLOW_INT}"
             - name: mlflow_tracking_uri_organizational
-              value: ${DP1_MLFLOW_ORG}
+              value: "${DP1_MLFLOW_ORG}"
           ports:
             - name: port-mlflow
               containerPort: 5000
@@ -81,7 +87,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: ${LAB_PZ}/${PZ_DATA_1}
+                  - key: "${LAB_PZ}/${PZ_DATA_1}"
                     operator: In
                     values:
                       - "true"

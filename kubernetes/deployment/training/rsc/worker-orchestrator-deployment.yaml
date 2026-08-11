@@ -24,7 +24,7 @@ spec:
     spec:
       initContainers:
         - name: ${BUILDER}
-          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
+          image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
@@ -34,10 +34,14 @@ spec:
           env:
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            - name: BUILD_DATA_METHOD
+              value: "SKIP"
             - name: BUILD_DATA_SRC
               #value: null
             #- name: BUILD_DATA_DST
             #  value: "/var/cache/data/"
+            - name: BUILD_WORKER_METHOD
+              value: "SKIP"
             - name: BUILD_WORKER_SRC
               #value: "docker://${ORCH_IMG}"
             #- name: BUILD_WORKER_DST
@@ -45,7 +49,7 @@ spec:
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${ORCH}:latest
-          image: ${ORCH_IMG}
+          image: "${ORCH_IMG}"
           imagePullPolicy: Always
           #command:
           #  - "fastapi"
@@ -58,7 +62,7 @@ spec:
           #  - "--root-path=/worker/orchestrator"
           env:
             - name: ROOT_PATH
-              value: /worker/${ORCH}
+              value: "/worker/${ORCH}"
             - name: BASIC_AUTH_USERNAME
             - name: BASIC_AUTH_PASSWORD
           resources:
@@ -74,7 +78,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: ${LAB_PZ}/${PZ_FED}
+                  - key: "${LAB_PZ}/${PZ_FED}"
                     operator: In
                     values:
                       - "true"

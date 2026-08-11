@@ -64,9 +64,9 @@ def collect_data_from_url(url: str, dst: str, auth: DataSourceAuth, timeout: int
     log.debug(f"Used authentication: {auth}")
     match auth.scheme:
         case DataSourceAuthScheme.BASIC:
-            req_auth = HTTPBasicAuth(username=auth.user, password=auth.secret)
+            req_auth = HTTPBasicAuth(username=str(auth.user), password=str(auth.secret))
         case DataSourceAuthScheme.DIGEST:
-            req_auth = HTTPDigestAuth(username=auth.user, password=auth.secret)
+            req_auth = HTTPDigestAuth(username=str(auth.user), password=str(auth.secret))
         case _:
             raise NotImplementedError
     log.info(f"Sending GET request to {url} with auth method: {type(req_auth).__name__}...")
@@ -137,7 +137,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
                 tmp.flush()
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'URL' | 'REST':
-            url, auth = data_content['url'], DataSourceAuth.parse(data_content.get('auth'))
+            url, auth = data_content.get('url'), DataSourceAuth.parse(data_content.get('auth'))
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth, retry=retry, timeout=timeout)
         case 'DOCKER':
             raise NotImplementedError
@@ -158,29 +158,36 @@ def get_data_resources() -> pathlib.Path | None | SKIPPED:
     log.info("Obtaining input data...")
     conn_timeout = int(CONFIG.get('connection.timeout', default=30))
     conn_retry = int(CONFIG.get('connection.retry', default=3))
-    data_src, data_dst = CONFIG['data.src'], CONFIG['data.dst']
+    data_src, data_dst = CONFIG.get('data.src'), CONFIG.get('data.dst')
     log.debug(f"Datasource is loaded from configuration: {data_src = }, {data_dst = }")
     data_path = None
-    if (dst := get_resource_path(data_dst)) is None:
-        return None
     if (data_method := CONFIG.get('data.method')) is None:
         data_method = get_resource_scheme_from_uri(data_src)
     if data_method is None:
         log.error("Undefined data collection method!")
         return None
+    if (dst := get_resource_path(data_dst)) is None:
+        log.warning("Undefined data destination!")
+        return None
     match data_method.upper():
+        case 'SKIP' | None:
+            log.warning("Data collection is skipped!")
+            data_path = SKIPPED
         case 'FILE' | 'DIR':
-            if (src := get_resource_path(data_src)) is not None:
+            if (src := get_resource_path(data_src)) is None:
+                log.warning("Undefined datasource path!")
+            else:
                 data_path = collect_data_from_filesystem(src=src, dst=dst)
         case 'HTTP' | 'HTTPS':
-            auth = DataSourceAuth.parse(CONFIG.get('data.auth'))
-            data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
-                                              retry=conn_retry, timeout=conn_timeout)
+            if not data_src:
+                log.warning("Undefined datasource url!")
+            else:
+                auth = DataSourceAuth.parse(CONFIG.get('data.auth'))
+                data_path = collect_data_from_url(url=data_src, dst=dst, auth=auth,
+                                                  retry=conn_retry, timeout=conn_timeout)
         case 'PTX':
             data_path = collect_data_from_ptx(exchange="data", dst=dst,
                                               retry=conn_retry, timeout=conn_timeout)
-        case 'SKIP' | None:
-            data_path = SKIPPED
         case other:
             log.error(f"Unknown data source method: {other}")
             data_path = None

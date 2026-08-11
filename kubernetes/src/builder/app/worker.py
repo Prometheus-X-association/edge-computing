@@ -162,10 +162,10 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
         elif isinstance(data_path, dict):
             worker_cfg = data_path.get('content', {}).get('worker')
         load_configuration(base=worker_cfg)
-    elif not CONFIG.get('worker.src'):
+    elif worker_method.upper() != 'SKIP' and not CONFIG.get('worker.src'):
         log.warning("Worker source configuration is missing! Set collection skipping...")
         worker_method = 'SKIP'
-    worker_src, worker_dst = CONFIG['worker.src'], CONFIG.get('worker.dst')
+    worker_src, worker_dst = CONFIG.get('worker.src'), CONFIG.get('worker.dst')
     log.debug(f"Worker setup is loaded from configuration: {worker_src = }, {worker_dst = }")
     result_id = None
     match worker_method.upper():
@@ -173,9 +173,12 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
             log.warning("Worker collection is skipped!")
             result_id = SKIPPED
         case 'DOCKER' | 'REMOTE':
-            src_auth = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
-            result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, src_auth=src_auth,
-                                                       retry=conn_retry, timeout=conn_timeout)
+            if not worker_src:
+                log.warning("Undefined image repository")
+            else:
+                src_auth = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))
+                result_id = collect_worker_image_from_repo(src=worker_src, dst=worker_dst, src_auth=src_auth,
+                                                           retry=conn_retry, timeout=conn_timeout)
         case 'AUTH' | 'SECRET':
             name, app = CONFIG.get('worker.pull-secret', default=worker_dst), CONFIG.get('worker.app', default='worker')
             cred = DockerRegistryAuth.parse(CONFIG.get('worker.auth'))

@@ -24,7 +24,7 @@ spec:
     spec:
       initContainers:
         - name: ${BUILDER}
-          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
+          image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
@@ -34,18 +34,20 @@ spec:
           env:
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
-            - name: BUILD_DATA_SRC
-              #value: null
-            #- name: BUILD_DATA_DST
-            #  value: "/var/cache/data/"
-            - name: BUILD_WORKER_SRC
-              #value: "docker://${AGG_IMG}"
+            - name: BUILD_DATA_METHOD
+              value: "SKIP"
+            #- name: BUILD_DATA_SRC
+            #  value: null
+            - name: BUILD_WORKER_METHOD
+              value: "SKIP"
+            #- name: BUILD_WORKER_SRC
+            #  value: "docker://${AGG_IMG}"
             #- name: BUILD_WORKER_DST
             #  value: "worker/${AGG}:latest"
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${AGG}:latest
-          image: ${AGG_IMG}
+          image: "${AGG_IMG}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -53,13 +55,13 @@ spec:
               memory: 3000Mi
           env:
             - name: mlflow_tracking_uri_internal
-              value: ${AGG_MLFLOW_INT}
+              value: "${AGG_MLFLOW_INT}"
             - name: mlflow_tracking_uri_organizational
-              value: ${AGG_MLFLOW_ORG}
+              value: "${AGG_MLFLOW_ORG}"
             - name: mlflow_tracking_uri_external
-              value: ${AGG_MLFLOW_EXT}
+              value: "${AGG_MLFLOW_EXT}"
             - name: STATIC_PREFIX_MLFLOW
-              value: /worker/${AGG}
+              value: "/worker/${AGG}"
           ports:
             - name: port-mlflow
               containerPort: 5000
@@ -71,7 +73,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: ${LAB_PZ}/${PZ_FED}
+                  - key: "${LAB_PZ}/${PZ_FED}"
                     operator: In
                     values:
                       - "true"

@@ -24,7 +24,7 @@ spec:
     spec:
       initContainers:
         - name: ${BUILDER}
-          image: ${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}
+          image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
@@ -40,35 +40,39 @@ spec:
           #    prefix: BUILD_PDC_
           env:
             - name: BUILD_PDC_HOST
-              value: ${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local
+              value: "${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local"
             - name: BUILD_PDC_PORT
               value: "${PDC_PORT}"
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
-                  name: ${PDC}-secrets-env
+                  name: "${PDC}-secrets-env"
                   key: SERVICE_KEY
             - name: BUILD_PDC_KEY_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: ${PDC}-secrets-env
+                  name: "${PDC}-secrets-env"
                   key: SECRET_KEY
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            - name: BUILD_DATA_METHOD
+              value: "${DP0_DATA_METHOD}"
             - name: BUILD_DATA_SRC
               value: "${DP0_DATA_SRC}"
             # PTX configuration
-            - name: BUILD_PTX_EXCHANGE_CONTRACT
+            - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
               value: "https://contract.visionstrust.com/contracts/${PTX_CONTRACT_ID}"
-            - name: BUILD_PTX_EXCHANGE_DATA_OFFER
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
               value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_DATA_OFFER_ID}"
-            - name: BUILD_PTX_EXCHANGE_DATA_RESOURCE
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
               value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_ID}"
-            - name: BUILD_PTX_EXCHANGE_SERVICE_OFFER
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
               value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
-            - name: BUILD_PTX_EXCHANGE_SERVICE_RESOURCE
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
               value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_ID}"
             # Direct datasource configuration
+            - name: BUILD_DATA_AUTH_SCHEME
+              value: "BASIC"
             - name: BUILD_DATA_AUTH_USER
               value: "${DS_API_USER}"
             - name: BUILD_DATA_AUTH_SECRET
@@ -77,6 +81,8 @@ spec:
               value: "${DS_API_INSECURE}"
             - name: BUILD_DATA_DST
               value: "/var/cache/data/"
+            - name: BUILD_WORKER_METHOD
+              value: "SKIP"
             - name: BUILD_WORKER_SRC
               #value: "docker://${DP0_IMG}"
             #- name: BUILD_WORKER_DST
@@ -88,7 +94,7 @@ spec:
       containers:
         - name: worker
           #image: ${REGISTRY}:${REGISTRY_PORT}/worker/${DP0}:latest
-          image: ${DP0_IMG}
+          image: "${DP0_IMG}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -100,9 +106,9 @@ spec:
               readOnly: true
           env:
             - name: mlflow_tracking_uri_internal
-              value: ${DP0_MLFLOW_INT}
+              value: "${DP0_MLFLOW_INT}"
             - name: mlflow_tracking_uri_organizational
-              value: ${DP0_MLFLOW_ORG}
+              value: "${DP0_MLFLOW_ORG}"
           ports:
             - name: port-mlflow
               containerPort: 5000
@@ -114,7 +120,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: ${LAB_PZ}/${PZ_DATA_0}
+                  - key: "${LAB_PZ}/${PZ_DATA_0}"
                     operator: In
                     values:
                       - "true"
