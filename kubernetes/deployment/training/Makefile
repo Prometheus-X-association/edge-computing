@@ -45,13 +45,16 @@ setup :: | 0-build 1-init 2-viewer 3-edge 4-demo
 
 ########################################################################################################################
 
-datasource-api ::
+start-datasource-api ::
 	${MAKE} -C datasource deploy-api-https
+
+stop-datasource-api ::
+	${MAKE} -C datasource teardown
 
 local-setup :: export LOCAL_SETUP=true
 local-setup :: export USE_SANDBOX=true
 local-setup :: export USE_NGROK=false
-local-setup :: | 0-build 1-init 2-viewer 3-edge datasource-api 4-demo
+local-setup :: | 0-build 1-init 2-viewer 3-edge start-datasource-api 4-demo
 
 ########################################################################################################################
 
@@ -62,7 +65,7 @@ stop-demo ::
 delete-edge ::
 	bash scripts/delete-ptx-edge.sh
 
-shutdown-cluster ::
+shutdown-cluster :: stop-datasource-api
 	bash scripts/shutdown-topo.sh
 	docker rm --force kube-ops-viewer "${NGROK_CONTAINER_NAME}" >/dev/null 2>&1 || exit 0
 
