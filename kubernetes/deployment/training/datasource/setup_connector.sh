@@ -190,7 +190,7 @@ EOF
         "catalogUri": "${PTX_CATALOG_URI}",
         "contractUri": "${PTX_CONTRACT_URI}",
         "consentUri": "${PTX_CONSENT_URI}",
-        "expressLimitSize": "10mb",
+        "expressLimitSize": "100mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
     }

@@ -289,7 +289,7 @@ configs:
             "value": "Basic YWRtaW46YWRtaW4="
           }
         ],
-        "expressLimitSize": "10mb",
+        "expressLimitSize": "100mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
@@ -322,7 +322,7 @@ configs:
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [],
-        "expressLimitSize": "10mb",
+        "expressLimitSize": "100mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }

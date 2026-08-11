@@ -5,5 +5,5 @@
   "contractUri": "http://contract:8081/",
   "catalogUri": "http://catalog:8082/v1/",
   "consentUri": "http://consent:8083/v1/",
-  "expressLimitSize": "25mb"
+  "expressLimitSize": "100mb"
 }

@@ -5,5 +5,5 @@
   "contractUri": "http://gw.ptx-core.sandbox.local:3001/",
   "catalogUri": "http://gw.ptx-core.sandbox.local:3002/v1/",
   "consentUri": "http://gw.ptx-core.sandbox.local:3003/v1/",
-  "expressLimitSize": "25mb"
+  "expressLimitSize": "100mb"
 }
