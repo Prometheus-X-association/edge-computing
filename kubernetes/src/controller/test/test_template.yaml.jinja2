@@ -40,12 +40,12 @@ spec:
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
-                  name: pdc-secrets-env
+                  name: {{ cfg.pdc.secret }}
                   key: SERVICE_KEY
             - name: BUILD_PDC_KEY_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: pdc-secrets-env
+                  name: {{ cfg.pdc.secret }}
                   key: SECRET_KEY
             # Basic builder configuration
             - name: BUILD_CONNECTION_TIMEOUT
@@ -60,7 +60,7 @@ spec:
               value: {{ data.src.path if data.src.path is not none }}
             {% endif %}
             # Direct datasource configuration
-            {% if data.src.auth is not none %}
+            {% if data.src.auth %}
             - name: BUILD_DATA_AUTH_SCHEME
               value: "{{ data.src.auth.scheme }}"
             - name: BUILD_DATA_AUTH_USER
@@ -71,34 +71,34 @@ spec:
               value: "{{ data.src.auth.insecure | lower }}"
             {% endif %}
             # PTX configuration
-            {% if dataspace.exchange.data is defined %}
+            {% if dataspace.exchange.data %}
             - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
               value: {{ "https://contract.visionstrust.com/contracts/" ~ dataspace.exchange.data.contract }}
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
               value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.data.provider.offer }}
-            {% if dataspace.exchange.data.provider.resource is defined %}
+            {% if dataspace.exchange.data.provider.resource %}
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
               value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/" ~ dataspace.exchange.data.provider.resource }}
             {% endif %}
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
               value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.data.consumer.offer }}
-            {% if dataspace.exchange.data.consumer.resource is defined %}
+            {% if dataspace.exchange.data.consumer.resource %}
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
               value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/" ~ dataspace.exchange.data.consumer.resource }}
             {% endif %}
             {% endif %}
-            {% if dataspace.exchange.worker is defined %}
+            {% if dataspace.exchange.worker %}
             - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
               value: {{ "https://contract.visionstrust.com/contracts/" ~ dataspace.exchange.worker.contract }}
             - name: BUILD_PTX_WORKER_EXCHANGE_DATA_OFFER
               value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.worker.provider.offer }}
-            {% if dataspace.exchange.worker.provider.resource is defined %}
+            {% if dataspace.exchange.worker.provider.resource %}
             - name: BUILD_PTX_WORKER_EXCHANGE_DATA_RESOURCE
               value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/" ~ dataspace.exchange.worker.provider.resource }}
             {% endif %}
             - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_OFFER
               value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.worker.consumer.offer }}
-            {% if dataspace.exchange.worker.consumer.resource is defined %}
+            {% if dataspace.exchange.worker.consumer.resource %}
             - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_RESOURCE
               value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/" ~ dataspace.exchange.worker.consumer.resource }}
             {% endif %}
@@ -108,9 +108,9 @@ spec:
               value: {{ worker.location.method }}
             {% if worker.location.method != "SKIP" %}
             - name: BUILD_WORKER_SRC
-              value: "{{ worker.location.image if worker.cached is true }}"
+              value: {{ worker.location.image if worker.location.image is not none and worker.cached is true }}
             {% endif %}
-            {% if worker.location.cred is defined %}
+            {% if worker.location.cred %}
             - name: BUILD_WORKER_AUTH_SERVER
               value: "{{ worker.location.cred.server }}"
             - name: BUILD_WORKER_AUTH_USER
@@ -118,7 +118,7 @@ spec:
             - name: BUILD_WORKER_AUTH_SECRET
               value: "{{ worker.location.cred.secret.get_secret_value() }}"
             - name: BUILD_WORKER_AUTH_INSECURE
-              value: "{{ worker.location.cred.insecure }}"
+              value: "{{ worker.location.cred.insecure | lower }}"
             {% endif %}
             {% if worker.cached is true %}
             - name: BUILD_WORKER_DST
@@ -130,26 +130,26 @@ spec:
               protocol: TCP
       containers:
         - name: worker
-          image: {% if worker.cached -%}
+          image: {% if worker.cached and worker.name -%}
                   {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ "worker/" ~ worker.name }}
                   {% else -%}
-                  {{ worker.location.image }}
+                  {{ worker.location.image if worker.location.image}}
                   {% endif %}
           imagePullPolicy: IfNotPresent
-          {% if worker.command is defined %}
+          {% if worker.command is iterable %}
           command:
           {% for cmd in worker.command %}
             - "{{ cmd.model_dump() }}"
           {% endfor %}
           {% endif %}
-          {% if worker.demands.cpu is defined or worker.demands.memory is defined %}
+          {% if worker.demands %}
           resources:
             requests:
-              {% if worker.demands.cpu is defined %}
+              {% if worker.demands.cpu %}
               cpu: {{ ( 1000 * worker.demands.cpu ) | int ~ "m"}}
               {% endif %}
-              {% if worker.demands.memory is defined %}
-              memory: {{ worker.demands.memory | int ~ "Mi"}}
+              {% if worker.demands.memory %}
+              memory: {{ worker.demands.memory | int ~ "M"}}
               {% endif %}
           {% endif %}
           # Data destination configuration
@@ -159,11 +159,13 @@ spec:
               mountPath: {{ data.dst.path | default("/var/cache/data", true) }}
               readOnly: true
           {% endif %}
-          {% if worker.config.env is defined %}
+          {% if worker.config.env is iterable %}
           env:
           {% for envvar in worker.config.env %}
             - name: "{{ envvar.key }}"
+              {% if envvar.value  %}
               value: "{{ envvar.value }}"
+              {% endif %}
           {% endfor %}
           {% endif %}
           {% if service.interfaces is iterable %}
@@ -174,10 +176,8 @@ spec:
               protocol: TCP
           {% endfor %}
           {% endif %}
-      {% if dataspace.privacy is defined and dataspace.privacy.required is true %}
-      schedulerName: "ptx-edge-scheduler"
-      {% endif %}
-      {% if dataspace.privacy.zones is defined %}
+      schedulerName: {{ cfg.scheduler.name if dataspace.privacy.required is true else "default" }}
+      {% if dataspace.privacy.zones %}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

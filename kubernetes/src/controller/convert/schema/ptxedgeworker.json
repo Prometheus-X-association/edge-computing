@@ -102,7 +102,7 @@
                       },
                       "size": {
                         "type": "integer",
-                        "description": "Requested data size in Mebibyte (Mi)",
+                        "description": "Requested data size in Megabyte (Mb)",
                         "minimum": 1,
                         "default": 100
                       },
@@ -254,7 +254,7 @@
                       },
                       "memory": {
                         "type": "integer",
-                        "description": "Amount of requested memory in Mebibyte (Mi)",
+                        "description": "Amount of requested memory in Megabyte (Mb)",
                         "minimum": 1,
                         "example": 1024
                       }
@@ -315,8 +315,7 @@
                           "type": "object",
                           "description": "Key-value pairs",
                           "required": [
-                            "key",
-                            "value"
+                            "key"
                           ],
                           "properties": {
                             "key": {

@@ -126,7 +126,7 @@ class PEWSpecDataSrc(BaseModel):
     """
     size: Annotated[int | None, Field(ge=1)] = 100
     """
-    Requested data size in Mebibyte (Mi)
+    Requested data size in Megabyte (Mb)
     """
     auth: PEWSpecDataSrcAuth | None = None
     """
@@ -262,7 +262,7 @@ class PEWSpecWorkerDemands(BaseModel):
     """
     memory: Annotated[int | None, Field(examples=[1024], ge=1)] = None
     """
-    Amount of requested memory in Mebibyte (Mi)
+    Amount of requested memory in Megabyte (Mb)
 
     Example: 1024
     """
@@ -310,7 +310,7 @@ class PEWSpecWorkerConfigEnvItem(BaseModel):
 
     Example: 'MY_CFG_ENVVAR'
     """
-    value: Annotated[str, Field(examples=["42"])]
+    value: Annotated[str | None, Field(examples=["42"])] = None
     """
     Value string
 

@@ -37,11 +37,12 @@ def test_template(template: str, values: str | pathlib.Path):
     print(f"Loaded value model:\n{pew.model_dump_json(indent=2)}")
     print('=' * 80)
     config = {'cfg': {'registry': {'path': 'registry.k3d.local:5000'},
+                      'scheduler': {'name': 'ptx-edge-scheduler'},
                       'builder': {'image': 'ptx-edge/builder:1.0'},
                       'pdc': {'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
-                              'port': 3000}
-                      }
-              }
+                              'port': 3000,
+                              'secret': 'pdc-secrets-env'
+                              }}}
     print(f"Defined config:\n{pprint.pformat(config)}")
     print('=' * 80)
     manifest = template.render(pew.spec, **config)

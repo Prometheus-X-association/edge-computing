@@ -44,12 +44,12 @@ spec:
       - "/bin/bash"
       - "date"
     config:
-      file:
-        path: "/var/cache/worker/config.json"
-        data: |
-          {
-            "test": 42
-          }
+#      file:
+#        path: "/var/cache/worker/config.json"
+#        data: |
+#          {
+#            "test": 42
+#          }
       env:
         - key: WRK_TEST_VAR
           value: "test123"
