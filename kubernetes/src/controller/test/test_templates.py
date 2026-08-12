@@ -92,4 +92,5 @@ def test_service_template(template: str, values: str | pathlib.Path):
 
 if __name__ == '__main__':
     # test_worker_template("template_worker.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_worker_template("template_service_port.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_worker_template("template_service_worker.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    # test_worker_template("template_service_builder.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
