@@ -24,7 +24,7 @@ spec:
         secret: admin
         insecure: true
     dst:
-      scheme: LOCAL
+      method: LOCAL
       path: "/data"
   worker:
     location:

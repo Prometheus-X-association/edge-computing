@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
+import pprint
 
 import jinja2
 import yaml
@@ -32,10 +33,18 @@ def test_template(template: str, values: str | pathlib.Path):
     print('=' * 80)
     with open(values) as f:
         pew_example = yaml.safe_load(f)
-    pew = PEW.model_validate(pew_example)
+    pew = PEW.model_validate(pew_example, strict=False)
     print(f"Loaded value model:\n{pew.model_dump_json(indent=2)}")
     print('=' * 80)
-    manifest = template.render(pew.spec, **{"meta": {"name": pew_example['metadata']['name']}})
+    config = {'cfg': {'registry': {'path': 'registry.k3d.local:5000'},
+                      'builder': {'image': 'ptx-edge/builder:1.0'},
+                      'pdc': {'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
+                              'port': 3000}
+                      }
+              }
+    print(f"Defined config:\n{pprint.pformat(config)}")
+    print('=' * 80)
+    manifest = template.render(pew.spec, **config)
     print(f"Generated raw manifest:\n---\n{manifest}\n---")
     print('=' * 80)
     manifest = yaml.safe_load(manifest)

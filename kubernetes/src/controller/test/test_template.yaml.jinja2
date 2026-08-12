@@ -23,16 +23,18 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
-            - name: data-dir
-              mountPath: /var/cache/data/
-              readOnly: false
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
+            {% if data.dst and (data.dst.method | upper) == "LOCAL"  %}
+            - name: data-dir
+              mountPath: /var/cache/data/
+              readOnly: false
+            {% endif %}
           env:
             # PDC configuration
             - name: BUILD_PDC_HOST
-              value: "{{ cfg.pdc.host }}"
+              value: {{ cfg.pdc.host if cfg.pdc.host }}
             - name: BUILD_PDC_PORT
               value: "3000"
             - name: BUILD_PDC_KEY_SERVICE
@@ -55,10 +57,10 @@ spec:
               value: {{ data.src.method }}
             {% if data.src.method != "SKIP" %}
             - name: BUILD_DATA_SRC
-              value: "{{ data.src.path }}"
+              value: {{ data.src.path if data.src.path is not none }}
             {% endif %}
             # Direct datasource configuration
-            {% if data.src.auth is defined %}
+            {% if data.src.auth is not none %}
             - name: BUILD_DATA_AUTH_SCHEME
               value: "{{ data.src.auth.scheme }}"
             - name: BUILD_DATA_AUTH_USER
@@ -66,7 +68,7 @@ spec:
             - name: BUILD_DATA_AUTH_SECRET
               value: "{{ data.src.auth.secret.get_secret_value() }}"
             - name: BUILD_DATA_AUTH_INSECURE
-              value: "{{ data.src.auth.insecure }}"
+              value: "{{ data.src.auth.insecure | lower }}"
             {% endif %}
             # PTX configuration
             {% if dataspace.exchange.data is defined %}
@@ -128,9 +130,9 @@ spec:
               protocol: TCP
       containers:
         - name: worker
-          image: {% if worker.cached %}
+          image: {% if worker.cached -%}
                   {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ "worker/" ~ worker.name }}
-                  {% else %}
+                  {% else -%}
                   {{ worker.location.image }}
                   {% endif %}
           imagePullPolicy: IfNotPresent
@@ -151,13 +153,11 @@ spec:
               {% endif %}
           {% endif %}
           # Data destination configuration
-          {% if data.dst is defined %}
+          {% if data.dst and (data.dst.method | upper) == "LOCAL"  %}
           volumeMounts:
-          {% if data.dst.scheme is undefined or data.dst.scheme == "local"  %}
             - name: data-dir
-              mountPath: {{ data.dst.path | default("/var/cache/data") }}
+              mountPath: {{ data.dst.path | default("/var/cache/data", true) }}
               readOnly: true
-          {% endif %}
           {% endif %}
           {% if worker.config.env is defined %}
           env:
@@ -166,7 +166,7 @@ spec:
               value: "{{ envvar.value }}"
           {% endfor %}
           {% endif %}
-          {% if service.interfaces is defined %}
+          {% if service.interfaces is iterable %}
           ports:
           {% for interface in service.interfaces %}
             - name: {{ "port-" ~ interface.port }}
@@ -191,15 +191,17 @@ spec:
               {% endfor %}
       {% endif %}
       volumes:
-        - name: data-dir
-          emptyDir:
-            sizeLimit: {{ data.src.size ~ "Mi" }}
         - name: registry-ca
           configMap:
             name: registry-root-ca.crt
             items:
               - key: ca.crt
                 path: registry_CA.crt
+        {% if data.dst and (data.dst.method | upper) == "LOCAL"  %}
+        - name: data-dir
+          emptyDir:
+            sizeLimit: {{ data.src.size ~ "Mi" }}
+        {% endif %}
 {#---#}
 {#apiVersion: v1#}
 {#kind: Service#}
