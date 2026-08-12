@@ -28,8 +28,8 @@ fi
 
 log "Initiate Data Processing Function 0..."
 ${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
-${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 sleep 1
+${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
@@ -43,8 +43,8 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
 log "Initiate Data Processing Function 1..."
 ${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 sleep 1
+${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
@@ -58,8 +58,8 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
 log "Initiate Aggregator..."
 ${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 sleep 1
+${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
@@ -83,8 +83,8 @@ log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 
 log "Initiate Orchestrator..."
 ${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 sleep 1
+${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 
