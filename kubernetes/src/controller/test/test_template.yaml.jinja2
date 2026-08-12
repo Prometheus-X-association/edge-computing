@@ -19,7 +19,7 @@ spec:
       terminationGracePeriodSeconds: 10
       initContainers:
         - name: builder
-          image: registry.k3d.local:5000/ptx-edge/builder:1.0
+          image: {{ cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path }}{{ cfg.builder.image }}
           imagePullPolicy: IfNotPresent
           command: [ "python3", "-m", "app", "-v" ]
           volumeMounts:
@@ -32,7 +32,7 @@ spec:
           env:
             # PDC configuration
             - name: BUILD_PDC_HOST
-              {# value: ${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local#}
+              value: "{{ cfg.pdc.host }}"
             - name: BUILD_PDC_PORT
               value: "3000"
             - name: BUILD_PDC_KEY_SERVICE
@@ -53,74 +53,74 @@ spec:
             # Datasource configuration
             - name: BUILD_DATA_METHOD
               value: {{ data.src.method }}
-            {% if data.src.method != 'SKIP' %}
+            {% if data.src.method != "SKIP" %}
             - name: BUILD_DATA_SRC
-              value: {{ data.src.path }}
+              value: "{{ data.src.path }}"
             {% endif %}
             # Direct datasource configuration
             {% if data.src.auth is defined %}
             - name: BUILD_DATA_AUTH_SCHEME
-              value: {{ data.src.auth.scheme }}
+              value: "{{ data.src.auth.scheme }}"
             - name: BUILD_DATA_AUTH_USER
-              value: {{ data.src.auth.user }}
+              value: "{{ data.src.auth.user }}"
             - name: BUILD_DATA_AUTH_SECRET
-              value: {{ data.src.auth.secret.get_secret_value() }}
+              value: "{{ data.src.auth.secret.get_secret_value() }}"
             - name: BUILD_DATA_AUTH_INSECURE
-              value: {{ data.src.auth.insecure }}
+              value: "{{ data.src.auth.insecure }}"
             {% endif %}
             # PTX configuration
             {% if dataspace.exchange.data is defined %}
             - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
-              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.data.contract }}
+              value: {{ "https://contract.visionstrust.com/contracts/" ~ dataspace.exchange.data.contract }}
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.data.provider.offer }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.data.provider.offer }}
             {% if dataspace.exchange.data.provider.resource is defined %}
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.data.provider.resource }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/" ~ dataspace.exchange.data.provider.resource }}
             {% endif %}
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.data.consumer.offer }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.data.consumer.offer }}
             {% if dataspace.exchange.data.consumer.resource is defined %}
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.data.consumer.resource }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/" ~ dataspace.exchange.data.consumer.resource }}
             {% endif %}
             {% endif %}
             {% if dataspace.exchange.worker is defined %}
             - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
-              value: https://contract.visionstrust.com/contracts/{{ dataspace.exchange.worker.contract }}
+              value: {{ "https://contract.visionstrust.com/contracts/" ~ dataspace.exchange.worker.contract }}
             - name: BUILD_PTX_WORKER_EXCHANGE_DATA_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.worker.provider.offer }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.worker.provider.offer }}
             {% if dataspace.exchange.worker.provider.resource is defined %}
             - name: BUILD_PTX_WORKER_EXCHANGE_DATA_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/dataresources/{{ dataspace.exchange.worker.provider.resource }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/" ~ dataspace.exchange.worker.provider.resource }}
             {% endif %}
             - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_OFFER
-              value: https://api.visionstrust.com/v1/catalog/serviceofferings/{{ dataspace.exchange.worker.consumer.offer }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/" ~ dataspace.exchange.worker.consumer.offer }}
             {% if dataspace.exchange.worker.consumer.resource is defined %}
             - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_RESOURCE
-              value: https://api.visionstrust.com/v1/catalog/softwareresources/{{ dataspace.exchange.worker.consumer.resource }}
+              value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/" ~ dataspace.exchange.worker.consumer.resource }}
             {% endif %}
             {% endif %}
             # Worker configuration
             - name: BUILD_WORKER_METHOD
               value: {{ worker.location.method }}
-            {% if worker.location.method != 'SKIP' %}
+            {% if worker.location.method != "SKIP" %}
             - name: BUILD_WORKER_SRC
-              value: {{ worker.location.image if worker.cached is true else undefined }}
+              value: "{{ worker.location.image if worker.cached is true }}"
             {% endif %}
             {% if worker.location.cred is defined %}
             - name: BUILD_WORKER_AUTH_SERVER
-              value: {{ worker.location.cred.server }}
+              value: "{{ worker.location.cred.server }}"
             - name: BUILD_WORKER_AUTH_USER
-              value: {{ worker.location.cred.user }}
+              value: "{{ worker.location.cred.user }}"
             - name: BUILD_WORKER_AUTH_SECRET
-              value: {{ worker.location.cred.secret.get_secret_value() }}
+              value: "{{ worker.location.cred.secret.get_secret_value() }}"
             - name: BUILD_WORKER_AUTH_INSECURE
-              value: {{ worker.location.cred.insecure }}
+              value: "{{ worker.location.cred.insecure }}"
             {% endif %}
             {% if worker.cached is true %}
             - name: BUILD_WORKER_DST
-              value: worker/{{ worker.name }}
+              value: {{ "worker/" ~ worker.name }}
             {% endif %}
           ports:
             - name: webhook-port
@@ -128,9 +128,11 @@ spec:
               protocol: TCP
       containers:
         - name: worker
-          image: {{ "registry.k3d.local:5000/worker/" + worker.name
-                    if worker.cached is true
-                    else worker.location.image }}
+          image: {% if worker.cached %}
+                  {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ "worker/" ~ worker.name }}
+                  {% else %}
+                  {{ worker.location.image }}
+                  {% endif %}
           imagePullPolicy: IfNotPresent
           {% if worker.command is defined %}
           command:
@@ -142,39 +144,39 @@ spec:
           resources:
             requests:
               {% if worker.demands.cpu is defined %}
-              cpu: {{ (1000 * worker.demands.cpu) | int }}m
+              cpu: {{ ( 1000 * worker.demands.cpu ) | int ~ "m"}}
               {% endif %}
               {% if worker.demands.memory is defined %}
-              memory: {{ worker.demands.memory }}Mi
+              memory: {{ worker.demands.memory | int ~ "Mi"}}
               {% endif %}
           {% endif %}
           # Data destination configuration
           {% if data.dst is defined %}
           volumeMounts:
-          {% if data.dst.scheme is undefined or data.dst.scheme == 'local'  %}
+          {% if data.dst.scheme is undefined or data.dst.scheme == "local"  %}
             - name: data-dir
-              mountPath: {{ data.dst.path or '/var/cache/data' }}
+              mountPath: {{ data.dst.path | default("/var/cache/data") }}
               readOnly: true
           {% endif %}
           {% endif %}
           {% if worker.config.env is defined %}
           env:
           {% for envvar in worker.config.env %}
-            - name: {{ envvar.key }}
+            - name: "{{ envvar.key }}"
               value: "{{ envvar.value }}"
           {% endfor %}
           {% endif %}
           {% if service.interfaces is defined %}
           ports:
           {% for interface in service.interfaces %}
-            - name: port-{{ interface.port }}
-              containerPort: {{ interface.port }}
+            - name: {{ "port-" ~ interface.port }}
+              containerPort: {{ interface.port | int }}
               protocol: TCP
           {% endfor %}
           {% endif %}
-      schedulerName: {{ 'ptx-edge-scheduler'
-                        if dataspace.privacy is defined and dataspace.privacy.required is true
-                        else 'default' }}
+      {% if dataspace.privacy is defined and dataspace.privacy.required is true %}
+      schedulerName: "ptx-edge-scheduler"
+      {% endif %}
       {% if dataspace.privacy.zones is defined %}
       affinity:
         nodeAffinity:
@@ -182,7 +184,7 @@ spec:
             nodeSelectorTerms:
               {% for zone in dataspace.privacy.zones %}
               - matchExpressions:
-                  - key: privacy-zone.dataspace.ptx.org/{{ zone.model_dump() }}
+                  - key: {{ "privacy-zone.dataspace.ptx.org/" ~ zone.model_dump() }}
                     operator: In
                     values:
                       - "true"
@@ -191,7 +193,7 @@ spec:
       volumes:
         - name: data-dir
           emptyDir:
-            sizeLimit: {{ data.src.size }}Mi
+            sizeLimit: {{ data.src.size ~ "Mi" }}
         - name: registry-ca
           configMap:
             name: registry-root-ca.crt
