@@ -11,13 +11,9 @@ spec:
     app.kubernetes.io/name: {{ cfg.name | default("worker") }}
     tier: worker
   type: ClusterIP
-  {% if service.interfaces is iterable %}
   ports:
-  {% for interface in service.interfaces %}
-    - name: {{ "port-" ~ interface.port }}
-      port: {{ interface.port | int }}
-      targetPort: {{ interface.port | int }}
+    - name: webhook-port
       protocol: TCP
-      appProtocol: http
-  {% endfor %}
-  {% endif %}
+      port: 9999
+      targetPort: 9999
+  publishNotReadyAddresses: true
