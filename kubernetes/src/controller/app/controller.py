@@ -14,8 +14,8 @@
 # limitations under the License.
 import http
 import logging
-import os
 import pathlib
+import pprint
 from typing import Any
 
 import jinja2
@@ -26,7 +26,7 @@ from asyncer import asyncify
 from kubernetes import client
 
 from model.ptxedgeworker import PEW
-from utils import sanitize_model, ExcludeProbesFilter
+from utils import load_config_from_env, sanitize_model, ExcludeProbesFilter
 
 ########################################################################################################################
 
@@ -34,10 +34,9 @@ from utils import sanitize_model, ExcludeProbesFilter
 __version__ = '1.0.0'
 
 ### Globally available objects
+ENV_PREFIX = "CFG_"
 # Required fields in the configuration
-REQUIRED_FIELDS = ("temp_dir",)
-# Default values of required fields using DEF_{field} names
-DEF_TEMP_DIR = "templates"
+REQUIRED_FIELDS = ("builder.name", "builder.image")
 
 
 ########################################################################################################################
@@ -46,11 +45,11 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
     logger.info(f"Loading controller configuration...")
     # PTX-edge/controller related configurations
     # Read config items from envvars dynamically using global default values
-    memo.CONFIG = {field: os.getenv(field.upper(), default=globals().get(f"DEF_{field.upper()}", None))
-                   for field in REQUIRED_FIELDS}
-    if not all(map(lambda _p: memo.CONFIG[_p] is not None, REQUIRED_FIELDS)):
+    logger.debug(f"Loading configuration from envvars[{ENV_PREFIX}*]...")
+    memo.CONFIG = load_config_from_env(prefix=ENV_PREFIX)
+    if not all(map(lambda _p: memo.CONFIG.get(_p) is not None, REQUIRED_FIELDS)):
         raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {memo.CONFIG}!")
-    logger.debug(f"Loaded configuration: {memo.CONFIG}")
+    logger.debug(f"Loaded configuration: {pprint.pformat(memo.CONFIG)}")
     # Kopf-internal configurations
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=PEW.group)
     settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=PEW.group,
@@ -64,13 +63,15 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
 async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
     logger.info("Loading manifest templates...")
     memo.TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
-        loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent / memo.CONFIG["temp_dir"]),
+        loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent / "templates"),
         autoescape=False,
         auto_reload=False,
         optimized=True,
         trim_blocks=True,
         lstrip_blocks=True,
-        enable_async=True)
+        enable_async=True,
+        extensions=['jinja2.ext.do']
+    )
     logger.debug(f"Loaded templates: {','.join(memo.TEMPLATES.list_templates())}")
 
 

@@ -102,6 +102,23 @@ spec:
       #command: [ "kopf", "run",  "--namespace=ptx-edge", "--standalone", "--debug",
       #           "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
+      env:
+        - name: CFG_REGISTRY_PATH
+          value: "registry.k3d.local:5000"
+        - name: CFG_SCHEDULER_NAME
+          value: "ptx-edge-scheduler"
+        - name: CFG_BUILDER_NAME
+          value: "builder"
+        - name: CFG_BUILDER_IMAGE
+          value: "ptx-edge/builder:1.0"
+        - name: CFG_BUILDER_PORT
+          value: "9999"
+        - name: CFG_PDC_HOST
+          value: "pdc.ptx-edge.svc.cluster.local"
+        - name: CFG_PDC_PORT
+          value: "3000"
+        - name: CFG_PDC_SECRET
+          value: "pdc-secrets-env"
       ports:
         - name: api-port
           containerPort: 8080
