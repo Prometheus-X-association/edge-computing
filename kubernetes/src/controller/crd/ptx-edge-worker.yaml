@@ -52,6 +52,11 @@ spec:
                         type: object
                         required:
                           - port
+                        x-kubernetes-validations:
+                          - rule: "self.public >= self.secured"
+                            message: "Only public port can be secured!"
+                            reason: "FieldValueInvalid"
+                            fieldPath: ".secured"
                         properties:
                           port:
                             type: integer
@@ -392,10 +397,19 @@ spec:
                           description: "List of privacy zones as node selection criteria"
                           minItems: 1
                           items:
-                            type: string
-                            description: "Privacy zone ID"
-                            minLength: 1
-                            patters: ^[^:/]+$
+                            type: object
+                            description: "Privacy zone"
+                            properties:
+                              name:
+                                type: string
+                                description: "Unique zone name"
+                                minLength: 1
+                                patters: ^[^:/]+$
+                                example: "zone-1"
+                              preferred:
+                                type: boolean
+                                description: "Prefer zone during scheduling"
+                                default: false
             status:
               type: object
               description: "Runtime information"

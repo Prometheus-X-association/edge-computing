@@ -520,10 +520,20 @@ class PEWSpecDataspaceExchange(BaseModel):
     """
 
 
-class PEWSpecDataspacePrivacyZone(RootModel[str]):
-    root: Annotated[str, Field(min_length=1)]
+class PEWSpecDataspacePrivacyZone(BaseModel):
     """
-    Privacy zone ID
+    Privacy zone
+    """
+
+    name: Annotated[str | None, Field(examples=["zone-1"], min_length=1)] = None
+    """
+    Unique zone name
+
+    Example: 'zone-1'
+    """
+    preferred: bool | None = False
+    """
+    Prefer zone during scheduling
     """
 
 

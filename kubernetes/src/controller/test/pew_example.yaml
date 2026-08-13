@@ -1,7 +1,7 @@
 apiVersion: dataspace.ptx.org/v1alpha1
 kind: PtxEdgeWorker
 metadata:
-  name: test-example
+  name: example
   namespace: ptx-edge
   labels:
     env: test
@@ -32,9 +32,9 @@ spec:
       image: "busybox:latest"
       cred:
         server: "https://index.docker.io/v1/"
-        #user: admin
-        #secret: admin
-        #insecure: false
+        user: admin
+        secret: admin
+        insecure: false
     demands:
       cpu: 1.5
       memory: 500
@@ -45,12 +45,12 @@ spec:
       - "-c"
       - "'sleep infinity'"
     config:
-      #file:
-      #  path: "/var/cache/worker/config.json"
-      #  data: |
-      #    {
-      #      "test": 42
-      #    }
+      file:
+        path: "/var/cache/worker/config.json"
+        data: |
+          {
+            "test": 42
+          }
       env:
         - key: WRK_TEST_VAR
           value: "test123"
@@ -75,5 +75,6 @@ spec:
     privacy:
       required: true
       zones:
-        - zone1
-        - zone2
+        - name: zone1
+        - name: zone2
+          preferred: true
