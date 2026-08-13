@@ -35,10 +35,15 @@ spec:
             {% endif %}
           env:
             # PDC configuration
+            {% if cfg.pdc %}
+            {% set zone = "-" ~ spec.dataspace.privacy.zones[0].model_dump()
+                          if spec.dataspace.privacy.zones is iterable else '' %}
             - name: BUILD_PDC_HOST
-              value: {{ cfg.pdc.host if cfg.pdc.host }}
+              value: {{ cfg.pdc.host | default(["pdc" ~ zone, namespace, 'scv', 'cluster', 'local' ] | join('.')) }}
             - name: BUILD_PDC_PORT
-              value: "3000"
+              value: "{{ cfg.pdc.port | default(3000) }}"
+            {% endif %}
+            {% if "PTX" in [spec.data.src.method, spec.worker.location.method] and cfg.pdc and cfg.pdc.secret %}
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
@@ -49,6 +54,7 @@ spec:
                 secretKeyRef:
                   name: {{ cfg.pdc.secret }}
                   key: SECRET_KEY
+            {% endif %}
             # Basic builder configuration
             - name: BUILD_CONNECTION_TIMEOUT
               value: "600"
@@ -136,10 +142,12 @@ spec:
             - name: BUILD_WORKER_DST
               value: {{ "worker/" ~ spec.worker.name }}
             {% endif %}
+          {% if "PTX" in [spec.data.src.method, spec.worker.location.method] %}
           ports:
             - name: webhook-port
-              containerPort: {{ cfg.builder.port }}
+              containerPort: {{ cfg.builder.port if cfg.builder and cfg.builder.port else 9999 }}
               protocol: TCP
+          {% endif %}
       containers:
         - name: worker
           image: {% if spec.worker.cached and spec.worker.name -%}
@@ -188,8 +196,10 @@ spec:
               protocol: TCP
           {% endfor %}
           {% endif %}
-      schedulerName: {{ cfg.scheduler.name if spec.dataspace.privacy.required else "default" }}
-      {% if spec.dataspace.privacy.zones %}
+      {% if spec.dataspace.privacy.required and cfg.scheduler and cfg.scheduler.name %}
+      schedulerName: {{ cfg.scheduler.name }}
+      {% endif %}
+      {% if spec.dataspace.privacy.required and spec.dataspace.privacy.zones is iterable %}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

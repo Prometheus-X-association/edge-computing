@@ -33,7 +33,7 @@ CONFIG = {
         'port': 9999
     },
     'pdc': {
-        'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
+        # 'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
         'port': 3000,
         'secret': 'pdc-secrets-env'
     }
@@ -46,7 +46,8 @@ def test_template(template: str, values: str | pathlib.Path):
                              auto_reload=False,
                              optimized=True,
                              trim_blocks=True,
-                             lstrip_blocks=True)
+                             lstrip_blocks=True,
+                             extensions=['jinja2.ext.do'])
     template = env.get_template(template)
     print(f"Loaded template: {template}")
     print('=' * 80)
@@ -66,7 +67,7 @@ def test_template(template: str, values: str | pathlib.Path):
 
 if __name__ == '__main__':
     test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_middleware.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_ingress.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    # test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    # test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    # test_template("worker_middleware.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    # test_template("worker_ingress.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")

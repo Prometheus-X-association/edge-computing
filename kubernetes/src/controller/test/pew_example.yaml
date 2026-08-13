@@ -17,7 +17,7 @@ spec:
     src:
       method: HTTPS
       path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
-      size: 50
+      size: 75
       auth:
         scheme: BASIC
         user: admin
@@ -32,24 +32,25 @@ spec:
       image: "busybox:latest"
       cred:
         server: "https://index.docker.io/v1/"
-        user: admin
-        secret: admin
-        insecure: false
+        #user: admin
+        #secret: admin
+        #insecure: false
     demands:
       cpu: 1.5
-      memory: 3000
+      memory: 500
     cached: true
     name: "myworker:latest"
     command:
-      - "/bin/bash"
-      - "date"
+      - "/bin/sh"
+      - "-c"
+      - "'sleep infinity'"
     config:
-#      file:
-#        path: "/var/cache/worker/config.json"
-#        data: |
-#          {
-#            "test": 42
-#          }
+      #file:
+      #  path: "/var/cache/worker/config.json"
+      #  data: |
+      #    {
+      #      "test": 42
+      #    }
       env:
         - key: WRK_TEST_VAR
           value: "test123"
@@ -75,3 +76,4 @@ spec:
       required: true
       zones:
         - zone1
+        - zone2

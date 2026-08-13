@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ cfg.builder.name ~ "-" ~ name }}
+  name: {{ (cfg.builder.name if cfg.builder and cfg.builder.name | default('builder')) ~ "-" ~ name }}
   namespace: {{ namespace }}
   labels:
     tier: worker
@@ -14,6 +14,7 @@ spec:
   ports:
     - name: webhook-port
       protocol: TCP
-      port: {{ cfg.builder.port | int }}
-      targetPort: {{ cfg.builder.port | int }}
+      {% set builder_port = cfg.builder.port | int if cfg.builder and cfg.builder.port else 9999 %}
+      port: {{ builder_port }}
+      targetPort: {{ builder_port }}
   publishNotReadyAddresses: true
