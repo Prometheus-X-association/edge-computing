@@ -1,0 +1,27 @@
+{% set public_interface = spec.service.interfaces | selectattr('public') | first %}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ name }}
+  namespace: {{ namespace }}
+  labels:
+    tier: worker
+    {# autofilled #}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: {{
+        [ namespace ~ '-api-basic-auth@kubernetescrd',
+          namespace ~ '-' ~ name ~ '-stripprefix@kubernetescrd']
+        | join(',') }}
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: {{ '/worker/' ~ name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ name }}
+                port:
+                  name: {{ 'port-' ~ public_interface.port }}

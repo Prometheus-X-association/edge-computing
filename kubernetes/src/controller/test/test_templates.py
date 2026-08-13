@@ -21,29 +21,27 @@ import yaml
 from model.ptxedgeworker import PEW
 
 CONFIG = {
-    'cfg': {
-        'name': 'test-example',
-        'namespace': 'ptx-edge',
-        'registry': {
-            'path': 'registry.k3d.local:5000'
-        },
-        'scheduler': {
-            'name': 'ptx-edge-scheduler'
-        },
-        'builder': {
-            'image': 'ptx-edge/builder:1.0'
-        },
-        'pdc': {
-            'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
-            'port': 3000,
-            'secret': 'pdc-secrets-env'
-        }
+    'registry': {
+        'path': 'registry.k3d.local:5000'
+    },
+    'scheduler': {
+        'name': 'ptx-edge-scheduler'
+    },
+    'builder': {
+        'name': 'builder',
+        'image': 'ptx-edge/builder:1.0',
+        'port': 9999
+    },
+    'pdc': {
+        'host': 'pdc-zone-data-0.ptx-edge.svc.cluster.local',
+        'port': 3000,
+        'secret': 'pdc-secrets-env'
     }
 }
 
 
-def test_worker_template(template: str, values: str | pathlib.Path):
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent),
+def test_template(template: str, values: str | pathlib.Path):
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent / '../app/templates'),
                              autoescape=False,
                              auto_reload=False,
                              optimized=True,
@@ -59,31 +57,7 @@ def test_worker_template(template: str, values: str | pathlib.Path):
     print('=' * 80)
     print(f"Defined config:\n{pprint.pformat(CONFIG)}")
     print('=' * 80)
-    manifest = template.render(pew.spec, **CONFIG)
-    print(f"Generated raw manifest:\n---\n{manifest}\n---")
-    print('=' * 80)
-    manifest = yaml.safe_load(manifest)
-    print(f"Generated manifest:\n---\n{yaml.safe_dump(manifest, indent=2)}---")
-
-
-def test_service_template(template: str, values: str | pathlib.Path):
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent),
-                             autoescape=False,
-                             auto_reload=False,
-                             optimized=True,
-                             trim_blocks=True,
-                             lstrip_blocks=True)
-    template = env.get_template(template)
-    print(f"Loaded template: {template}")
-    print('=' * 80)
-    with open(values) as f:
-        pew_example = yaml.safe_load(f)
-    pew = PEW.model_validate(pew_example, strict=False)
-    print(f"Loaded value model:\n{pew.model_dump_json(indent=2)}")
-    print('=' * 80)
-    print(f"Defined config:\n{pprint.pformat(CONFIG)}")
-    print('=' * 80)
-    manifest = template.render(pew.spec, **CONFIG)
+    manifest = template.render(spec=pew.spec, name='test123', namespace="ptx-edge", cfg=CONFIG)
     print(f"Generated raw manifest:\n---\n{manifest}\n---")
     print('=' * 80)
     manifest = yaml.safe_load(manifest)
@@ -91,6 +65,8 @@ def test_service_template(template: str, values: str | pathlib.Path):
 
 
 if __name__ == '__main__':
-    # test_worker_template("template_worker.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_worker_template("template_service_worker.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    # test_worker_template("template_service_builder.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("worker_middleware.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("worker_ingress.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")

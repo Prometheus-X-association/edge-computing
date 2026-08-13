@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Service
 metadata:
-  {# name: autofilled #}
-  {# namespace: autofilled #}
+  name: {{ cfg.builder.name ~ "-" ~ name }}
+  namespace: {{ namespace }}
   labels:
     tier: worker
     {# autofilled #}
 spec:
   selector:
-    app.kubernetes.io/name: {{ cfg.name | default("worker") }}
+    app.kubernetes.io/name: {{ name }}
     tier: worker
   type: ClusterIP
   ports:
     - name: webhook-port
       protocol: TCP
-      port: 9999
-      targetPort: 9999
+      port: {{ cfg.builder.port | int }}
+      targetPort: {{ cfg.builder.port | int }}
   publishNotReadyAddresses: true

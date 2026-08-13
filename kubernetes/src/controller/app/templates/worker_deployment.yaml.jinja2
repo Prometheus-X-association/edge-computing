@@ -1,0 +1,216 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ name }}
+  namespace: {{ namespace }}
+  labels:
+    tier: worker
+    {# autofilled #}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ name }}
+      tier: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ name }}
+        tier: worker
+    spec:
+      terminationGracePeriodSeconds: 10
+      initContainers:
+        - name: builder
+          image: {{ cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path }}{{ cfg.builder.image }}
+          imagePullPolicy: IfNotPresent
+          command: [ "python3", "-m", "app", "-v" ]
+          volumeMounts:
+            - name: registry-ca
+              mountPath: /usr/share/ca-certificates/ptx-edge
+              readOnly: true
+            {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+            - name: data-dir
+              mountPath: /var/cache/data/
+              readOnly: false
+            {% endif %}
+          env:
+            # PDC configuration
+            - name: BUILD_PDC_HOST
+              value: {{ cfg.pdc.host if cfg.pdc.host }}
+            - name: BUILD_PDC_PORT
+              value: "3000"
+            - name: BUILD_PDC_KEY_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ cfg.pdc.secret }}
+                  key: SERVICE_KEY
+            - name: BUILD_PDC_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ cfg.pdc.secret }}
+                  key: SECRET_KEY
+            # Basic builder configuration
+            - name: BUILD_CONNECTION_TIMEOUT
+              value: "600"
+            - name: BUILD_DATA_DST
+              value: "/var/cache/data/"
+            # Datasource configuration
+            - name: BUILD_DATA_METHOD
+              value: {{ spec.data.src.method }}
+            {% if spec.data.src.method != "SKIP" %}
+            - name: BUILD_DATA_SRC
+              value: {{ spec.data.src.path if spec.data.src.path is not none }}
+            {% endif %}
+            # Direct datasource configuration
+            {% if spec.data.src.auth %}
+            - name: BUILD_DATA_AUTH_SCHEME
+              value: "{{ spec.data.src.auth.scheme }}"
+            - name: BUILD_DATA_AUTH_USER
+              value: "{{ spec.data.src.auth.user }}"
+            - name: BUILD_DATA_AUTH_SECRET
+              value: "{{ spec.data.src.auth.secret.get_secret_value() }}"
+            - name: BUILD_DATA_AUTH_INSECURE
+              value: "{{ spec.data.src.auth.insecure | lower }}"
+            {% endif %}
+            # PTX configuration
+            {% if spec.dataspace.exchange.data %}
+            - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
+              value: {{ "https://contract.visionstrust.com/contracts/"
+                        ~ spec.dataspace.exchange.data.contract }}
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/"
+                        ~ spec.dataspace.exchange.data.provider.offer }}
+            {% if spec.dataspace.exchange.data.provider.resource %}
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
+              value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/"
+                        ~ spec.dataspace.exchange.data.provider.resource }}
+            {% endif %}
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/"
+                        ~ spec.dataspace.exchange.data.consumer.offer }}
+            {% if spec.dataspace.exchange.data.consumer.resource %}
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
+              value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/"
+                      ~ spec.dataspace.exchange.data.consumer.resource }}
+            {% endif %}
+            {% endif %}
+            {% if spec.dataspace.exchange.worker %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
+              value: {{ "https://contract.visionstrust.com/contracts/"
+                        ~ spec.dataspace.exchange.worker.contract }}
+            - name: BUILD_PTX_WORKER_EXCHANGE_DATA_OFFER
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/"
+                        ~ spec.dataspace.exchange.worker.provider.offer }}
+            {% if spec.dataspace.exchange.worker.provider.resource %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_DATA_RESOURCE
+              value: {{ "https://api.visionstrust.com/v1/catalog/dataresources/"
+                      ~ spec.dataspace.exchange.worker.provider.resource }}
+            {% endif %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_OFFER
+              value: {{ "https://api.visionstrust.com/v1/catalog/serviceofferings/"
+                      ~ spec.dataspace.exchange.worker.consumer.offer }}
+            {% if spec.dataspace.exchange.worker.consumer.resource %}
+            - name: BUILD_PTX_WORKER_EXCHANGE_SERVICE_RESOURCE
+              value: {{ "https://api.visionstrust.com/v1/catalog/softwareresources/"
+                      ~ spec.dataspace.exchange.worker.consumer.resource }}
+            {% endif %}
+            {% endif %}
+            # Worker configuration
+            - name: BUILD_WORKER_METHOD
+              value: {{ spec.worker.location.method }}
+            {% if spec.worker.location.method != "SKIP" %}
+            - name: BUILD_WORKER_SRC
+              value: {{ spec.worker.location.image if spec.worker.location.image is not none and spec.worker.cached}}
+            {% endif %}
+            {% if spec.worker.location.cred %}
+            - name: BUILD_WORKER_AUTH_SERVER
+              value: "{{ spec.worker.location.cred.server }}"
+            - name: BUILD_WORKER_AUTH_USER
+              value: "{{ spec.worker.location.cred.user }}"
+            - name: BUILD_WORKER_AUTH_SECRET
+              value: "{{ spec.worker.location.cred.secret.get_secret_value() }}"
+            - name: BUILD_WORKER_AUTH_INSECURE
+              value: "{{ spec.worker.location.cred.insecure | lower }}"
+            {% endif %}
+            {% if spec.worker.cached is true %}
+            - name: BUILD_WORKER_DST
+              value: {{ "worker/" ~ spec.worker.name }}
+            {% endif %}
+          ports:
+            - name: webhook-port
+              containerPort: {{ cfg.builder.port }}
+              protocol: TCP
+      containers:
+        - name: worker
+          image: {% if spec.worker.cached and spec.worker.name -%}
+                  {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ "worker/" ~ spec.worker.name }}
+                  {% else -%}
+                  {{ spec.worker.location.image if spec.worker.location.image}}
+                  {% endif %}
+          imagePullPolicy: IfNotPresent
+          {% if spec.worker.command is iterable %}
+          command:
+          {% for cmd in spec.worker.command %}
+            - "{{ cmd.model_dump() }}"
+          {% endfor %}
+          {% endif %}
+          {% if spec.worker.demands %}
+          resources:
+            requests:
+              {% if spec.worker.demands.cpu %}
+              cpu: {{ ( 1000 * spec.worker.demands.cpu ) | int ~ "m"}}
+              {% endif %}
+              {% if spec.worker.demands.memory %}
+              memory: {{ spec.worker.demands.memory | int ~ "M"}}
+              {% endif %}
+          {% endif %}
+          # Data destination configuration
+          {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+          volumeMounts:
+            - name: data-dir
+              mountPath: {{ spec.data.dst.path | default("/var/cache/data", true) }}
+              readOnly: true
+          {% endif %}
+          {% if spec.worker.config.env is iterable %}
+          env:
+          {% for envvar in spec.worker.config.env %}
+            - name: "{{ envvar.key }}"
+              {% if envvar.value  %}
+              value: "{{ envvar.value }}"
+              {% endif %}
+          {% endfor %}
+          {% endif %}
+          {% if spec.service.interfaces is iterable %}
+          ports:
+          {% for interface in spec.service.interfaces %}
+            - name: {{ "port-" ~ interface.port }}
+              containerPort: {{ interface.port | int }}
+              protocol: TCP
+          {% endfor %}
+          {% endif %}
+      schedulerName: {{ cfg.scheduler.name if spec.dataspace.privacy.required else "default" }}
+      {% if spec.dataspace.privacy.zones %}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              {% for zone in spec.dataspace.privacy.zones %}
+              - matchExpressions:
+                  - key: {{ "privacy-zone.dataspace.ptx.org/" ~ zone.model_dump() }}
+                    operator: In
+                    values:
+                      - "true"
+              {% endfor %}
+      {% endif %}
+      volumes:
+        - name: registry-ca
+          configMap:
+            name: registry-root-ca.crt
+            items:
+              - key: ca.crt
+                path: registry_CA.crt
+        {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+        - name: data-dir
+          emptyDir:
+            sizeLimit: {{ spec.data.src.size ~ "Mi" }}
+        {% endif %}
