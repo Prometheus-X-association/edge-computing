@@ -140,7 +140,7 @@ spec:
             {% endif %}
             {% if spec.worker.cached is true %}
             - name: BUILD_WORKER_DST
-              value: {{ "worker/" ~ spec.worker.name }}
+              value: {{ "worker/" ~ spec.worker.name if spec.worker.name else spec.worker.location.image }}
             {% endif %}
           {% if "PTX" in [spec.data.src.method, spec.worker.location.method] %}
           ports:
@@ -150,10 +150,12 @@ spec:
           {% endif %}
       containers:
         - name: worker
-          image: {% if spec.worker.cached and spec.worker.name -%}
-                  {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ "worker/" ~ spec.worker.name }}
+          image: {% if spec.worker.cached -%}
+                  {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path)
+                    ~ "worker/"
+                    ~ (spec.worker.name if spec.worker.name else spec.worker.location.image) }}
                   {% else -%}
-                  {{ spec.worker.location.image if spec.worker.location.image}}
+                  {{ spec.worker.location.image if spec.worker.location.image }}
                   {% endif %}
           imagePullPolicy: IfNotPresent
           {% if spec.worker.command is iterable %}
