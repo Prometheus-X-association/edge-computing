@@ -54,6 +54,8 @@ spec:
       env:
         - key: WRK_TEST_VAR
           value: "test123"
+        - key: WRK_TEST_VAR2
+          value: "42"
   dataspace:
     exchange:
       data:

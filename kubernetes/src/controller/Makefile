@@ -52,7 +52,7 @@ status ::
 ########################################################################################################################
 
 add-test-pew ::
-	-kubectl delete -f test/pew_example.yaml
+	-@kubectl delete -f test/pew_example.yaml
 	kubectl apply -f test/pew_example.yaml
 
 del-test-pew:
