@@ -524,6 +524,15 @@ class PEWSpecDataspaceExchange(BaseModel):
     """
 
 
+class PEWSpecDataspacePrivacyScheduler(StrEnum):
+    """
+    Used scheduling method
+    """
+
+    DEFAULT = "DEFAULT"
+    PRIVATE = "PRIVATE"
+
+
 class PEWSpecDataspacePrivacyZone(BaseModel):
     """
     Privacy zone
@@ -549,6 +558,12 @@ class PEWSpecDataspacePrivacy(BaseModel):
     required: bool | None = True
     """
     Demands PTX-edge specific scheduler
+    """
+    scheduler: PEWSpecDataspacePrivacyScheduler | None = (
+        PEWSpecDataspacePrivacyScheduler.PRIVATE
+    )
+    """
+    Used scheduling method
     """
     zones: Annotated[list[PEWSpecDataspacePrivacyZone] | None, Field(min_length=1)] = (
         None

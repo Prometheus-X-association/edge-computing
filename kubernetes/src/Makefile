@@ -222,6 +222,13 @@ run-controller:
 	kubectl delete pods/controller --now --wait
 	#kubectl delete pods -l app=worker
 
+add-test-pew ::
+	-@kubectl delete -f controller/test/test_pew.yaml
+	kubectl apply -f controller/test/test_pew.yaml
+
+del-test-pew ::
+	kubectl delete -f test/test_pew.yaml
+
 ########################################################################################################################
 
 run-sample-convnet:

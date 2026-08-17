@@ -422,6 +422,11 @@ spec:
                           type: boolean
                           description: "Demands PTX-edge specific scheduler"
                           default: true
+                        scheduler:
+                          type: string
+                          description: "Used scheduling method"
+                          enum: [ DEFAULT, PRIVATE ]
+                          default: PRIVATE
                         zones:
                           type: array
                           description: "List of privacy zones as node selection criteria"

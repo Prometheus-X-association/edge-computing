@@ -58,13 +58,6 @@ add-example ::
 del-example:
 	kubectl delete -f test/pew_example.yaml
 
-add-test ::
-	-@kubectl delete -f test/test_pew.yaml
-	kubectl apply -f test/test_pew.yaml
-
-del-test ::
-	kubectl delete -f test/test_pew.yaml
-
 ########################################################################################################################
 
 docker-test-setup :: build

@@ -72,8 +72,9 @@ spec:
     #        offer: 77d18b79ee71f9f096baecb1
     #        resource: 77d18bf6ee71f9f096baed58
     privacy:
-      required: false
-      #zones:
-      #  - name: zone1
-      #  - name: zone2
-      #    preferred: true
+      required: true
+      scheduler: DEFAULT
+      zones:
+        - name: zone-A
+        - name: zone-B
+          preferred: true

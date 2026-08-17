@@ -39,11 +39,12 @@ spec:
             {% set zone = "-" ~ (spec.dataspace.privacy.zones | selectattr('preferred') | first).name
                           if spec.dataspace.privacy.zones is iterable else '' %}
             - name: BUILD_PDC_HOST
-              value: {{ cfg.pdc.host | default(["pdc" ~ zone, namespace, 'scv', 'cluster', 'local' ] | join('.')) }}
+              value: {{ cfg.pdc.host | default(["pdc" ~ zone, namespace, 'scv', 'cluster', 'local' ] | join('.'), true) }}
             - name: BUILD_PDC_PORT
-              value: "{{ cfg.pdc.port | default(3000) }}"
+              value: "{{ cfg.pdc.port | default(3000, true) }}"
             {% endif %}
-            {% if "PTX" in [spec.data.src.method, spec.worker.location.method] and cfg.pdc and cfg.pdc.secret %}
+            {% if "PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper]
+                    and cfg.pdc and cfg.pdc.secret %}
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
@@ -65,7 +66,7 @@ spec:
               value: {{ spec.data.src.method }}
             {% if spec.data.src.method != "SKIP" %}
             - name: BUILD_DATA_SRC
-              value: {{ spec.data.src.path if spec.data.src.path is not none }}
+              value: {{ spec.data.src.path | default("", true) }}
             {% endif %}
             # Direct datasource configuration
             {% if spec.data.src.auth %}
@@ -124,9 +125,9 @@ spec:
             # Worker configuration
             - name: BUILD_WORKER_METHOD
               value: {{ spec.worker.location.method }}
-            {% if spec.worker.location.method != "SKIP" %}
+            {% if spec.worker.location.method | upper != "SKIP" %}
             - name: BUILD_WORKER_SRC
-              value: {{ spec.worker.location.image if spec.worker.location.image and spec.worker.cached }}
+              value: {{ spec.worker.location.image if spec.worker.cached and spec.worker.location.image }}
             {% endif %}
             {% if spec.worker.location.cred %}
             - name: BUILD_WORKER_AUTH_SERVER
@@ -142,7 +143,7 @@ spec:
             - name: BUILD_WORKER_DST
               value: {{ "worker/" ~ spec.worker.name if spec.worker.name else spec.worker.location.image }}
             {% endif %}
-          {% if "PTX" in [spec.data.src.method, spec.worker.location.method] %}
+          {% if "PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper] %}
           ports:
             - name: webhook-port
               containerPort: {{ cfg.builder.port if cfg.builder and cfg.builder.port else 9999 }}
@@ -153,9 +154,9 @@ spec:
           image: {% if spec.worker.cached -%}
                   {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path)
                     ~ "worker/"
-                    ~ (spec.worker.name if spec.worker.name else spec.worker.location.image) }}
+                    ~ (spec.worker.name | default(spec.worker.location.image, true)) }}
                   {% else -%}
-                  {{ spec.worker.location.image if spec.worker.location.image }}
+                  {{ spec.worker.location.image | default("", true) }}
                   {% endif %}
           imagePullPolicy: IfNotPresent
           {% if spec.worker.command is iterable %}
@@ -198,7 +199,8 @@ spec:
               protocol: TCP
           {% endfor %}
           {% endif %}
-      {% if spec.dataspace.privacy.required and cfg.scheduler and cfg.scheduler.name %}
+      {% if spec.dataspace.privacy.required and (spec.dataspace.privacy.scheduler | upper) != "DEFAULT"
+            and cfg.scheduler and cfg.scheduler.name %}
       schedulerName: {{ cfg.scheduler.name }}
       {% endif %}
       {% if spec.dataspace.privacy.required and spec.dataspace.privacy.zones is iterable %}
@@ -224,5 +226,5 @@ spec:
         {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
         - name: data-dir
           emptyDir:
-            sizeLimit: {{ spec.data.src.size ~ "Mi" }}
+            sizeLimit: {{ spec.data.src.size ~ "M" }}
         {% endif %}
