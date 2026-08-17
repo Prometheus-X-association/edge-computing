@@ -1,7 +1,7 @@
 {% set public_interface = spec.service.interfaces | selectattr('public') | first %}
 {% set middlewares = [namespace ~ '-' ~ name ~ '-stripprefix@kubernetescrd'] %}
 {% if public_interface.secured %}
-  {% do middlewares.insert(0, namespace ~ '-api-basic-auth@kubernetescrd') %}
+  {% set middlewares = [namespace ~ '-api-basic-auth@kubernetescrd'] + middlewares %}
 {% endif %}
 apiVersion: networking.k8s.io/v1
 kind: Ingress

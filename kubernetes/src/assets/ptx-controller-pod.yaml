@@ -61,7 +61,7 @@ rules:
     resources: [ services ]
     verbs: [ create ]
   - apiGroups: [ networking.k8s.io ]
-    resources: [ ingress ]
+    resources: [ ingresses ]
     verbs: [ create ]
   - apiGroups: [ traefik.io ]
     resources: [ middlewares ]
