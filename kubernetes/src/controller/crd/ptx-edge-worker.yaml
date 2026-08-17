@@ -493,5 +493,5 @@ spec:
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp
-          priority: 1
+          priority: 0
 ---

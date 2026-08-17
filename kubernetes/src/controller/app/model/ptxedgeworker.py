@@ -537,7 +537,7 @@ class PEWSpecDataspacePrivacyZone(BaseModel):
     """
     preferred: bool | None = False
     """
-    Prefer zone during scheduling
+    Prefer zone during scheduling and data transition
     """
 
 

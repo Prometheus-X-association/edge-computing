@@ -51,12 +51,19 @@ status ::
 
 ########################################################################################################################
 
-add-test-pew ::
+add-example ::
 	-@kubectl delete -f test/pew_example.yaml
 	kubectl apply -f test/pew_example.yaml
 
-del-test-pew:
+del-example:
 	kubectl delete -f test/pew_example.yaml
+
+add-test ::
+	-@kubectl delete -f test/test_pew.yaml
+	kubectl apply -f test/test_pew.yaml
+
+del-test ::
+	kubectl delete -f test/test_pew.yaml
 
 ########################################################################################################################
 

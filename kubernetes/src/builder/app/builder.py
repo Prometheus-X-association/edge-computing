@@ -82,7 +82,6 @@ def main():
     log.debug("Configuration arguments: %s", args)
     # Load configuration
     load_configuration(cfg_file=args.config, from_env=True)
-    print(args)
     if args.dummy:
         # Testing builder
         return wait_and_exit()

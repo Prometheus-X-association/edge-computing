@@ -12,10 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import http
 import logging
 import pathlib
-import pprint
 from typing import Any
 
 import jinja2
@@ -49,7 +49,7 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
     memo.CONFIG = load_config_from_env(prefix=ENV_PREFIX)
     if not all(map(lambda _p: memo.CONFIG.get(_p) is not None, REQUIRED_FIELDS)):
         raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {memo.CONFIG}!")
-    logger.debug(f"Loaded configuration: {pprint.pformat(memo.CONFIG)}")
+    logger.debug(f"Loaded configuration:\n" + str(memo.CONFIG.to_toml()))
     # Kopf-internal configurations
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=PEW.group)
     settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=PEW.group,
@@ -72,7 +72,7 @@ async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_) -> None:
         enable_async=True,
         extensions=['jinja2.ext.do']
     )
-    logger.debug(f"Loaded templates: {','.join(memo.TEMPLATES.list_templates())}")
+    logger.debug(f"Loaded templates: {memo.TEMPLATES.list_templates()}")
 
 
 @kopf.on.startup(errors=kopf.ErrorsMode.PERMANENT)
@@ -87,41 +87,52 @@ def _is_service(spec: kopf.Spec, **_: Any) -> bool:
     return spec.get("service", {}).get("enabled", False)
 
 
-@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="create/service")
-async def create_service(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
-                         **_: Any) -> dict[str, Any]:
+async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
+                                    **_: Any):
+    logger.debug("-" * 100)
+    logger.info(f"Rendering deployment manifest...")
+    template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_deployment.yaml.jinja2")
+    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    body: dict = await asyncify(yaml.safe_load)(stream=manifest)
+    kopf.adopt(body, strict=True, forced=True)
+    logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
+    ####
+    try:
+        k8s = client.AppsV1Api()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        obj, status, _ = await asyncify(k8s.create_namespaced_deployment_with_http_info)(namespace=namespace,
+                                                                                         body=body)
+        status = http.HTTPStatus(status)
+        logger.debug(f"Received response: HTTP/{status} - {status.name}")
+        if not status.is_success:
+            raise kopf.TemporaryError(f"Kube API response: {status}")
+        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+    except client.ApiException as e:
+        logger.error(f"Error received:\n{e}")
+        raise kopf.TemporaryError(str(e)) from e
+    ###
+    logger.debug("-" * 100)
+
+
+@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="create/worker")
+async def create_pew_service(body: kopf.Body, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
     logger.info(f"Parsing {PEW.kind} model...")
     pew = PEW.model_validate(body, strict=False)
-    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=4)}")
+    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
     ####
-    logger.info(f"Rendering manifest...")
-    worker_temp: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_pod.yaml.jinja2")
-    manifest: str = await worker_temp.render_async(pew.spec)
-    new_body: dict = await asyncify(yaml.safe_load)(stream=manifest)
-    kopf.adopt(new_body, forced=True)
-    logger.debug(f"New object:\n{sanitize_model(new_body)}")
+    sub_handlers = {"deployment": functools.partial(_create_worker_deployment, pew=pew)}
+    logging.debug(f"Registering object sub-handlers: {sub_handlers.keys()}")
+    # noinspection bad-argument-type
+    await kopf.execute(fns=sub_handlers)
     ####
-    try:
-        logger.info("Invoke k8s API...")
-        k8s = client.CoreV1Api()
-        pod, status, _ = await asyncify(k8s.create_namespaced_pod_with_http_info)(body=new_body,
-                                                                                  namespace=namespace,
-                                                                                  _preload_content=True)
-        logger.debug(f"Received response: HTTP/{status}")
-        if (status := http.HTTPStatus(status)).is_success:
-            logger.debug(f"Invocation status: {status.name}")
-            kopf.info(body, reason="Starting", message=f"{PEW.__name__} {pod.metadata.name} initiated successfully!")
-        else:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-    except client.ApiException as e:
-        logger.error(f"Error received:\n{e}")
-        raise kopf.TemporaryError(str(e)) from e
+    kopf.info(body, reason="Initiated", message="Initiated successfully!")
     logger.debug("=" * 100)
+    ###
     return {'initialized': True}
 
 
 @kopf.on.create(*PEW.SELECTOR, when=kopf.not_(_is_service), id="create/task")
-def create_task(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
+def create_pew_task(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     raise kopf.PermanentError("Not implemented yet!")

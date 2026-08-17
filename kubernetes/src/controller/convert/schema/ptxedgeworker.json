@@ -21,6 +21,18 @@
               "data",
               "worker"
             ],
+            "x-kubernetes-validations": [
+              {
+                "rule": "self.data.src.method != 'PTX' || has(self.dataspace.exchange.data)",
+                "message": "Data source method: PTX requires a dataspace contract!",
+                "fieldPath": ".dataspace.exchange.data"
+              },
+              {
+                "rule": "self.worker.location.method != 'PTX' || has(self.dataspace.exchange.worker)",
+                "message": "Worker collection method: PTX requires a dataspace contract!",
+                "fieldPath": ".dataspace.exchange.worker"
+              }
+            ],
             "properties": {
               "service": {
                 "type": "object",
@@ -57,7 +69,6 @@
                         {
                           "rule": "self.public >= self.secured",
                           "message": "Only public port can be secured!",
-                          "reason": "FieldValueInvalid",
                           "fieldPath": ".secured"
                         }
                       ],
@@ -100,12 +111,12 @@
                     "x-kubernetes-validations": [
                       {
                         "rule": "self.method in [\"PTX\", \"SKIP\"] || size(self.path) > 0",
-                        "messageExpression": "\"method: \" + self.method + \" requires a valid path!\"",
+                        "messageExpression": "\"method: \" + self.method + \" requires a valid data resource path!\"",
                         "fieldPath": ".path"
                       },
                       {
                         "rule": "!has(self.path) || self.method != \"SKIP\" && self.path.lowerAscii().startsWith(self.method.lowerAscii()+\":\")",
-                        "messageExpression": "\"Heading scheme must aligned with method: \" + self.method.lowerAscii()",
+                        "messageExpression": "\"Heading scheme in path must start with method: \" + self.method.lowerAscii() + \"!\"",
                         "fieldPath": ".path"
                       }
                     ],
@@ -206,6 +217,13 @@
                 "required": [
                   "location"
                 ],
+                "x-kubernetes-validations": [
+                  {
+                    "rule": "!has(self.name) || size(self.name) > 0 && self.cached",
+                    "messageExpression": "\"Image with new name: \" + self.name + \" requires cacheing!\"",
+                    "fieldPath": ".cached"
+                  }
+                ],
                 "properties": {
                   "location": {
                     "type": "object",
@@ -215,7 +233,7 @@
                     ],
                     "x-kubernetes-validations": [
                       {
-                        "rule": "self.method in [\"DOCKER\", \"SECRET\"] && has(self.image) && size(self.image) > 0",
+                        "rule": "!(self.method in [\"DOCKER\", \"SECRET\"]) || has(self.image) && size(self.image) > 0",
                         "messageExpression": "\"method: \" + self.method + \" requires a valid image!\"",
                         "fieldPath": ".image"
                       }
@@ -558,7 +576,7 @@
                             },
                             "preferred": {
                               "type": "boolean",
-                              "description": "Prefer zone during scheduling",
+                              "description": "Prefer zone during scheduling and data transition",
                               "default": false
                             }
                           }

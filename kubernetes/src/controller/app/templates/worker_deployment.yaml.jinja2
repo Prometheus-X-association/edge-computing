@@ -28,7 +28,7 @@ spec:
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
-            {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+            {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
             - name: data-dir
               mountPath: /var/cache/data/
               readOnly: false
@@ -36,7 +36,7 @@ spec:
           env:
             # PDC configuration
             {% if cfg.pdc %}
-            {% set zone = "-" ~ spec.dataspace.privacy.zones[0].model_dump()
+            {% set zone = "-" ~ (spec.dataspace.privacy.zones | selectattr('preferred') | first).name
                           if spec.dataspace.privacy.zones is iterable else '' %}
             - name: BUILD_PDC_HOST
               value: {{ cfg.pdc.host | default(["pdc" ~ zone, namespace, 'scv', 'cluster', 'local' ] | join('.')) }}
@@ -126,7 +126,7 @@ spec:
               value: {{ spec.worker.location.method }}
             {% if spec.worker.location.method != "SKIP" %}
             - name: BUILD_WORKER_SRC
-              value: {{ spec.worker.location.image if spec.worker.location.image is not none and spec.worker.cached}}
+              value: {{ spec.worker.location.image if spec.worker.location.image and spec.worker.cached }}
             {% endif %}
             {% if spec.worker.location.cred %}
             - name: BUILD_WORKER_AUTH_SERVER
@@ -168,14 +168,14 @@ spec:
           resources:
             requests:
               {% if spec.worker.demands.cpu %}
-              cpu: {{ ( 1000 * spec.worker.demands.cpu ) | int ~ "m"}}
+              cpu: {{ ( 1000 * spec.worker.demands.cpu ) | int ~ "m" }}
               {% endif %}
               {% if spec.worker.demands.memory %}
-              memory: {{ spec.worker.demands.memory | int ~ "M"}}
+              memory: {{ spec.worker.demands.memory | int ~ "M" }}
               {% endif %}
           {% endif %}
           # Data destination configuration
-          {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+          {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
           volumeMounts:
             - name: data-dir
               mountPath: {{ spec.data.dst.path | default("/var/cache/data", true) }}
@@ -208,7 +208,7 @@ spec:
             nodeSelectorTerms:
               {% for zone in spec.dataspace.privacy.zones %}
               - matchExpressions:
-                  - key: {{ "privacy-zone.dataspace.ptx.org/" ~ zone.model_dump() }}
+                  - key: {{ "privacy-zone.dataspace.ptx.org/" ~ zone.name }}
                     operator: In
                     values:
                       - "true"
@@ -221,7 +221,7 @@ spec:
             items:
               - key: ca.crt
                 path: registry_CA.crt
-        {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL"  %}
+        {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
         - name: data-dir
           emptyDir:
             sizeLimit: {{ spec.data.src.size ~ "Mi" }}
