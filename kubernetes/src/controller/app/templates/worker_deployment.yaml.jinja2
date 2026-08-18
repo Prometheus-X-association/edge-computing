@@ -28,23 +28,26 @@ spec:
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
-            {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
+            {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
+                  (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
             - name: data-dir
               mountPath: /var/cache/data/
               readOnly: false
             {% endif %}
           env:
             # PDC configuration
-            {% if cfg.pdc %}
-            {% set zone = "-" ~ (spec.dataspace.privacy.zones | selectattr('preferred') | first).name
-                          if spec.dataspace.privacy.zones is iterable else '' %}
+            {% set ptx_required = ("PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper]) %}
+            {% if ptx_required %}
+            {% set preferred_zone = spec.dataspace.privacy.zones | selectattr('preferred') | first
+                                    if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required
+                                    and spec.dataspace.privacy.zones is iterable %}
+            {% set pdc_by_zone = "pdc" ~ ("-" ~ preferred_zone.name if preferred_zone else '') %}
+            {% set pdc_host = [pdc_by_zone, namespace, 'svc', 'cluster', 'local' ] | join('.') %}
             - name: BUILD_PDC_HOST
-              value: {{ cfg.pdc.host | default(["pdc" ~ zone, namespace, 'scv', 'cluster', 'local' ] | join('.'), true) }}
+              value: {{ cfg.pdc.host if cfg.pdc and cfg.pdc.host else pdc_host }}
             - name: BUILD_PDC_PORT
-              value: "{{ cfg.pdc.port | default(3000, true) }}"
-            {% endif %}
-            {% if "PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper]
-                    and cfg.pdc and cfg.pdc.secret %}
+              value: "{{ cfg.pdc.port if cfg.pdc and cfg.pdc.port else 3000 }}"
+            {% if cfg.pdc and cfg.pdc.secret %}
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
@@ -56,6 +59,7 @@ spec:
                   name: {{ cfg.pdc.secret }}
                   key: SECRET_KEY
             {% endif %}
+            {% endif %}
             # Basic builder configuration
             - name: BUILD_CONNECTION_TIMEOUT
               value: "600"
@@ -64,10 +68,9 @@ spec:
             # Datasource configuration
             - name: BUILD_DATA_METHOD
               value: {{ spec.data.src.method }}
-            {% if spec.data.src.method != "SKIP" %}
+            {% if spec.data.src.method | upper != "SKIP" %}
             - name: BUILD_DATA_SRC
-              value: {{ spec.data.src.path | default("", true) }}
-            {% endif %}
+              value: {{ spec.data.src.path | default(undefined, true) }}
             # Direct datasource configuration
             {% if spec.data.src.auth %}
             - name: BUILD_DATA_AUTH_SCHEME
@@ -79,8 +82,10 @@ spec:
             - name: BUILD_DATA_AUTH_INSECURE
               value: "{{ spec.data.src.auth.insecure | lower }}"
             {% endif %}
+            {% endif %}
             # PTX configuration
-            {% if spec.dataspace.exchange.data %}
+            {% if spec.data.src.method | upper == "PTX" and
+                  spec.dataspace and spec.dataspace.exchange and spec.dataspace.exchange.data %}
             - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
               value: {{ "https://contract.visionstrust.com/contracts/"
                         ~ spec.dataspace.exchange.data.contract }}
@@ -101,7 +106,8 @@ spec:
                       ~ spec.dataspace.exchange.data.consumer.resource }}
             {% endif %}
             {% endif %}
-            {% if spec.dataspace.exchange.worker %}
+            {% if spec.worker.location.method | upper == "PTX" and
+                  spec.dataspace and spec.dataspace.exchange and spec.dataspace.exchange.worker %}
             - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
               value: {{ "https://contract.visionstrust.com/contracts/"
                         ~ spec.dataspace.exchange.worker.contract }}
@@ -125,10 +131,12 @@ spec:
             # Worker configuration
             - name: BUILD_WORKER_METHOD
               value: {{ spec.worker.location.method }}
+            {% set worker_image = "worker" ~
+                                  ("/" ~ spec.worker.name | default(spec.worker.location.image, true)
+                                  if spec.worker.name or spec.worker.location.image) %}
             {% if spec.worker.location.method | upper != "SKIP" %}
             - name: BUILD_WORKER_SRC
               value: {{ spec.worker.location.image if spec.worker.cached and spec.worker.location.image }}
-            {% endif %}
             {% if spec.worker.location.cred %}
             - name: BUILD_WORKER_AUTH_SERVER
               value: "{{ spec.worker.location.cred.server }}"
@@ -139,11 +147,12 @@ spec:
             - name: BUILD_WORKER_AUTH_INSECURE
               value: "{{ spec.worker.location.cred.insecure | lower }}"
             {% endif %}
-            {% if spec.worker.cached is true %}
+            {% if spec.worker.cached %}
             - name: BUILD_WORKER_DST
-              value: {{ "worker/" ~ spec.worker.name if spec.worker.name else spec.worker.location.image }}
+              value: {{ worker_image }}
             {% endif %}
-          {% if "PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper] %}
+            {% endif %}
+          {% if ptx_required %}
           ports:
             - name: webhook-port
               containerPort: {{ cfg.builder.port if cfg.builder and cfg.builder.port else 9999 }}
@@ -151,13 +160,9 @@ spec:
           {% endif %}
       containers:
         - name: worker
-          image: {% if spec.worker.cached -%}
-                  {{ (cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path)
-                    ~ "worker/"
-                    ~ (spec.worker.name | default(spec.worker.location.image, true)) }}
-                  {% else -%}
-                  {{ spec.worker.location.image | default("", true) }}
-                  {% endif %}
+          image: {{ ((cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ worker_image)
+                    if spec.worker.cached
+                    else spec.worker.location.image | default(undefined, true) }}
           imagePullPolicy: IfNotPresent
           {% if spec.worker.command is iterable %}
           command:
@@ -176,17 +181,18 @@ spec:
               {% endif %}
           {% endif %}
           # Data destination configuration
-          {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
+          {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
+                (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
           volumeMounts:
             - name: data-dir
               mountPath: {{ spec.data.dst.path | default("/var/cache/data", true) }}
               readOnly: true
           {% endif %}
-          {% if spec.worker.config.env is iterable %}
+          {% if spec.worker.config and spec.worker.config.env is iterable %}
           env:
           {% for envvar in spec.worker.config.env %}
             - name: "{{ envvar.key }}"
-              {% if envvar.value  %}
+              {% if envvar.value %}
               value: "{{ envvar.value }}"
               {% endif %}
           {% endfor %}
@@ -199,11 +205,11 @@ spec:
               protocol: TCP
           {% endfor %}
           {% endif %}
-      {% if spec.dataspace.privacy.required and (spec.dataspace.privacy.scheduler | upper) != "DEFAULT"
-            and cfg.scheduler and cfg.scheduler.name %}
-      schedulerName: {{ cfg.scheduler.name }}
+      {% if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required %}
+      {% if spec.dataspace.privacy.scheduler | upper != "DEFAULT" %}
+      schedulerName: {{ cfg.scheduler.name if cfg.scheduler and cfg.scheduler.name else "ptx-edge-scheduler" }}
       {% endif %}
-      {% if spec.dataspace.privacy.required and spec.dataspace.privacy.zones is iterable %}
+      {% if spec.dataspace.privacy.zones is iterable %}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -216,6 +222,7 @@ spec:
                       - "true"
               {% endfor %}
       {% endif %}
+      {% endif %}
       volumes:
         - name: registry-ca
           configMap:
@@ -223,8 +230,9 @@ spec:
             items:
               - key: ca.crt
                 path: registry_CA.crt
-        {% if spec.data.dst and (spec.data.dst.method | upper) == "LOCAL" %}
+        {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
+              (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
         - name: data-dir
           emptyDir:
-            sizeLimit: {{ spec.data.src.size ~ "M" }}
+            sizeLimit: {{ spec.data.src.size | default(100, true) ~ "M" }}
         {% endif %}

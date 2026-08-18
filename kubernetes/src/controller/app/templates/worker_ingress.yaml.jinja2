@@ -1,6 +1,7 @@
-{% set public_interface = spec.service.interfaces | selectattr('public') | first %}
+{% set public_interface = spec.service.interfaces | selectattr('public') | first
+                          if spec.service and spec.service.interfaces is iterable %}
 {% set middlewares = [namespace ~ '-' ~ name ~ '-stripprefix@kubernetescrd'] %}
-{% if public_interface.secured %}
+{% if public_interface and public_interface.secured %}
   {% set middlewares = [namespace ~ '-api-basic-auth@kubernetescrd'] + middlewares %}
 {% endif %}
 apiVersion: networking.k8s.io/v1
@@ -25,4 +26,4 @@ spec:
               service:
                 name: {{ name }}
                 port:
-                  name: {{ 'port-' ~ public_interface.port }}
+                  name: {{ 'port-' ~ public_interface.port if public_interface }}

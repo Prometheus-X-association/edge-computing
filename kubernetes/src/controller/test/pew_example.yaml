@@ -15,7 +15,7 @@ spec:
         secured: true
   data:
     src:
-      method: HTTPS
+      method: PTX
       path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
       size: 75
       auth:
@@ -28,7 +28,7 @@ spec:
       path: "/data"
   worker:
     location:
-      method: DOCKER
+      method: SKIP
       image: "busybox:latest"
       cred:
         server: "https://index.docker.io/v1/"
@@ -43,14 +43,14 @@ spec:
     command:
       - "/bin/sh"
       - "-c"
-      - "'sleep infinity'"
+      - "sleep infinity"
     config:
-      file:
-        path: "/var/cache/worker/config.json"
-        data: |
-          {
-            "test": 42
-          }
+#      file:
+#        path: "/var/cache/worker/config.json"
+#        data: |
+#          {
+#            "test": 42
+#          }
       env:
         - key: WRK_TEST_VAR
           value: "test123"
@@ -76,6 +76,7 @@ spec:
           resource: 77d18bf6ee71f9f096baed58
     privacy:
       required: true
+      scheduler: DEFAULT
       zones:
         - name: zone1
         - name: zone2
