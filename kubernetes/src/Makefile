@@ -180,8 +180,8 @@ run-api:
 	@echo
 	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/api/v1/ui/"
 	@sleep 3
-	wget -T3 -qS http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
-	curl -LSs "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
+	wget -T3 -qS --user=admin --password=admin http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
+	curl -LSs -u admin:admin "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
 
 run-builder:
 	envsubst <${ASSETS}/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-

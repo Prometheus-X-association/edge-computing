@@ -12,8 +12,8 @@ spec:
       - port: 8080  # Expose container port
         public: true  # Set out of cluster access to the service
         secured: false # Do not use HTTPS entrypoint by default
-        restricted: false  # Use basic authentication
-        # wget -v -O- http://localhost:8888/worker/test/hosts
+        restricted: true  # Use basic authentication
+        # wget -v -O- --user=admin --password=admin http://localhost:8888/worker/test/hosts
   data:
     src:
       method: FILE  # Use local file as source
