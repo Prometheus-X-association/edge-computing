@@ -208,7 +208,7 @@ async def create_pew_service(body: kopf.Body, logger: kopf.Logger, **_: Any) -> 
     logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
     ####
     sub_handlers = {"deployment": functools.partial(_create_worker_deployment, pew=pew)}
-    if 'PTX' in (pew.spec.data.src.method, pew.spec.worker.location.method):
+    if 'PTX' in (pew.spec.data.src.method, pew.spec.worker.src.method):
         sub_handlers['builder'] = functools.partial(_create_service, pew=pew, template="builder_service.yaml.jinja2")
     if pew.spec.service.interfaces:
         if next(filter(lambda i: i.public, pew.spec.service.interfaces)) is not None:

@@ -36,7 +36,7 @@ spec:
             {% endif %}
           env:
             # PDC configuration
-            {% set ptx_required = ("PTX" in [spec.data.src.method | upper, spec.worker.location.method | upper]) %}
+            {% set ptx_required = ("PTX" in [spec.data.src.method | upper, spec.worker.src.method | upper]) %}
             {% if ptx_required %}
             {% set preferred_zone = spec.dataspace.privacy.zones | selectattr('preferred') | first
                                     if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required
@@ -106,7 +106,7 @@ spec:
                       ~ spec.dataspace.exchange.data.consumer.resource }}
             {% endif %}
             {% endif %}
-            {% if spec.worker.location.method | upper == "PTX" and
+            {% if spec.worker.src.method | upper == "PTX" and
                   spec.dataspace and spec.dataspace.exchange and spec.dataspace.exchange.worker %}
             - name: BUILD_PTX_WORKER_EXCHANGE_CONTRACT
               value: {{ "https://contract.visionstrust.com/contracts/"
@@ -130,24 +130,25 @@ spec:
             {% endif %}
             # Worker configuration
             - name: BUILD_WORKER_METHOD
-              value: {{ spec.worker.location.method }}
+              value: {{ spec.worker.src.method }}
             {% set worker_image = "worker" ~
-                                  ("/" ~ spec.worker.name | default(spec.worker.location.image, true)
-                                  if spec.worker.name or spec.worker.location.image) %}
-            {% if spec.worker.location.method | upper != "SKIP" %}
+                                  ("/" ~ spec.worker.dst.name | default(spec.worker.src.image, true)
+                                  if spec.worker.dst.name or spec.worker.src.image) %}
+            {% if spec.worker.src.method | upper != "SKIP" %}
             - name: BUILD_WORKER_SRC
-              value: {{ spec.worker.location.image if spec.worker.cached and spec.worker.location.image }}
-            {% if spec.worker.location.cred %}
+              value: {{ spec.worker.src.image | default(undefined, true)
+                        if spec.worker.dst and spec.worker.dst.cached }}
+            {% if spec.worker.src.auth %}
             - name: BUILD_WORKER_AUTH_SERVER
-              value: "{{ spec.worker.location.cred.server }}"
+              value: "{{ spec.worker.src.auth.server }}"
             - name: BUILD_WORKER_AUTH_USER
-              value: "{{ spec.worker.location.cred.user }}"
+              value: "{{ spec.worker.src.auth.user }}"
             - name: BUILD_WORKER_AUTH_SECRET
-              value: "{{ spec.worker.location.cred.secret.get_secret_value() }}"
+              value: "{{ spec.worker.src.auth.secret.get_secret_value() }}"
             - name: BUILD_WORKER_AUTH_INSECURE
-              value: "{{ spec.worker.location.cred.insecure | lower }}"
+              value: "{{ spec.worker.src.auth.insecure | lower }}"
             {% endif %}
-            {% if spec.worker.cached %}
+            {% if spec.worker.dst and spec.worker.dst.cached %}
             - name: BUILD_WORKER_DST
               value: {{ worker_image }}
             {% endif %}
@@ -161,9 +162,9 @@ spec:
       containers:
         - name: worker
           image: {{ ((cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ worker_image)
-                    if spec.worker.cached
-                    else spec.worker.location.image | default(undefined, true) }}
-          imagePullPolicy: IfNotPresent
+                    if spec.worker.dst and spec.worker.dst.cached
+                    else spec.worker.src.image | default(undefined, true) }}
+          imagePullPolicy: {{ "IfNotPresent" if spec.worker.dst and spec.worker.dst.cached else "Always" }}
           {% if spec.worker.command is iterable %}
           command:
           {% for cmd in spec.worker.command %}

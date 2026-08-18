@@ -23,7 +23,7 @@ raw_kopf_obj = {
         }
     },
     'worker': {
-        'location': {
+        'src': {
             'method': 'DOCKER'
         }
     }
@@ -40,17 +40,17 @@ raw_k8s_obj = r"""
     "kind": "PtxEdgeWorker",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"secured\":true}]},\"worker\":{\"cached\":true,\"command\":[\"/bin/sh\",\"-c\",\"'sleep infinity'\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"}],\"file\":{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}},\"demands\":{\"cpu\":1.5,\"memory\":500},\"location\":{\"cred\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"DOCKER\"},\"name\":\"myworker:latest\"}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"secured\":true}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
         },
-        "creationTimestamp": "2026-08-13T14:15:55Z",
+        "creationTimestamp": "2026-08-18T13:52:42Z",
         "generation": 1,
         "labels": {
             "env": "test"
         },
         "name": "example",
         "namespace": "ptx-edge",
-        "resourceVersion": "4179",
-        "uid": "476549f4-f269-413c-b77a-47b218f7b583"
+        "resourceVersion": "24240",
+        "uid": "55a18e47-cb22-4f66-bfab-6809693a3db2"
     },
     "spec": {
         "data": {
@@ -97,6 +97,7 @@ raw_k8s_obj = r"""
             },
             "privacy": {
                 "required": true,
+                "scheduler": "DEFAULT",
                 "zones": [
                     {
                         "name": "zone1",
@@ -125,39 +126,41 @@ raw_k8s_obj = r"""
             ]
         },
         "worker": {
-            "cached": true,
             "command": [
                 "/bin/sh",
                 "-c",
-                "'sleep infinity'"
+                "sleep infinity"
             ],
             "config": {
                 "env": [
                     {
                         "key": "WRK_TEST_VAR",
                         "value": "test123"
+                    },
+                    {
+                        "key": "WRK_TEST_VAR2",
+                        "value": "42"
                     }
-                ],
-                "file": {
-                    "data": "{\n  \"test\": 42\n}\n",
-                    "path": "/var/cache/worker/config.json"
-                }
+                ]
             },
             "demands": {
                 "cpu": 1.5,
                 "memory": 500
             },
-            "location": {
-                "cred": {
+            "dst": {
+                "cached": true,
+                "name": "myworker:latest"
+            },
+            "src": {
+                "auth": {
                     "insecure": false,
                     "secret": "admin",
                     "server": "https://index.docker.io/v1/",
                     "user": "admin"
                 },
                 "image": "busybox:latest",
-                "method": "DOCKER"
-            },
-            "name": "myworker:latest"
+                "method": "SKIP"
+            }
         }
     }
 }
@@ -169,7 +172,7 @@ def test_k8s_raw_parsing():
     pprint.pprint(k8s_model)
 
     print("Parsed datasource:", k8s_model.spec.data.src.path)
-    print("Parsed image:", k8s_model.spec.worker.location.image)
+    print("Parsed image:", k8s_model.spec.worker.src.image)
 
 
 if __name__ == '__main__':

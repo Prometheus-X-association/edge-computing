@@ -122,10 +122,10 @@ spec:
           value: "ptx-edge/builder:1.0"
         - name: CFG_BUILDER_PORT
           value: "9999"
-        - name: CFG_PDC_HOST
-          #value: "pdc.ptx-edge.svc.cluster.local"
-        - name: CFG_PDC_PORT
-          value: "3000"
+        #- name: CFG_PDC_HOST
+        #  value: "pdc.ptx-edge.svc.cluster.local"
+        #- name: CFG_PDC_PORT
+        #  value: "3000"
         - name: CFG_PDC_SECRET
           value: "pdc-secrets-env"
       ports:

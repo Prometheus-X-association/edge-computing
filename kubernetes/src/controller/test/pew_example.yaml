@@ -15,7 +15,7 @@ spec:
         secured: true
   data:
     src:
-      method: PTX
+      method: HTTPS
       path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
       size: 75
       auth:
@@ -27,23 +27,24 @@ spec:
       method: LOCAL
       path: "/data"
   worker:
-    location:
+    src:
       method: SKIP
       image: "busybox:latest"
-      cred:
+      auth:
         server: "https://index.docker.io/v1/"
         user: admin
         secret: admin
         insecure: false
-    demands:
-      cpu: 1.5
-      memory: 500
-    cached: true
-    name: "myworker:latest"
+    dst:
+      cached: true
+      name: "myworker:latest"
     command:
       - "/bin/sh"
       - "-c"
       - "sleep infinity"
+    demands:
+      cpu: 1.5
+      memory: 500
     config:
 #      file:
 #        path: "/var/cache/worker/config.json"
