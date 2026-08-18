@@ -40,17 +40,17 @@ raw_k8s_obj = r"""
     "kind": "PtxEdgeWorker",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"secured\":true}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"prefixed\":false,\"public\":true,\"restricted\":true,\"secured\":true}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
         },
-        "creationTimestamp": "2026-08-18T13:52:42Z",
+        "creationTimestamp": "2026-08-18T19:31:13Z",
         "generation": 1,
         "labels": {
             "env": "test"
         },
         "name": "example",
         "namespace": "ptx-edge",
-        "resourceVersion": "24240",
-        "uid": "55a18e47-cb22-4f66-bfab-6809693a3db2"
+        "resourceVersion": "2410",
+        "uid": "120b6b40-4323-4bab-9e34-20e3ea980c02"
     },
     "spec": {
         "data": {
@@ -115,12 +115,16 @@ raw_k8s_obj = r"""
             "interfaces": [
                 {
                     "port": 8080,
+                    "prefixed": true,
                     "public": false,
-                    "secured": false
+                    "restricted": false,
+                    "secured": true
                 },
                 {
                     "port": 80,
+                    "prefixed": false,
                     "public": true,
+                    "restricted": true,
                     "secured": true
                 }
             ]

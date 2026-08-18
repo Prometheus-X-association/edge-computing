@@ -1,8 +1,13 @@
-{% set public = spec.service.interfaces | selectattr('public') | first
-                          if spec.service and spec.service.interfaces is iterable %}
-{% set middlewares = [namespace ~ '-' ~ name ~ '-stripprefix@kubernetescrd'] %}
-{% if public and public.restricted %}
-  {% set middlewares = [namespace ~ '-api-basic-auth@kubernetescrd'] + middlewares %}
+{% set public = spec.service.interfaces | selectattr("public") | first
+                if spec.service and spec.service.interfaces is iterable %}
+{% set middlewares = [] %}
+{% if public %}
+  {% if public.restricted %}
+    {% set middlewares = middlewares + [namespace ~ "-api-basic-auth@kubernetescrd"] %}
+  {% endif %}
+  {% if public.prefixed %}
+    {% set middlewares = middlewares + [namespace ~ "-" ~ name ~ "-stripprefix@kubernetescrd"] %}
+  {% endif %}
 {% endif %}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -14,13 +19,13 @@ metadata:
     {# autofilled #}
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: {{ "websecure" if public and public.secured else "web" }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ middlewares | join(',') }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ middlewares | join(",") }}
 spec:
   ingressClassName: traefik
   rules:
     - http:
         paths:
-          - path: {{ '/worker/' ~ name }}
+          - path: {{ "/worker/" ~ name if public and public.prefixed else "/" }}
             pathType: Prefix
             backend:
               service:

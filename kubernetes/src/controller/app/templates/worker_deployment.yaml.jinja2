@@ -29,7 +29,7 @@ spec:
               mountPath: /usr/share/ca-certificates/ptx-edge
               readOnly: true
             {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
-                  (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
+                  (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
             - name: data-dir
               mountPath: /var/cache/data/
               readOnly: false
@@ -38,11 +38,11 @@ spec:
             # PDC configuration
             {% set ptx_required = ("PTX" in [spec.data.src.method | upper, spec.worker.src.method | upper]) %}
             {% if ptx_required %}
-            {% set preferred_zone = spec.dataspace.privacy.zones | selectattr('preferred') | first
+            {% set preferred_zone = spec.dataspace.privacy.zones | selectattr("preferred") | first
                                     if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required
                                     and spec.dataspace.privacy.zones is iterable %}
-            {% set pdc_by_zone = "pdc" ~ ("-" ~ preferred_zone.name if preferred_zone else '') %}
-            {% set pdc_host = [pdc_by_zone, namespace, 'svc', 'cluster', 'local' ] | join('.') %}
+            {% set pdc_by_zone = "pdc" ~ ("-" ~ preferred_zone.name if preferred_zone else "") %}
+            {% set pdc_host = [pdc_by_zone, namespace, "svc", "cluster", "local" ] | join(".") %}
             - name: BUILD_PDC_HOST
               value: {{ cfg.pdc.host if cfg.pdc and cfg.pdc.host else pdc_host }}
             - name: BUILD_PDC_PORT
@@ -183,7 +183,7 @@ spec:
           {% endif %}
           # Data destination configuration
           {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
-                (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
+                (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
           volumeMounts:
             - name: data-dir
               mountPath: {{ spec.data.dst.path | default("/var/cache/data", true) }}
@@ -232,7 +232,7 @@ spec:
               - key: ca.crt
                 path: registry_CA.crt
         {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
-              (spec.data.dst is none and spec.data.src.method | upper != 'SKIP') %}
+              (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
         - name: data-dir
           emptyDir:
             sizeLimit: {{ spec.data.src.size | default(100, true) ~ "M" }}

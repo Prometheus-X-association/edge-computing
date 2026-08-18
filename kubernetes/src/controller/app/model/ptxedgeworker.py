@@ -29,6 +29,10 @@ class PEWSpecServiceInterface(BaseModel):
     """
     Use HTTPS protocol for service access
     """
+    prefixed: bool | None = True
+    """
+    Use a stripped prefix for service exposure
+    """
     restricted: bool | None = False
     """
     Apply the same authentication credentials as of the REST-API

@@ -67,12 +67,7 @@
                       ],
                       "x-kubernetes-validations": [
                         {
-                          "rule": "self.public >= self.secured",
-                          "message": "Only public port can be secured!",
-                          "fieldPath": ".secured"
-                        },
-                        {
-                          "rule": "self.public >= self.secured",
+                          "rule": "self.public >= self.restricted",
                           "message": "Only public port can be restricted!",
                           "fieldPath": ".restricted"
                         }
@@ -93,6 +88,11 @@
                         "secured": {
                           "type": "boolean",
                           "description": "Use HTTPS protocol for service access",
+                          "default": true
+                        },
+                        "prefixed": {
+                          "type": "boolean",
+                          "description": "Use a stripped prefix for service exposure",
                           "default": true
                         },
                         "restricted": {
