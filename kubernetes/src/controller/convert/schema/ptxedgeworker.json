@@ -70,6 +70,11 @@
                           "rule": "self.public >= self.secured",
                           "message": "Only public port can be secured!",
                           "fieldPath": ".secured"
+                        },
+                        {
+                          "rule": "self.public >= self.secured",
+                          "message": "Only public port can be restricted!",
+                          "fieldPath": ".restricted"
                         }
                       ],
                       "properties": {
@@ -87,7 +92,12 @@
                         },
                         "secured": {
                           "type": "boolean",
-                          "description": "Apply the same security measures as of the REST-API, e.g., authentication",
+                          "description": "Use HTTPS protocol for service access",
+                          "default": true
+                        },
+                        "restricted": {
+                          "type": "boolean",
+                          "description": "Apply the same authentication credentials as of the REST-API",
                           "default": false
                         }
                       }

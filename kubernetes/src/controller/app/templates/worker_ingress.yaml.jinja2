@@ -1,7 +1,7 @@
-{% set public_interface = spec.service.interfaces | selectattr('public') | first
+{% set public = spec.service.interfaces | selectattr('public') | first
                           if spec.service and spec.service.interfaces is iterable %}
 {% set middlewares = [namespace ~ '-' ~ name ~ '-stripprefix@kubernetescrd'] %}
-{% if public_interface and public_interface.secured %}
+{% if public and public.restricted %}
   {% set middlewares = [namespace ~ '-api-basic-auth@kubernetescrd'] + middlewares %}
 {% endif %}
 apiVersion: networking.k8s.io/v1
@@ -13,7 +13,7 @@ metadata:
     tier: worker
     {# autofilled #}
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: {{ "websecure" if public and public.secured else "web" }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ middlewares | join(',') }}
 spec:
   ingressClassName: traefik
@@ -26,4 +26,4 @@ spec:
               service:
                 name: {{ name }}
                 port:
-                  name: {{ 'port-' ~ public_interface.port if public_interface }}
+                  number: {{ public.port | int if public }}

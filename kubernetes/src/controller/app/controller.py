@@ -148,7 +148,7 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_middleware.yaml.jinja2")
     manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
-    kopf.adopt(body, strict=True, forced=True)
+    kopf.adopt(body, strict=False, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:

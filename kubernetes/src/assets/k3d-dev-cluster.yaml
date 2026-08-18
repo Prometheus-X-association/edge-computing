@@ -21,6 +21,27 @@ volumes:
   - volume: ${PROJECT_ROOT}/registry/.certs/ca/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
     nodeFilters:
       - all
+files:
+  - description: "Default TLS cert"
+    source: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChartConfig
+      metadata:
+        name: traefik
+        namespace: kube-system
+      spec:
+        valuesContent: |-
+          additionalArguments:
+            - "--global.checknewversion=false"
+            - "--global.sendanonymoususage=false"
+            - "--log.level=DEBUG"
+            - "--accesslog=false"
+            - "--providers.kubernetescrd=true"
+            - "--providers.kubernetesingress=true"
+            - "--api=false"
+    destination: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    nodeFilters:
+      - all
 registries:
   create:
     name: ${REGISTRY}

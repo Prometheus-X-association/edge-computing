@@ -1,0 +1,17 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: test
+  namespace: ptx-edge
+  labels:
+    env: test
+spec:
+  service:
+    enabled: true # Run as a deployment instead of a job
+  data:
+    src:
+      method: SKIP  # Skip data collection
+  worker:
+    src:
+      method: SKIP  # Skip worker image collection
+      image: k8s.gcr.io/pause:latest  # Use this image directly

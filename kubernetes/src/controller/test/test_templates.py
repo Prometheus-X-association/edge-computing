@@ -66,8 +66,8 @@ def test_template(template: str, values: str | pathlib.Path):
 
 
 if __name__ == '__main__':
-    test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_middleware.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
-    test_template("worker_ingress.yaml.jinja2", pathlib.Path(__file__).parent / "pew_example.yaml")
+    test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("worker_middleware.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("worker_ingress.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")

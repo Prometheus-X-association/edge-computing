@@ -25,9 +25,13 @@ class PEWSpecServiceInterface(BaseModel):
     """
     Enable out-of-cluster access
     """
-    secured: bool | None = False
+    secured: bool | None = True
     """
-    Apply the same security measures as of the REST-API, e.g., authentication
+    Use HTTPS protocol for service access
+    """
+    restricted: bool | None = False
+    """
+    Apply the same authentication credentials as of the REST-API
     """
 
 

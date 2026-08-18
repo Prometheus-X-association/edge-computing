@@ -1,0 +1,27 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: test
+  namespace: ptx-edge
+  labels:
+    env: test
+spec:
+  service:
+    enabled: true
+  data:
+    src:
+      method: SKIP
+  worker:
+    src:
+      method: DOCKER
+      image: k8s.gcr.io/pause:latest  # Similar as SKIP but with cache control and credentials
+    dst:
+      cached: false # Do not collect and store image in local registry
+  dataspace:
+    privacy:
+      required: true
+      scheduler: DEFAULT  # Use k8s default scheduler
+      zones:
+        - name: zone-A
+        - name: zone-B
+          preferred: true # Use this privacy zone's PDC if relevant

@@ -1,0 +1,30 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: test
+  namespace: ptx-edge
+  labels:
+    env: test
+spec:
+  service:
+    enabled: true
+  data:
+    src:
+      method: HTTPS # Collect remote data
+      path: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/olivetti_train_data.npz"
+      size: 50  # Maximal size of data for storage reservation
+    dst:
+      method: LOCAL
+      path: "/data/"  # Store data in given dir
+  worker:
+    src:
+      method: SKIP
+      image: busybox:latest
+    command: # Use given entrypoint
+      - "/bin/sh"
+      - "-c"
+      - "sleep infinity"
+    config:
+      env: # Add explicit envvars
+        - key: WRK_TEST_VAR
+          value: "test123"
