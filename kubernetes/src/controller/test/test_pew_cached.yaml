@@ -13,7 +13,7 @@ spec:
       method: SKIP
   worker:
     src:
-      method: DOCKER
+      method: DOCKER  # Similar as SKIP but with cache control and credentials
       image: k8s.gcr.io/pause:latest
     dst:
       cached: true  # Store image in local registry

@@ -14,9 +14,9 @@ spec:
   worker:
     src:
       method: DOCKER
-      image: k8s.gcr.io/pause:latest  # Similar as SKIP but with cache control and credentials
+      image: k8s.gcr.io/pause:latest
     dst:
-      cached: false # Do not collect and store image in local registry
+      cached: false # Do not collect and store image in local registry, apply directly
   dataspace:
     privacy:
       required: true

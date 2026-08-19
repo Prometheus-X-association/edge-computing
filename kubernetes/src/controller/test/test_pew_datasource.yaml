@@ -8,11 +8,14 @@ metadata:
 spec:
   service:
     enabled: true
+    interfaces:
+      - port: 8080
+        public: false # Do not expose container port out-of-cluster
   data:
     src:
       method: HTTPS # Collect remote data
       path: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/olivetti_train_data.npz"
-      size: 50  # Maximal size of data for storage reservation
+      size: 50  # Maximal size of data for storage request
     dst:
       method: LOCAL
       path: "/data/"  # Store data in given dir
@@ -20,7 +23,7 @@ spec:
     src:
       method: SKIP
       image: busybox:latest
-    command: # Use given entrypoint
+    command: # Use given command
       - "/bin/sh"
       - "-c"
       - "sleep infinity"

@@ -210,12 +210,12 @@ async def create_pew_service(body: kopf.Body, logger: kopf.Logger, **_: Any) -> 
     sub_handlers = {"deployment": functools.partial(_create_worker_deployment, pew=pew)}
     if 'PTX' in (pew.spec.data.src.method, pew.spec.worker.src.method):
         sub_handlers['builder'] = functools.partial(_create_service, pew=pew, template="builder_service.yaml.jinja2")
-    if pew.spec.service.interfaces:
-        if next(filter(lambda i: i.public, pew.spec.service.interfaces)) is not None:
-            sub_handlers.update(
-                {'service': functools.partial(_create_service, pew=pew, template="worker_service.yaml.jinja2"),
-                 'middleware': functools.partial(_create_middleware, pew=pew),
-                 'ingress': functools.partial(_create_ingress, pew=pew)})
+    if pew.spec.service and pew.spec.service.interfaces:
+        if public_port := next(filter(lambda i: i.public, pew.spec.service.interfaces), None):
+            sub_handlers['service'] = functools.partial(_create_service, pew=pew, template="worker_service.yaml.jinja2")
+            if public_port.prefixed:
+                sub_handlers['middleware'] = functools.partial(_create_middleware, pew=pew)
+            sub_handlers['ingress'] = functools.partial(_create_ingress, pew=pew)
     logger.debug(f"Registered object sub-handlers: {[k for k in sub_handlers.keys()]}")
     ####
     # noinspection bad-argument-type
