@@ -501,11 +501,12 @@ spec:
         - name: Service
           type: boolean
           jsonPath: .spec.service.enabled
-          description: "Enabled as a Service"
+          description: "Deployed as a service"
           priority: 0
         - name: State
           type: string
-          jsonPath: .status.state
+          description: "Controller state"
+          jsonPath: .status.worker.state
           priority: 1
         - name: Age
           type: date

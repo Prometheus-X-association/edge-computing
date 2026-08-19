@@ -25,7 +25,7 @@ import yaml
 from asyncer import asyncify
 from kubernetes import client
 
-from model.ptxedgeworker import PEW
+from model.ptxedgeworker import PEW, PEWSpecServiceInterface
 from utils import load_config_from_env, sanitize_model, ExcludeProbesFilter
 
 ########################################################################################################################
@@ -159,7 +159,6 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
                                                                                             namespace=namespace,
                                                                                             plural="middlewares",
                                                                                             body=body)
-        print(obj)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -199,34 +198,51 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
     logger.debug("-" * 100)
 
 
-@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="create/worker")
-async def create_pew_service(body: kopf.Body, logger: kopf.Logger, **_: Any) -> dict[str, Any]:
+@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="worker")
+async def create_pew_service(body: kopf.Body, name: str, memo: kopf.Memo, logger: kopf.Logger,
+                             **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
-    logger.info(f"Parsing {PEW.kind} model...")
-    pew = PEW.model_validate(body, strict=False)
-    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
+    if not hasattr(memo, 'model'):
+        logger.info(f"Parsing {PEW.kind} model...")
+        memo.model = PEW.model_validate(body, strict=False)
+        logger.debug(f"Parsed model:\n{memo.model.model_dump_json(indent=2)}")
+    else:
+        logger.info(f"Using cached {PEW.kind} model")
     ####
-    sub_handlers = {"deployment": functools.partial(_create_worker_deployment, pew=pew)}
-    if 'PTX' in (pew.spec.data.src.method, pew.spec.worker.src.method):
-        sub_handlers['builder'] = functools.partial(_create_service, pew=pew, template="builder_service.yaml.jinja2")
-    if pew.spec.service and pew.spec.service.interfaces:
-        if public_port := next(filter(lambda i: i.public, pew.spec.service.interfaces), None):
-            sub_handlers['service'] = functools.partial(_create_service, pew=pew, template="worker_service.yaml.jinja2")
-            if public_port.prefixed:
-                sub_handlers['middleware'] = functools.partial(_create_middleware, pew=pew)
-            sub_handlers['ingress'] = functools.partial(_create_ingress, pew=pew)
-    logger.debug(f"Registered object sub-handlers: {[k for k in sub_handlers.keys()]}")
+    if not hasattr(memo, 'handlers'):
+        logger.info(f"Registering object handlers...")
+        memo.handlers = {"deployment": functools.partial(_create_worker_deployment,
+                                                         pew=memo.model)}
+        if 'PTX' in (memo.model.spec.data.src.method, memo.model.spec.worker.src.method):
+            memo.handlers['builder'] = functools.partial(_create_service,
+                                                         pew=memo.model,
+                                                         template="builder_service.yaml.jinja2")
+        if memo.model.spec.service and memo.model.spec.service.interfaces:
+            if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
+                public_port: PEWSpecServiceInterface
+                memo.handlers['service'] = functools.partial(_create_service,
+                                                             pew=memo.model,
+                                                             template="worker_service.yaml.jinja2")
+                if public_port.prefixed:
+                    memo.handlers['middleware'] = functools.partial(_create_middleware,
+                                                                    pew=memo.model)
+                memo.handlers['ingress'] = functools.partial(_create_ingress,
+                                                             pew=memo.model)
+        logger.debug(f"Registered sub-handlers: {[k for k in memo.handlers.keys()]}")
+    else:
+        logger.debug(f"Processing cached sub-handlers: {[k for k in memo.handlers.keys()]}")
     ####
     # noinspection bad-argument-type
-    await kopf.execute(fns=sub_handlers)
+    await kopf.execute(fns=memo.handlers)
     ####
+    logger.info(f"{PEW.kind}[{name}] initiated successfully")
     kopf.info(body, reason="Initiated", message="Initiated successfully!")
     logger.debug("=" * 100)
     ###
-    return {'initialized': True}
+    return {'state': 'Initiated'}
 
 
-@kopf.on.create(*PEW.SELECTOR, when=kopf.not_(_is_service), id="create/task")
+@kopf.on.create(*PEW.SELECTOR, when=kopf.not_(_is_service), id="worker")
 def create_pew_task(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
     raise kopf.PermanentError("Not implemented yet!")
