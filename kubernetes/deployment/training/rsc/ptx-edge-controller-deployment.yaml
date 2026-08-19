@@ -73,7 +73,7 @@ rules:
     resources: [ services ]
     verbs: [ create ]
   - apiGroups: [ networking.k8s.io ]
-    resources: [ ingress ]
+    resources: [ ingresses ]
     verbs: [ create ]
   - apiGroups: [ traefik.io ]
     resources: [ middlewares ]
@@ -131,6 +131,23 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "kopf", "run", "--standalone",
                      "--namespace=${NS}", "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
+          env:
+            - name: CFG_REGISTRY_PATH
+              value: "${REGISTRY}:${REGISTRY_PORT}"
+            - name: CFG_SCHEDULER_NAME
+              value: "${PTX}-${SCHEDULER}"
+            - name: CFG_BUILDER_NAME
+              value: "${BUILDER}"
+            - name: CFG_BUILDER_IMAGE
+              value: "${BUILD_IMG}"
+            - name: CFG_BUILDER_PORT
+              value: "${BUILD_PORT}"
+            #- name: CFG_PDC_HOST
+            #  value: "pdc.ptx-edge.svc.cluster.local"
+            - name: CFG_PDC_PORT
+              value: "${PDC_PORT}"
+            - name: CFG_PDC_SECRET
+              value: "${PDC_SECRET_NAME}"
           ports:
             - name: api-port
               containerPort: ${CNTR_PORT}

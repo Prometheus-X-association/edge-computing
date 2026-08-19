@@ -57,7 +57,7 @@ apiVersion: v1
 kind: Secret
 type: Opaque
 metadata:
-  name: ${PDC}-secrets-env
+  name: ${PDC_SECRET_NAME}
   namespace: ${PTX}
   labels:
     app.kubernetes.io/name: ${PDC}

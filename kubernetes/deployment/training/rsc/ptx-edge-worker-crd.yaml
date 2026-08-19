@@ -33,6 +33,13 @@ spec:
               required:
                 - data
                 - worker
+              x-kubernetes-validations:
+                - rule: "self.data.src.method != 'PTX' || has(self.dataspace.exchange.data)"
+                  message: "Data source method: PTX requires a dataspace contract!"
+                  fieldPath: ".dataspace.exchange.data"
+                - rule: "self.worker.src.method != 'PTX' || has(self.dataspace.exchange.worker)"
+                  message: "Worker collection method: PTX requires a dataspace contract!"
+                  fieldPath: ".dataspace.exchange.worker"
               properties:
                 service:
                   type: object
@@ -47,10 +54,20 @@ spec:
                     interfaces:
                       type: array
                       description: "Exposed worker interfaces"
+                      minItems: 1
+                      x-kubernetes-list-type: map
+                      x-kubernetes-list-map-keys: [ port ]
+                      x-kubernetes-validations:
+                        - rule: 'size(self.filter(i, i.public)) <= 1'
+                          message: 'Only one interface/port can be public!'
                       items:
                         type: object
                         required:
                           - port
+                        x-kubernetes-validations:
+                          - rule: "self.public >= self.restricted"
+                            message: "Only public port can be restricted!"
+                            fieldPath: ".restricted"
                         properties:
                           port:
                             type: integer
@@ -64,7 +81,15 @@ spec:
                             default: false
                           secured:
                             type: boolean
-                            description: "Apply the same security measures as of the REST-API, e.g., authentication"
+                            description: "Use HTTPS protocol for service access"
+                            default: true
+                          prefixed:
+                            type: boolean
+                            description: "Use a stripped prefix for service exposure"
+                            default: true
+                          restricted:
+                            type: boolean
+                            description: "Apply the same authentication credentials as of the REST-API"
                             default: false
                 data:
                   type: object
@@ -76,32 +101,48 @@ spec:
                       type: object
                       description: "Data source location"
                       required:
-                        - path
+                        - method
+                      x-kubernetes-validations:
+                        - rule: 'self.method in ["PTX", "SKIP"] || size(self.path) > 0'
+                          messageExpression: '"method: " + self.method + " requires a valid data resource path!"'
+                          fieldPath: ".path"
+                        - rule: '!has(self.path) || self.method != "SKIP" &&
+                                  self.path.lowerAscii().startsWith(self.method.lowerAscii()+":")'
+                          messageExpression: '"Heading scheme in path must start with method: " 
+                                              + self.method.lowerAscii() + "!"'
+                          fieldPath: ".path"
                       properties:
-                        scheme:
+                        method:
                           type: string
-                          description: "Data collection scheme"
-                          enum: [ file, dir, http, https, ptx ]
-                          example: https
+                          description: "Data collection method"
+                          enum: [ FILE, DIR, HTTP, HTTPS, PTX, SKIP ]
+                          example: HTTPS
                         path:
                           type: string
                           description: "Data resource location"
-                          #format: "([scheme]://)([host][:port])/[path]"
-                          pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
+                          minLength: 1
+                          #format: "[scheme]://([host][:port])/[path]"
+                          pattern: ^([^:/]+://)([^:/]+(:[0-9]{1,5})?)?(/.+)$
                           example: https://my.api.localhost:8080/data/example.csv
+                        size:
+                          type: integer
+                          description: "Requested data size in Megabyte (Mb)"
+                          minimum: 1
+                          #maximum: 10240
+                          default: 100
                         auth:
                           type: object
                           description: "Authentication parameters for remote data collection"
                           required:
-                            - method
+                            - scheme
                             - user
                             - secret
                           properties:
-                            method:
+                            scheme:
                               type: string
                               description: "Used authentication method"
-                              enum: [ basic, digest, bearer ]
-                              example: basic
+                              enum: [ BASIC, DIGEST, BEARER ]
+                              example: BASIC
                             user:
                               type: string
                               description: "User identification"
@@ -113,71 +154,55 @@ spec:
                               minLength: 1
                               format: password
                               example: myPasswd!007
+                            insecure:
+                              type: boolean
+                              description: "Disable verification of data server's TLS certificate"
+                              default: false
                     dst:
                       type: object
                       description: "Data destination location"
-                      required:
-                        - path
                       properties:
-                        scheme:
+                        method:
                           type: string
                           description: "Data propagation scheme"
-                          enum: [ local ]
-                          default: local
+                          enum: [ LOCAL ]
+                          default: LOCAL
                         path:
                           type: string
                           description: "Data resource location"
-                          #format: "([scheme]://)([host][:port])/[path]"
-                          pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?)?(/.+)$
-                          example: https://my.api.localhost:8080/data/example.csv
-                        auth:
-                          type: object
-                          description: "Authentication parameters for remote data storage"
-                          required:
-                            - method
-                            - user
-                            - secret
-                          properties:
-                            method:
-                              type: string
-                              description: "Used authentication method"
-                              enum: [ basic, digest, bearer ]
-                              example: basic
-                            user:
-                              type: string
-                              description: "User identification"
-                              minLength: 1
-                              example: admin
-                            secret:
-                              type: string
-                              description: "Secret token or password"
-                              minLength: 1
-                              format: password
-                              example: myPasswd!007
+                          minLength: 1
+                          #format: "/[path]/"
+                          pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
+                          default: /var/cache/data
                 worker:
                   type: object
                   description: "Worker environment parameters"
                   required:
-                    - location
+                    - src
                   properties:
-                    location:
+                    src:
                       type: object
                       description: "Worker image location"
                       required:
-                        - image
+                        - method
+                      x-kubernetes-validations:
+                        - rule: '!(self.method in ["DOCKER", "SECRET"]) || has(self.image) && size(self.image) > 0'
+                          messageExpression: '"method: " + self.method + " requires a valid image!"'
+                          fieldPath: ".image"
                       properties:
-                        protocol:
+                        method:
                           type: string
                           description: "Image pull approach"
-                          enum: [ docker, secret, ptx ]
-                          default: docker
+                          enum: [ DOCKER, PTX, INLINE, DATASOURCE, SECRET, SKIP ]
+                          example: DOCKER
                         image:
                           type: string
-                          #format: "([scheme]://)([host][:port]/)[name][:version]"
                           description: "Image resource location"
+                          minLength: 1
+                          #format: "([scheme]://)([host][:port]/)[name][:version]"
                           pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
                           example: busybox:latest
-                        cred:
+                        auth:
                           type: object
                           description: "Credentials for remote image collection"
                           required:
@@ -187,6 +212,7 @@ spec:
                             server:
                               type: string
                               description: "Image server prefix"
+                              minLength: 1
                               #format: "[scheme]://[host][:port]/[path]/"
                               pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
                               default: https://index.docker.io/v1/
@@ -205,16 +231,25 @@ spec:
                               type: boolean
                               description: "Disable verification of image server's TLS certificate"
                               default: false
-                    cached:
-                      type: boolean
-                      description: "Worker cached in local registry, otherwise pull secret is used with auth"
-                      default: true
-                    name:
-                      type: string
-                      description: "Cached image name, otherwise autogenerated from source image"
-                      #format: "[name][:version]"
-                      pattern: ^([^:]+):([^:/]+)$
-                      example: myworker:latest
+                    dst:
+                      type: object
+                      description: "Worker image destination configuration"
+                      x-kubernetes-validations:
+                        - rule: '!has(self.name) || size(self.name) > 0 && self.cached'
+                          messageExpression: '"Image with new name: " + self.name + " requires cacheing!"'
+                          fieldPath: ".cached"
+                      properties:
+                        cached:
+                          type: boolean
+                          description: "Worker cached in local registry"
+                          default: true
+                        name:
+                          type: string
+                          description: "Cached image name, otherwise autogenerated from source image"
+                          minLength: 1
+                          #format: "([group]/)[name][:version]"
+                          pattern: ^([^:/]+/)?([^:]+):([^:/]+)$
+                          example: myworker:latest
                     command:
                       type: array
                       description: "Override image start command"
@@ -222,6 +257,22 @@ spec:
                       items:
                         type: string
                         description: "command & args"
+                        minLength: 1
+                    demands:
+                      type: object
+                      description: "Operating resource demands"
+                      properties:
+                        cpu:
+                          type: number
+                          description: "Number of requested vCPU cores"
+                          format: float
+                          minimum: 0.5
+                          example: 1.5
+                        memory:
+                          type: integer
+                          description: "Amount of requested memory in Megabyte (Mb)"
+                          minimum: 1
+                          example: 1024
                     config:
                       type: object
                       description: "Worker image configuration parameters"
@@ -236,6 +287,7 @@ spec:
                             path:
                               type: string
                               description: "Mount path of configuration file"
+                              minLength: 1
                               pattern: ^((/[a-zA-Z0-9-_\.]+)+)$
                               example: /var/cache/worker/cfg.ini
                             data:
@@ -244,12 +296,14 @@ spec:
                         env:
                           type: array
                           description: "Environment variables"
+                          minItems: 1
+                          x-kubernetes-list-type: map
+                          x-kubernetes-list-map-keys: [ key ]
                           items:
                             type: object
                             description: "Key-value pairs"
                             required:
                               - key
-                              - value
                             properties:
                               key:
                                 type: string
@@ -262,23 +316,154 @@ spec:
                                 example: "42"
                 dataspace:
                   type: object
-                  description: "Attributes of data exchange via PTX dataspace"
+                  description: "PTX dataspace-related configuration"
                   properties:
-                    offer:
+                    exchange:
                       type: object
-                      description: "PTX dataspace contract info"
-                      required:
-                        - provider
-                        - consumer
+                      description: "Attributes of data exchange via PTX dataspace"
                       properties:
-                        provider:
+                        data:
+                          type: object
+                          description: "Dataspace contract information for data exchange"
+                          required:
+                            - contract
+                            - provider
+                            - consumer
+                          properties:
+                            contract:
+                              type: string
+                              description: "Dataspace contract ID"
+                              minLength: 1
+                              pattern: ^[0-9a-fA-F]+$
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
+                        worker:
+                          type: object
+                          description: "Dataspace contract information for worker exchange"
+                          required:
+                            - contract
+                            - provider
+                            - consumer
+                          properties:
+                            contract:
+                              type: string
+                              description: "Dataspace contract ID"
+                              minLength: 1
+                              pattern: ^[0-9a-fA-F]+$
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
+                    privacy:
+                      type: object
+                      description: "Privacy zone restriction policies"
+                      properties:
+                        required:
+                          type: boolean
+                          description: "Demands PTX-edge specific scheduler"
+                          default: true
+                        scheduler:
                           type: string
-                          description: "Data provider ID"
-                          minLength: 1
-                        consumer:
-                          type: string
-                          description: "Data consumer ID"
-                          minLength: 1
+                          description: "Used scheduling method"
+                          enum: [ DEFAULT, PRIVATE ]
+                          default: PRIVATE
+                        zones:
+                          type: array
+                          description: "List of privacy zones as node selection criteria"
+                          minItems: 1
+                          x-kubernetes-list-type: map
+                          x-kubernetes-list-map-keys: [ name ]
+                          x-kubernetes-validations:
+                            - rule: 'size(self.filter(i, i.preferred)) <= 1'
+                              message: 'Only one zone can be preferred!'
+                          items:
+                            type: object
+                            description: "Privacy zone"
+                            required:
+                              - name
+                            properties:
+                              name:
+                                type: string
+                                description: "Unique zone name"
+                                minLength: 1
+                                patters: ^[^:/]+$
+                                example: "zone-1"
+                              preferred:
+                                type: boolean
+                                description: "Prefer zone during scheduling and data transition"
+                                default: false
             status:
               type: object
               description: "Runtime information"
@@ -295,23 +480,34 @@ spec:
       additionalPrinterColumns:
         - name: Datasource
           type: string
+          description: "Datasource collection method"
+          jsonPath: .spec.data.src.method
+          priority: 0
+        - name: Path
+          type: string
           description: "Datasource configuration"
           jsonPath: .spec.data.src.path
           priority: 1
         - name: Worker
           type: string
-          description: "Worker configuration"
-          jsonPath: .spec.worker.location.image
+          description: "Worker collection method"
+          jsonPath: .spec.worker.src.method
+          priority: 0
+        - name: Image
+          type: string
+          description: "Worker collection image"
+          jsonPath: .spec.worker.src.image
           priority: 1
         - name: Service
           type: boolean
           jsonPath: .spec.service.enabled
-          description: "Enabled as a Service"
-          priority: 1
+          description: "Deployed as a service"
+          priority: 0
         - name: State
           type: string
-          jsonPath: .status.state
-          priority: 0
+          description: "Controller state"
+          jsonPath: .status.worker.state
+          priority: 1
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp

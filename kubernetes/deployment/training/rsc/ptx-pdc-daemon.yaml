@@ -86,7 +86,7 @@ spec:
                   fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
           envFrom:
             - secretRef:
-                name: ${PDC}-secrets-env
+                name: ${PDC_SECRET_NAME}
       volumes:
         - name: env-template
           configMap:

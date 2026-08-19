@@ -131,6 +131,7 @@ PDC_PORT=3000
 PDC_ID='${PDC_ID}'          # placeholder for keeping PDC's service/ingress name
 PDC_DEF_PZ='${PDC_DEF_PZ}'  # placeholder for keeping PDC's privacy zone ID
 # Loaded from creds/fured-cloud-creds.sh !
+PDC_SECRET_NAME="${PDC}-secrets-env"
 ### PDC_SERVICE_KEY=
 ### PDC_SECRET_KEY=
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder for injecting key in runtime
@@ -179,6 +180,7 @@ CNTR_LIVE_PATH="healthz"
 
 # Builder
 BUILDER=builder
+BUILD_PORT=9999
 BUILD_TIMEOUT=600
 
 ########################################################################################################################

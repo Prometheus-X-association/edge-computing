@@ -36,7 +36,7 @@ spec:
               readOnly: true
           #envFrom:
           #  - secretRef:
-          #      name: ${PDC}-secrets-env
+          #      name: ${PDC_SECRET_NAME}
           #    prefix: BUILD_PDC_
           env:
             - name: BUILD_PDC_HOST
@@ -46,12 +46,12 @@ spec:
             - name: BUILD_PDC_KEY_SERVICE
               valueFrom:
                 secretKeyRef:
-                  name: "${PDC}-secrets-env"
+                  name: "${PDC_SECRET_NAME}"
                   key: SERVICE_KEY
             - name: BUILD_PDC_KEY_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: "${PDC}-secrets-env"
+                  name: "${PDC_SECRET_NAME}"
                   key: SECRET_KEY
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
@@ -89,7 +89,7 @@ spec:
             #  value: "worker/${DP0}:latest"
           ports:
             - name: webhook-port
-              containerPort: 9999
+              containerPort: ${BUILD_PORT}
               protocol: TCP
       containers:
         - name: worker
@@ -114,7 +114,7 @@ spec:
               containerPort: 5000
             - name: port-api
               containerPort: 8000
-      schedulerName: ptx-edge-scheduler
+      schedulerName: ${PTX}-${SCHEDULER}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
