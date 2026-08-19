@@ -1,0 +1,55 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: ${DP0}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${DP0}
+    env: ${ENV}
+spec:
+  service:
+    enabled: true
+    interfaces:
+      - port: 8000
+      - port: 5000
+  data:
+    src:
+      method: ${DP0_DATA_METHOD}
+      path: ${DP0_DATA_SRC}
+      auth:
+        scheme: BASIC
+        user: ${DS_API_USER}
+        secret: ${DS_API_PASSWORD}
+        insecure: ${DS_API_INSECURE}
+      size: 100
+    dst:
+      method: LOCAL
+      path: "/var/cache/data/"
+  worker:
+    src:
+      method: SKIP
+      image: ${DP0_IMG}
+    config:
+      env:
+        - key: mlflow_tracking_uri_internal
+          value: "${DP0_MLFLOW_INT}"
+        - key: mlflow_tracking_uri_organizational
+          value: "${DP0_MLFLOW_ORG}"
+    demands:
+      cpu: 1.0
+      memory: 3000
+  dataspace:
+    exchange:
+      data:
+        contract: "${PTX_CONTRACT_ID}"
+        provider:
+          offer: "${PTX_DATA_OFFER_ID}"
+          resource: "${PTX_DATA_ID}"
+        consumer:
+          offer: "${PTX_SERVICE_OFFER_ID}"
+          resource: "${PTX_SERVICE_ID}"
+    privacy:
+      required: true
+      zones:
+        - name: "${PZ_DATA_0}"
+          preferred: true

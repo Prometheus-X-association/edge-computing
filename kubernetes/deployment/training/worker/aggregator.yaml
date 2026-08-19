@@ -1,0 +1,42 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: ${AGG}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${AGG}
+    env: ${ENV}
+spec:
+  service:
+    enabled: true
+    interfaces:
+      - port: 8000
+      - port: 5000
+        public: true
+        restricted: true
+        prefixed: false
+  data:
+    src:
+      method: SKIP
+  worker:
+    src:
+      method: SKIP
+      image: ${AGG_IMG}
+    config:
+      env:
+        - key: mlflow_tracking_uri_internal
+          value: "${AGG_MLFLOW_INT}"
+        - key: mlflow_tracking_uri_organizational
+          value: "${AGG_MLFLOW_ORG}"
+        - key: mlflow_tracking_uri_external
+          value: "${AGG_MLFLOW_EXT}"
+        - key: STATIC_PREFIX_MLFLOW
+          value: "/worker/${AGG}"
+    demands:
+      cpu: 0.5
+      memory: 3000
+  dataspace:
+    privacy:
+      required: true
+      zones:
+        - name: "${PZ_FED}"

@@ -129,8 +129,9 @@ spec:
         - name: ${CONTROLLER}
           image: ${REGISTRY}:${REGISTRY_PORT}/${CONTROL_IMG}
           imagePullPolicy: IfNotPresent
-          command: [ "kopf", "run", "--standalone",
-                     "--namespace=${NS}", "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
+          command: [ "kopf", "run", "--standalone", "--verbose",
+                     "--namespace=${PTX}", "--liveness=http://0.0.0.0:8080/healthz",
+                     "app/controller.py" ]
           env:
             - name: CFG_REGISTRY_PATH
               value: "${REGISTRY}:${REGISTRY_PORT}"

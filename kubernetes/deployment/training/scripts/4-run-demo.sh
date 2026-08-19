@@ -27,7 +27,9 @@ fi
 ########################################################################################################################
 
 log "Initiate Data Processing Function 0..."
-${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
+#${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
+${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
+kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP0}"
 sleep 1
 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
@@ -42,7 +44,9 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 ########################################################################################################################
 
 log "Initiate Data Processing Function 1..."
-${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
+#${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
+${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
+kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP1}"
 sleep 1
 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
@@ -57,7 +61,9 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 ########################################################################################################################
 
 log "Initiate Aggregator..."
-${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
+#${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
+${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
+kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${AGG}"
 sleep 1
 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
@@ -71,7 +77,7 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
 log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
-${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}-mlflow-ui"
+${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
 _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
 wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
@@ -82,7 +88,9 @@ log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 ########################################################################################################################
 
 log "Initiate Orchestrator..."
-${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
+#${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
+${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
+kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${ORCH}"
 sleep 1
 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"

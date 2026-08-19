@@ -1,0 +1,35 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: ${ORCH}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${ORCH}
+    env: ${ENV}
+spec:
+  service:
+    enabled: true
+    interfaces:
+      - port: 8000
+        public: true
+        restricted: true
+        prefixed: true
+  data:
+    src:
+      method: SKIP
+  worker:
+    src:
+      method: SKIP
+      image: ${ORCH_IMG}
+    config:
+      env:
+        - key: ROOT_PATH
+          value: "/worker/${ORCH}"
+    demands:
+      cpu: 0.5
+      memory: 500
+  dataspace:
+    privacy:
+      required: true
+      zones:
+        - name: "${PZ_FED}"

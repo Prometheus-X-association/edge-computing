@@ -19,7 +19,8 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ########################################################################################################################
 
 LOG "Shutting down demo setup..."
-${KCTL} delete deployments,services,jobs,pods -l tier=worker --ignore-not-found || true
+${KCTL} delete deployments,jobs,services,pods,ingresses,middlewares -l tier=worker --ignore-not-found || true
+${KCTL} delete ptxedgeworkers --all --now --wait=false --ignore-not-found || true
 ${KCTL} delete pv,pvc,events --all --now --wait=false --ignore-not-found || true
 
 ########################################################################################################################
