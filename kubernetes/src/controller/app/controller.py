@@ -224,7 +224,7 @@ async def create_pew_service(body: kopf.Body, name: str, memo: kopf.Memo, logger
                 memo.handlers['service'] = functools.partial(_create_service,
                                                              pew=memo.model,
                                                              template="worker_service.yaml.jinja2")
-                if public_port.prefixed:
+                if public_port.stripped:
                     memo.handlers['middleware'] = functools.partial(_create_middleware,
                                                                     pew=memo.model)
                 memo.handlers['ingress'] = functools.partial(_create_ingress,

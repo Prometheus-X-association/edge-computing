@@ -14,7 +14,7 @@ spec:
         public: true
         secured: true
         restricted: true
-        prefixed: false
+        stripped: false
   data:
     src:
       method: HTTPS

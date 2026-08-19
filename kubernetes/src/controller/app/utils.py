@@ -16,7 +16,6 @@ import logging
 import os
 import pprint
 import typing
-from textwrap import indent
 
 import benedict
 from kubernetes import client

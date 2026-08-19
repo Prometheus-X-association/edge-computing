@@ -13,7 +13,7 @@ spec:
       - port: 8000
         public: true
         restricted: true
-        prefixed: true
+        stripped: true
   data:
     src:
       method: SKIP

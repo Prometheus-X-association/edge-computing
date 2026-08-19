@@ -83,9 +83,9 @@ spec:
                             type: boolean
                             description: "Use HTTPS protocol for service access"
                             default: true
-                          prefixed:
+                          stripped:
                             type: boolean
-                            description: "Use a stripped prefix for service exposure"
+                            description: "Strip prefix for service exposure"
                             default: true
                           restricted:
                             type: boolean

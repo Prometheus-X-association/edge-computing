@@ -29,9 +29,9 @@ class PEWSpecServiceInterface(BaseModel):
     """
     Use HTTPS protocol for service access
     """
-    prefixed: bool | None = True
+    stripped: bool | None = True
     """
-    Use a stripped prefix for service exposure
+    Strip prefix for service exposure
     """
     restricted: bool | None = False
     """

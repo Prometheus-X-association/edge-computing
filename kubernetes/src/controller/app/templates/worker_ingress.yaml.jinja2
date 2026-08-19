@@ -5,7 +5,7 @@
   {% if public.restricted %}
     {% set middlewares = middlewares + [namespace ~ "-api-basic-auth@kubernetescrd"] %}
   {% endif %}
-  {% if public.prefixed %}
+  {% if public.stripped %}
     {% set middlewares = middlewares + [namespace ~ "-" ~ name ~ "-stripprefix@kubernetescrd"] %}
   {% endif %}
 {% endif %}
@@ -25,7 +25,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: {{ "/worker/" ~ name if public and public.prefixed else "/" }}
+          - path: {{ "/worker/" ~ name }}
             pathType: Prefix
             backend:
               service:
