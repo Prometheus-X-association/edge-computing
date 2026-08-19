@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expess or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 import os
 import pprint
 import typing
+from textwrap import indent
 
 import benedict
+from kubernetes import client
 
 
 def load_config_from_env(prefix: str):
@@ -69,3 +72,9 @@ def sanitize_model(data: object, indent: int = 2) -> str:
 class ExcludeProbesFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return 'GET /healthz ' not in record.getMessage()
+
+
+def convert_k8s_api_error(e: client.ApiException) -> str:
+    return '\n'.join((f"Error received with status: {e.status} and reason: {e.reason}",
+                      "HTTP response body:",
+                      json.dumps(json.loads(str(e.body)) if e.body else '{}', indent=2)))
