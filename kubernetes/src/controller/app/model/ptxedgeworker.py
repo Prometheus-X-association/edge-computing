@@ -325,9 +325,11 @@ class PEWSpecWorkerConfigFile(BaseModel):
 
     Example: '/var/cache/worker/cfg.ini'
     """
-    data: str
+    data: Annotated[str, Field(examples=['{"var": 42}'])]
     """
     Configuration data
+
+    Example: '{"var": 42}'
     """
 
 
@@ -378,11 +380,14 @@ class PEWSpecWorker(BaseModel):
     """
     Worker image destination configuration
     """
-    command: Annotated[list[PEWSpecWorkerCommandItem] | None, Field(min_length=1)] = (
-        None
-    )
+    command: Annotated[
+        list[PEWSpecWorkerCommandItem] | None,
+        Field(examples=[["/bin/sh", "-c", "sleep infinity"]], min_length=1),
+    ] = None
     """
     Override image start command
+
+    Example: ['/bin/sh', '-c', 'sleep infinity']
     """
     demands: PEWSpecWorkerDemands | None = None
     """

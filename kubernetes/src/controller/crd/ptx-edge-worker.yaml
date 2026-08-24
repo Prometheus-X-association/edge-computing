@@ -258,6 +258,7 @@ spec:
                         type: string
                         description: "command & args"
                         minLength: 1
+                      example: [ "/bin/sh", "-c", "sleep infinity" ]
                     demands:
                       type: object
                       description: "Operating resource demands"
@@ -293,6 +294,7 @@ spec:
                             data:
                               type: string
                               description: "Configuration data"
+                              example: '{"var": 42}'
                         env:
                           type: array
                           description: "Environment variables"
