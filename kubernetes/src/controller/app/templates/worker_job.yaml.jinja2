@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: {{ name }}
   namespace: {{ namespace }}
@@ -7,11 +7,9 @@ metadata:
     tier: worker
     {# autofilled #}
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      ptxedgeworkers.dataspace.ptx.org/component: {{ name }}
-      tier: worker
+  completions: 1
+  parallelism: 1
+  backoffLimit: 1
   template:
     metadata:
       labels:
@@ -19,7 +17,7 @@ spec:
         tier: worker
     spec:
       terminationGracePeriodSeconds: 10
-      restartPolicy: Never
+      restartPolicy: Always
       initContainers:
         - name: builder
           image: {{ cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path }}{{ cfg.builder.image }}

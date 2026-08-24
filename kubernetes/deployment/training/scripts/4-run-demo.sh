@@ -82,6 +82,7 @@ _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
 wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
                                 --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
+# curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
 log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 >>> Aggregator is also exposed on https://${GW_HOST}/worker/${AGG}/"
 
@@ -109,6 +110,7 @@ _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"
 wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
                             --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_ORCH_URL}"
+# curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${ORCH}/docs"
 log ">>> Orchestrator is also exposed on https://${PRIMARY_HOST}/worker/${ORCH}/docs\n
 >>> Orchestrator is also exposed on https://${GW_HOST}/worker/${ORCH}/docs"
 

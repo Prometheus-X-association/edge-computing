@@ -83,9 +83,6 @@ async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.L
 
 ########################################################################################################################
 
-def _is_service(spec: kopf.Spec, **_: Any) -> bool:
-    return spec.get("service", {}).get("enabled", False)
-
 
 async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
                                     **_: Any):
@@ -102,6 +99,33 @@ async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logg
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
         obj, status, _ = await asyncify(k8s.create_namespaced_deployment_with_http_info)(namespace=namespace,
                                                                                          body=body)
+        status = http.HTTPStatus(status)
+        logger.debug(f"Received response: HTTP/{status} - {status.name}")
+        if not status.is_success:
+            raise kopf.TemporaryError(f"Kube API response: {status}")
+        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+    except client.ApiException as e:
+        logger.error(convert_k8s_api_error(e))
+        raise kopf.TemporaryError(str(e)) from e
+    ###
+    logger.debug("-" * 100)
+
+
+async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
+                                 **_: Any):
+    logger.debug("-" * 100)
+    logger.info(f"Rendering worker job manifest...")
+    template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_job.yaml.jinja2")
+    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    body: dict = await asyncify(yaml.safe_load)(stream=manifest)
+    kopf.adopt(body, strict=True, forced=True, nested="spec.template")
+    logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
+    ####
+    try:
+        k8s = client.BatchV1Api()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        obj, status, _ = await asyncify(k8s.create_namespaced_job_with_http_info)(namespace=namespace,
+                                                                                  body=body)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -198,9 +222,11 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
     logger.debug("-" * 100)
 
 
-@kopf.on.create(*PEW.SELECTOR, when=_is_service, id="worker")
-async def create_pew_service(body: kopf.Body, name: str, memo: kopf.Memo, logger: kopf.Logger,
-                             **_: Any) -> dict[str, Any]:
+########################################################################################################################
+
+@kopf.on.create(*PEW.SELECTOR, id="worker")
+async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logger: kopf.Logger,
+                               **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
     if not hasattr(memo, 'model'):
@@ -211,9 +237,14 @@ async def create_pew_service(body: kopf.Body, name: str, memo: kopf.Memo, logger
         logger.info(f"Using cached {PEW.kind} model")
     ####
     if not hasattr(memo, 'handlers'):
+        memo.handlers = {}
         logger.info(f"Registering object handlers...")
-        memo.handlers = {"deployment": functools.partial(_create_worker_deployment,
-                                                         pew=memo.model)}
+        if memo.model.spec.service and memo.model.spec.service.enabled:
+            memo.handlers['deployment'] = functools.partial(_create_worker_deployment,
+                                                            pew=memo.model)
+        else:
+            memo.handlers['job'] = functools.partial(_create_job_deployment,
+                                                     pew=memo.model)
         if 'PTX' in (memo.model.spec.data.src.method, memo.model.spec.worker.src.method):
             memo.handlers['builder'] = functools.partial(_create_service,
                                                          pew=memo.model,
@@ -241,8 +272,3 @@ async def create_pew_service(body: kopf.Body, name: str, memo: kopf.Memo, logger
     logger.debug("=" * 100)
     ###
     return {'state': 'Initiated'}
-
-
-@kopf.on.create(*PEW.SELECTOR, when=kopf.not_(_is_service), id="worker")
-def create_pew_task(body: kopf.Body, namespace: str, logger: kopf.Logger, memo: kopf.Memo, **_: Any) -> dict[str, Any]:
-    raise kopf.PermanentError("Not implemented yet!")

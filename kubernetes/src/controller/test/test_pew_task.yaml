@@ -1,0 +1,28 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: test
+  namespace: ptx-edge
+  labels:
+    env: test
+spec:
+  service:
+    enabled: false
+  data:
+    src:
+      method: SKIP
+    dst:
+      method: LOCAL
+      path: "/usr/data/"
+  worker:
+    src:
+      method: SKIP
+      image: "busybox:latest"
+    command: [ '/bin/sh', '-c', 'sleep ${DELAY_SEC}s' ]
+    config:
+      env: # Add explicit envvars
+        - key: DELAY_SEC
+          value: "10"
+    demands: # Define min resource requirements
+      cpu: 1.0
+      memory: 50

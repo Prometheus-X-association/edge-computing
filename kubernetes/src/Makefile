@@ -222,12 +222,16 @@ run-controller:
 	kubectl delete pods/controller --now --wait
 	#kubectl delete pods -l app=worker
 
-add-test-pew ::
-	-@kubectl delete -f controller/test/test_pew.yaml
-	kubectl apply -f controller/test/test_pew.yaml
+add-test-worker ::
+	-@kubectl delete -f controller/test/test_pew_httpd.yaml
+	kubectl apply -f controller/test/test_pew_httpd.yaml
 
-del-test-pew ::
-	kubectl delete -f test/test_pew.yaml
+add-test-task ::
+	-@kubectl delete -f controller/test/test_pew_task.yaml
+	kubectl apply -f controller/test/test_pew_task.yaml
+
+del-test-worker ::
+	kubectl delete -f pew/test
 
 ########################################################################################################################
 
