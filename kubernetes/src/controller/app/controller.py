@@ -217,7 +217,7 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
         logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
-        raise kopf.TemporaryError(str(e)) from e
+        raise kopf.TemporaryError(e.reason) from e
     ###
     logger.debug("-" * 100)
 
