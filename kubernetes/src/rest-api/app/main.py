@@ -22,7 +22,6 @@ import fastapi
 import urllib3
 from asyncify import asyncify
 from kubernetes import client, config
-from starlette import responses, status
 
 from app import __version__
 from app.config import ApiConfiguration
@@ -76,8 +75,8 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
 
 ########################################################################################################################
 
-@app.get("/versions", status_code=status.HTTP_200_OK)
-@app.head("/versions", status_code=status.HTTP_200_OK)
+@app.get("/versions", status_code=http.HTTPStatus.OK)
+@app.head("/versions", status_code=http.HTTPStatus.OK)
 async def get_versions() -> VersionsResponse:
     """Versions of the REST-API component"""
     return VersionsResponse(api=__version__, framework=fastapi.__version__)
@@ -87,12 +86,12 @@ async def get_versions() -> VersionsResponse:
 @app.head("/health")
 async def health():
     """For health check purposes"""
-    return responses.Response(status_code=status.HTTP_200_OK)
+    return fastapi.responses.Response(status_code=http.HTTPStatus.OK)
 
 
 ########################################################################################################################
 
-@app.put("/workers/{worker_name}", response_model=PTXEdgeWorkerResponse, status_code=status.HTTP_201_CREATED)
+@app.put("/workers/{worker_name}", response_model=PTXEdgeWorkerResponse, status_code=http.HTTPStatus.CREATED)
 async def create_worker(worker_name: str, pew: PEW) -> typing.Any:
     """Create PTX Edge Computing worker"""
     logger.info(f"Received {PEW.__name__} create request with name: {worker_name}")
@@ -129,7 +128,6 @@ async def create_worker(worker_name: str, pew: PEW) -> typing.Any:
                                            body=manifest)
         result = http.HTTPStatus(_status)
         logger.debug(f"Received response: HTTP/{result} - {result.name}")
-        response = {}
         if not result.is_success:
             logger.error(result)
             response['status'] = PTXEdgeWorkerStatus.ERROR
