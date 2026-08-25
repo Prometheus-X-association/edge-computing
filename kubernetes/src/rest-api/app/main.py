@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import http
+import json
 import os
 import pathlib
 import sys
@@ -130,17 +131,32 @@ async def create_worker(worker_name: str, pew: PEW) -> typing.Any:
         logger.debug(f"Received response: HTTP/{result} - {result.name}")
         if not result.is_success:
             logger.error(result)
-            response['status'] = PTXEdgeWorkerStatus.ERROR
+            raise fastapi.HTTPException(status_code=_status,
+                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                                "code": _status,
+                                                "resource": {
+                                                    "name": obj.metadata.name,
+                                                    "group": obj.group,
+                                                    "kind": obj.kind,
+                                                }})
         logger.info(f"Created resource: {obj.get('kind')}/{obj.get('metadata', {}).get('name')}")
-        response['status'] = PTXEdgeWorkerStatus.INITIALIZED
     except client.ApiException as e:
-        logger.error(f"Exception while creating worker: {convert_k8s_api_error(e)}")
-        response['status'] = PTXEdgeWorkerStatus.ERROR
+        logger.error(convert_k8s_api_error(e))
+        error = json.loads(str(e.body))
+        code = http.HTTPStatus.CONFLICT if e.reason == "Conflict" else http.HTTPStatus.UNPROCESSABLE_ENTITY
+        raise fastapi.HTTPException(status_code=code,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": e.reason,
+                                            "message": error['message'],
+                                            "resource": error['details']
+                                            })
     except urllib3.exceptions.MaxRetryError as e:
         logger.error(f"Max retries exceeded: {e}")
-        response['status'] = PTXEdgeWorkerStatus.ERROR
+        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": str(e.reason)})
     logger.debug("=" * 100)
-    return response
+    return {"status": PTXEdgeWorkerStatus.INITIALIZED}
 
 
 ########################################################################################################################
