@@ -20,8 +20,10 @@ from pydantic import BaseModel, Field
 class PTXEdgeWorkerStatus(enum.StrEnum):
     INITIALIZED = enum.auto()
     ERROR = enum.auto()
+    TERMINATING = enum.auto()
 
 
 class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     status: typing.Annotated[PTXEdgeWorkerStatus, Field(description="Worker deployment status")]
+    resource: typing.Annotated[dict[str, typing.Any], Field(description="Worker resource")] = None
