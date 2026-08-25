@@ -11,24 +11,57 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
+import http
+import os
 import pathlib
+import sys
+import typing
 
 import fastapi
-from app.config import CFG
-from app.model.versions import VersionsResponse
+import urllib3
+from asyncify import asyncify
+from kubernetes import client, config
 from starlette import responses, status
 
 from app import __version__
+from app.config import ApiConfiguration
+from app.logger import logger, convert_k8s_api_error
+from app.model.ptxedgeworker import PEW
+from app.model.responses import PTXEdgeWorkerStatus, PTXEdgeWorkerResponse
+from app.model.versions import VersionsResponse
+
+########################################################################################################################
+
+CONFIG = ApiConfiguration()
+
+
+async def setup_k8s_client():
+    try:
+        logger.debug("Loading in-cluster K8s configuration....")
+        config.load_incluster_config()
+    except config.ConfigException as e:
+        logger.error(f"Error loading Kubernetes API config:\n{e}")
+        sys.exit(os.EX_CONFIG)
+
+
+@contextlib.asynccontextmanager
+async def lifespan(_app: fastapi.FastAPI):
+    logger.info("Starting PTX Edge Computing REST-API...")
+    await setup_k8s_client()
+    yield
+    logger.info("Stopping PTX Edge Computing REST-API...")
+
 
 app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       description="The Edge Computing (Decentralized AI processing) BB-02 provides value-added "
                                   "services exploiting an underlying distributed edge computing infrastructure.",
-                      contact=dict(email="czentye.janos@vik.bme.hu"),
+                      # contact=dict(email="czentye.janos@vik.bme.hu"),
                       license_info=dict(name="Apache 2.0",
                                         url="https://www.apache.org/licenses/LICENSE-2.0.html"),
                       version=__version__,
-                      root_path=CFG.root_path,
-                      servers=[dict(url=CFG.root_path,
+                      root_path=CONFIG.ROOT_PATH,
+                      servers=[dict(url=CONFIG.ROOT_PATH,
                                     description="PTX Edge Computing")],
                       openapi_tags=[dict(name="customerAPI",
                                          description="Customer-facing API (EdgeAPI)",
@@ -37,8 +70,11 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                              url="https://github.com/Prometheus-X-association/edge-computing"),
                                          )],
                       docs_url="/ui/",
-                      redoc_url=None)
+                      redoc_url=None,
+                      lifespan=lifespan)
 
+
+########################################################################################################################
 
 @app.get("/versions", status_code=status.HTTP_200_OK)
 @app.head("/versions", status_code=status.HTTP_200_OK)
@@ -54,6 +90,64 @@ async def health():
     return responses.Response(status_code=status.HTTP_200_OK)
 
 
+########################################################################################################################
+
+@app.put("/workers/{worker_name}", response_model=PTXEdgeWorkerResponse, status_code=status.HTTP_201_CREATED)
+async def create_worker(worker_name: str, pew: PEW) -> typing.Any:
+    """Create PTX Edge Computing worker"""
+    logger.info(f"Received {PEW.__name__} create request with name: {worker_name}")
+    logger.debug("=" * 100)
+    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
+    logger.debug("Creating manifest body...")
+    manifest = {
+        'apiVersion': f"{PEW.group}/{PEW.version}",
+        'kind': PEW.kind,
+        'metadata': {
+            'name': worker_name,
+            'namespace': CONFIG.WORKER_NS,
+            'labels': {
+                'tier': 'worker'
+            }
+        }
+    }
+    sanitized_request_body = pew.model_dump(mode="json",
+                                            context=dict(expose_secrets=True),
+                                            exclude={"status"},
+                                            exclude_unset=True,
+                                            exclude_none=True,
+                                            warnings=True)
+    manifest.update(sanitized_request_body)
+    response = {}
+    try:
+        k8s = client.CustomObjectsApi()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        create_cmd = asyncify(k8s.create_namespaced_custom_object_with_http_info)
+        obj, _status, _ = await create_cmd(group=PEW.group,
+                                           version=PEW.version,
+                                           namespace=CONFIG.WORKER_NS,
+                                           plural=PEW.plural,
+                                           body=manifest)
+        result = http.HTTPStatus(_status)
+        logger.debug(f"Received response: HTTP/{result} - {result.name}")
+        response = {}
+        if not result.is_success:
+            logger.error(result)
+            response['status'] = PTXEdgeWorkerStatus.ERROR
+        logger.info(f"Created resource: {obj.get('kind')}/{obj.get('metadata', {}).get('name')}")
+        response['status'] = PTXEdgeWorkerStatus.INITIALIZED
+    except client.ApiException as e:
+        logger.error(f"Exception while creating worker: {convert_k8s_api_error(e)}")
+        response['status'] = PTXEdgeWorkerStatus.ERROR
+    except urllib3.exceptions.MaxRetryError as e:
+        logger.error(f"Max retries exceeded: {e}")
+        response['status'] = PTXEdgeWorkerStatus.ERROR
+    logger.debug("=" * 100)
+    return response
+
+
+########################################################################################################################
+
+
 if __name__ == '__main__':
     # Automatic reloading for development purposed,
     # In other case use `fastapi dev --host localhost --port 8080 --reload app/main.py`
@@ -62,5 +156,5 @@ if __name__ == '__main__':
     # http://localhost:8080/docs | http://localhost:8080/redoc
     import uvicorn
 
-    uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=8080, reload=True, access_log=True,
-                log_level="debug")
+    uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=9999,
+                reload=True, access_log=True, log_level="debug")

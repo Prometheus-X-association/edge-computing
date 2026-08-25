@@ -1,3 +1,44 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rest-api
+  namespace: ptx-edge
+  labels:
+    app: rest-api
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rest-api-rbac
+  namespace: ptx-edge
+  labels:
+    app: rest-api
+rules:
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers ]
+    verbs: [ create, list, patch ]
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers/status ]
+    verbs: [ list ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rest-api-rbac
+  namespace: ptx-edge
+  labels:
+    app: rest-api
+subjects:
+  - kind: ServiceAccount
+    name: rest-api
+    namespace: ptx-edge
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rest-api-rbac
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -6,23 +47,30 @@ metadata:
   labels:
     app: rest-api
 spec:
+  terminationGracePeriodSeconds: 1
+  serviceAccountName: rest-api
   containers:
     - name: rest-api
       image: registry.k3d.local:5000/ptx-edge/rest-api:1.0
       imagePullPolicy: IfNotPresent
-      command: [ "uvicorn", "app.main:app", "--workers=2",
-                 "--host=0.0.0.0", "--port=8080",
-                 "--reload", "--reload-dir=app",
-                 "--access-log", "--log-level=debug" ]
+      #command: [ "uvicorn", "app.main:app", "--workers=2",
+      #           "--host=0.0.0.0", "--port=8080",
+      #           "--reload", "--reload-dir=app",
+      #           "--access-log", "--log-level=debug" ]
+      command: [ "/bin/sh", "-c", "sleep infinity" ]
       env:
-        - name: ROOT_PATH
+        - name: API_ROOT_PATH
           value: "/ptx-edge/api/v1"
+        - name: API_WORKER_NS
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
       ports:
         - name: api-port
           containerPort: 8080
       volumeMounts:
         - name: src
-          mountPath: /usr/src/rest-api/app
+          mountPath: /usr/src/api/app
   volumes:
     - name: src
       hostPath:
@@ -84,3 +132,4 @@ spec:
                 name: rest-api
                 port:
                   number: 8080
+---

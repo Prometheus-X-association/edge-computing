@@ -1,4 +1,4 @@
-# Copyright 2025 Janos Czentye
+# Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,10 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic import BaseModel
+import enum
+import typing
+
+from pydantic import BaseModel, Field
 
 
-class VersionsResponse(BaseModel):
-    """API and used framework versions"""
-    api: str
-    framework: str
+class PTXEdgeWorkerStatus(enum.StrEnum):
+    INITIALIZED = enum.auto()
+    ERROR = enum.auto()
+
+
+class PTXEdgeWorkerResponse(BaseModel):
+    """Created PTXEdgeWorker status"""
+    status: typing.Annotated[PTXEdgeWorkerStatus, Field(description="Worker deployment status")]

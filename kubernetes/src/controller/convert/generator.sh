@@ -43,7 +43,7 @@ datamodel-codegen --input="${1}" --output "${2}" \
                 --capitalize-enum-members \
                 --target-python-version="${PY_VER}" \
                 --custom-template-dir="${TEMPLATE_DIR}/template" \
-                --additional-imports="typing.ClassVar" \
+                --additional-imports="typing.ClassVar,typing.Any,pydantic.field_serializer" \
                 --enable-version-header \
                 --enable-generated-header-marker \
                 --disable-timestamp \

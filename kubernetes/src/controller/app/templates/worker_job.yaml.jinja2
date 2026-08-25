@@ -18,5 +18,5 @@ spec:
     spec:
       restartPolicy: Never
       {% filter indent(width=6, first=true) %}
-      {% include "worker_containers.yaml.jinja2" %}
+        {% include "worker_containers.yaml.jinja2" %}
       {% endfilter %}
