@@ -3,13 +3,11 @@ info:
   title: PTX Edge Computing REST-API
   description: The Edge Computing (Decentralized AI processing) BB-02 provides value-added
     services exploiting an underlying distributed edge computing infrastructure.
-  contact:
-    email: czentye.janos@vik.bme.hu
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-03-18T10:47:49'
+  x-creation-date: '2026-08-25T16:46:47'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -58,8 +56,717 @@ paths:
           content:
             application/json:
               schema: {}
+  /workers/{worker_name}:
+    put:
+      summary: Create Worker
+      description: Create PTX Edge Computing worker
+      operationId: create_worker_workers__worker_name__put
+      parameters:
+      - name: worker_name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Worker Name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PEW'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PEW:
+      properties:
+        spec:
+          $ref: '#/components/schemas/PEWSpec'
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatus'
+          - type: 'null'
+      type: object
+      required:
+      - spec
+      title: PEW
+    PEWSpec:
+      properties:
+        service:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecService'
+          - type: 'null'
+        data:
+          $ref: '#/components/schemas/PEWSpecData'
+        worker:
+          $ref: '#/components/schemas/PEWSpecWorker'
+        dataspace:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspace'
+          - type: 'null'
+      type: object
+      required:
+      - data
+      - worker
+      title: PEWSpec
+      description: Specification of PTX Edge Worker
+    PEWSpecData:
+      properties:
+        src:
+          $ref: '#/components/schemas/PEWSpecDataSrc'
+        dst:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataDst'
+          - type: 'null'
+      type: object
+      required:
+      - src
+      title: PEWSpecData
+      description: Data collection parameters
+    PEWSpecDataDst:
+      properties:
+        method:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataDstMethod'
+          - type: 'null'
+          default: LOCAL
+        path:
+          anyOf:
+          - type: string
+            minLength: 1
+            pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
+          - type: 'null'
+          title: Path
+          default: /var/cache/data
+      type: object
+      title: PEWSpecDataDst
+      description: Data destination location
+    PEWSpecDataDstMethod:
+      type: string
+      enum:
+      - LOCAL
+      title: PEWSpecDataDstMethod
+      description: Data propagation scheme
+    PEWSpecDataSrc:
+      properties:
+        method:
+          $ref: '#/components/schemas/PEWSpecDataSrcMethod'
+          examples:
+          - HTTPS
+        path:
+          anyOf:
+          - type: string
+            minLength: 1
+            pattern: ^([^:/]+://)([^:/]+(:[0-9]{1,5})?)?(/.+)$
+          - type: 'null'
+          title: Path
+          examples:
+          - https://my.api.localhost:8080/data/example.csv
+        size:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Size
+          default: 100
+        auth:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataSrcAuth'
+          - type: 'null'
+      type: object
+      required:
+      - method
+      title: PEWSpecDataSrc
+      description: Data source location
+    PEWSpecDataSrcAuth:
+      properties:
+        scheme:
+          $ref: '#/components/schemas/PEWSpecDataSrcAuthScheme'
+          examples:
+          - BASIC
+        user:
+          type: string
+          minLength: 1
+          title: User
+          examples:
+          - admin
+        secret:
+          type: string
+          minLength: 1
+          format: password
+          title: Secret
+          writeOnly: true
+          examples:
+          - myPasswd!007
+        insecure:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Insecure
+          default: false
+      type: object
+      required:
+      - scheme
+      - user
+      - secret
+      title: PEWSpecDataSrcAuth
+      description: Authentication parameters for remote data collection
+    PEWSpecDataSrcAuthScheme:
+      type: string
+      enum:
+      - BASIC
+      - DIGEST
+      - BEARER
+      title: PEWSpecDataSrcAuthScheme
+      description: Used authentication method
+    PEWSpecDataSrcMethod:
+      type: string
+      enum:
+      - FILE
+      - DIR
+      - HTTP
+      - HTTPS
+      - PTX
+      - SKIP
+      title: PEWSpecDataSrcMethod
+      description: Data collection method
+    PEWSpecDataspace:
+      properties:
+        exchange:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspaceExchange'
+          - type: 'null'
+        privacy:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspacePrivacy'
+          - type: 'null'
+      type: object
+      title: PEWSpecDataspace
+      description: PTX dataspace-related configuration
+    PEWSpecDataspaceExchange:
+      properties:
+        data:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspaceExchangeData'
+          - type: 'null'
+        worker:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspaceExchangeWorker'
+          - type: 'null'
+      type: object
+      title: PEWSpecDataspaceExchange
+      description: Attributes of data exchange via PTX dataspace
+    PEWSpecDataspaceExchangeData:
+      properties:
+        contract:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Contract
+          examples:
+          - 66db1a6dc29e3ba863a85e0f
+        provider:
+          $ref: '#/components/schemas/PEWSpecDataspaceExchangeDataProvider'
+        consumer:
+          $ref: '#/components/schemas/PEWSpecDataspaceExchangeDataConsumer'
+      type: object
+      required:
+      - contract
+      - provider
+      - consumer
+      title: PEWSpecDataspaceExchangeData
+      description: Dataspace contract information for data exchange
+    PEWSpecDataspaceExchangeDataConsumer:
+      properties:
+        offer:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Offer
+          examples:
+          - 66d18b79ee71f9f096baecb1
+        resource:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Resource
+          examples:
+          - 66d18bf6ee71f9f096baed58
+      type: object
+      required:
+      - offer
+      - resource
+      title: PEWSpecDataspaceExchangeDataConsumer
+      description: Data consumer configuration
+    PEWSpecDataspaceExchangeDataProvider:
+      properties:
+        offer:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Offer
+          examples:
+          - 66d187f4ee71f9f096bae8ca
+        resource:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Resource
+          examples:
+          - 66d1889cee71f9f096bae98b
+      type: object
+      required:
+      - offer
+      - resource
+      title: PEWSpecDataspaceExchangeDataProvider
+      description: Data provider configuration
+    PEWSpecDataspaceExchangeWorker:
+      properties:
+        contract:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Contract
+          examples:
+          - 66db1a6dc29e3ba863a85e0f
+        provider:
+          $ref: '#/components/schemas/PEWSpecDataspaceExchangeWorkerProvider'
+        consumer:
+          $ref: '#/components/schemas/PEWSpecDataspaceExchangeWorkerConsumer'
+      type: object
+      required:
+      - contract
+      - provider
+      - consumer
+      title: PEWSpecDataspaceExchangeWorker
+      description: Dataspace contract information for worker exchange
+    PEWSpecDataspaceExchangeWorkerConsumer:
+      properties:
+        offer:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Offer
+          examples:
+          - 66d18b79ee71f9f096baecb1
+        resource:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Resource
+          examples:
+          - 66d18bf6ee71f9f096baed58
+      type: object
+      required:
+      - offer
+      - resource
+      title: PEWSpecDataspaceExchangeWorkerConsumer
+      description: Data consumer configuration
+    PEWSpecDataspaceExchangeWorkerProvider:
+      properties:
+        offer:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Offer
+          examples:
+          - 66d187f4ee71f9f096bae8ca
+        resource:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-fA-F]+$
+          title: Resource
+          examples:
+          - 66d1889cee71f9f096bae98b
+      type: object
+      required:
+      - offer
+      - resource
+      title: PEWSpecDataspaceExchangeWorkerProvider
+      description: Data provider configuration
+    PEWSpecDataspacePrivacy:
+      properties:
+        required:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Required
+          default: true
+        scheduler:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecDataspacePrivacyScheduler'
+          - type: 'null'
+          default: PRIVATE
+        zones:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWSpecDataspacePrivacyZone'
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Zones
+      type: object
+      title: PEWSpecDataspacePrivacy
+      description: Privacy zone restriction policies
+    PEWSpecDataspacePrivacyScheduler:
+      type: string
+      enum:
+      - DEFAULT
+      - PRIVATE
+      title: PEWSpecDataspacePrivacyScheduler
+      description: Used scheduling method
+    PEWSpecDataspacePrivacyZone:
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Name
+          examples:
+          - zone-1
+        preferred:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Preferred
+          default: false
+      type: object
+      required:
+      - name
+      title: PEWSpecDataspacePrivacyZone
+      description: Privacy zone
+    PEWSpecService:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        interfaces:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWSpecServiceInterface'
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Interfaces
+      type: object
+      required:
+      - enabled
+      title: PEWSpecService
+      description: Initiate worker as a service, not a single-executed task
+    PEWSpecServiceInterface:
+      properties:
+        port:
+          type: integer
+          maximum: 65535.0
+          minimum: 1.0
+          title: Port
+          examples:
+          - 8080
+        public:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Public
+          default: false
+        secured:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Secured
+          default: true
+        stripped:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Stripped
+          default: true
+        restricted:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Restricted
+          default: false
+      type: object
+      required:
+      - port
+      title: PEWSpecServiceInterface
+    PEWSpecWorker:
+      properties:
+        src:
+          $ref: '#/components/schemas/PEWSpecWorkerSrc'
+        dst:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecWorkerDst'
+          - type: 'null'
+        command:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWSpecWorkerCommandItem'
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Command
+          examples:
+          - - /bin/sh
+            - -c
+            - sleep infinity
+        demands:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecWorkerDemands'
+          - type: 'null'
+        config:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecWorkerConfig'
+          - type: 'null'
+      type: object
+      required:
+      - src
+      title: PEWSpecWorker
+      description: Worker environment parameters
+    PEWSpecWorkerCommandItem:
+      type: string
+      minLength: 1
+      title: PEWSpecWorkerCommandItem
+    PEWSpecWorkerConfig:
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecWorkerConfigFile'
+          - type: 'null'
+        env:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWSpecWorkerConfigEnvItem'
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Env
+      type: object
+      title: PEWSpecWorkerConfig
+      description: Worker image configuration parameters
+    PEWSpecWorkerConfigEnvItem:
+      properties:
+        key:
+          type: string
+          minLength: 1
+          title: Key
+          examples:
+          - MY_CFG_ENVVAR
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+          examples:
+          - '42'
+      type: object
+      required:
+      - key
+      title: PEWSpecWorkerConfigEnvItem
+      description: Key-value pairs
+    PEWSpecWorkerConfigFile:
+      properties:
+        path:
+          type: string
+          minLength: 1
+          pattern: ^((/[a-zA-Z0-9-_\.]+)+)$
+          title: Path
+          examples:
+          - /var/cache/worker/cfg.ini
+        data:
+          type: string
+          title: Data
+          examples:
+          - '{"var": 42}'
+      type: object
+      required:
+      - path
+      - data
+      title: PEWSpecWorkerConfigFile
+      description: Configuration file
+    PEWSpecWorkerDemands:
+      properties:
+        cpu:
+          anyOf:
+          - type: number
+            minimum: 0.5
+          - type: 'null'
+          title: Cpu
+          examples:
+          - 1.5
+        memory:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Memory
+          examples:
+          - 1024
+      type: object
+      title: PEWSpecWorkerDemands
+      description: Operating resource demands
+    PEWSpecWorkerDst:
+      properties:
+        cached:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Cached
+          default: true
+        name:
+          anyOf:
+          - type: string
+            minLength: 1
+            pattern: ^([^:/]+/)?([^:]+):([^:/]+)$
+          - type: 'null'
+          title: Name
+          examples:
+          - myworker:latest
+      type: object
+      title: PEWSpecWorkerDst
+      description: Worker image destination configuration
+    PEWSpecWorkerSrc:
+      properties:
+        method:
+          $ref: '#/components/schemas/PEWSpecWorkerSrcMethod'
+          examples:
+          - DOCKER
+        image:
+          anyOf:
+          - type: string
+            minLength: 1
+            pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
+          - type: 'null'
+          title: Image
+          examples:
+          - busybox:latest
+        auth:
+          anyOf:
+          - $ref: '#/components/schemas/PEWSpecWorkerSrcAuth'
+          - type: 'null'
+      type: object
+      required:
+      - method
+      title: PEWSpecWorkerSrc
+      description: Worker image location
+    PEWSpecWorkerSrcAuth:
+      properties:
+        server:
+          anyOf:
+          - type: string
+            minLength: 1
+            pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
+          - type: 'null'
+          title: Server
+          default: https://index.docker.io/v1/
+        user:
+          type: string
+          minLength: 1
+          title: User
+          examples:
+          - admin
+        secret:
+          type: string
+          minLength: 1
+          format: password
+          title: Secret
+          writeOnly: true
+          examples:
+          - myPasswd!007
+        insecure:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Insecure
+          default: false
+      type: object
+      required:
+      - user
+      - secret
+      title: PEWSpecWorkerSrcAuth
+      description: Credentials for remote image collection
+    PEWSpecWorkerSrcMethod:
+      type: string
+      enum:
+      - DOCKER
+      - PTX
+      - INLINE
+      - DATASOURCE
+      - SECRET
+      - SKIP
+      title: PEWSpecWorkerSrcMethod
+      description: Image pull approach
+    PEWStatus:
+      properties:
+        state:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: State
+      type: object
+      title: PEWStatus
+      description: Runtime information
+    PTXEdgeWorkerResponse:
+      properties:
+        status:
+          $ref: '#/components/schemas/PTXEdgeWorkerStatus'
+          description: Worker deployment status
+      type: object
+      required:
+      - status
+      title: PTXEdgeWorkerResponse
+      description: Created PTXEdgeWorker status
+    PTXEdgeWorkerStatus:
+      type: string
+      enum:
+      - initialized
+      - error
+      title: PTXEdgeWorkerStatus
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     VersionsResponse:
       properties:
         api:
@@ -73,6 +780,7 @@ components:
       - api
       - framework
       title: VersionsResponse
+      description: API and used framework versions
 tags:
 - name: customerAPI
   description: Customer-facing API (EdgeAPI)

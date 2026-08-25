@@ -11,13 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+export PROJECT_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 NAME := rest-api
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 TEST_IMG := ptx-edge/${NAME}-test:${VERSION}
+PEW_MODEL := $(realpath ${PROJECT_ROOT}/../controller/app/model/ptxedgeworker.py)
 
 # Docker commands
 build:
+	cp ${PEW_MODEL} ./app/model/
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}
 

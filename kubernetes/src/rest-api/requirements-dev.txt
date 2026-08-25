@@ -1,8 +1,8 @@
 # Development
 virtualenv
-fastapi[standard]~=0.141.0     # For the fastapi shell command
+fastapi[standard]    # For the fastapi shell command
 # Testing
 pytest
-pytest-custom_exit_code~=0.3.0
+pytest-custom_exit_code
 tox
-httpx~=0.28.1
+httpx

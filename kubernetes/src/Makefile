@@ -23,21 +23,21 @@ CA_DIR := ${PROJECT_ROOT}/registry/.certs/ca
 
 ASSETS := ${PROJECT_ROOT}/assets
 
-COMPONENTS := builder controller registry rest-api scheduler
+COMPONENTS := registry scheduler builder controller rest-api
 PTX_CORE := catalog contract consent
 CONNECTOR := connector mongodb
 SAMPLES := convnet gbc
 EXTRA := "busybox:latest"
 
-build:
+build ::
 	for mod in ${COMPONENTS}; do ${MAKE} -C $${mod} build; done
 	${MAKE} -C ptx build
 	${MAKE} -C samples build-all
 	docker images
 
-rebuild: | purge build
+rebuild :: | purge build
 
-setup:
+setup ::
 	k3d cluster create --config=${ASSETS}/k3d-dev-cluster.yaml
 	kubectl create namespace ptx-edge && kubectl config set-context --current --namespace ptx-edge
 	kubectl create namespace ptx-sandbox
@@ -86,7 +86,7 @@ setup:
 	@echo ">>> Configured CoreDNS entries:"
 	kubectl -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 
-status:
+status ::
 	@k3d cluster list --no-headers | grep -q ^ # check for existing cluster
 	@kubectl get nodes --ignore-not-found -o wide
 	@echo
@@ -99,12 +99,12 @@ status:
 	@echo
 	@pgrep -fa "^kubectl.*port-forward.*8888:8080" || true
 
-shell:
+shell ::
 	-@kubectl run --rm --grace-period=3 --restart=Never --image alpine:latest -ti "shell" --command -- sh
 
 ########################################################################################################################
 
-run-catalog:
+run-catalog ::
 	kubectl -n ptx-sandbox apply -f ${ASSETS}/ptx-sandbox-setup.yaml -l app=catalog
 	kubectl -n ptx-sandbox wait --for="condition=Ready" --timeout=30s pod/catalog
 	@echo
@@ -115,7 +115,7 @@ run-catalog:
 								sh -c "nslookup catalog.ptx-sandbox.svc.cluster.local; \
 								wget -T3 -qO- http://catalog.ptx-sandbox.svc.cluster.local:3002/__admin/health; echo"
 
-run-pdc-pod: run-catalog
+run-pdc-pod :: run-catalog
 	kubectl apply -f ${ASSETS}/ptx-pdc-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/pdc
 	@echo "Waiting for PDC to set up..."
@@ -132,7 +132,7 @@ run-pdc-pod: run-catalog
 	@echo ">>> PDC is exposed on http://${NODE_IP}:30003/"
 	@curl -Ssf "http://${NODE_IP}:30003/" | grep "href"
 
-run-pdc-daemon-headless: run-catalog
+run-pdc-daemon-headless :: run-catalog
 	kubectl apply -f ${ASSETS}/ptx-pdc-daemon_headless.yaml
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
 	@echo "Waiting for PDC to set up..."
@@ -153,7 +153,7 @@ run-pdc-daemon-headless: run-catalog
 	@curl -Ssf "http://${NODE_IP}:30003/" | grep "href"
 	@#kubectl exec -ti ds/pdc --container builder -- sh
 
-run-pdc-daemon-cluster: run-catalog
+run-pdc-daemon-cluster :: run-catalog
 	kubectl apply -f ${ASSETS}/ptx-pdc-daemon_cluster.yaml
 	kubectl apply -f ${ASSETS}/ptx-pdc-ingess.yaml
 	kubectl wait --for=jsonpath='.status.numberReady'=1 --timeout=30s daemonset/pdc
@@ -173,17 +173,25 @@ run-pdc-daemon-cluster: run-catalog
 	wget -T3 -O /dev/null -qS http://localhost:8888/ptx-edge/zone-b/pdc/
 	@curl -Ssf "http://localhost:8888/ptx-edge/zone-a/pdc/" | grep "href"
 
-run-api:
+run-api ::
 	kubectl apply -f ${ASSETS}/ptx-rest-api-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/rest-api
 	@#( kubectl port-forward service/rest-api 8888:8080 & ) && sleep 3
 	@echo
 	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/api/v1/ui/"
-	@sleep 3
-	wget -T3 -qS --user=admin --password=admin http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
-	curl -LSs -u admin:admin "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
+	@#sleep 3
+	#wget -T3 -qS -O- --user=admin --password=admin http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
+	#curl -LSs -u admin:admin "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
+	@echo
+	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/ptx-edge-worker.yaml
+	sleep 3s
+	kubectl wait --for="condition=established" --timeout=30s crd/ptxedgeworkers.dataspace.ptx.org
+	kubectl get all,crd -o wide
+	@echo
+	-kubectl exec -ti pod/rest-api -- sh || true
+	kubectl delete pods/rest-api --now --wait
 
-run-builder:
+run-builder ::
 	envsubst <${ASSETS}/ptx-builder-pod.yaml '$${DH_TOKEN}' | kubectl apply -f=-
 	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=30s pod/builder
 	@echo
@@ -193,7 +201,7 @@ run-builder:
 	kubectl delete pods/builder --now --wait
 	kubectl delete pods,secrets -l app=builder -l app=worker --now --wait
 
-run-scheduler:
+run-scheduler ::
 	kubectl apply -f ${ASSETS}/ptx-scheduler-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/scheduler
 	@echo
@@ -203,7 +211,7 @@ run-scheduler:
 	kubectl delete pods/scheduler --now --wait
 	#kubectl delete pods -l app=worker
 
-run-controller:
+run-controller ::
 	@#kubectl apply -f https://github.com/nolar/kopf/raw/main/peering.yaml
 	@#kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/	# override default namespace
 	#
@@ -235,7 +243,7 @@ del-test-worker ::
 
 ########################################################################################################################
 
-run-sample-convnet:
+run-sample-convnet ::
 	kubectl apply -f ${ASSETS}/ptx-samples-convnet-job.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
@@ -247,7 +255,7 @@ run-sample-convnet:
 	kubectl wait --for="condition=ContainersReady" pods -l app=consumer
 	kubectl logs -f --prefix job/consumer worker
 
-run-sample-gbc:
+run-sample-gbc ::
 	kubectl apply -f ${ASSETS}/ptx-samples-gbc-job.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=20s pvc/worker-pvc
 	@echo
@@ -262,7 +270,7 @@ run-sample-gbc:
 
 ########################################################################################################################
 
-run-test-job:
+run-test-job ::
 	kubectl apply -f ${ASSETS}/ptx-test-worker-job.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
@@ -276,10 +284,10 @@ run-test-job:
 	kubectl logs -f --prefix job/consumer-test-job worker
 
 
-registry-ca:
+registry-ca ::
 	kubectl create configmap registry-root-ca.crt --from-file=ca.crt=registry/.certs/ca/ca.crt || true
 
-run-test-img: registry-ca
+run-test-img :: registry-ca
 	kubectl apply -f ${ASSETS}/ptx-test-worker-img.yaml
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
@@ -297,7 +305,7 @@ ifneq (,$(wildcard ./.creds/dockerhub.token))
     export
 endif
 
-run-test-secret:
+run-test-secret ::
 	envsubst <${ASSETS}/ptx-test-worker-secret.yaml '$${DH_TOKEN}' | kubectl apply -f=-
 	kubectl wait --for='jsonpath={.status.phase}=Bound' --timeout=30s pvc/worker-pvc
 	@echo
@@ -310,7 +318,7 @@ run-test-secret:
 	kubectl wait --for="condition=ContainersReady" pods --timeout=20s -l app=consumer
 	kubectl logs -f --prefix job/consumer-test-secret worker
 
-run-test-pod:
+run-test-pod ::
 	kubectl delete -f "${ASSETS}/ptx-test-worker-pod.yaml" || true
 	kubectl delete event --all || true
 	kubectl apply -f "${ASSETS}/ptx-test-worker-pod.yaml"
@@ -319,19 +327,19 @@ run-test-pod:
 
 ########################################################################################################################
 
-run: | registry-ca run-pdc-daemon-cluster run-api run-scheduler
+run :: | registry-ca run-pdc-daemon-cluster run-api run-scheduler
 
-launch: | rebuild setup run-pdc-pod run-builder
+launch :: | rebuild setup run-pdc-pod run-builder
 
-log-pdc:
+log-pdc ::
 	-kubectl logs --prefix --ignore-errors -f pdc connector
 
-log-catalog:
+log-catalog ::
 	-kubectl -n ptx-sandbox logs --prefix --ignore-errors -f pods/catalog catalog-wiremock
 
 ########################################################################################################################
 
-stop:
+stop ::
 	( pgrep -f "^kubectl.*port-forward.*8888:8080" ) | xargs -r kill
 	kubectl delete namespace ptx-edge --ignore-not-found --now && kubectl create namespace ptx-edge
 	kubectl delete namespace ptx-sandbox --ignore-not-found --now && kubectl create namespace ptx-sandbox
@@ -340,22 +348,23 @@ stop:
 
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
 
-clear-test:
+clear-test ::
 	kubectl delete all,pv,pvc,secret -l env=test
 	kubectl delete events --all
 	@#${MAKE} -f $(THIS_FILE) status
 	@echo && ${MAKE} -s status
 
 
-teardown:
+teardown ::
 	-docker ps -aq -f name=ptx-catalog | xargs -r docker rm -f
 	-k3d cluster delete dev
 
-purge: clear-test
+reset :: | teardown build setup
+
+purge :: clear-test
 	rm -rf ${PROJECT_ROOT}/.cache
 	docker image ls -qf "reference=ptx/*" -f "reference=ptx-edge/*" \
 					 -f "reference=ptx-sandbox/*" -f "reference=samples/*" | xargs -r docker rmi -f
 	docker image prune -f
 
-.PHONY:
 .DEFAULT_GOAL := setup

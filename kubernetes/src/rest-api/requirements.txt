@@ -1,5 +1,12 @@
-fastapi~=0.141.0
+fastapi~=0.141.1
+pydantic
+starlette
 uvicorn
-pydantic-settings~=2.11.0
+uvloop
+asyncify
+urllib3
+kubernetes==35.0.0
+pydantic-settings~=2.15.0
 #hypercorn~=0.17.3              # Optional ASGI server
 #granian~=1.6.3                 # Optional ASGI server
+

@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ApiConfiguration(BaseSettings):
-    root_path: str = "/"  # Also auto-read from envvar: 'ROOT_PATH'
-
-
-CFG = ApiConfiguration()
+    # Also auto-read from envvar
+    ROOT_PATH: str = Field(default="/")
+    WORKER_NS: str = Field(default="ptx-edge")
+    #
+    model_config = SettingsConfigDict(env_prefix='API_',
+                                      case_sensitive=False)

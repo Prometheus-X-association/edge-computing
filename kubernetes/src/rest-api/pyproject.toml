@@ -19,9 +19,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    "fastapi~=0.141.0",
+    "fastapi~=0.141.1",
+    "pydantic",
+    "starlette",
     "uvicorn",
-    "pydantic-settings~=2.11.0"
+    "uvloop",
+    "asyncify",
+    "urllib3",
+    "kubernetes==35.0.0",
+    "pydantic-settings~=2.15.0"
 ]
 
 [project.urls]
@@ -32,11 +38,11 @@ Issues = "https://github.com/Prometheus-X-association/edge-computing/issues"
 [project.optional-dependencies]
 test = [
     "virtualenv",
-    "fastapi[standard]~=0.141.0", # For the fastapi shell command
-    "pytest~=8.4.1",
-    "pytest-custom_exit_code~=0.3.0",
-    "tox~=4.32.0",
-    "httpx~=0.28.1"
+    "fastapi[standard]", # For the fastapi shell command
+    "pytest",
+    "pytest-custom_exit_code",
+    "tox",
+    "httpx"
 ]
 
 [tool.setuptools.dynamic]
