@@ -11,16 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import logging
-
-from kubernetes import client
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 logger.setLevel(logging.DEBUG)
-
-
-def convert_k8s_api_error(e: client.ApiException) -> str:
-    return '\n'.join((f"Error received with status: {e.status} and reason: {e.reason}",
-                      "HTTP response body:",
-                      json.dumps(json.loads(str(e.body)) if e.body else '{}', indent=2)))

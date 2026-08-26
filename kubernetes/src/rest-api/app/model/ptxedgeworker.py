@@ -2,11 +2,12 @@
 #   filename:  ptxedgeworker.json
 #   version:   0.74.0
 
-from typing import Any, ClassVar
-from pydantic import field_serializer
-from typing import Annotated
-from pydantic import BaseModel as _BaseModel, ConfigDict, Field, RootModel, SecretStr
 from enum import StrEnum
+from typing import Annotated
+from typing import Any, ClassVar
+
+from pydantic import BaseModel as _BaseModel, ConfigDict, Field, RootModel, SecretStr
+from pydantic import field_serializer
 
 
 class BaseModel(_BaseModel):

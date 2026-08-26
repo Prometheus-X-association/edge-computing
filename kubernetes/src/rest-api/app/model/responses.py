@@ -27,3 +27,9 @@ class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     status: typing.Annotated[PTXEdgeWorkerStatus, Field(description="Worker deployment status")]
     resource: typing.Annotated[dict[str, typing.Any], Field(description="Worker resource")] = None
+
+
+class VersionsResponse(BaseModel):
+    """API and used framework versions"""
+    api: str
+    framework: str

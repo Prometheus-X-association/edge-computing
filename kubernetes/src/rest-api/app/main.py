@@ -1,4 +1,4 @@
-# Copyright 2025 Janos Czentye
+# Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 import contextlib
 import http
-import json
 import os
 import pathlib
 import pprint
@@ -26,11 +25,12 @@ from asyncify import asyncify
 from kubernetes import client, config
 
 from app import __version__
-from app.config import ApiConfiguration
-from app.logger import logger, convert_k8s_api_error
+from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
+                              convert_k8s_api_error)
 from app.model.ptxedgeworker import PEW
-from app.model.responses import PTXEdgeWorkerStatus, PTXEdgeWorkerResponse
-from app.model.versions import VersionsResponse
+from app.model.responses import PTXEdgeWorkerStatus, PTXEdgeWorkerResponse, VersionsResponse
+from app.utils.config import ApiConfiguration
+from app.utils.logger import logger
 
 ########################################################################################################################
 
@@ -125,41 +125,16 @@ async def get_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=
                                            namespace=CONFIG.WORKER_NS,
                                            plural=PEW.plural,
                                            name=name)
-        result = http.HTTPStatus(_status)
-        logger.debug(f"Received response: HTTP/{result} - {result.name}")
-        if not result.is_success:
-            logger.error(result)
-            raise fastapi.HTTPException(status_code=_status,
-                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                                "code": _status,
-                                                "resource": {
-                                                    "name": obj['details']['name'],
-                                                    "group": obj['details']['group'],
-                                                    "kind": obj['details']['kind']
-                                                }})
+        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
+        raise_for_k8s_error(obj=obj, _status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj
     except client.ApiException as e:
-        logger.error(convert_k8s_api_error(e))
-        error = json.loads(str(e.body))
-        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
-        raise fastapi.HTTPException(status_code=code,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": error['reason'],
-                                            "message": error['message'],
-                                            "resource": error['details']
-                                            })
+        raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
-        logger.error(f"Max retries exceeded: {e}")
-        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": str(e.reason),
-                                            "message": None,
-                                            "resource": {
-                                                "url": e.url
-                                            }})
+        raise_for_network_error(e)
 
 
 @app.get("/workers",
@@ -180,44 +155,19 @@ async def list_all_workers():
                                            version=PEW.version,
                                            namespace=CONFIG.WORKER_NS,
                                            plural=PEW.plural)
-        result = http.HTTPStatus(_status)
-        logger.debug(f"Received response: HTTP/{result} - {result.name}")
-        if not result.is_success:
-            logger.error(result)
-            raise fastapi.HTTPException(status_code=_status,
-                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                                "code": _status,
-                                                "resource": {
-                                                    "name": obj['details']['name'],
-                                                    "group": obj['details']['group'],
-                                                    "kind": obj['details']['kind']
-                                                }})
+        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
+        raise_for_k8s_error(obj=obj, _status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj.get("items", [])
     except client.ApiException as e:
-        logger.error(convert_k8s_api_error(e))
-        error = json.loads(str(e.body))
-        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
-        raise fastapi.HTTPException(status_code=code,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": error['reason'],
-                                            "message": error['message'],
-                                            "resource": error['details']
-                                            })
+        raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
-        logger.error(f"Max retries exceeded: {e}")
-        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": str(e.reason),
-                                            "message": None,
-                                            "resource": {
-                                                "url": e.url
-                                            }})
+        raise_for_network_error(e)
 
 
-async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typing.Any]:
+async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typing.Any] | None:
     """Create PTX Edge Computing worker"""
     logger.info(f"Received {PEW.__name__} create request with name: {name}")
     logger.debug("=" * 100)
@@ -253,18 +203,8 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
                                            namespace=CONFIG.WORKER_NS,
                                            plural=PEW.plural,
                                            body=manifest)
-        result = http.HTTPStatus(_status)
-        logger.debug(f"Received response: HTTP/{result} - {result.name}")
-        if not result.is_success:
-            logger.error(result)
-            raise fastapi.HTTPException(status_code=_status,
-                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                                "code": _status,
-                                                "resource": {
-                                                    "name": obj['metadata']['name'],
-                                                    "version": obj['apiVersion'],
-                                                    "kind": obj['kind']
-                                                }})
+        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
+        raise_for_k8s_error(obj=obj, _status=_status)
         logger.info(f"Created resource: {obj['kind']}/{obj['metadata']['name']}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
@@ -275,24 +215,9 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
                     "kind": obj['kind']
                 }}
     except client.ApiException as e:
-        logger.error(convert_k8s_api_error(e))
-        error = json.loads(str(e.body))
-        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
-        raise fastapi.HTTPException(status_code=code,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": error['reason'],
-                                            "message": error['message'],
-                                            "resource": error['details']
-                                            })
+        raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
-        logger.error(f"Max retries exceeded: {e}")
-        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": str(e.reason),
-                                            "message": None,
-                                            "resource": {
-                                                "url": e.url
-                                            }})
+        raise_for_network_error(e)
 
 
 @app.put("/workers/{name}",
@@ -331,18 +256,8 @@ async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
                                            namespace=CONFIG.WORKER_NS,
                                            plural=PEW.plural,
                                            name=name)
-        result = http.HTTPStatus(_status)
-        logger.debug(f"Received response: HTTP/{result} - {result.name}")
-        if not result.is_success:
-            logger.error(result)
-            raise fastapi.HTTPException(status_code=_status,
-                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                                "code": _status,
-                                                "resource": {
-                                                    "name": obj['details']['name'],
-                                                    "group": obj['details']['group'],
-                                                    "kind": obj['details']['kind']
-                                                }})
+        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
+        raise_for_k8s_error(obj=obj, _status=_status)
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
@@ -353,24 +268,9 @@ async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
                     "kind": obj['details']['kind']
                 }}
     except client.ApiException as e:
-        logger.error(convert_k8s_api_error(e))
-        error = json.loads(str(e.body))
-        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
-        raise fastapi.HTTPException(status_code=code,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": error['reason'],
-                                            "message": error['message'],
-                                            "resource": error['details']
-                                            })
+        raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
-        logger.error(f"Max retries exceeded: {e}")
-        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "reason": str(e.reason),
-                                            "message": None,
-                                            "resource": {
-                                                "url": e.url
-                                            }})
+        raise_for_network_error(e)
 
 
 ########################################################################################################################
