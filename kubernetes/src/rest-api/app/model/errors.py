@@ -19,7 +19,7 @@ import fastapi
 import urllib3
 from kubernetes import client
 
-from app.model.responses import PTXEdgeWorkerStatus
+from app.model.responses import PTXEdgeWorkerResponseStatus
 from app.utils.logger import logger
 
 
@@ -28,7 +28,7 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     logger.debug(f"Received response: HTTP/{result} - {result.name}")
     if not result.is_success:
         raise fastapi.HTTPException(status_code=status,
-                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                    detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
                                             "code": status,
                                             "resource": {
                                                 "name": obj['details']['name'],
@@ -42,7 +42,7 @@ def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
     error = json.loads(str(ex.body))
     code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
     raise fastapi.HTTPException(status_code=code,
-                                detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
                                         "reason": error['reason'],
                                         "message": error['message'],
                                         "resource": error['details']
@@ -52,7 +52,7 @@ def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
 def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
     logger.error(f"Max retries exceeded: {ex}")
     raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
-                                detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
                                         "reason": str(ex.reason),
                                         "message": None,
                                         "resource": {

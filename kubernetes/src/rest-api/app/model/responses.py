@@ -14,22 +14,47 @@
 import enum
 import typing
 
+import fastapi
 from pydantic import BaseModel, Field
 
+from app import __version__
+from app.model.ptxedgeworker import PEW
 
-class PTXEdgeWorkerStatus(enum.StrEnum):
+
+class VersionsResponse(BaseModel):
+    """API and used framework versions"""
+    api: typing.Annotated[str, Field(default=__version__)]
+    framework: typing.Annotated[str, Field(default=fastapi.__version__)]
+
+
+class PTXEdgeWorkerResponseStatus(enum.StrEnum):
     INITIALIZED = enum.auto()
     ERROR = enum.auto()
     TERMINATING = enum.auto()
 
 
+PTXEdgeWorkerNameType = typing.Annotated[str, Field(description="Worker name",
+                                                    pattern=r"^[a-zA-Z0-9_-]+$",
+                                                    example="worker")]
+
+
+class PTXEdgeWorkerResponseResource(BaseModel):
+    name: PTXEdgeWorkerNameType
+    kind: typing.Annotated[str, Field(description="Resource type",
+                                      min_length=1,
+                                      example="PtxEdgeWorker")]
+    version: typing.Annotated[str | None, Field(description="Resource version",
+                                                example="dataspace.ptx.org/v1alpha1")] = None
+    group: typing.Annotated[str | None, Field(description="Resource group",
+                                              example="dataspace.ptx.org")] = None
+
+
 class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
-    status: typing.Annotated[PTXEdgeWorkerStatus, Field(description="Worker deployment status")]
-    resource: typing.Annotated[dict[str, typing.Any], Field(description="Worker resource")] = None
+    status: typing.Annotated[PTXEdgeWorkerResponseStatus, Field(description="Worker deployment status")]
+    resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource", default=None)]
 
 
-class VersionsResponse(BaseModel):
-    """API and used framework versions"""
-    api: str
-    framework: str
+class PTXEdgeWorkerCollectionResponse(BaseModel):
+    workers: typing.Annotated[list[PTXEdgeWorkerNameType], Field(description="List of worker names")]
+    resources: typing.Annotated[list[PEW] | None, Field(description="List of PtxEdgeWorkers", default=None)]
