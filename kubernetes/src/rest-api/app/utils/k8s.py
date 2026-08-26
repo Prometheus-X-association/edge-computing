@@ -36,8 +36,9 @@ async def setup_k8s_client() -> None:
 class K8sAPIMethod(enum.StrEnum):
     CREATE = "create"
     GET = "get"
-    DELETE = "delete"
     LIST = "list"
+    DELETE = "delete"
+    DELETE_ALL = "delete_collection"
 
 
 async def invoke_k8s_api(method: K8sAPIMethod,

@@ -18,7 +18,7 @@ metadata:
 rules:
   - apiGroups: [ dataspace.ptx.org ]
     resources: [ ptxedgeworkers ]
-    verbs: [ get, list, create, delete ]
+    verbs: [ get, list, create, delete, deletecollection ]
   - apiGroups: [ dataspace.ptx.org ]
     resources: [ ptxedgeworkers/status ]
     verbs: [ list ]

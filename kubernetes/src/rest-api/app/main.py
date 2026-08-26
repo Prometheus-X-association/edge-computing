@@ -138,8 +138,6 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
         raise_for_network_error(e)
 
 
-########################################################################################################################
-
 @app.get("/workers/{name}",
          tags=["Customer"],
          response_model=PEW,
@@ -158,29 +156,6 @@ async def get_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj
-    except kubernetes.client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
-
-
-@app.get("/workers",
-         tags=["Cluster"],
-         response_model=list[PEW],
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=http.HTTPStatus.OK)
-async def list_all_workers():
-    """Obtain deployed PTX-Edge workers"""
-    logger.info(f"Received {PEW.__name__} list request")
-    logger.debug("=" * 100)
-    try:
-        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.LIST)
-        raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
-        logger.debug("=" * 100)
-        return obj.get("items", [])
     except kubernetes.client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
@@ -227,6 +202,53 @@ async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
                     "group": obj['details']['group'],
                     "kind": obj['details']['kind']
                 }}
+    except kubernetes.client.ApiException as e:
+        raise_for_failed_k8s_request(e)
+    except urllib3.exceptions.MaxRetryError as e:
+        raise_for_network_error(e)
+
+
+########################################################################################################################
+@app.get("/workers",
+         tags=["Cluster"],
+         response_model=list[PEW],
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=http.HTTPStatus.OK)
+async def list_all_workers():
+    """Obtain deployed PTX-Edge workers"""
+    logger.info(f"Received {PEW.__name__} list request")
+    logger.debug("=" * 100)
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.LIST)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("items", [])
+    except kubernetes.client.ApiException as e:
+        raise_for_failed_k8s_request(e)
+    except urllib3.exceptions.MaxRetryError as e:
+        raise_for_network_error(e)
+
+
+@app.delete("/workers",
+            tags=["Cluster"],
+            response_model=list[PEW],
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True,
+            status_code=http.HTTPStatus.OK)
+async def delete_all_workers():
+    """Delete all deployed PTX-Edge workers"""
+    logger.info(f"Received {PEW.__name__} delete all request")
+    logger.debug("=" * 100)
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.DELETE_ALL)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("items", [])
     except kubernetes.client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:

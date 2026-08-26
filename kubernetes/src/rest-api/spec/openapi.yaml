@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-08-26T12:51:55'
+  x-creation-date: '2026-08-26T13:03:23'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -194,6 +194,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Cluster
+      summary: Delete All Workers
+      description: Delete all deployed PTX-Edge workers
+      operationId: delete_all_workers_workers_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PEW-Output'
+                type: array
+                title: Response Delete All Workers Workers Delete
 components:
   schemas:
     HTTPValidationError:
