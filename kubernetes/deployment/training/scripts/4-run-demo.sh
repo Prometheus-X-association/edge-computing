@@ -24,6 +24,12 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
     warning "Setup is configured for local datasource!"
 fi
 
+_REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}"
+log ">>> Validating ${REST_API} availability on ${_REST_API_URL}"
+curl -fSsL --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                                    "https://${CLUSTER_HOST}/${PREFIX}/health"
+echo -e "Validation successful!\n"
+
 ########################################################################################################################
 
 log "Initiate Data Processing Function 0..."

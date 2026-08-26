@@ -1,4 +1,50 @@
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${REST_API}
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: ${ENV}
+    tier: edge
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${REST_API}-rbac
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: ${ENV}
+    tier: edge
+rules:
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers ]
+    verbs: [ get, list, create, delete, deletecollection ]
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers/status ]
+    verbs: [ list ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${REST_API}-rbac
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${REST_API}
+    env: ${ENV}
+    tier: edge
+subjects:
+  - kind: ServiceAccount
+    name: ${REST_API}
+    namespace: ${PTX}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${REST_API}-rbac
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,17 +66,19 @@ spec:
         env: ${ENV}
         tier: edge
     spec:
+      serviceAccountName: ${REST_API}-rbac
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
       containers:
         - name: rest-api
           image: ${REGISTRY}:${REGISTRY_PORT}/${API_IMG}
           imagePullPolicy: IfNotPresent
-          command: [ "uvicorn", "app.main:app", "--workers=2", "--host=0.0.0.0", "--port=${API_PORT}" ]
+          command: [ "uvicorn", "app.main:app", "--host=0.0.0.0", "--port=${API_PORT}", "--workers=2",
+                     "--proxy-headers", "--forwarded-allow-ips='*'", "--access-log", "--log-level=debug" ]
           env:
             - name: API_ROOT_PATH
-              value: /${PREFIX}
-            - name: API_WORKER_NS
+              value: "/ptx-edge/api/v1"
+            - name: API_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
