@@ -93,6 +93,24 @@ for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     curl -k -LSsf "${_PDC_URL}" | grep "href" | head -n1
     echo
 done
+########################################################################################################################
+
+log "Deploy scheduler"
+${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-scheduler-deployment.yaml")
+${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
+echo
+${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
+
+########################################################################################################################
+
+log "Deploy Controller"
+#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
+#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
+${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml")
+${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml")
+${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
+echo
+${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
 
 ########################################################################################################################
 
@@ -114,25 +132,6 @@ curl --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                                                     "https://${CLUSTER_HOST}/${PREFIX}/versions" | python3 -m json.tool
 log ">>> ${REST_API} is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/\n
 >>> ${REST_API} is also exposed on https://${GW_HOST}/${PREFIX}/ui/"
-
-########################################################################################################################
-
-log "Deploy Controller"
-#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
-#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml")
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml")
-${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
-echo
-${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
-
-########################################################################################################################
-
-log "Deploy scheduler"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-scheduler-deployment.yaml")
-${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
-echo
-${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
 
 ########################################################################################################################
 
