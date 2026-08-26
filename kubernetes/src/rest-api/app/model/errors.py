@@ -14,11 +14,10 @@
 import http
 import json
 import typing
-from http import HTTPStatus
 
 import fastapi
+import kubernetes
 import urllib3
-from kubernetes import client
 from pydantic import BaseModel, Field
 
 from app.model.responses import PTXEdgeWorkerResponseStatus
@@ -41,7 +40,7 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
     logger.debug(f"Received response: HTTP/{result} - {result.name}")
     if not result.is_success:
-        raise fastapi.HTTPException(status_code=HTTPStatus.FAILED_DEPENDENCY,
+        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
                                     detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
                                             "error_code": status,
                                             "resource": {
@@ -51,17 +50,17 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
                                             }})
 
 
-def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
+def raise_for_failed_k8s_request(ex: kubernetes.client.ApiException) -> None:
     logger.error(convert_k8s_api_error(ex))
     error = json.loads(str(ex.body))
     code = error.get('code')
     match code:
         case 422:
-            code = HTTPStatus.NOT_ACCEPTABLE
+            code = http.HTTPStatus.NOT_ACCEPTABLE
         case 409:
-            code = HTTPStatus.CONFLICT
+            code = http.HTTPStatus.CONFLICT
         case _:
-            code = HTTPStatus.FAILED_DEPENDENCY
+            code = http.HTTPStatus.FAILED_DEPENDENCY
     raise fastapi.HTTPException(status_code=code,
                                 detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
                                         "error_code": error.get('code'),
@@ -82,7 +81,7 @@ def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
                                         }})
 
 
-def convert_k8s_api_error(e: client.ApiException) -> str:
+def convert_k8s_api_error(e: kubernetes.client.ApiException) -> str:
     return '\n'.join((f"Error received with status: {e.status} and reason: {e.reason}",
                       "HTTP response body:",
                       json.dumps(json.loads(str(e.body)) if e.body else '{}', indent=2)))

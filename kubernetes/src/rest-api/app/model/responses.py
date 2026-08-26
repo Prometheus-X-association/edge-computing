@@ -14,7 +14,7 @@
 import enum
 import typing
 
-import fastapi
+from fastapi import __version__ as fastapi_version
 from pydantic import BaseModel, Field
 
 from app import __version__
@@ -24,7 +24,7 @@ from app.model.ptxedgeworker import PEW
 class VersionsResponse(BaseModel):
     """API and used framework versions"""
     api: typing.Annotated[str, Field(default=__version__)]
-    framework: typing.Annotated[str, Field(default=fastapi.__version__)]
+    framework: typing.Annotated[str, Field(default=fastapi_version)]
 
 
 class PTXEdgeWorkerResponseStatus(enum.StrEnum):
