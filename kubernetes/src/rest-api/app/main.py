@@ -16,6 +16,7 @@ import http
 import json
 import os
 import pathlib
+import pprint
 import sys
 import typing
 
@@ -63,12 +64,15 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       root_path=CONFIG.ROOT_PATH,
                       servers=[dict(url=CONFIG.ROOT_PATH,
                                     description="PTX Edge Computing")],
-                      openapi_tags=[dict(name="customerAPI",
+                      openapi_tags=[dict(name="Customer",
                                          description="Customer-facing API (EdgeAPI)",
                                          external_docs=dict(
                                              description="Prometheus-X",
-                                             url="https://github.com/Prometheus-X-association/edge-computing"),
-                                         )],
+                                             url="https://github.com/Prometheus-X-association/edge-computing")),
+                                    dict(name="Internal",
+                                         description="Internal management API"),
+                                    dict(name="Cluster",
+                                         description="Cluster-wide management API")],
                       docs_url="/ui/",
                       redoc_url=None,
                       lifespan=lifespan)
@@ -77,9 +81,11 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
 ########################################################################################################################
 
 @app.get("/versions",
+         tags=["Internal"],
          response_model=VersionsResponse,
          status_code=http.HTTPStatus.OK)
 @app.head("/versions",
+          tags=["Internal"],
           response_model=VersionsResponse,
           status_code=http.HTTPStatus.OK)
 async def get_versions() -> dict[str, str]:
@@ -88,15 +94,128 @@ async def get_versions() -> dict[str, str]:
 
 
 @app.get("/health",
+         tags=["Internal"],
          status_code=http.HTTPStatus.OK)
 @app.head("/health",
+          tags=["Internal"],
           status_code=http.HTTPStatus.OK)
-async def health():
+async def health() -> None:
     """For health check purposes"""
     pass
 
 
 ########################################################################################################################
+
+@app.get("/workers/{name}",
+         tags=["Customer"],
+         response_model=PEW,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=http.HTTPStatus.OK)
+async def get_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+    """Obtain PTX-Edge worker with given name"""
+    logger.info(f"Received {PEW.__name__} get request with name: {name}")
+    logger.debug("=" * 100)
+    try:
+        k8s = client.CustomObjectsApi()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        create_cmd = asyncify(k8s.get_namespaced_custom_object_with_http_info)
+        obj, _status, _ = await create_cmd(group=PEW.group,
+                                           version=PEW.version,
+                                           namespace=CONFIG.WORKER_NS,
+                                           plural=PEW.plural,
+                                           name=name)
+        result = http.HTTPStatus(_status)
+        logger.debug(f"Received response: HTTP/{result} - {result.name}")
+        if not result.is_success:
+            logger.error(result)
+            raise fastapi.HTTPException(status_code=_status,
+                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                                "code": _status,
+                                                "resource": {
+                                                    "name": obj['details']['name'],
+                                                    "group": obj['details']['group'],
+                                                    "kind": obj['details']['kind']
+                                                }})
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj
+    except client.ApiException as e:
+        logger.error(convert_k8s_api_error(e))
+        error = json.loads(str(e.body))
+        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
+        raise fastapi.HTTPException(status_code=code,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": error['reason'],
+                                            "message": error['message'],
+                                            "resource": error['details']
+                                            })
+    except urllib3.exceptions.MaxRetryError as e:
+        logger.error(f"Max retries exceeded: {e}")
+        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": str(e.reason),
+                                            "message": None,
+                                            "resource": {
+                                                "url": e.url
+                                            }})
+
+
+@app.get("/workers",
+         tags=["Cluster"],
+         response_model=list[PEW],
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=http.HTTPStatus.OK)
+async def list_all_workers():
+    """Obtain PTX-Edge worker with given name"""
+    logger.info(f"Received {PEW.__name__} list request")
+    logger.debug("=" * 100)
+    try:
+        k8s = client.CustomObjectsApi()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        create_cmd = asyncify(k8s.list_namespaced_custom_object_with_http_info)
+        obj, _status, _ = await create_cmd(group=PEW.group,
+                                           version=PEW.version,
+                                           namespace=CONFIG.WORKER_NS,
+                                           plural=PEW.plural)
+        result = http.HTTPStatus(_status)
+        logger.debug(f"Received response: HTTP/{result} - {result.name}")
+        if not result.is_success:
+            logger.error(result)
+            raise fastapi.HTTPException(status_code=_status,
+                                        detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                                "code": _status,
+                                                "resource": {
+                                                    "name": obj['details']['name'],
+                                                    "group": obj['details']['group'],
+                                                    "kind": obj['details']['kind']
+                                                }})
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("items", [])
+    except client.ApiException as e:
+        logger.error(convert_k8s_api_error(e))
+        error = json.loads(str(e.body))
+        code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
+        raise fastapi.HTTPException(status_code=code,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": error['reason'],
+                                            "message": error['message'],
+                                            "resource": error['details']
+                                            })
+    except urllib3.exceptions.MaxRetryError as e:
+        logger.error(f"Max retries exceeded: {e}")
+        raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
+                                    detail={"status": PTXEdgeWorkerStatus.ERROR,
+                                            "reason": str(e.reason),
+                                            "message": None,
+                                            "resource": {
+                                                "url": e.url
+                                            }})
+
 
 async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typing.Any]:
     """Create PTX Edge Computing worker"""
@@ -104,7 +223,7 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
     logger.debug("=" * 100)
     logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
     logger.debug("Creating manifest body...")
-    manifest = {
+    manifest: dict[str, typing.Any] = {
         'apiVersion': f"{PEW.group}/{PEW.version}",
         'kind': PEW.kind,
         'metadata': {
@@ -147,6 +266,14 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
                                                     "kind": obj['kind']
                                                 }})
         logger.info(f"Created resource: {obj['kind']}/{obj['metadata']['name']}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return {"status": PTXEdgeWorkerStatus.INITIALIZED,
+                "resource": {
+                    "name": obj['metadata']['name'],
+                    "version": obj['apiVersion'],
+                    "kind": obj['kind']
+                }}
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         error = json.loads(str(e.body))
@@ -166,39 +293,32 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
                                             "resource": {
                                                 "url": e.url
                                             }})
-    logger.debug("=" * 100)
-    return {"status": PTXEdgeWorkerStatus.INITIALIZED,
-            "resource": {
-                "name": obj['metadata']['name'],
-                "version": obj['apiVersion'],
-                "kind": obj['kind']
-            }}
 
 
 @app.put("/workers/{name}",
-         tags=["customerAPI"],
+         tags=["Customer"],
          response_model=PTXEdgeWorkerResponse,
          status_code=http.HTTPStatus.CREATED)
-async def create_named_worker(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
-                              pew: typing.Annotated[PEW, fastapi.Body]):
+async def create_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+                                  pew: typing.Annotated[PEW, fastapi.Body]):
     """Create PTX-Edge worker with given name"""
     return await _create_pew_worker(pew=pew, name=name)
 
 
 @app.post("/workers",
-          tags=["customerAPI"],
+          tags=["Customer"],
           response_model=PTXEdgeWorkerResponse,
           status_code=http.HTTPStatus.CREATED)
-async def create_default_worker(pew: typing.Annotated[PEW, fastapi.Body]):
+async def create_worker(pew: typing.Annotated[PEW, fastapi.Body]):
     """Create PTX-Edge worker with autogenerated name"""
     return await _create_pew_worker(pew=pew)
 
 
 @app.delete("/workers/{name}",
-            tags=["customerAPI"],
+            tags=["Customer"],
             response_model=PTXEdgeWorkerResponse,
             status_code=http.HTTPStatus.OK)
-async def delete_named_worker(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")], ):
+async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
     """Delete PTX-Edge worker with given name"""
     logger.info(f"Received {PEW.__name__} delete request with name: {name}")
     logger.debug("=" * 100)
@@ -224,6 +344,14 @@ async def delete_named_worker(name: typing.Annotated[str, fastapi.Path(pattern=r
                                                     "kind": obj['details']['kind']
                                                 }})
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return {"status": PTXEdgeWorkerStatus.TERMINATING,
+                "resource": {
+                    "name": obj['details']['name'],
+                    "group": obj['details']['group'],
+                    "kind": obj['details']['kind']
+                }}
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         error = json.loads(str(e.body))
@@ -243,13 +371,6 @@ async def delete_named_worker(name: typing.Annotated[str, fastapi.Path(pattern=r
                                             "resource": {
                                                 "url": e.url
                                             }})
-    logger.debug("=" * 100)
-    return {"status": PTXEdgeWorkerStatus.TERMINATING,
-            "resource": {
-                "name": obj['details']['name'],
-                "group": obj['details']['group'],
-                "kind": obj['details']['kind']
-            }}
 
 
 ########################################################################################################################
