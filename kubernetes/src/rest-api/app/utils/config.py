@@ -1,4 +1,4 @@
-# Copyright 2025 Janos Czentye
+# Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ApiConfiguration(BaseSettings):
-    # Also auto-read from envvar
+class PTXEdgeApiConfig(BaseSettings):
+    # Also auto-read from envvars
     ROOT_PATH: str = Field(default="/")
     WORKER_NS: str = Field(default="ptx-edge")
     #
     model_config = SettingsConfigDict(env_prefix='API_',
                                       case_sensitive=False)
+
+
+CONFIG = PTXEdgeApiConfig()

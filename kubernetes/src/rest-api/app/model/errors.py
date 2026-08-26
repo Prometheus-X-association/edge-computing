@@ -1,4 +1,4 @@
-# Copyright 2025 Janos Czentye
+# Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ from app.model.responses import PTXEdgeWorkerStatus
 from app.utils.logger import logger
 
 
-def raise_for_k8s_error(obj: dict[str, typing.Any], _status: int) -> None:
-    if not http.HTTPStatus(_status).is_success:
-        raise fastapi.HTTPException(status_code=_status,
+def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
+    result = http.HTTPStatus(status)
+    logger.debug(f"Received response: HTTP/{result} - {result.name}")
+    if not result.is_success:
+        raise fastapi.HTTPException(status_code=status,
                                     detail={"status": PTXEdgeWorkerStatus.ERROR,
-                                            "code": _status,
+                                            "code": status,
                                             "resource": {
                                                 "name": obj['details']['name'],
                                                 "group": obj['details']['group'],

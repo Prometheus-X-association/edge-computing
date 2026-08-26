@@ -13,38 +13,23 @@
 # limitations under the License.
 import contextlib
 import http
-import os
-import pathlib
 import pprint
-import sys
 import typing
 
 import fastapi
+import kubernetes
 import urllib3
-from asyncify import asyncify
-from kubernetes import client, config
 
 from app import __version__
-from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
-                              convert_k8s_api_error)
+from app.model.errors import raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error
 from app.model.ptxedgeworker import PEW
 from app.model.responses import PTXEdgeWorkerStatus, PTXEdgeWorkerResponse, VersionsResponse
-from app.utils.config import ApiConfiguration
+from app.utils.config import CONFIG
+from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod
 from app.utils.logger import logger
 
+
 ########################################################################################################################
-
-CONFIG = ApiConfiguration()
-
-
-async def setup_k8s_client():
-    try:
-        logger.debug("Loading in-cluster K8s configuration....")
-        config.load_incluster_config()
-    except config.ConfigException as e:
-        logger.error(f"Error loading Kubernetes API config:\n{e}")
-        sys.exit(os.EX_CONFIG)
-
 
 @contextlib.asynccontextmanager
 async def lifespan(_app: fastapi.FastAPI):
@@ -90,7 +75,8 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
           status_code=http.HTTPStatus.OK)
 async def get_versions() -> dict[str, str]:
     """Versions of the REST-API component"""
-    return {'api': __version__, 'framework': fastapi.__version__}
+    return {'api': __version__,
+            'framework': fastapi.__version__}
 
 
 @app.get("/health",
@@ -105,66 +91,6 @@ async def health() -> None:
 
 
 ########################################################################################################################
-
-@app.get("/workers/{name}",
-         tags=["Customer"],
-         response_model=PEW,
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=http.HTTPStatus.OK)
-async def get_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
-    """Obtain PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} get request with name: {name}")
-    logger.debug("=" * 100)
-    try:
-        k8s = client.CustomObjectsApi()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        create_cmd = asyncify(k8s.get_namespaced_custom_object_with_http_info)
-        obj, _status, _ = await create_cmd(group=PEW.group,
-                                           version=PEW.version,
-                                           namespace=CONFIG.WORKER_NS,
-                                           plural=PEW.plural,
-                                           name=name)
-        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
-        raise_for_k8s_error(obj=obj, _status=_status)
-        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
-        logger.debug("=" * 100)
-        return obj
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
-
-
-@app.get("/workers",
-         tags=["Cluster"],
-         response_model=list[PEW],
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=http.HTTPStatus.OK)
-async def list_all_workers():
-    """Obtain PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} list request")
-    logger.debug("=" * 100)
-    try:
-        k8s = client.CustomObjectsApi()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        create_cmd = asyncify(k8s.list_namespaced_custom_object_with_http_info)
-        obj, _status, _ = await create_cmd(group=PEW.group,
-                                           version=PEW.version,
-                                           namespace=CONFIG.WORKER_NS,
-                                           plural=PEW.plural)
-        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
-        raise_for_k8s_error(obj=obj, _status=_status)
-        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
-        logger.debug("=" * 100)
-        return obj.get("items", [])
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
 
 
 async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typing.Any] | None:
@@ -187,24 +113,16 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
         manifest['metadata']['name'] = name
     else:
         manifest['metadata']['generateName'] = "worker-"
-    sanitized_request_body = pew.model_dump(mode="json",
-                                            context=dict(expose_secrets=True),
-                                            exclude={"status"},
-                                            exclude_unset=True,
-                                            exclude_none=True,
-                                            warnings=True)
-    manifest.update(sanitized_request_body)
+    manifest.update(pew.model_dump(mode="json",
+                                   context=dict(expose_secrets=True),
+                                   exclude={"status"},
+                                   exclude_unset=True,
+                                   exclude_none=True,
+                                   warnings=True))
     try:
-        k8s = client.CustomObjectsApi()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        create_cmd = asyncify(k8s.create_namespaced_custom_object_with_http_info)
-        obj, _status, _ = await create_cmd(group=PEW.group,
-                                           version=PEW.version,
-                                           namespace=CONFIG.WORKER_NS,
-                                           plural=PEW.plural,
-                                           body=manifest)
-        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
-        raise_for_k8s_error(obj=obj, _status=_status)
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.CREATE,
+                                            body=manifest)
+        raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Created resource: {obj['kind']}/{obj['metadata']['name']}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
@@ -214,7 +132,56 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
                     "version": obj['apiVersion'],
                     "kind": obj['kind']
                 }}
-    except client.ApiException as e:
+    except kubernetes.client.ApiException as e:
+        raise_for_failed_k8s_request(e)
+    except urllib3.exceptions.MaxRetryError as e:
+        raise_for_network_error(e)
+
+
+########################################################################################################################
+
+@app.get("/workers/{name}",
+         tags=["Customer"],
+         response_model=PEW,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=http.HTTPStatus.OK)
+async def get_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.info(f"Received {PEW.__name__} get request with name: {name}")
+    logger.debug("=" * 100)
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
+                                            name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj
+    except kubernetes.client.ApiException as e:
+        raise_for_failed_k8s_request(e)
+    except urllib3.exceptions.MaxRetryError as e:
+        raise_for_network_error(e)
+
+
+@app.get("/workers",
+         tags=["Cluster"],
+         response_model=list[PEW],
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=http.HTTPStatus.OK)
+async def list_all_workers():
+    """Obtain deployed PTX-Edge workers"""
+    logger.info(f"Received {PEW.__name__} list request")
+    logger.debug("=" * 100)
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.LIST)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("items", [])
+    except kubernetes.client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -248,16 +215,9 @@ async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
     logger.info(f"Received {PEW.__name__} delete request with name: {name}")
     logger.debug("=" * 100)
     try:
-        k8s = client.CustomObjectsApi()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        create_cmd = asyncify(k8s.delete_namespaced_custom_object_with_http_info)
-        obj, _status, _ = await create_cmd(group=PEW.group,
-                                           version=PEW.version,
-                                           namespace=CONFIG.WORKER_NS,
-                                           plural=PEW.plural,
-                                           name=name)
-        logger.debug(f"Received response: HTTP/{_status} - {http.HTTPStatus(_status).name}")
-        raise_for_k8s_error(obj=obj, _status=_status)
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.DELETE,
+                                            name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
@@ -267,7 +227,7 @@ async def delete_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
                     "group": obj['details']['group'],
                     "kind": obj['details']['kind']
                 }}
-    except client.ApiException as e:
+    except kubernetes.client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -283,6 +243,7 @@ if __name__ == '__main__':
     # or `gunicorn -k uvicorn_worker.UvicornWorker -b :8080 -w $((`nproc` * 2)) --access-logfile=- main:app`
     # http://localhost:8080/docs | http://localhost:8080/redoc
     import uvicorn
+    import pathlib
 
     uvicorn.run(f"{pathlib.Path(__file__).stem}:app", host='127.0.0.1', port=9999,
                 reload=True, access_log=True, log_level="debug")

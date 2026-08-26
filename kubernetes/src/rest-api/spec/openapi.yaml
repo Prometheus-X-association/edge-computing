@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-08-26T12:11:19'
+  x-creation-date: '2026-08-26T12:51:55'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -69,7 +69,7 @@ paths:
       tags:
       - Customer
       summary: Get Worker With Name
-      description: Obtain PTX-Edge worker with given name
+      description: Obtain deployed PTX-Edge worker with given name
       operationId: get_worker_with_name_workers__name__get
       parameters:
       - name: name
@@ -157,7 +157,7 @@ paths:
       tags:
       - Cluster
       summary: List All Workers
-      description: Obtain PTX-Edge worker with given name
+      description: Obtain deployed PTX-Edge workers
       operationId: list_all_workers_workers_get
       responses:
         '200':
