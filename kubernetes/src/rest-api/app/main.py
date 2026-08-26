@@ -37,6 +37,7 @@ from app.utils.logger import logger
 @contextlib.asynccontextmanager
 async def lifespan(_app: fastapi.FastAPI):
     logger.info("Starting PTX Edge Computing REST-API...")
+    logger.debug(f"Used configuration:\n{CONFIG.model_dump_json(indent=2)}")
     await setup_k8s_client()
     yield
     logger.info("Stopping PTX Edge Computing REST-API...")

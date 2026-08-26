@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pydantic
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,10 +19,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class PTXEdgeApiConfig(BaseSettings):
     # Also auto-read from envvars
     ROOT_PATH: str = Field(default="/")
-    WORKER_NS: str = Field(default="ptx-edge")
+    NAMESPACE: str = Field(default="ptx-edge")
+    WORKER_NS: str = Field(default="ptx-edge", alias="NAMESPACE")
+    HOSTNAME: str = Field(default="rest-api")
     #
     model_config = SettingsConfigDict(env_prefix='API_',
                                       case_sensitive=False)
+
+    @pydantic.computed_field
+    @property
+    def field_manager(self) -> str:
+        return f"{self.NAMESPACE}/{self.HOSTNAME}"
 
 
 CONFIG = PTXEdgeApiConfig()

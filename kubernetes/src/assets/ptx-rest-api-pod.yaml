@@ -61,7 +61,7 @@ spec:
       env:
         - name: API_ROOT_PATH
           value: "/ptx-edge/api/v1"
-        - name: API_WORKER_NS
+        - name: API_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace

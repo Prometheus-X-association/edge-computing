@@ -48,6 +48,8 @@ async def invoke_k8s_api(method: K8sAPIMethod,
     logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
     api_caller = asyncify(getattr(k8s, f"{method.value}_namespaced_custom_object_with_http_info"))
     params = dict(group=PEW.group, version=PEW.version, namespace=CONFIG.WORKER_NS, plural=PEW.plural)
+    if method is K8sAPIMethod.CREATE:
+        params['field_manager'] = CONFIG.field_manager
     if body is not None:
         params["body"] = body
     if name is not None:
