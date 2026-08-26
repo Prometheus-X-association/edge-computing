@@ -13,18 +13,10 @@
 # limitations under the License.
 import json
 import logging
-import os
 import pprint
 import typing
 
-import benedict
 from kubernetes import client
-
-
-def load_config_from_env(prefix: str):
-    envvars = [(k, int(v)) if v.isnumeric() else (k, v) for k, v in os.environ.items() if k.startswith(prefix)]
-    return benedict.benedict.from_toml("\n".join(f'{k.removeprefix(prefix).replace('_', '.').lower()}="{v}"'
-                                                 for k, v in envvars))
 
 
 def deep_json_filter(data: object, keep: typing.Callable = bool) -> object:

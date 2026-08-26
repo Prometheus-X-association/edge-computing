@@ -25,18 +25,9 @@ import yaml
 from asyncer import asyncify
 from kubernetes import client
 
+from config import load_config_from_env, ENV_PREFIX
 from model.ptxedgeworker import PEW, PEWSpecServiceInterface
-from utils import load_config_from_env, sanitize_model, ExcludeProbesFilter, convert_k8s_api_error
-
-########################################################################################################################
-
-# Controller version
-__version__ = '1.0.0'
-
-### Globally available objects
-ENV_PREFIX = "CFG_"
-# Required fields in the configuration
-REQUIRED_FIELDS = ("builder.name", "builder.image")
+from utils import sanitize_model, ExcludeProbesFilter, convert_k8s_api_error
 
 
 ########################################################################################################################
@@ -46,9 +37,7 @@ async def load_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: 
     # PTX-edge/controller related configurations
     # Read config items from envvars dynamically using global default values
     logger.debug(f"Loading configuration from envvars[{ENV_PREFIX}*]...")
-    memo.CONFIG = load_config_from_env(prefix=ENV_PREFIX)
-    if not all(map(lambda _p: memo.CONFIG.get(_p) is not None, REQUIRED_FIELDS)):
-        raise kopf.PermanentError(f"Missing one of the required configurations: {REQUIRED_FIELDS} from {memo.CONFIG}!")
+    memo.CONFIG = load_config_from_env()
     logger.debug(f"Loaded configuration:\n" + str(memo.CONFIG.to_toml()))
     # Kopf-internal configurations
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=PEW.group)
@@ -97,8 +86,10 @@ async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logg
     try:
         k8s = client.AppsV1Api()
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        obj, status, _ = await asyncify(k8s.create_namespaced_deployment_with_http_info)(namespace=namespace,
-                                                                                         body=body)
+        cmd_caller = asyncify(k8s.create_namespaced_deployment_with_http_info)
+        obj, status, _ = await cmd_caller(namespace=namespace,
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -116,7 +107,10 @@ async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger:
     logger.debug("-" * 100)
     logger.info(f"Rendering worker job manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_job.yaml.jinja2")
-    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    manifest: str = await template.render_async(name=name,
+                                                namespace=namespace,
+                                                spec=pew.spec,
+                                                cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(body, strict=True, forced=True, nested="spec.template")
     logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
@@ -124,8 +118,10 @@ async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger:
     try:
         k8s = client.BatchV1Api()
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        obj, status, _ = await asyncify(k8s.create_namespaced_job_with_http_info)(namespace=namespace,
-                                                                                  body=body)
+        cmd_caller = asyncify(k8s.create_namespaced_job_with_http_info)
+        obj, status, _ = await cmd_caller(namespace=namespace,
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -143,7 +139,10 @@ async def _create_service(pew: PEW, template: str, *, name: str, namespace: str,
     logger.debug("-" * 100)
     logger.info(f"Rendering service manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name=template)
-    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    manifest: str = await template.render_async(name=name,
+                                                namespace=namespace,
+                                                spec=pew.spec,
+                                                cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(body, strict=True, forced=True)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
@@ -151,8 +150,10 @@ async def _create_service(pew: PEW, template: str, *, name: str, namespace: str,
     try:
         k8s = client.CoreV1Api()
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        obj, status, _ = await asyncify(k8s.create_namespaced_service_with_http_info)(namespace=namespace,
-                                                                                      body=body)
+        cmd_caller = asyncify(k8s.create_namespaced_service_with_http_info)
+        obj, status, _ = await cmd_caller(namespace=namespace,
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -170,7 +171,10 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
     logger.debug("-" * 100)
     logger.info(f"Rendering middleware manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_middleware.yaml.jinja2")
-    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    manifest: str = await template.render_async(name=name,
+                                                namespace=namespace,
+                                                spec=pew.spec,
+                                                cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(body, strict=False, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
@@ -178,11 +182,13 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
     try:
         k8s = client.CustomObjectsApi()
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        obj, status, _ = await asyncify(k8s.create_namespaced_custom_object_with_http_info)(group="traefik.io",
-                                                                                            version="v1alpha1",
-                                                                                            namespace=namespace,
-                                                                                            plural="middlewares",
-                                                                                            body=body)
+        cmd_caller = asyncify(k8s.create_namespaced_custom_object_with_http_info)
+        obj, status, _ = await cmd_caller(group="traefik.io",
+                                          version="v1alpha1",
+                                          namespace=namespace,
+                                          plural="middlewares",
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
@@ -200,7 +206,10 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
     logger.debug("-" * 100)
     logger.info(f"Rendering ingress manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_ingress.yaml.jinja2")
-    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    manifest: str = await template.render_async(name=name,
+                                                namespace=namespace,
+                                                spec=pew.spec,
+                                                cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
     kopf.adopt(body, strict=False, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
@@ -208,8 +217,10 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
     try:
         k8s = client.NetworkingV1Api()
         logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        obj, status, _ = await asyncify(k8s.create_namespaced_ingress_with_http_info)(namespace=namespace,
-                                                                                      body=body)
+        cmd_caller = asyncify(k8s.create_namespaced_ingress_with_http_info)
+        obj, status, _ = await cmd_caller(namespace=namespace,
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
         status = http.HTTPStatus(status)
         logger.debug(f"Received response: HTTP/{status} - {status.name}")
         if not status.is_success:
