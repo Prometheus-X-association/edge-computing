@@ -55,6 +55,12 @@ class PTXEdgeWorkerResponse(BaseModel):
     resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource", default=None)]
 
 
+class PTXEdgeWorkerState(BaseModel):
+    """Worker state"""
+    name: typing.Annotated[PTXEdgeWorkerNameType, Field(description="Worker name")]
+    state: typing.Annotated[str | None, Field(description="Worker state", default=None)]
+
+
 class PTXEdgeWorkerCollectionResponse(BaseModel):
-    workers: typing.Annotated[list[PTXEdgeWorkerNameType], Field(description="List of worker names")]
+    workers: typing.Annotated[list[PTXEdgeWorkerState], Field(description="List of worker states")]
     resources: typing.Annotated[list[PEW] | None, Field(description="List of PtxEdgeWorkers", default=None)]

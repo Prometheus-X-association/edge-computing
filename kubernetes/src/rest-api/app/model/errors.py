@@ -14,22 +14,36 @@
 import http
 import json
 import typing
+from http import HTTPStatus
 
 import fastapi
 import urllib3
 from kubernetes import client
+from pydantic import BaseModel, Field
 
 from app.model.responses import PTXEdgeWorkerResponseStatus
 from app.utils.logger import logger
+
+
+class PTXEdgeAPIErrorDetail(BaseModel):
+    status: typing.Annotated[PTXEdgeWorkerResponseStatus, Field(description="Worker Status")]
+    error_code: typing.Annotated[int | None, Field(description="Status code", default=None)]
+    reason: typing.Annotated[str | None, Field(description="Cause of error", default=None)]
+    message: typing.Annotated[str | None, Field(description="Detailed error message", default=None)]
+    resource: typing.Annotated[dict[str, typing.Any] | None, Field(description="Worker resource", default=None)]
+
+
+class PTXEdgeAPIError(BaseModel):
+    detail: typing.Annotated[PTXEdgeAPIErrorDetail, Field(description="Error details")]
 
 
 def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
     logger.debug(f"Received response: HTTP/{result} - {result.name}")
     if not result.is_success:
-        raise fastapi.HTTPException(status_code=status,
+        raise fastapi.HTTPException(status_code=HTTPStatus.FAILED_DEPENDENCY,
                                     detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
-                                            "code": status,
+                                            "error_code": status,
                                             "resource": {
                                                 "name": obj['details']['name'],
                                                 "group": obj['details']['group'],
@@ -40,9 +54,17 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
 def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
     logger.error(convert_k8s_api_error(ex))
     error = json.loads(str(ex.body))
-    code = error['code'] if 'code' in error else http.HTTPStatus.UNPROCESSABLE_ENTITY
+    code = error.get('code')
+    match code:
+        case 422:
+            code = HTTPStatus.NOT_ACCEPTABLE
+        case 409:
+            code = HTTPStatus.CONFLICT
+        case _:
+            code = HTTPStatus.FAILED_DEPENDENCY
     raise fastapi.HTTPException(status_code=code,
                                 detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
+                                        "error_code": error.get('code'),
                                         "reason": error['reason'],
                                         "message": error['message'],
                                         "resource": error['details']
@@ -53,8 +75,8 @@ def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
     logger.error(f"Max retries exceeded: {ex}")
     raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
                                 detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
-                                        "reason": str(ex.reason),
-                                        "message": None,
+                                        "reason": f"{ex.__class__.__name__}",
+                                        "message": str(ex.reason),
                                         "resource": {
                                             "url": ex.url
                                         }})

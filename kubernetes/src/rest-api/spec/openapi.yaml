@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-08-26T13:59:36'
+  x-creation-date: '2026-08-26T16:32:38'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -86,6 +86,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PEW-Output'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Found
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -119,6 +131,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '406':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Acceptable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Conflict
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -146,6 +176,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Found
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -172,6 +214,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '406':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Acceptable
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -199,6 +253,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -226,6 +286,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
         '422':
           description: Validation Error
           content:
@@ -1068,17 +1134,57 @@ components:
       type: object
       title: PEWStatus
       description: Runtime information
+    PTXEdgeAPIError:
+      properties:
+        detail:
+          $ref: '#/components/schemas/PTXEdgeAPIErrorDetail'
+          description: Error details
+      type: object
+      required:
+      - detail
+      title: PTXEdgeAPIError
+    PTXEdgeAPIErrorDetail:
+      properties:
+        status:
+          $ref: '#/components/schemas/PTXEdgeWorkerResponseStatus'
+          description: Worker Status
+        error_code:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Error Code
+          description: Status code
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+          description: Cause of error
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+          description: Detailed error message
+        resource:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Resource
+          description: Worker resource
+      type: object
+      required:
+      - status
+      title: PTXEdgeAPIErrorDetail
     PTXEdgeWorkerCollectionResponse:
       properties:
         workers:
           items:
-            type: string
-            pattern: ^[a-zA-Z0-9_-]+$
-            description: Worker name
-            example: worker
+            $ref: '#/components/schemas/PTXEdgeWorkerState'
           type: array
           title: Workers
-          description: List of worker names
+          description: List of worker states
         resources:
           anyOf:
           - items:
@@ -1144,6 +1250,25 @@ components:
       - error
       - terminating
       title: PTXEdgeWorkerResponseStatus
+    PTXEdgeWorkerState:
+      properties:
+        name:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+          title: Name
+          description: Worker name
+          example: worker
+        state:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: State
+          description: Worker state
+      type: object
+      required:
+      - name
+      title: PTXEdgeWorkerState
+      description: Worker state
     ValidationError:
       properties:
         loc:

@@ -15,13 +15,15 @@ import contextlib
 import http
 import pprint
 import typing
+from http import HTTPStatus
 
 import fastapi
 import kubernetes
 import urllib3
 
 from app import __version__
-from app.model.errors import raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error
+from app.model.errors import raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error, \
+    PTXEdgeAPIError
 from app.model.ptxedgeworker import PEW
 from app.model.responses import PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse, \
     PTXEdgeWorkerCollectionResponse
@@ -142,6 +144,9 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
 
 @app.get("/workers/{name}",
          tags=["Customer"],
+         responses={
+             HTTPStatus.NOT_FOUND: {"model": PTXEdgeAPIError},
+             HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
          response_model=PEW,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
@@ -166,6 +171,10 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
 
 @app.put("/workers/{name}",
          tags=["Customer"],
+         responses={
+             HTTPStatus.NOT_ACCEPTABLE: {"model": PTXEdgeAPIError},
+             HTTPStatus.CONFLICT: {"model": PTXEdgeAPIError},
+             HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
          response_model=PTXEdgeWorkerResponse,
          status_code=http.HTTPStatus.CREATED)
 async def create_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
@@ -176,6 +185,9 @@ async def create_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
 
 @app.post("/workers",
           tags=["Customer"],
+          responses={
+              HTTPStatus.NOT_ACCEPTABLE: {"model": PTXEdgeAPIError},
+              HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
           response_model=PTXEdgeWorkerResponse,
           status_code=http.HTTPStatus.CREATED)
 async def create_worker(pew: typing.Annotated[PEW, fastapi.Body]):
@@ -185,6 +197,9 @@ async def create_worker(pew: typing.Annotated[PEW, fastapi.Body]):
 
 @app.delete("/workers/{name}",
             tags=["Customer"],
+            responses={
+                HTTPStatus.NOT_FOUND: {"model": PTXEdgeAPIError},
+                HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
             response_model=PTXEdgeWorkerResponse,
             status_code=http.HTTPStatus.OK)
 async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
@@ -213,6 +228,8 @@ async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern
 ########################################################################################################################
 @app.get("/workers",
          tags=["Cluster"],
+         responses={
+             HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
          response_model=PTXEdgeWorkerCollectionResponse,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
@@ -227,7 +244,9 @@ async def list_all_workers(resource: bool = False):
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
-        ret = {"workers": [w['metadata']['name'] for w in obj.get("items", [])]}
+        ret = {"workers": [{"name": w['metadata']['name'],
+                            "state": w.get('status', {}).get('worker', {}).get('state')}
+                           for w in obj.get("items", [])]}
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
@@ -239,6 +258,8 @@ async def list_all_workers(resource: bool = False):
 
 @app.delete("/workers",
             tags=["Cluster"],
+            responses={
+                HTTPStatus.FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
             response_model=PTXEdgeWorkerCollectionResponse,
             response_model_exclude_unset=True,
             response_model_exclude_none=True,
@@ -253,7 +274,8 @@ async def delete_all_workers(resource: bool = False):
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
         logger.debug("=" * 100)
-        ret = {"workers": [w['metadata']['name'] for w in obj.get("items", [])]}
+        ret = {"workers": [{"name": w['metadata']['name']}
+                           for w in obj.get("items", [])]}
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
