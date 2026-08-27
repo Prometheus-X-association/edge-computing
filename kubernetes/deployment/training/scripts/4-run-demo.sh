@@ -25,25 +25,32 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
 fi
 
 _REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}"
-log ">>> Validating ${REST_API} availability on ${_REST_API_URL}"
-curl -fSsL --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                                                    "https://${CLUSTER_HOST}/${PREFIX}/health"
+log ">>> Validating ${REST_API} availability on ${_REST_API_URL}/health"
+curl -fSsL --location-trusted --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -o /dev/null \
+                                                                            "https://${CLUSTER_HOST}/${PREFIX}/health"
 echo -e "Validation successful!\n"
 
 ########################################################################################################################
 
 log "Initiate Data Processing Function 0..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
-${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
-kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP0}"
-sleep 1
-${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
-${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP0}"
+#${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
+curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
+                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                -H "Content-Type: application/json" -H 'Accept: application/json' \
+                --data-binary @<(envsubst <"request/${DP0}.json" | jq -c .) | jq
+
+repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP0}"
+repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
+repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
+                                                                                    -l "app.kubernetes.io/name=${DP0}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
-log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) \
+                                                        | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
@@ -51,16 +58,23 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
 log "Initiate Data Processing Function 1..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
-${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
-kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP1}"
-sleep 1
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
-${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${DP1}"
+#${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
+curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
+                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                -H "Content-Type: application/json" -H 'Accept: application/json' \
+                --data-binary @<(envsubst <"request/${DP1}.json" | jq -c .) | jq
+
+repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP1}"
+repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
+repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
+                                                                                    -l "app.kubernetes.io/name=${DP1}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
-log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) \
+                                                        | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
@@ -68,26 +82,35 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
 log "Initiate Aggregator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
-${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
-kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${AGG}"
-sleep 1
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
-${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${AGG}"
+#${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
+curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
+                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                -H "Content-Type: application/json" -H 'Accept: application/json' \
+                --data-binary @<(envsubst <"request/${AGG}.json" | jq -c .) | jq
+
+repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${AGG}"
+repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
+repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
+                                                                                    -l "app.kubernetes.io/name=${AGG}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
-log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${AGG}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) \
+                                                        | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
-log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
 _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
-wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-                                --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
+wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
+                            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+                            --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
 # curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
 log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 >>> Aggregator is also exposed on https://${GW_HOST}/worker/${AGG}/"
@@ -96,25 +119,34 @@ log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 
 log "Initiate Orchestrator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
-${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
-kubectl wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${ORCH}"
-sleep 1
-${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
-${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${ORCH}"
+#${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
+curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
+                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                -H "Content-Type: application/json" -H 'Accept: application/json' \
+                --data-binary @<(envsubst <"request/${ORCH}.json" | jq -c .) | jq
+
+repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${ORCH}"
+repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
+repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
+                                                                                    -l "app.kubernetes.io/name=${ORCH}"
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 
-log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${ORCH}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${ORCH}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) \
+                                                        | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 
-log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${ORCH}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${ORCH}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
 _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"
-wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
+                            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
                             --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_ORCH_URL}"
 # curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${ORCH}/docs"
 log ">>> Orchestrator is also exposed on https://${PRIMARY_HOST}/worker/${ORCH}/docs\n

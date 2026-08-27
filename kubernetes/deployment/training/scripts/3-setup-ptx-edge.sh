@@ -56,14 +56,16 @@ ${KCTL} create configmap registry-root-ca.crt --from-file="ca.crt=${ROOT_DIR}/sr
 log "Set up PDC configuration..."
 ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-config.yaml")
 echo
-${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clusterrolebinding -l "app.kubernetes.io/name=${PDC}"
+${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clusterrolebinding \
+                                                                                    -l "app.kubernetes.io/name=${PDC}"
 
 log "Deploy per-zone PDCs"
 ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-daemon.yaml")
 ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
 echo
 
-log "Waiting for PDC instances:$(kubectl get pods -l app.kubernetes.io/name="${PDC}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to initialize..."
+log "Waiting for PDC instances:$(kubectl get pods -l app.kubernetes.io/name="${PDC}" \
+                                                -o=jsonpath='{range .items[*]} | {.metadata.name}') to initialize..."
 for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
@@ -76,7 +78,8 @@ for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.
     ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
 
-log "Waiting for PDC ingress:$(kubectl get ingress -l app.kubernetes.io/name="${PDC}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for PDC ingress:$(kubectl get ingress -l app.kubernetes.io/name="${PDC}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     zone_pdc=$(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -l "${LAB_PZ}/${pz}" --no-headers --ignore-not-found)
@@ -120,7 +123,8 @@ ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${R
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
 
-log "Waiting for API ingress:$(kubectl get ingress -l app.kubernetes.io/name="${REST_API}" -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+log "Waiting for API ingress:$(kubectl get ingress -l app.kubernetes.io/name="${REST_API}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
