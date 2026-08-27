@@ -13,10 +13,12 @@
 # limitations under the License.
 import enum
 import os
+import pprint
 import sys
 import typing
 
 from asyncify import asyncify
+from fastapi import Query
 from kubernetes import config, client
 
 from app.model.ptxedgeworker import PEW
@@ -41,18 +43,27 @@ class K8sAPIMethod(enum.StrEnum):
     DELETE_ALL = "delete_collection"
 
 
+K8sLabelCollectionType = typing.Annotated[
+    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+)$")]] | None,
+    Query(example="tier=worker")]
+
+
 async def invoke_k8s_api(method: K8sAPIMethod,
                          body: dict[str, typing.Any] | None = None,
-                         name: str | None = None) -> tuple[dict[str, typing.Any], int]:
+                         name: str | None = None,
+                         label_selector: tuple[str] | None = None) -> tuple[dict[str, typing.Any], int]:
     k8s = client.CustomObjectsApi()
     logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
     api_caller = asyncify(getattr(k8s, f"{method.value}_namespaced_custom_object_with_http_info"))
     params = dict(group=PEW.group, version=PEW.version, namespace=CONFIG.WORKER_NS, plural=PEW.plural)
+    if body:
+        params["body"] = body
+    if name:
+        params["name"] = name
+    if method in (K8sAPIMethod.LIST, K8sAPIMethod.DELETE_ALL) and label_selector:
+        params["label_selector"] = label_selector if isinstance(label_selector, str) else ",".join(label_selector)
     if method is K8sAPIMethod.CREATE:
         params['field_manager'] = CONFIG.field_manager
-    if body is not None:
-        params["body"] = body
-    if name is not None:
-        params["name"] = name
+    logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, indent=2)}")
     obj, status, _ = await api_caller(**params)
     return obj, status
