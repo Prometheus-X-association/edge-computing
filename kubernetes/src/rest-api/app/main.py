@@ -111,7 +111,7 @@ async def _create_pew_worker(pew: PEW, name: str | None = None) -> dict[str, typ
         }
     }
     if name:
-        manifest['metadata']['name'] = name
+        manifest['metadata']['name'] = manifest['metadata']['labels']['app.kubernetes.io/name'] = name
     else:
         manifest['metadata']['generateName'] = "worker-"
     manifest.update(pew.model_dump(mode="json",

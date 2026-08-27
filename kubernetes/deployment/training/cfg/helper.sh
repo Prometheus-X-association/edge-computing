@@ -55,3 +55,23 @@ function _timeout() {
 function wait_enter() {
     echo -e "\n\n" && read -rp ">>> Press ENTER to continue ${1}..."
 }
+
+function repeat_wait() {
+    #CMD=$(fc -ln | tail -2 | head -1)
+    retry=${1:-5}
+    shift
+    CMD=${*}
+    if ! $CMD; then
+        cntr=1
+        echo -e "\nRepeating until success[${cntr}/${retry}]: ${CMD}"
+        until $CMD; do
+            cntr=$((cntr+1))
+            if [ "${cntr}" -gt "${retry}" ]; then
+                error "Retry threshold reached!"
+                exit 1
+            fi
+            sleep 2
+            echo -e "\nRepeating until success[${cntr}/${retry}]: ${CMD}"
+        done
+    fi
+}

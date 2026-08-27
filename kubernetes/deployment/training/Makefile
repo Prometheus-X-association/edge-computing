@@ -62,14 +62,14 @@ stop-demo ::
 	#-for uc in rsc/task*.yaml; do kubectl delete -f $${uc} --now --wait --ignore-not-found; done
 	bash scripts/stop-demo.sh
 
-delete-edge ::
+stop-edge ::
 	bash scripts/delete-ptx-edge.sh
 
-shutdown-cluster :: stop-datasource-api
+stop-cluster :: stop-datasource-api
 	bash scripts/shutdown-topo.sh
 	docker rm --force kube-ops-viewer "${NGROK_CONTAINER_NAME}" >/dev/null 2>&1 || exit 0
 
-teardown :: | stop-demo delete-edge shutdown-cluster
+teardown :: | stop-demo stop-edge stop-cluster
 
 ########################################################################################################################
 
