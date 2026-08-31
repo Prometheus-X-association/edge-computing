@@ -320,7 +320,7 @@ class PEWSpecWorkerDemands(BaseModel):
     """
 
 
-class PEWSpecWorkerConfigFile(BaseModel):
+class PEWSpecWorkerConfigFileItem(BaseModel):
     """
     Configuration file
     """
@@ -370,9 +370,11 @@ class PEWSpecWorkerConfig(BaseModel):
     Worker image configuration parameters
     """
 
-    file: PEWSpecWorkerConfigFile | None = None
+    file: Annotated[list[PEWSpecWorkerConfigFileItem] | None, Field(min_length=1)] = (
+        None
+    )
     """
-    Configuration file
+    Configuration files
     """
     env: Annotated[list[PEWSpecWorkerConfigEnvItem] | None, Field(min_length=1)] = None
     """

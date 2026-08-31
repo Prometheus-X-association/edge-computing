@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pprint
-
 from model.ptxedgeworker import PEW, PEWSpec
 
 raw_kopf_obj = {
@@ -29,28 +27,23 @@ raw_kopf_obj = {
     }
 }
 
-
-def test_ewt_spec_parsing():
-    pprint.pprint(PEW(spec=PEWSpec(**raw_kopf_obj)))
-
-
 raw_k8s_obj = r"""
 {
     "apiVersion": "dataspace.ptx.org/v1alpha1",
     "kind": "PtxEdgeWorker",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"restricted\":true,\"secured\":true,\"stripped\":false}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"restricted\":true,\"secured\":true,\"stripped\":false}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}],\"file\":[{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
         },
-        "creationTimestamp": "2026-08-19T19:23:41Z",
+        "creationTimestamp": "2026-08-31T13:32:29Z",
         "generation": 1,
         "labels": {
             "env": "test"
         },
         "name": "example",
         "namespace": "ptx-edge",
-        "resourceVersion": "869",
-        "uid": "1a258416-656c-4252-b544-57c236f48f24"
+        "resourceVersion": "1060",
+        "uid": "992dfa23-a99c-48ce-8669-b741d21007b1"
     },
     "spec": {
         "data": {
@@ -145,6 +138,12 @@ raw_k8s_obj = r"""
                         "key": "WRK_TEST_VAR2",
                         "value": "42"
                     }
+                ],
+                "file": [
+                    {
+                        "data": "{\n  \"test\": 42\n}\n",
+                        "path": "/var/cache/worker/config.json"
+                    }
                 ]
             },
             "demands": {
@@ -171,12 +170,15 @@ raw_k8s_obj = r"""
 """
 
 
-def test_k8s_raw_parsing():
-    k8s_model = PEW.model_validate_json(raw_k8s_obj)
-    pprint.pprint(k8s_model)
+def test_ewt_spec_parsing():
+    print(PEW(spec=PEWSpec(**raw_kopf_obj)).model_dump_json(indent=2, exclude_none=True, exclude_defaults=True))
 
+
+def test_k8s_raw_parsing():
+    k8s_model = PEW.model_validate_json(raw_k8s_obj, strict=True, extra="ignore")
     print("Parsed datasource:", k8s_model.spec.data.src.path)
     print("Parsed image:", k8s_model.spec.worker.src.image)
+    print("Parsed model:\n", k8s_model.model_dump_json(indent=2, exclude_none=False))
 
 
 if __name__ == '__main__':

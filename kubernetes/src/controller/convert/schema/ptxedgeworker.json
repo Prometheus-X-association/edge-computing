@@ -363,24 +363,33 @@
                     "description": "Worker image configuration parameters",
                     "properties": {
                       "file": {
-                        "type": "object",
-                        "description": "Configuration file",
-                        "required": [
-                          "path",
-                          "data"
+                        "type": "array",
+                        "description": "Configuration files",
+                        "minItems": 1,
+                        "x-kubernetes-list-type": "map",
+                        "x-kubernetes-list-map-keys": [
+                          "path"
                         ],
-                        "properties": {
-                          "path": {
-                            "type": "string",
-                            "description": "Mount path of configuration file",
-                            "minLength": 1,
-                            "pattern": "^((/[a-zA-Z0-9-_\\.]+)+)$",
-                            "example": "/var/cache/worker/cfg.ini"
-                          },
-                          "data": {
-                            "type": "string",
-                            "description": "Configuration data",
-                            "example": "{\"var\": 42}"
+                        "items": {
+                          "type": "object",
+                          "description": "Configuration file",
+                          "required": [
+                            "path",
+                            "data"
+                          ],
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "description": "Mount path of configuration file",
+                              "minLength": 1,
+                              "pattern": "^((/[a-zA-Z0-9-_\\.]+)+)$",
+                              "example": "/var/cache/worker/cfg.ini"
+                            },
+                            "data": {
+                              "type": "string",
+                              "description": "Configuration data",
+                              "example": "{\"var\": 42}"
+                            }
                           }
                         }
                       },
