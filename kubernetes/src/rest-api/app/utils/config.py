@@ -28,7 +28,7 @@ class PTXEdgeApiConfig(BaseSettings):
     @computed_field
     @property
     def field_manager(self) -> str:
-        return f"{self.NAMESPACE}/{self.HOSTNAME}"
+        return f"{self.NAMESPACE}-{self.HOSTNAME}"
 
 
 CONFIG = PTXEdgeApiConfig()

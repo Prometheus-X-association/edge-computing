@@ -4,7 +4,10 @@ metadata:
   name: {{ name ~ "-stripprefix" }}
   namespace: {{ namespace }}
   labels:
-    tier: worker
+    app.kubernetes.io/name: {{ name }}
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: {{ name }}
+    app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
     {# autofilled #}
 spec:
   stripPrefix:

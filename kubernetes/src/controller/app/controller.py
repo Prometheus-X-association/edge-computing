@@ -72,6 +72,34 @@ async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.L
 
 ########################################################################################################################
 
+async def _create_worker_configuration(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
+                                       **_: Any):
+    logger.debug("-" * 100)
+    logger.info(f"Rendering worker configuration manifest...")
+    template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name="worker_configmap.yaml.jinja2")
+    manifest: str = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
+    body: dict = await asyncify(yaml.safe_load)(stream=manifest)
+    kopf.adopt(body, strict=True, forced=True, nested="spec.template")
+    logger.debug(f"Rendered configuration object:\n{sanitize_model(body)}")
+    ####
+    try:
+        k8s = client.CoreV1Api()
+        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+        cmd_caller = asyncify(k8s.create_namespaced_config_map_with_http_info)
+        obj, status, _ = await cmd_caller(namespace=namespace,
+                                          body=body,
+                                          field_manager=memo.CONFIG.controller.manager)
+        status = http.HTTPStatus(status)
+        logger.debug(f"Received response: HTTP/{status} - {status.name}")
+        if not status.is_success:
+            raise kopf.TemporaryError(f"Kube API response: {status}")
+        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+    except client.ApiException as e:
+        logger.error(convert_k8s_api_error(e))
+        raise kopf.TemporaryError(str(e)) from e
+    ###
+    logger.debug("-" * 100)
+
 
 async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
                                     **_: Any):
@@ -250,6 +278,9 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
     if not hasattr(memo, 'handlers'):
         memo.handlers = {}
         logger.info(f"Registering object handlers...")
+        if memo.model.spec.worker.config and memo.model.spec.worker.config.file:
+            memo.handlers['config'] = functools.partial(_create_worker_configuration,
+                                                        pew=memo.model)
         if memo.model.spec.service and memo.model.spec.service.enabled:
             memo.handlers['deployment'] = functools.partial(_create_worker_deployment,
                                                             pew=memo.model)

@@ -13,7 +13,6 @@ initContainers:
       - name: data-dir
         mountPath: /var/cache/data/
         readOnly: false
-
       {% endif %}
     env:
       # PDC configuration
@@ -163,13 +162,23 @@ containers:
         {% endif %}
     {% endif %}
     # Data destination configuration
-    {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
-          (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
     volumeMounts:
+      {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
+            (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
       - name: data-dir
         mountPath: {{ spec.data.dst.path | default("/var/cache/data", true) }}
         readOnly: true
-    {% endif %}
+      {% endif %}
+      {% if spec.worker.config and spec.worker.config.file is iterable %}
+      {% for cfg in spec.worker.config.file %}
+      {% set vol_name = "vol-" ~ loop.index ~ "-"
+                                ~ cfg.path.rsplit('/', maxsplit=1) | last | replace('.', '-') | replace('_', '-') %}
+      - name: {{ vol_name }}
+        mountPath: {{ cfg.path }}
+        subPath: {{ cfg.path.rsplit('/', maxsplit=1) | last }}
+        readOnly: true
+      {% endfor %}
+      {% endif %}
     {% if spec.worker.config and spec.worker.config.env is iterable %}
     env:
     {% for envvar in spec.worker.config.env %}
@@ -217,4 +226,16 @@ volumes:
   - name: data-dir
     emptyDir:
       sizeLimit: {{ spec.data.src.size | default(100, true) ~ "M" }}
+  {% endif %}
+  {% if spec.worker.config and spec.worker.config.file is iterable %}
+  {% for cfg in spec.worker.config.file %}
+  {% set vol_name = "vol-" ~ loop.index ~ "-"
+                            ~ cfg.path.rsplit('/', maxsplit=1) | last | replace('.', '-') | replace('_', '-') %}
+  - name: {{ vol_name }}
+    configMap:
+      name: {{ name }}
+      items:
+        - key: {{ vol_name }}
+          path: {{ cfg.path.rsplit('/', maxsplit=1) | last }}
+  {% endfor %}
   {% endif %}

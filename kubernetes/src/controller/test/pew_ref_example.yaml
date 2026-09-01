@@ -49,6 +49,10 @@ spec:
       memory: 500
     config:
       file:
+        - path: "/data/config.txt"
+          data: |
+            test=42,
+            data=112
         - path: "/var/cache/worker/config.json"
           data: |
             {

@@ -26,7 +26,7 @@ REQUIRED_FIELDS = ("builder.name", "builder.image")
 
 DEF_CONFIG = {
     "controller": {
-        "manager": "ptx-edge/controller"
+        "manager": f"{os.getenv('NAMESPACE', "ptx-edge")}-{os.getenv('HOSTNAME', "controller")}"
     }
 }
 

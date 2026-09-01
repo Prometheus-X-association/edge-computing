@@ -58,7 +58,7 @@ rules:
     resources: [ deployments ]
     verbs: [ create ]
   - apiGroups: [ "" ]
-    resources: [ services ]
+    resources: [ services, configmaps ]
     verbs: [ create ]
   - apiGroups: [ networking.k8s.io ]
     resources: [ ingresses ]
@@ -112,6 +112,8 @@ spec:
       #           "--liveness=http://0.0.0.0:8080/healthz", "app/controller.py" ]
       command: [ "/bin/sh", "-c", "sleep infinity" ]
       env:
+        #- name: CFG_CONTROLLER_MANAGER
+        #  value: "ptx-edge-controller"
         - name: CFG_REGISTRY_PATH
           value: "registry.k3d.local:5000"
         - name: CFG_SCHEDULER_NAME

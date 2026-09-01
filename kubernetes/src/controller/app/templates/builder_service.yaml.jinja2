@@ -4,12 +4,14 @@ metadata:
   name: {{ (cfg.builder.name if cfg.builder and cfg.builder.name else "builder") ~ "-" ~ name }}
   namespace: {{ namespace }}
   labels:
-    tier: worker
+    app.kubernetes.io/name: {{ name }}
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: {{ name }}
+    app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
     {# autofilled #}
 spec:
   selector:
-    ptxedgeworkers.dataspace.ptx.org/component: {{ name }}
-    tier: worker
+    ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
   type: ClusterIP
   ports:
     - name: webhook-port

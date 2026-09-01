@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ name }}
+  namespace: {{ namespace }}
+  labels:
+    app.kubernetes.io/name: {{ name }}
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: {{ name }}
+    app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+    {# autofilled #}
+{% if spec.worker.config and spec.worker.config.file is iterable %}
+data:
+  {% for cfg in spec.worker.config.file %}
+  {% set vol_name = "vol-" ~ loop.index ~ "-"
+                            ~ cfg.path.rsplit('/', maxsplit=1) | last | replace('.', '-') | replace('_', '-') %}
+  {{ vol_name }}: |
+  {% filter indent(4) %}
+    {{ cfg.data }}
+  {%- endfilter %}
+  {% endfor %}
+{% endif %}
+immutable: true

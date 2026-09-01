@@ -4,19 +4,20 @@ metadata:
   name: {{ name }}
   namespace: {{ namespace }}
   labels:
-    tier: worker
+    app.kubernetes.io/name: {{ name }}
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: {{ name }}
+    app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
     {# autofilled #}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      ptxedgeworkers.dataspace.ptx.org/component: {{ name }}
-      tier: worker
+      ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
   template:
     metadata:
       labels:
-        ptxedgeworkers.dataspace.ptx.org/component: {{ name }}
-        tier: worker
+        ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
     spec:
       restartPolicy: Always
       {% filter indent(width=6, first=true) %}

@@ -21,6 +21,9 @@ import yaml
 from model.ptxedgeworker import PEW
 
 CONFIG = {
+    'controller': {
+        'manager': 'ptx-edge-controller'
+    },
     'registry': {
         'path': 'registry.k3d.local:5000'
     },
@@ -67,6 +70,7 @@ def test_template(template: str, values: str | pathlib.Path):
 
 if __name__ == '__main__':
     test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("worker_configuration.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("worker_job.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
