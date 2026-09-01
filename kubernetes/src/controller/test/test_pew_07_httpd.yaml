@@ -14,22 +14,36 @@ spec:
         secured: false # Do not use HTTPS entrypoint by default (only HTTP)
         restricted: true  # Use basic authentication / Prerequisite: REST-API and its credential middleware
         stripped: true  # Use /worker/<name> but prefix stripped, otherwise consider fixed prefix
-        # wget -v -O- --user=admin --password=admin http://localhost:8888/worker/test/hosts
+        # wget -q -O- --user=admin --password=admin http://localhost:8888/worker/test/data/hosts
   data:
     src:
-      method: FILE  # Use local file as source
+      method: FILE  # Use local file as source and copy into <path>
       path: file:///etc/hosts
       size: 10
     dst:
       method: LOCAL
-      path: "/usr/data/"
+      path: "/usr/www/data/"
   worker:
     src:
       method: DOCKER
       image: "busybox:latest"
     dst:
       cached: false
-    command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', '/usr/data/' ]
+    config:
+      file: # firefox http://localhost:8888/worker/test/hosts
+        - path: /usr/www/index.html
+          data: |
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Hello World</title>
+            </head>
+            <body>
+                <h1>Hello, World!</h1>
+            </body>
+            </html>
+    command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', '/usr/www/' ]
     demands: # Define min resource requirements
       cpu: 1.0
       memory: 50

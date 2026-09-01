@@ -26,8 +26,4 @@ spec:
     command: # Use given command
       - "/bin/sh"
       - "-c"
-      - "sleep infinity"
-    config:
-      env: # Add explicit envvars
-        - key: WRK_TEST_VAR
-          value: "test123"
+      - "ls -alh /data; sleep infinity"

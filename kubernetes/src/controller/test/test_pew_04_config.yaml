@@ -1,0 +1,39 @@
+apiVersion: dataspace.ptx.org/v1alpha1
+kind: PtxEdgeWorker
+metadata:
+  name: test
+  namespace: ptx-edge
+  labels:
+    env: test
+spec:
+  service:
+    enabled: true
+  data:
+    src:
+      method: SKIP
+  worker:
+    src:
+      method: SKIP
+      image: busybox:latest
+    config:
+      file:
+        - path: /data/example.json
+          data: |
+            {
+              "data": 42
+            {
+        - path: /data/example.txt
+          data: |
+            abcd=1234,
+            ddssrr=1244
+      env: # Add explicit envvars
+        - key: WRK_PEW_GRP
+          value: "dataspace.ptx.org"
+        - key: WRK_PEW_VER
+          value: "1.0"
+        - key: WRK_CFG_NUM
+          value: "42"
+    command: # Use given command to print configurations
+      - "/bin/sh"
+      - "-c"
+      - "env | grep 'WRK_'; ls -alh /data; sleep infinity"

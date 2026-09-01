@@ -144,7 +144,8 @@ containers:
     image: {{ ((cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ worker_image)
               if spec.worker.dst and spec.worker.dst.cached
               else spec.worker.src.image | default(undefined, true) }}
-    imagePullPolicy: {{ "IfNotPresent" if spec.worker.dst and spec.worker.dst.cached else "Always" }}
+    {#imagePullPolicy: {{ "IfNotPresent" if spec.worker.dst and spec.worker.dst.cached else "Always" }}#}
+    imagePullPolicy: IfNotPresent
     {% if spec.worker.command is iterable %}
     command:
     {% for cmd in spec.worker.command %}

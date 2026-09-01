@@ -65,12 +65,13 @@ def test_template(template: str, values: str | pathlib.Path):
     print(f"Generated raw manifest:\n---\n{manifest}\n---")
     print('=' * 80)
     manifest = yaml.safe_load(manifest)
-    print(f"Generated manifest:\n---\n{yaml.safe_dump(manifest, indent=2)}---")
+    #print(f"Generated manifest:\n---\n{yaml.safe_dump(manifest, indent=2)}---")
+    print(f"Generated manifest:\n---\n{pprint.pformat(manifest, indent=2)}---")
 
 
 if __name__ == '__main__':
     test_template("worker_deployment.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
-    test_template("worker_configuration.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
+    test_template("worker_configmap.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("worker_job.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("worker_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
     test_template("builder_service.yaml.jinja2", pathlib.Path(__file__).parent / "pew_ref_example.yaml")
