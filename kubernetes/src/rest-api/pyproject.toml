@@ -24,9 +24,8 @@ dependencies = [
     "starlette",
     "uvicorn",
     "uvloop",
-    "asyncify",
     "urllib3",
-    "kubernetes==35.0.0",
+    "kubernetes~=36.0.0",
     "pydantic-settings~=2.15.0"
 ]
 

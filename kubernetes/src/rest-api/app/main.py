@@ -27,7 +27,7 @@ from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerRespo
                                  PTXEdgeWorkerCollectionResponse)
 from app.utils.config import CONFIG
 from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType
-from app.utils.logger import logger
+from app.utils.logger import logger, sanitize_model
 
 
 ########################################################################################################################
@@ -128,7 +128,7 @@ async def _create_pew_worker(pew: PEW,
                                             body=manifest)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Created resource: {obj['kind']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         grp, ver = obj['apiVersion'].split('/', maxsplit=1)
         return {"status": PTXEdgeWorkerResponseStatus.INITIALIZED,
@@ -162,7 +162,7 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
                                             name=name)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj
     except kubernetes.client.ApiException as e:
@@ -215,7 +215,7 @@ async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern
                                             name=name)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         return {"status": PTXEdgeWorkerResponseStatus.TERMINATING,
                 "resource": {
@@ -248,7 +248,7 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
                                             label_selector=label)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         ret = {"workers": [{"name": w['metadata']['name'],
                             "state": w.get('status', {}).get('worker', {}).get('state')}

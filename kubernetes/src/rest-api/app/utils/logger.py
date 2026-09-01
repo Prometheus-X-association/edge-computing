@@ -12,6 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import pprint
+import typing
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 logger.setLevel(logging.DEBUG)
+
+
+def deep_json_filter(data: object, keep: typing.Callable = bool) -> object:
+    """
+
+    :param data:
+    :param keep:
+    :return:
+    """
+    if isinstance(data, dict):
+        return dict(filter(lambda kv: keep(kv[1]), ((k, deep_json_filter(v, keep)) for k, v in data.items())))
+    elif isinstance(data, (list, tuple, set)):
+        return type(data)(filter(keep, (deep_json_filter(v, keep) for v in data)))
+    elif isinstance(data, (bool, int, float)):
+        return data
+    elif keep(data):
+        return data
+    else:
+        return None
+
+
+def deep_openapi_filter(data: object, keep: typing.Callable = bool) -> object:
+    """
+
+    :param data:
+    :param keep:
+    :return:
+    """
+    if hasattr(data, "openapi_types"):
+        return dict(filter(lambda kv: keep(kv[1]),
+                           ((att, deep_openapi_filter(getattr(data, att), keep)) for att in data.openapi_types)))
+    if isinstance(data, dict):
+        return dict(filter(lambda kv: keep(kv[1]), ((k, deep_json_filter(v, keep)) for k, v in data.items())))
+    elif isinstance(data, (list, tuple, set)):
+        return type(data)(filter(bool, (deep_openapi_filter(v, keep) for v in data)))
+    elif isinstance(data, (bool, int, float)):
+        return data
+    elif keep(data):
+        return data
+    else:
+        return None
+
+
+def sanitize_model(data: object, indent: int = 2) -> str:
+    return pprint.pformat(deep_openapi_filter(data, keep=lambda _v: isinstance(_v, bool) or bool(_v)), indent=indent)
