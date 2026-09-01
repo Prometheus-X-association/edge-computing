@@ -53,9 +53,9 @@ services:
       - source: cfg-npmrc
         target: /root/.npmrc
       - source: cfg-pdc-provider.json
-        target: /usr/src/app/src/config.json
+        target: /usr/src/app/src/config.${PDC_ENV}.json
       - source: cfg-pdc-provider.env
-        target: /usr/src/app/.env
+        target: /usr/src/app/.env.${PDC_ENV}
     networks:
       - nw-mongo
       - nw-proxy
@@ -92,9 +92,9 @@ services:
       - source: cfg-npmrc
         target: /root/.npmrc
       - source: cfg-pdc-consumer.json
-        target: /usr/src/app/src/config.json
+        target: /usr/src/app/src/config.${PDC_ENV}.json
       - source: cfg-pdc-consumer.env
-        target: /usr/src/app/.env
+        target: /usr/src/app/.env.${PDC_ENV}
     networks:
       - nw-mongo
       - nw-proxy
@@ -296,7 +296,7 @@ configs:
 
   cfg-pdc-provider.env:
     content: |
-      NODE_ENV=production
+      NODE_ENV=${PDC_ENV}
       PORT=3000
       SESSION_SECRET=6OEVPVF73INhElUq
       SESSION_COOKIE_EXPIRATION=24000
@@ -329,7 +329,7 @@ configs:
 
   cfg-pdc-consumer.env:
     content: |
-      NODE_ENV=production
+      NODE_ENV=${PDC_ENV}
       PORT=3000
       SESSION_SECRET=6OEVPVF73INhElUq
       SESSION_COOKIE_EXPIRATION=24000

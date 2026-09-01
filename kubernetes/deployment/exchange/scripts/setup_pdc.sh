@@ -14,7 +14,9 @@
 # limitations under the License.
 set -euo pipefail
 
-source "$(readlink -f "$(dirname "$0")/helper.sh")"
+ROOT_DIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")
+source "${ROOT_DIR}/scripts/helper.sh"
+source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
@@ -25,7 +27,7 @@ PDC_IMG="dataspace-connector"
 
 ########################################################################################################################
 
-LOG "Setup Dataspace Connector (PDC)"
+LOG "Setup Dataspace Connector (PDC) in <${PDC_ENV}> mode"
 
 if [ -z "${PDC_DIR:-}" ]; then
     PDC_DIR=$(readlink -f "$(dirname "$0")/../pdc")
@@ -87,7 +89,7 @@ EOF
 fi
 
 log "Create config files..."
-cat <<EOF >"${PDC_DIR}/src/config.json"
+cat <<EOF >"${PDC_DIR}/src/config.${PDC_ENV}.json"
 {
     "endpoint": "",
     "serviceKey": "",
@@ -101,10 +103,10 @@ cat <<EOF >"${PDC_DIR}/src/config.json"
     "serviceChainAdapterTimeout": 0
 }
 EOF
-ls -alht "${PDC_DIR}/src/config.json"
+ls -alht "${PDC_DIR}/src/config.${PDC_ENV}.json"
 
-cat <<EOF >"${PDC_DIR}/.env"
-NODE_ENV=production
+cat <<EOF >"${PDC_DIR}/.env.${PDC_ENV}"
+NODE_ENV=${PDC_ENV}
 PORT=3000
 
 SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
@@ -128,7 +130,7 @@ EXCHANGE_TRIGGER_API_KEY=
 # Exchange Timeout in seconds
 EXCHANGE_TIMEOUT=120
 EOF
-ls -alht "${PDC_DIR}/.env"
+ls -alht "${PDC_DIR}/.env.${PDC_ENV}"
 
 ########################################################################################################################
 
@@ -136,7 +138,7 @@ log "Build PDC..."
 docker build -f "${PDC_DIR}/docker/app/Dockerfile" \
              -t "${PDC_IMG}:${PDC_VERSION}" \
              -t "${PDC_IMG}:latest" \
-             --build-arg "ENV=production" \
+             --build-arg "ENV=${PDC_ENV}" \
              --pull \
              "${PDC_DIR}"
 
