@@ -33,6 +33,7 @@ or in a separate env file that is directly used by a `test_<...>.sh` script.
 
 Mandatory variables, that need to be given:
 
+- PDC **operation mode**: either `development` or `production`
 - PDCs' **service** and **secret** keys that can be found (currently)
   [here](https://visionstrust.com/dashboard/profile/settings?tab=api).
 - ngrok's **authentication token** and a fixed (dev) **domain name** that can be found (currently)
@@ -105,6 +106,20 @@ The following URLs can be used for accessing the web interfaces:
 
 - Reverse tunneling (`ngrok-tunnel`): http://ngrok.exchange.localhost:8080
 - HTTP request routing (`traefik-proxy`): http://traefik.exchange.localhost:8080
+
+According to the default [configuration](basic-infra.yaml), the following component URLs can be
+also checked from outside the local setup by using the `ngrok` domain:
+
+- Main datasource [PDC endpoint](basic-infra.yaml#349): **https://<NGROK_DOMAIN>/datasource/pdc**
+- Main data consumer [PDC endpoint](basic-infra.yaml#356): **https://<NGROK_DOMAIN>/service/pdc**
+
+PDC also provides a swagger based self-documenting web interface, but only in `development` mode.
+See more in [configuration](#prerequisites).
+Please mind the **trailing `/`** at the end of the URLs!
+
+- Datasource web interface: **https://<NGROK_DOMAIN>/datasource/pdc/docs/**
+- Data consumer web interface: **https://<NGROK_DOMAIN>/service/pdc/docs/**
+
 
 ### Dataspace contract
 
