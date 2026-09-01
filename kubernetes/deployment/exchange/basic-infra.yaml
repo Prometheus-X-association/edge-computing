@@ -66,7 +66,7 @@ services:
           cpus: 2.0
           memory: 700m
     healthcheck:
-      test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
+      test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000/health' ]
       start_period: 15s
       interval: 5m
     depends_on:
@@ -105,7 +105,7 @@ services:
           cpus: 2.0
           memory: 700m
     healthcheck:
-      test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000' ]
+      test: [ 'CMD', 'curl', '-o', '/dev/null', '-SsfI', 'http://localhost:3000/health' ]
       start_period: 15s
       interval: 5m
     depends_on:
