@@ -14,10 +14,12 @@
 import logging
 import pprint
 import sys
+import uuid
 
 import requests
 
 from app.util.config import CONFIG
+from app.util.k8s import K8sLeaderElectorManager
 from app.util.webhook import WebHooKManager
 
 log = logging.getLogger(__name__)
@@ -66,7 +68,7 @@ def _construct_exchange_request(exchange: str) -> dict[str, str | list[dict[str,
             "purposes": [{"resource": CONFIG[f"ptx.{exchange}.exchange.service.resource"]}]}
 
 
-def make_data_exchange(exchange: str, token: str, timeout: int | None = None) -> dict | None:
+def initiate_data_exchange(exchange: str, token: str, timeout: int | None = None) -> dict | None:
     """
 
     :param exchange:
@@ -104,7 +106,7 @@ def make_data_exchange(exchange: str, token: str, timeout: int | None = None) ->
     return webhook_data
 
 
-def perform_pdc_consumer_exchange(exchange: str, timeout: int | None = None) -> dict | None:
+def perform_authenticate_exchange(exchange: str, timeout: int | None = None) -> dict | None:
     """
 
     :param exchange:
@@ -121,4 +123,22 @@ def perform_pdc_consumer_exchange(exchange: str, timeout: int | None = None) -> 
     log.debug(f"Assigned token: {bearer}")
     log.info(f"Login to connector was successful!")
     log.info(f"Initiate data exchange[{exchange}]...")
-    return make_data_exchange(exchange=exchange, token=bearer, timeout=timeout)
+    return initiate_data_exchange(exchange=exchange, token=bearer, timeout=timeout)
+
+
+def perform_pdc_consumer_exchange(exchange: str, synced: bool, timeout: int | None = None) -> dict | None:
+    """
+
+    :param exchange:
+    :param synced:
+    :param timeout:
+    :return:
+    """
+    if not synced:
+        return perform_authenticate_exchange(exchange=exchange, timeout=timeout)
+    log.info("Perform synchronized data exchange...")
+    identity = CONFIG.get("pdc.sync.identity", f"{CONFIG.get("app.name")}-{uuid.uuid4().hex[:8]}")
+    timeout = timeout if timeout else 60
+    mgr = K8sLeaderElectorManager(lock_name=CONFIG['pdc.sync.lock'], identity=identity, timeout=timeout, retry=5)
+    with mgr.with_task(perform_authenticate_exchange, exchange=exchange, timeout=timeout) as mgr:
+        return mgr.wait()

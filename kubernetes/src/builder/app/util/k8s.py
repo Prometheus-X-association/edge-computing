@@ -26,12 +26,16 @@ from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
 from kubernetes.leaderelection import electionconfig, leaderelection
-from kubernetes.leaderelection.leaderelectionrecord import LeaderElectionRecord
-from kubernetes.leaderelection.resourcelock import configmaplock
+
+try:
+    from kubernetes.leaderelection.resourcelock.leaselock import LeaseLock as LeaderElectionLock
+except ImportError:
+    from kubernetes.leaderelection.resourcelock.configmaplock import ConfigMapLock as LeaderElectionLock
 
 from app.util.helper import deep_filter
 
 log = logging.getLogger(__name__)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 def _load_incluster_projected_config(token: str,
@@ -210,19 +214,19 @@ class K8sLeaderElectorManager(object):
     CERT_FILE = PROJECTED_DIR + "ca.crt"
     NS_FILE = PROJECTED_DIR + "namespace"
 
-    def __init__(self, lock_name: str, identity: str, namespace: str | None = None,
-                 projected: bool = True, timeout: int | None = None, retry: int = 10):
-        self._timeout = timeout if timeout is not None else 60
+    def __init__(self, lock_name: str, identity: str, timeout: int, namespace: str | None = None,
+                 projected: bool = True, retry: int = 10):
+        self._timeout = timeout
         self.init_client(projected)
         if not namespace:
             namespace = pathlib.Path(self.NS_FILE).read_text() if projected else "default"
         self.elector = leaderelection.LeaderElection(
             electionconfig.Config(
-                configmaplock.ConfigMapLock(name=lock_name,
-                                            namespace=namespace,
-                                            identity=identity),
+                LeaderElectionLock(name=lock_name,
+                                   namespace=namespace,
+                                   identity=identity),
                 lease_duration=self._timeout,
-                renew_deadline=self._timeout // 2,
+                renew_deadline=round(0.75 * self._timeout),
                 retry_period=max(min(self._timeout // 2, retry), 3),
                 onstarted_leading=self._on_start_handler,
                 onstopped_leading=self._on_stopped_handler))
@@ -254,8 +258,12 @@ class K8sLeaderElectorManager(object):
     def leader(self) -> bool:
         return self.__leader
 
-    def with_task(self, task: typing.Callable[[K8sLeaderElectorManager, ...], typing.Any] | None = None,
-                  *args, **kwargs) -> K8sLeaderElectorManager:
+    def with_task(self, task: typing.Callable | None = None, *args, **kwargs) -> K8sLeaderElectorManager:
+        """Helper function to define task inline with context manager definition."""
+        self._task = functools.partial(task, *args, **kwargs) if task else None
+        return self
+
+    def with_augmented_task(self, task: typing.Callable | None = None, *args, **kwargs) -> K8sLeaderElectorManager:
         """Helper function to define task inline with context manager definition."""
         self._task = functools.partial(task, self, *args, **kwargs) if task else None
         return self
@@ -310,15 +318,16 @@ class K8sLeaderElectorManager(object):
         """Release lease lock."""
         if self.__leader:
             log.warning(f"Elector is still the leader while lock is being released!")
-        stat, record = lock.get(lock.name, lock.namespace)
-        if not stat:
-            log.error(f"Lock[{lock.namespace}] not found!")
+        found, lock_record = lock.get(lock.name, lock.namespace)
+        if not found:
+            log.error(f"Lock[{lock.name}] not found!")
             return False
-        elif record.holder_identity != lock.identity:
-            log.warning(f"Lock[{lock.namespace}] already transitioned!")
+        elif lock_record.holder_identity != lock.identity:
+            log.warning(f"Lock[{lock.name}] already transitioned!")
             return True
         else:
-            return lock.update(lock.name, lock.namespace, LeaderElectionRecord("", 0, 0, 0))
+            lock_record.holder_identity = ""
+            return lock.update(lock.name, lock.namespace, lock_record)
 
     def stop(self, blocking: bool = True):
         """Stop executor by force-raising an exception."""
@@ -347,17 +356,37 @@ def test_threaded_leader_elector():
     InClusterConfigLoader(token_filename=PROJECTED_TOKEN_FILE,
                           cert_filename=PROJECTED_CERT_FILE,
                           try_refresh_token=True).load_and_set()
-    lock = configmaplock.ConfigMapLock("ptx-pdc-lock", "ptx-edge", "xyz")
-    config = electionconfig.Config(lock, lease_duration=17, renew_deadline=15, retry_period=5,
+    lock = LeaderElectionLock(name="ptx-pdc-lock", namespace="ptx-edge", identity="xyz")
+    config = electionconfig.Config(lock, lease_duration=20, renew_deadline=15, retry_period=5,
                                    onstarted_leading=lambda: time.sleep(10), onstopped_leading=None)
     elector = leaderelection.LeaderElection(config)
     t = threading.Thread(target=elector.run, daemon=True)
     t.start()
     print("leaderelection started...")
     time.sleep(10)
+    print("leaderelection stopping...")
     elector.election_config = None
     print("leaderelection waited...")
     t.join()
+
+
+def test_elector_manager():
+    mgr = K8sLeaderElectorManager(lock_name="ptx-pdc-lock",
+                                  identity="xxx",
+                                  timeout=20,
+                                  retry=5).with_task(lambda _, c, v: time.sleep(10))
+    mgr.start()
+    result = mgr.wait()
+    mgr.stop()
+
+
+def test_elector_context_manager():
+    mgr = K8sLeaderElectorManager(lock_name="ptx-pdc-lock",
+                                  identity="xxx",
+                                  timeout=20,
+                                  retry=5)
+    with mgr.with_task(lambda _, c, v: time.sleep(10)) as mgr:
+        result = mgr.wait()
 
 
 if __name__ == '__main__':
@@ -366,3 +395,5 @@ if __name__ == '__main__':
     # check_kube_api_cfg()
     # check_projected_kube_api_cfg()
     test_threaded_leader_elector()
+    test_elector_manager()
+    test_elector_context_manager()

@@ -201,6 +201,16 @@ run-builder ::
 	kubectl delete pods/builder --now --wait
 	kubectl delete pods,secrets -l app=builder -l app=worker --now --wait
 
+run-builder2 ::
+	envsubst <${ASSETS}/ptx-builder-pod2.yaml '$${DH_TOKEN}' | kubectl apply -f=-
+	kubectl wait --for="condition=PodReadyToStartContainers" --timeout=30s pod/builder2
+	@echo
+	kubectl get all -o wide
+	@echo
+	-kubectl exec -ti pod/builder2 -c builder -- sh
+	kubectl delete pods/builder2 --now --wait
+	kubectl delete pods,secrets -l app=builder2 -l app=worker --now --wait
+
 run-scheduler ::
 	kubectl apply -f ${ASSETS}/ptx-scheduler-pod.yaml
 	kubectl wait --for="condition=Ready" --timeout=30s pod/scheduler
@@ -349,10 +359,10 @@ stop ::
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
 
 clear-test ::
-	kubectl delete all,pv,pvc,secret -l env=test
-	kubectl delete events --all
+	-kubectl delete all,pv,pvc,secret -l env=test
+	-kubectl delete events --all
 	@#${MAKE} -f $(THIS_FILE) status
-	@echo && ${MAKE} -s status
+	@echo && ${MAKE} -s status || true
 
 
 teardown ::

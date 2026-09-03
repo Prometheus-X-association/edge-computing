@@ -1,111 +1,11 @@
-# kubectl -n ptx-edge create secret generic pdc-secrets.env --type=Opaque \
-# --from-literal=PDC_SERVICE_KEY=dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV \
-# --from-literal=PDC_SECRET_KEY=Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x \
-# -o yaml --dry-run=client
-apiVersion: v1
-kind: Secret
-type: Opaque
-metadata:
-  name: pdc-secrets.env
-  namespace: ptx-edge
-  labels:
-    env: test
-data:
-  BUILD_PDC_KEY_SERVICE: ZFdKVVVLSDlyWUY5d3JfVUFQYjZQUVhXOWgxN0c3ZHp1R0NiaURoY3lqQ0dnSHpMd0JwNlFIT1FoRGcwRkZ4UzI0R0Q4bnZ3MzdvZV9MT2psN3p0TkFUWWlWT2RfWkVWSFFwVg==
-  BUILD_PDC_KEY_SECRET: UWg0WHZ1aFNKYk9wOG5NVjFKdGliQVVxanAzd19lZkJlRlVmQ21xUVdfTmw4eDR0M1NrNmZXaUs1TDA1Q0IzamhLWk9nWTVKbEJTdldrRkJISF82ZkZoWVFaV1hOb1p4Tzc4eA==
-immutable: true
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pdc-config.env
-  namespace: ptx-edge
-  labels:
-    env: test
-data:
-  BUILD_PDC_HOST: "pdc.ptx-edge.svc.cluster.local"
-  BUILD_PDC_PORT: "30003"
-  BUILD_CONTRACT_HOST: "contract.ptx-sandbox.svc.cluster.local"
-  BUILD_CONTRACT_PORT: "3001"
-  BUILD_CATALOG_HOST: "catalog.ptx-sandbox.svc.cluster.local"
-  BUILD_CATALOG_PORT: "3002"
-immutable: true
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: builder-webhook
-  namespace: ptx-edge
-  labels:
-    env: test
-spec:
-  selector:
-    app: builder
-  type: ClusterIP
-  ports:
-    - name: webhook-port
-      protocol: TCP
-      port: 9999
-      targetPort: 9999  # Required port reference by number, as port names does not propagate into endpoint slice
-  publishNotReadyAddresses: true  # Required for service to consider non-ready pods in endpoint slice
---- ####################################################################################################################
-# kubectl create serviceaccount builder
-# kubectl config set-credentials builder --token=$(kubectl create token builder)
-# kubectl config set-context builder-context --cluster=k3d-dev --user=builder
-# kubectl config use-context builder-context
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: builder
-  labels:
-    app: builder
-    env: test
-automountServiceAccountToken: false
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: secret-creator
-  namespace: ptx-edge
-  labels:
-    env: test
-rules:
-  - apiGroups: [ "" ]
-    resources: [ secrets ]
-    verbs: [ create ]
-  - apiGroups: [ coordination.k8s.io ]
-    resources: [ leases ]
-    verbs: [ get, create, update ]
-  - apiGroups: [ "" ]
-    resources: [ configmaps ]
-    verbs: [ get, create, update ]
-#  - apiGroups: [ "" ]
-#    resources: [ "events" ]
-#    verbs: [ "create", "patch" ]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: secret-creator
-  namespace: ptx-edge
-  labels:
-    env: test
-subjects:
-  - kind: ServiceAccount
-    name: builder
-    namespace: ptx-edge
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: secret-creator
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: builder
+  name: builder2
   namespace: ptx-edge
   labels:
-    app: builder
+    app: builder2
     env: test
 spec:
   serviceAccountName: builder
@@ -158,10 +58,6 @@ spec:
           value: "true"
         - name: BUILD_PDC_SYNC_LOCK
           value: "pdc-sync-lock"
-        #- name: BUILD_PDC_SYNC_IDENTITY
-        #  valueFrom:
-        #    fieldRef:
-        #      fieldPath: metadata.name
         #- name: BUILD_CONNECTION_TIMEOUT
         #  value: "${BUILD_TIMEOUT}"
         - name: BUILD_DATA_METHOD
