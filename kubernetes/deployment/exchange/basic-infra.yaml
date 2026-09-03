@@ -346,14 +346,14 @@ configs:
         routers:
           datasource:
             service: pdc-provider
-            rule: Host(`${NGROK_DOMAIN:?}`) && PathPrefix(`/datasource/pdc`)
+            rule: Host(`${NGROK_DOMAIN:?}`) && (PathPrefix(`/datasource/pdc`) || PathPrefix(`/datasource/pdc/v1`))
             middlewares: 
               - no-pdc-prefix@file
             entrypoints:
               - web
           consumer:
             service: pdc-consumer
-            rule: Host(`${NGROK_DOMAIN:?}`) && PathPrefix(`/service/pdc`)
+            rule: Host(`${NGROK_DOMAIN:?}`) && (PathPrefix(`/service/pdc`) || PathPrefix(`/service/pdc/v1`))
             middlewares:
               - no-pdc-prefix@file
             entrypoints:
@@ -389,7 +389,9 @@ configs:
           no-pdc-prefix:
             stripprefix:
               prefixes:
+                - /datasource/pdc/v1
                 - /datasource/pdc
+                - /service/pdc/v1
                 - /service/pdc
 
 ########################################################################################################################
