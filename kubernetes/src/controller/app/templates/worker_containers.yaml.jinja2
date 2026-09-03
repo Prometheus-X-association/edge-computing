@@ -39,6 +39,14 @@ initContainers:
             name: {{ cfg.pdc.secret }}
             key: SECRET_KEY
       {% endif %}
+      - name: BUILD_PDC_SYNC_ENABLED
+        value: "true"
+      - name: BUILD_PDC_SYNC_LOCK
+        value: "pdc-sync-lock"
+      - name: BUILD_PDC_SYNC_IDENTITY
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
       {% endif %}
       # Basic builder configuration
       - name: BUILD_CONNECTION_TIMEOUT

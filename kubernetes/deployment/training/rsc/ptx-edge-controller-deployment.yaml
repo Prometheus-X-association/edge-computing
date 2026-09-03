@@ -71,7 +71,7 @@ rules:
     resources: [ deployments ]
     verbs: [ create ]
   - apiGroups: [ "" ]
-    resources: [ services ]
+    resources: [ services, configmaps ]
     verbs: [ create ]
   - apiGroups: [ networking.k8s.io ]
     resources: [ ingresses ]

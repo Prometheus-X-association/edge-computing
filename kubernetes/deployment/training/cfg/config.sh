@@ -125,7 +125,7 @@ API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWO
 
 # PDC
 PDC=pdc
-PDC_ENV=production
+PDC_ENV=development
 PDC_PORT=3000
 #PDC_NODE_PORT=30003
 PDC_ID='${PDC_ID}'          # placeholder for keeping PDC's service/ingress name
