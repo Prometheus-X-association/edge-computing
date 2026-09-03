@@ -19,13 +19,13 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    'python-benedict[toml]~=0.37.0',
+    'python-benedict[toml]',
     'requests~=2.34.2',
     'requests-toolbelt~=1.0.0',
     'urllib3',
     'certifi',
     'PyYAML~=6.0.3',
-    'kubernetes~=35.0.0',
+    'kubernetes==36.0.3',
     'pytest~=9.0.3'
 ]
 

@@ -78,4 +78,4 @@ def deep_filter(data: object, keep: typing.Callable = bool) -> object:
 
 
 def str2bool(s: str | bool) -> bool:
-    return str(s).lower() in ('true', 'yes', 'on', '1')
+    return str(s).lower() in ('true', 'yes', 'on', 'y', '1')

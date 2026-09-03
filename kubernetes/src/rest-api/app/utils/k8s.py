@@ -51,9 +51,9 @@ async def invoke_k8s_api(method: K8sAPIMethod,
                          body: dict[str, typing.Any] | None = None,
                          name: str | None = None,
                          label_selector: tuple[str] | None = None) -> tuple[dict[str, typing.Any], int]:
-    async with client.ApiClient() as api:
-        k8s = client.CustomObjectsApi(api_client=api)
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
+    async with client.ApiClient() as api_client:
+        api = client.CustomObjectsApi(api_client=api_client)
+        logger.info(f"Invoke k8s {api.__class__.__name__}...")
         params = dict(group=PEW.group, version=PEW.version, namespace=CONFIG.WORKER_NS, plural=PEW.plural)
         if body:
             params["body"] = body
@@ -64,6 +64,6 @@ async def invoke_k8s_api(method: K8sAPIMethod,
         if method is K8sAPIMethod.CREATE:
             params['field_manager'] = CONFIG.field_manager
         logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, indent=2)}")
-        api_caller = getattr(k8s, f"{method.value}_namespaced_custom_object_with_http_info")
+        api_caller = getattr(api, f"{method.value}_namespaced_custom_object_with_http_info")
         obj, status, _ = await api_caller(**params)
         return obj, status

@@ -8,6 +8,10 @@ prefix = "BUILD_"
 timeout = 30
 retry = 3
 
+[pdc.sync]
+enabled = "yes"
+lock = "pdc-sync-lock"
+
 [data]
 dst = "/var/cache/data/"
 

@@ -6,5 +6,6 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN python3 -m pip install --no-cache-dir -U -r requirements.txt
 COPY ./app ./app
-EXPOSE 8888
+EXPOSE 9999
+RUN echo "python3 -m app -v" > /usr/bin/run-builder && chmod +x /usr/bin/run-builder
 CMD ["python3", "-m", "app"]

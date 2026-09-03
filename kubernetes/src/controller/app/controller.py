@@ -83,17 +83,18 @@ async def _create_worker_configuration(pew: PEW, *, name: str, namespace: str, l
     logger.debug(f"Rendered configuration object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.CoreV1Api()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_config_map_with_http_info)
-        obj, status, _ = await cmd_caller(namespace=namespace,
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+        with client.ApiClient() as api_client:
+            api = client.CoreV1Api(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_config_map_with_http_info)
+            obj, status, _ = await cmd_caller(namespace=namespace,
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
@@ -112,17 +113,18 @@ async def _create_worker_deployment(pew: PEW, *, name: str, namespace: str, logg
     logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.AppsV1Api()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_deployment_with_http_info)
-        obj, status, _ = await cmd_caller(namespace=namespace,
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+        with client.ApiClient() as api_client:
+            api = client.AppsV1Api(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_deployment_with_http_info)
+            obj, status, _ = await cmd_caller(namespace=namespace,
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
@@ -144,17 +146,18 @@ async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger:
     logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.BatchV1Api()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_job_with_http_info)
-        obj, status, _ = await cmd_caller(namespace=namespace,
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+        with client.ApiClient() as api_client:
+            api = client.BatchV1Api(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_job_with_http_info)
+            obj, status, _ = await cmd_caller(namespace=namespace,
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
@@ -176,17 +179,18 @@ async def _create_service(pew: PEW, template: str, *, name: str, namespace: str,
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.CoreV1Api()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_service_with_http_info)
-        obj, status, _ = await cmd_caller(namespace=namespace,
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+        with client.ApiClient() as api_client:
+            api = client.CoreV1Api(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_service_with_http_info)
+            obj, status, _ = await cmd_caller(namespace=namespace,
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
@@ -208,20 +212,21 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.CustomObjectsApi()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_custom_object_with_http_info)
-        obj, status, _ = await cmd_caller(group="traefik.io",
-                                          version="v1alpha1",
-                                          namespace=namespace,
-                                          plural="middlewares",
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.get('kind')}/{obj.get('metadata', {}).get('name')}")
+        with client.ApiClient() as api_client:
+            api = client.CustomObjectsApi(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_custom_object_with_http_info)
+            obj, status, _ = await cmd_caller(group="traefik.io",
+                                              version="v1alpha1",
+                                              namespace=namespace,
+                                              plural="middlewares",
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.get('kind')}/{obj.get('metadata', {}).get('name')}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
@@ -243,17 +248,18 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
-        k8s = client.NetworkingV1Api()
-        logger.info(f"Invoke k8s {k8s.__class__.__name__}...")
-        cmd_caller = asyncify(k8s.create_namespaced_ingress_with_http_info)
-        obj, status, _ = await cmd_caller(namespace=namespace,
-                                          body=body,
-                                          field_manager=memo.CONFIG.controller.manager)
-        status = http.HTTPStatus(status)
-        logger.debug(f"Received response: HTTP/{status} - {status.name}")
-        if not status.is_success:
-            raise kopf.TemporaryError(f"Kube API response: {status}")
-        logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
+        with client.ApiClient() as api_client:
+            api = client.NetworkingV1Api(api_client=api_client)
+            logger.info(f"Invoke k8s {api.__class__.__name__}...")
+            cmd_caller = asyncify(api.create_namespaced_ingress_with_http_info)
+            obj, status, _ = await cmd_caller(namespace=namespace,
+                                              body=body,
+                                              field_manager=memo.CONFIG.controller.manager)
+            status = http.HTTPStatus(status)
+            logger.debug(f"Received response: HTTP/{status} - {status.name}")
+            if not status.is_success:
+                raise kopf.TemporaryError(f"Kube API response: {status}")
+            logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(e.reason) from e

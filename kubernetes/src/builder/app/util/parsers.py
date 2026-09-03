@@ -39,7 +39,7 @@ class DataSourceAuth(object):
                 insecure = False
             cfg = cfg.split(':')
             if len(cfg) == 3:
-                return cls(DataSourceAuthScheme(scheme=cfg[0]), user=cfg[1], secret=cfg[2], insecure=insecure)
+                return cls(scheme=DataSourceAuthScheme(cfg[0]), user=cfg[1], secret=cfg[2], insecure=insecure)
             elif len(cfg) == 2:
                 return cls(user=cfg[0], secret=cfg[1], insecure=insecure)
             else:

@@ -12,21 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import base64
+import functools
 import json
 import logging
 import pathlib
+import threading
+import time
+import typing
+from types import TracebackType
 
 from kubernetes import config, client
 from kubernetes.client import OpenApiException
 from kubernetes.config import ConfigException
 from kubernetes.config.incluster_config import InClusterConfigLoader
+from kubernetes.leaderelection import electionconfig, leaderelection
+from kubernetes.leaderelection.leaderelectionrecord import LeaderElectionRecord
+from kubernetes.leaderelection.resourcelock import configmaplock
 
 from app.util.helper import deep_filter
 
 log = logging.getLogger(__name__)
 
 
-def _load_incluster_projected_config(token: str, cert: str, client_configuration: client.Configuration = None,
+def _load_incluster_projected_config(token: str,
+                                     cert: str,
+                                     client_configuration: client.Configuration | None = None,
                                      try_refresh_token: bool = True) -> InClusterConfigLoader:
     """
 
@@ -108,9 +118,9 @@ def create_image_pull_secret(name: str, user: str, passwd: str, server: str = "h
         log.error(f"Error:\n{e}")
 
 
-def create_service(name: str, port: int, target_port: int, namespace: str = None, selector: dict[str, str] = None,
-                   stype: str = "ClusterIP", app: str = None, projected: bool = True,
-                   timeout: int = None) -> client.V1Service | None:
+def create_service(name: str, port: int, target_port: int, namespace: str | None = None,
+                   selector: dict[str, str] | None = None, stype: str = "ClusterIP", app: str | None = None,
+                   projected: bool = True, timeout: int | None = None) -> client.V1Service | None:
     """
 
     :param name:
@@ -149,14 +159,14 @@ def create_service(name: str, port: int, target_port: int, namespace: str = None
         log.error(f"Error:\n{e}")
 
 
-def create_endpointslice(service_name: str, address: str, target_port: int, namespace: str = None,
-                         app: str = None, projected: bool = True, timeout: int = None) -> client.V1EndpointSlice | None:
+def create_endpointslice(service_name: str, address: str, target_port: int, namespace: str | None = None,
+                         app: str | None = None, projected: bool = True,
+                         timeout: int | None = None) -> client.V1EndpointSlice | None:
     """
 
     :param service_name:
     :param address:
     :param target_port:
-    :param zone:
     :param namespace:
     :param app:
     :param projected:
@@ -176,10 +186,10 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
     endpointslice_body = client.V1EndpointSlice(metadata=client.V1ObjectMeta(name=service_name,
                                                                              labels=labels),
                                                 address_type="IPv4",
-                                                ports=[client.V1ServicePort(name="pdc-port",
-                                                                            app_protocol="http",
-                                                                            protocol="TCP",
-                                                                            port=target_port)],
+                                                ports=[client.DiscoveryV1EndpointPort(name="pdc-port",
+                                                                                      app_protocol="http",
+                                                                                      protocol="TCP",
+                                                                                      port=target_port)],
                                                 endpoints=[client.V1Endpoint(addresses=[address])])
     log.debug(
         f"Created endpointslice body:\n{json.dumps(deep_filter(endpointslice_body.to_dict()), indent=4, default=str)}")
@@ -193,8 +203,166 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
         log.error(f"Error:\n{e}")
 
 
+class K8sLeaderElectorManager(object):
+    """Manager object to govern K8s leader elector and wait for successful synced task execution"""
+    PROJECTED_DIR = "/var/run/secrets/projected/"
+    TOKEN_FILE = PROJECTED_DIR + "token"
+    CERT_FILE = PROJECTED_DIR + "ca.crt"
+    NS_FILE = PROJECTED_DIR + "namespace"
+
+    def __init__(self, lock_name: str, identity: str, namespace: str | None = None,
+                 projected: bool = True, timeout: int | None = None, retry: int = 10):
+        self._timeout = timeout if timeout is not None else 60
+        self.init_client(projected)
+        if not namespace:
+            namespace = pathlib.Path(self.NS_FILE).read_text() if projected else "default"
+        self.elector = leaderelection.LeaderElection(
+            electionconfig.Config(
+                configmaplock.ConfigMapLock(name=lock_name,
+                                            namespace=namespace,
+                                            identity=identity),
+                lease_duration=self._timeout,
+                renew_deadline=self._timeout // 2,
+                retry_period=max(min(self._timeout // 2, retry), 3),
+                onstarted_leading=self._on_start_handler,
+                onstopped_leading=self._on_stopped_handler))
+        self._runner = threading.Thread(target=self._execute_elector,
+                                        name=f"{lock_name}-{identity}",
+                                        daemon=True)
+        self._task: functools.partial | None = None
+        self._executed = threading.Event()
+        self.__leader = False
+        self.__result: typing.Any = None
+
+    @classmethod
+    def init_client(cls, projected: bool, token: str = TOKEN_FILE, cert: str = CERT_FILE):
+        """Load K8s in-cluster config from default or a projected path."""
+        if projected:
+            log.info(f"Loading projected K8s client configuration...")
+            InClusterConfigLoader(token_filename=token,
+                                  cert_filename=cert,
+                                  try_refresh_token=True).load_and_set()
+        else:
+            log.info(f"Loading in-cluster K8s client configuration...")
+            config.load_incluster_config()
+
+    @property
+    def executed(self) -> bool:
+        return self._executed.is_set()
+
+    @property
+    def leader(self) -> bool:
+        return self.__leader
+
+    def with_task(self, task: typing.Callable[[K8sLeaderElectorManager, ...], typing.Any] | None = None,
+                  *args, **kwargs) -> K8sLeaderElectorManager:
+        """Helper function to define task inline with context manager definition."""
+        self._task = functools.partial(task, self, *args, **kwargs) if task else None
+        return self
+
+    def _on_start_handler(self):
+        """Execute task and set waited event."""
+        self.__leader = True
+        if self._task:
+            log.debug(f"Calling task[{self._task.func.__name__}]...")
+            try:
+                self.__result = self._task()
+                log.debug(f"Task[{self._task.func.__name__}] finished!")
+            except Exception as e:
+                log.exception(e)
+        else:
+            log.warning(f"No executable task is defined!")
+        self._executed.set()
+
+    def _on_stopped_handler(self):
+        log.debug(f"Lease time ended!")
+        self.__leader = False
+
+    def _execute_elector(self):
+        """Start executor and wait for exit exception."""
+        log.info("Leader elector started!")
+        try:
+            self.elector.run()
+        except AttributeError as e:
+            # Hackish solution to stop elector loop by raising an exception manually
+            if 'lock' not in e.name:
+                log.exception(e)
+        self.__leader = False
+        log.info(f"Leader elector finished!")
+
+    def start(self, task: typing.Callable | None = None, *args, **kwargs) -> K8sLeaderElectorManager:
+        """Start executor in separate thread."""
+        if not self._runner.is_alive():
+            if not self._task and task:
+                self.with_task(task, *args, **kwargs)
+            self._runner.start()
+        else:
+            log.error(f"Leader elector already started!")
+        return self
+
+    def wait(self) -> typing.Any:
+        """Blocking wait for allocated lock and finished task."""
+        if not self._executed.wait(timeout=self._timeout + 1):
+            log.error(f"Wait timeout[{self._timeout}] reached!")
+        return self.__result if self._executed.is_set() else None
+
+    def release(self, lock) -> bool:
+        """Release lease lock."""
+        if self.__leader:
+            log.warning(f"Elector is still the leader while lock is being released!")
+        stat, record = lock.get(lock.name, lock.namespace)
+        if not stat:
+            log.error(f"Lock[{lock.namespace}] not found!")
+            return False
+        elif record.holder_identity != lock.identity:
+            log.warning(f"Lock[{lock.namespace}] already transitioned!")
+            return True
+        else:
+            return lock.update(lock.name, lock.namespace, LeaderElectionRecord("", 0, 0, 0))
+
+    def stop(self, blocking: bool = True):
+        """Stop executor by force-raising an exception."""
+        log.debug(f"Stopping leader elector...")
+        _lock = self.elector.election_config.lock
+        self.elector.election_config = None  # Cause exception when runner thread tries to access config
+        if blocking:
+            self._runner.join(timeout=self._timeout)
+        self._executed.clear()
+        log.debug(f"Releasing lock[{_lock.name}]...")
+        if self.release(_lock):
+            log.debug("Lock is released!")
+        else:
+            log.error("Lock release failed!")
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type: type[BaseException] | None,
+                 exc_val: BaseException | None,
+                 exc_tb: TracebackType | None):
+        self.stop()
+
+
+def test_threaded_leader_elector():
+    InClusterConfigLoader(token_filename=PROJECTED_TOKEN_FILE,
+                          cert_filename=PROJECTED_CERT_FILE,
+                          try_refresh_token=True).load_and_set()
+    lock = configmaplock.ConfigMapLock("ptx-pdc-lock", "ptx-edge", "xyz")
+    config = electionconfig.Config(lock, lease_duration=17, renew_deadline=15, retry_period=5,
+                                   onstarted_leading=lambda: time.sleep(10), onstopped_leading=None)
+    elector = leaderelection.LeaderElection(config)
+    t = threading.Thread(target=elector.run, daemon=True)
+    t.start()
+    print("leaderelection started...")
+    time.sleep(10)
+    elector.election_config = None
+    print("leaderelection waited...")
+    t.join()
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ###
-    check_kube_api_cfg()
-    check_projected_kube_api_cfg()
+    # check_kube_api_cfg()
+    # check_projected_kube_api_cfg()
+    test_threaded_leader_elector()

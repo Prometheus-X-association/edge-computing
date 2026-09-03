@@ -91,7 +91,9 @@ def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
     :return:
     """
     log.info(f"Acquiring worker resources based on contract[{exchange}]...")
-    data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
+    data = perform_pdc_consumer_exchange(exchange=exchange,
+                                         synced=CONFIG.get("pdc.sync.enabled", True),
+                                         timeout=timeout)
     # {
     #     "type": ...,
     #     "content": {
@@ -156,7 +158,7 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
             try:
                 with open(data_path, 'r') as f:
                     worker_cfg = json.load(f).get('worker')
-            except:
+            except OSError:
                 log.error(f"Failed to load worker configuration from {data_path}!")
                 worker_cfg = None
         elif isinstance(data_path, dict):

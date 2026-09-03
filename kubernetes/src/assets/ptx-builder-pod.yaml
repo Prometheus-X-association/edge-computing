@@ -71,8 +71,17 @@ metadata:
     env: test
 rules:
   - apiGroups: [ "" ]
-    resources: [ "secrets" ]
-    verbs: [ "create" ]
+    resources: [ secrets ]
+    verbs: [ create ]
+  - apiGroups: [ coordination.k8s.io ]
+    resources: [ leases ]
+    verbs: [ get, create, update ]
+  - apiGroups: [ "" ]
+    resources: [ configmaps ]
+    verbs: [ get, create, update ]
+#  - apiGroups: [ "" ]
+#    resources: [ "events" ]
+#    verbs: [ "create", "patch" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -145,13 +154,19 @@ spec:
         #    secretKeyRef:
         #      name: ${PDC}-secrets-env
         #      key: SECRET_KEY
+        - name: BUILD_PDC_SYNC_ENABLED
+          value: "true"
+        - name: BUILD_PDC_SYNC_LOCK
+          value: "pdc-sync-lock"
         #- name: BUILD_CONNECTION_TIMEOUT
         #  value: "${BUILD_TIMEOUT}"
-        - name: BUILD_DATA_SRC
+        - name: BUILD_DATA_METHOD
+          value: "ptx"
+          #- name: BUILD_DATA_SRC
           #value: "file:///etc/hostname"  # collect_data_from_file
           #value: "https://github.com/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"  # collect_data_from_url
           #value: "http://host.k3d.internal:9000/datetime.txt" # collect_data_from_url + auth
-          value: "https://host.k3d.internal:9443/static/dp1/train_data.npz" # collect_data_from_url + https + insecure
+          #value: "https://host.k3d.internal:9443/static/dp1/train_data.npz" # collect_data_from_url + https + insecure
           #value: "https://host.k3d.internal:9443/dataset/dp1/train_data.npz" # collect_data_from_url + https + insecure + auth
           #value: "ptx://66db1a6dc29e3ba863a85e0f"
         #- name: BUILD_DATA_AUTH
@@ -166,6 +181,18 @@ spec:
           value: "true"
         - name: BUILD_DATA_DST
           value: "/var/cache/data/"
+        #- name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
+        #  value: "https://contract.visionstrust.com/contracts/${PTX_CONTRACT_ID}"
+        #- name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
+        #  value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_DATA_OFFER_ID}"
+        #- name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
+        #  value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_ID}"
+        #- name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
+        #  value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
+        #- name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
+        #  value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_ID}"
+        #- name: BUILD_WORKER_METHOD
+        #  value: "SKIP"
         - name: BUILD_WORKER_SRC
           value: "docker://busybox:latest"  # collect_worker_image_from_repo
           #value: "docker://host.k3d.internal:5555/busybox:latest" # collect_worker_image_from_repo + auth

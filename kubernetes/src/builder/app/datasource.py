@@ -108,7 +108,9 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
     :return:
     """
     log.info(f"Acquiring private data based on PTX contract[{exchange}]...")
-    data = perform_pdc_consumer_exchange(exchange=exchange, timeout=timeout)
+    data = perform_pdc_consumer_exchange(exchange=exchange,
+                                         synced=CONFIG.get("pdc.sync.enabled", True),
+                                         timeout=timeout)
     # {
     #     "type": ...,
     #     "content": {
