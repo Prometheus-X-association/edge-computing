@@ -42,12 +42,13 @@ echo "${LOGIN_BODY}" | jq
 RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -79,13 +80,14 @@ echo "${CREDENTIAL_BODY}" | jq
 RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -H "Authorization: Bearer ${TOKEN}" \
                 -d "${CREDENTIAL_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 201 ]; then
     error "Credential request failed!" && exit 1
 else
     CRED_ID=$(jq -r '.content._id' <<<"${RESP}")
@@ -104,12 +106,13 @@ echo -e "\nUsed URL: [GET] ${_URL}"
 
 RESP=$(curl -Ss -X GET \
                 "${_URL}" \
+                -H "Accept: application/json" \
                 -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Credential validation failed!" && exit 1
 else
     echo -e "\nCredential validation was successful!"

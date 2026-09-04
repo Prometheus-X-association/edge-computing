@@ -36,20 +36,23 @@ restart :: | teardown setup
 
 ########################################################################################################################
 
-test-config ::
-	./tests/test_config.sh
+test-config-api ::
+	./tests/test_config_api.sh
+
+test-config-file ::
+	./tests/test_config_file.sh
 
 test-credential ::
 	./tests/test_credential.sh
 
-test-exchange ::
+test-exchange-consumer ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
 	./tests/test_exchange.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
-test-exchange-reversed ::
+test-exchange-provider ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
 	./tests/test_exchange_reversed.sh

@@ -20,7 +20,7 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Configuration"
+LOG "Test Configuration API"
 
 _BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 
@@ -33,21 +33,22 @@ LOGIN_BODY=$(jq -n "$(cat <<EOF
 EOF
 )")
 
-_URL="${_BASE_URL}/login"
-echo "Used URL: [POST] ${_URL}"
-
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
+
+_URL="${_BASE_URL}/login"
+echo -e "\nUsed URL: [POST] ${_URL}"
 
 RESP=$(curl -Ss -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -66,6 +67,7 @@ echo "Used URL: [GET] ${_URL}"
 
 RESP=$(curl -Ss -X GET \
                 "${_URL}" \
+                -H "Accept: application/json" \
                 -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
@@ -83,8 +85,9 @@ log "Adjust PDC configuration..."
 
 CFG_BODY=$(jq -n "$(cat <<EOF
 {
-    "catalogUri": $(jq '.content.catalogUri' <<<"${RESP}"), # remain unchanged
-    "registrationUri": "https://example.com/register/"      # set new url (BUG: PDC requires trailing '/')
+    "endpoint": "https://${NGROK_DOMAIN}/service/pdc/v1/",      # changed (BUG: PDC requires trailing '/')
+    "catalogUri": $(jq '.content.catalogUri' <<<"${RESP}"),     # remain unchanged
+    "registrationUri": "https://example.com/register/"          # set new uri (BUG: PDC requires trailing '/')
 }
 EOF
 )")
@@ -92,11 +95,12 @@ EOF
 echo -e "Prepared config body:"
 echo "${CFG_BODY}" | jq
 
-echo "Used URL: [PUT] ${_URL}"
+echo -e"\nUsed URL: [PUT] ${_URL}"
 
 RESP=$(curl -Ss -X PUT \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -H "Authorization: Bearer ${TOKEN}" \
                 -d "${CFG_BODY}")
 
@@ -107,26 +111,6 @@ if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne
     error "Config update failed!" && exit 1
 else
     echo -e "\nConfig update was successful!"
-fi
-
-########################################################################################################################
-
-log "Reload PDC..."
-
-_URL="${_BASE_URL}/private/configuration/reload"
-echo "Used URL: [POST] ${_URL}"
-
-RESP=$(curl -Ss -X POST \
-                "${_URL}" \
-                -H "Authorization: Bearer ${TOKEN}")
-
-echo -e "\nReceived response:"
-echo "${RESP}" | jq
-
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
-    error "Config reload failed!" && exit 1
-else
-    echo -e "\nConfig reload was successful!"
 fi
 
 ########################################################################################################################

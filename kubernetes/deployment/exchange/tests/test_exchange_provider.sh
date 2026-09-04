@@ -22,13 +22,13 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 LOG "Test Exchange"
 
-_BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
+_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${PDC_SECRET_KEY}",
-    "serviceKey": "${PDC_SERVICE_KEY}"
+    "secretKey": "${DS_PDC_SECRET_KEY}",
+    "serviceKey": "${DS_PDC_SERVICE_KEY}"
 }
 EOF
 )")
@@ -42,12 +42,13 @@ echo "${LOGIN_BODY}" | jq
 RESP=$(curl -Ssf -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     error "Login request failed!" && exit 1
 else
     TOKEN=$(jq -r '.content.token' <<<"${RESP}")
@@ -107,13 +108,14 @@ echo "${EXCHANGE_BODY}" | jq
 RESP=$(curl -s -X POST \
                 "${_URL}" \
                 -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
                 -H "Authorization: Bearer ${TOKEN}" \
                 -d "${EXCHANGE_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
 
-if ! jq -e '.code' <<<"${RESP}" >/dev/null || \
+if ! jq -e '.code' <<<"${RESP}" &>/dev/null || \
         [ "$(jq '.code' <<<"${RESP}")" -ne 200 ] || \
         [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then
     error "Exchange request failed!" && exit 1
