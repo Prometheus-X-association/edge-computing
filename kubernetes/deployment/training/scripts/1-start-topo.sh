@@ -62,12 +62,12 @@ ${KCTL} -n kube-system wait --for="condition=Available" --timeout="${TIMEOUT}s" 
 _TRAEFIK_HTTPS="localhost:${LB_WEBSECURE_PORT}"
 log "Default certificate details on ${_TRAEFIK_HTTPS}"
 #sleep 3
-#_cntr=0
-#until [ -n "$(openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}" </dev/null 2>&1)" ] || [ "${_cntr}" -gt 3 ];
-#do
-#    printf "." && sleep 1 && _cntr=$((_cntr+1))
-#done; echo
-repeat_wait 3 openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}" </dev/null 2>&1
+_cntr=0
+until [ -n "$(openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}" </dev/null 2>&1)" ] || [ "${_cntr}" -gt 3 ];
+do
+    printf "." && sleep 1 && _cntr=$((_cntr+1))
+done; echo
+#repeat_wait 3 openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}" </dev/null 2>&1
 openssl s_client -showcerts -brief -CAfile="${CA_DIR}/ca.crt" -servername "${GW_DOMAIN}" "${_TRAEFIK_HTTPS}" </dev/null
 
 LOG "Load components into registry: ${K3D_REG}"
