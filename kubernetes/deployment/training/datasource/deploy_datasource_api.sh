@@ -138,6 +138,7 @@ docker run -d -p "${DATASOURCE_PORT}:8888" \
         "${SSL_ARG[@]}" # Expand ssl args to uvicorn inside container, otherwise skip parameter entirely
 
 log "Waiting for completed startup..."
+sleep 3
 # Wait for server startup
 (docker logs -f -t "${DATASOURCE_API_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "Application startup complete."
 # shellcheck disable=SC2181
