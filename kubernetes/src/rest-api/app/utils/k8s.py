@@ -44,7 +44,7 @@ class K8sAPIMethod(enum.StrEnum):
 
 K8sLabelCollectionType = typing.Annotated[
     tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+)$")]] | None,
-    Query(example="tier=worker")]
+    Query(examples=["tier=worker"])]
 
 
 async def invoke_k8s_api(method: K8sAPIMethod,

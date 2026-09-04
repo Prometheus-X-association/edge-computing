@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-03T12:35:24'
+  x-creation-date: '2026-09-04T16:48:02'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -130,8 +130,9 @@ paths:
             minItems: 1
             maxItems: 1
           - type: 'null'
+          examples:
+          - tier=worker
           title: Label
-        example: tier=worker
       requestBody:
         required: true
         content:
@@ -228,8 +229,9 @@ paths:
             minItems: 1
             maxItems: 1
           - type: 'null'
+          examples:
+          - tier=worker
           title: Label
-        example: tier=worker
       requestBody:
         required: true
         content:
@@ -287,8 +289,9 @@ paths:
             minItems: 1
             maxItems: 1
           - type: 'null'
+          examples:
+          - tier=worker
           title: Label
-        example: tier=worker
       responses:
         '200':
           description: Successful Response
@@ -334,8 +337,9 @@ paths:
             minItems: 1
             maxItems: 1
           - type: 'null'
+          examples:
+          - tier=worker
           title: Label
-        example: tier=worker
       responses:
         '200':
           description: Successful Response
