@@ -118,7 +118,7 @@ spec:
           value: "registry.k3d.local:5000"
         - name: CFG_SCHEDULER_NAME
           value: "ptx-edge-scheduler"
-        - name: CFG_BUILDER_NAME
+        - name: CFG_BUILDER_PREFIX
           value: "builder"
         - name: CFG_BUILDER_IMAGE
           value: "ptx-edge/builder:1.0"

@@ -22,7 +22,7 @@ from benedict import benedict
 ### Globally available objects
 ENV_PREFIX = "CFG_"
 # Required fields in the configuration
-REQUIRED_FIELDS = ("builder.name", "builder.image")
+REQUIRED_FIELDS = ("builder.prefix", "builder.image")
 
 DEF_CONFIG = {
     "controller": {
