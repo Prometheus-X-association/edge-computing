@@ -37,10 +37,14 @@ def build() -> bool:
     :return:
     """
     log.info("Building worker environment...")
-    _start = time.perf_counter()
-    data_path = get_data_resources()
-    _end = time.perf_counter()
-    log.debug(f"Data collection delta: {datetime.timedelta(seconds=_end - _start)}")
+    try:
+        _start = time.perf_counter()
+        data_path = get_data_resources()
+        _end = time.perf_counter()
+        log.debug(f"Data collection delta: {datetime.timedelta(seconds=_end - _start)}")
+    except Exception as ex:
+        log.error(f"Build failed unexpectedly: {ex}")
+        return False
     if data_path is SKIPPED:
         log.warning("Data collection skipped. Continue builder...")
     elif data_path is None:
@@ -48,10 +52,14 @@ def build() -> bool:
         return False
     else:
         log.info(f"Collected data resources: {data_path}")
-    _start = time.perf_counter()
-    result = get_worker_resources(data_path=data_path)
-    _end = time.perf_counter()
-    log.debug(f"Worker collection delta: {datetime.timedelta(seconds=_end - _start)}")
+    try:
+        _start = time.perf_counter()
+        result = get_worker_resources(data_path=data_path)
+        _end = time.perf_counter()
+        log.debug(f"Worker collection delta: {datetime.timedelta(seconds=_end - _start)}")
+    except Exception as ex:
+        log.error(f"Build failed unexpectedly: {ex}")
+        return False
     if result is SKIPPED:
         log.warning("Worker collection skipped. Continue builder...")
     elif result is None:

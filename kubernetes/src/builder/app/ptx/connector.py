@@ -13,7 +13,6 @@
 # limitations under the License.
 import logging
 import pprint
-import sys
 import typing
 import uuid
 
@@ -35,6 +34,7 @@ EXCHANGE_URL = f"{BASE_ENDPOINT}/consumer/exchange"
 
 
 def check_connector_availability(retry: int = 5, timeout: int | None = None) -> bool:
+    log.info("Checking connector availability...")
     url = HEALTH_URL.format(host=CONFIG['pdc.host'], port=CONFIG['pdc.port'])
     with requests.Session() as session:
         session.mount(url,
@@ -46,7 +46,7 @@ def check_connector_availability(retry: int = 5, timeout: int | None = None) -> 
             if resp.status_code != requests.codes.ok:
                 log.warning(f"Received validation response: HTTP {resp.status_code}")
                 resp.raise_for_status()
-            log.warning(f"Connector validation was successful!")
+            log.info(f"Connector validation was successful!")
     return True
 
 
@@ -204,8 +204,8 @@ def initiate_data_exchange(exchange: str, token: str, timeout: int | None = None
             log.info("Processing connector response...")
             webhook_data = mgr.wait()
     if webhook_data is not None:
-        log.info("Webhook data received successfully!")
-        log.debug(f"Received data size: {sys.getsizeof(webhook_data)}")
+        log.info("Webhook data parsed successfully!")
+        log.debug(f"Received webhook data:\n{pprint.pformat(webhook_data)}")
     return webhook_data
 
 
