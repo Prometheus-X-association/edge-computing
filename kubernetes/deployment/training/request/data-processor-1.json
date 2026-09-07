@@ -49,16 +49,16 @@
         "cpu": 1.0,
         "memory": 3000
       }
-    }
-  },
-  "dataspace": {
-    "privacy": {
-      "required": true,
-      "zones": [
-        {
-          "name": "${PZ_DATA_1}"
-        }
-      ]
+    },
+    "dataspace": {
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${PZ_DATA_1}"
+          }
+        ]
+      }
     }
   }
 }

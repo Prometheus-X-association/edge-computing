@@ -49,30 +49,30 @@
         "cpu": 1.0,
         "memory": 3000
       }
-    }
-  },
-  "dataspace": {
-    "exchange": {
-      "data": {
-        "contract": "${PTX_CONTRACT_ID}",
-        "provider": {
-          "offer": "${PTX_DATA_OFFER_ID}",
-          "resource": "${PTX_DATA_ID}"
-        },
-        "consumer": {
-          "offer": "${PTX_SERVICE_OFFER_ID}",
-          "resource": "${PTX_SERVICE_ID}"
-        }
-      }
     },
-    "privacy": {
-      "required": true,
-      "zones": [
-        {
-          "name": "${PZ_DATA_0}",
-          "preferred": true
+    "dataspace": {
+      "exchange": {
+        "data": {
+          "contract": "${PTX_CONTRACT_ID}",
+          "provider": {
+            "offer": "${PTX_DATA_OFFER_ID}",
+            "resource": "${PTX_DATA_ID}"
+          },
+          "consumer": {
+            "offer": "${PTX_SERVICE_OFFER_ID}",
+            "resource": "${PTX_SERVICE_ID}"
+          }
         }
-      ]
+      },
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${PZ_DATA_0}",
+            "preferred": true
+          }
+        ]
+      }
     }
   }
 }
