@@ -131,7 +131,7 @@ class PEWSpecDataSrc(BaseModel):
         Field(
             examples=["https://my.api.localhost:8080/data/example.csv"],
             min_length=1,
-            pattern="^([^:/]+://)([^:/]+(:[0-9]{1,5})?)?(/.+)$",
+            pattern="^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$",
         ),
     ] = None
     """
@@ -167,7 +167,7 @@ class PEWSpecDataDst(BaseModel):
     Data propagation scheme
     """
     path: Annotated[
-        str | None, Field(min_length=1, pattern="^((/[a-zA-Z0-9-_]+)+)/?$")
+        str | None, Field(min_length=1, pattern="^((/[a-zA-Z0-9-_\\.]+)+)/?$")
     ] = "/var/cache/data"
     """
     Data resource location
@@ -210,7 +210,7 @@ class PEWSpecWorkerSrcAuth(BaseModel):
     server: Annotated[
         str | None,
         Field(
-            min_length=1, pattern="^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$"
+            min_length=1, pattern="^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$"
         ),
     ] = "https://index.docker.io/v1/"
     """
@@ -256,7 +256,7 @@ class PEWSpecWorkerSrc(BaseModel):
         Field(
             examples=["busybox:latest"],
             min_length=1,
-            pattern="^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$",
+            pattern="^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$",
         ),
     ] = None
     """
@@ -284,7 +284,7 @@ class PEWSpecWorkerDst(BaseModel):
         Field(
             examples=["myworker:latest"],
             min_length=1,
-            pattern="^([^:/]+/)?([^:]+):([^:/]+)$",
+            pattern="^([^:/]+/)?([^:/]+):([^:/]+)$",
         ),
     ] = None
     """

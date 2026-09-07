@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.14
 # Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,13 @@
 import argparse
 import json
 import pathlib
-import sys
 import warnings
 from importlib import resources
 
+import sys
 import yaml
 
 OPENAPI_VERSION = "3.0.0"
-CODEGEN_MODEL_DIR = pathlib.Path(str(resources.files("datamodel_code_generator").joinpath("model")))
 BASEMODEL_TEMPLATE_FILE = pathlib.Path("template/pydantic_v2/BaseModel.jinja2")
 CRD_META_EXT_FILE = pathlib.Path("template/pydantic_v2/CrdMetaExtension.jinja2")
 
@@ -38,6 +37,8 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
     basemodel = pathlib.Path(__file__).parent / BASEMODEL_TEMPLATE_FILE
     basemodel.parent.mkdir(parents=True, exist_ok=True)
     if not basemodel.exists():
+        print("Creating model extension...")
+        CODEGEN_MODEL_DIR = pathlib.Path(str(resources.files("datamodel_code_generator").joinpath("model")))
         orig_template = pathlib.Path(CODEGEN_MODEL_DIR / BASEMODEL_TEMPLATE_FILE)
         orig_template.copy(basemodel)
         temp_data = basemodel.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -56,6 +57,7 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
             f.writelines(temp_data)
     scheme_dir.mkdir(parents=True, exist_ok=True)
     crds = list(filter(bool, yaml.safe_load_all(crd_file.resolve(strict=True).read_text())))
+    print("Read crds:", [crd['metadata']['name'] for crd in crds])
     for crd in crds:
         for version in crd['spec']['versions']:
             if served and not version['served']:
@@ -85,6 +87,7 @@ def extract_openapi_scheme_from_crd(crd_file: pathlib.Path, scheme_dir: pathlib.
                 }
             }
             with scheme_dir.joinpath(crd['spec']['names']['singular'] + ".json").open("w") as f:
+                print("Saving extracted crd into", f.name)
                 json.dump(data, f, indent=2, sort_keys=False)
 
 

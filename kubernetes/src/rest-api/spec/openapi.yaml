@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-04T16:48:02'
+  x-creation-date: '2026-09-07T12:36:20'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -471,7 +471,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^((/[a-zA-Z0-9-_]+)+)/?$
+            pattern: ^((/[a-zA-Z0-9-_\.]+)+)/?$
           - type: 'null'
           title: Path
           default: /var/cache/data
@@ -494,7 +494,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+://)([^:/]+(:[0-9]{1,5})?)?(/.+)$
+            pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
           - type: 'null'
           title: Path
           examples:
@@ -525,7 +525,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+://)([^:/]+(:[0-9]{1,5})?)?(/.+)$
+            pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
           - type: 'null'
           title: Path
           examples:
@@ -1052,7 +1052,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+/)?([^:]+):([^:/]+)$
+            pattern: ^([^:/]+/)?([^:/]+):([^:/]+)$
           - type: 'null'
           title: Name
           examples:
@@ -1070,7 +1070,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
+            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$
           - type: 'null'
           title: Image
           examples:
@@ -1094,7 +1094,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+://)?([^:/]+(:[0-9]{1,5})?/)?([^:]+):([^:/]+)$
+            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$
           - type: 'null'
           title: Image
           examples:
@@ -1114,7 +1114,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
+            pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
           - type: 'null'
           title: Server
           default: https://index.docker.io/v1/
@@ -1150,7 +1150,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([^:/]+)(://)([^:/]+(:[0-9]{1,5})?)((/[^/]+)*)/$
+            pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
           - type: 'null'
           title: Server
           default: https://index.docker.io/v1/

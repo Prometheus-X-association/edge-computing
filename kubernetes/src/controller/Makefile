@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+export PROJECT_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 NAME := controller
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
@@ -30,7 +32,7 @@ clean ::
 ########################################################################################################################
 
 extract ::
-	. .venv/bin/activate && \
+	. ${PROJECT_ROOT}/.venv/bin/activate && \
 	for crd in crd/ptx-edge-*.yaml; do \
     	python3 convert/extractor.py "$${crd}" "./convert/schema/" --served; \
 	done
