@@ -303,10 +303,10 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
             memo.handlers['builder'] = functools.partial(_create_builder_service,
                                                          pew=memo.model)
         if memo.model.spec.service and memo.model.spec.service.interfaces:
+            memo.handlers['service'] = functools.partial(_create_worker_service,
+                                                         pew=memo.model)
             if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
                 public_port: PEWSpecServiceInterface
-                memo.handlers['service'] = functools.partial(_create_worker_service,
-                                                             pew=memo.model)
                 if public_port.stripped:
                     memo.handlers['middleware'] = functools.partial(_create_middleware,
                                                                     pew=memo.model)
