@@ -17,7 +17,7 @@ NAME := controller
 VERSION := 1.0
 IMG := ptx-edge/${NAME}:${VERSION}
 
-build :: convert
+build ::
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}
 

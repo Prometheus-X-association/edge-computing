@@ -18,33 +18,39 @@ TEMPLATE_DIR=$(readlink -f "$(dirname "$0")")
 #PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 PY_VER='3.14'
 
-datamodel-codegen --input="${1}" --output "${2}" \
-                --input-file-type="openapi" \
-                --openapi-scopes="schemas" \
-                --schema-version="3.0" \
-                --schema-version-mode="strict" \
-                --formatter="ruff-format" \
-                --use-generic-base-class \
-                --use-annotated \
-                --use-union-operator \
-                --use-specialized-enum \
-                --use-standard-collections \
-                --use-schema-description \
-                --use-field-description \
-                --use-field-description-example \
-                --use-double-quotes \
-                --field-constraints \
-                --reuse-model \
-                --extra-fields="ignore" \
-                --field-type-collision-strategy="rename-type" \
-                --naming-strategy="full-path" \
-                --enum-field-as-literal="none" \
-                --set-default-enum-member \
-                --capitalize-enum-members \
-                --target-python-version="${PY_VER}" \
-                --custom-template-dir="${TEMPLATE_DIR}/template" \
-                --additional-imports="typing.ClassVar,typing.Any,pydantic.field_serializer" \
-                --enable-version-header \
-                --enable-generated-header-marker \
-                --disable-timestamp \
-                --disable-warnings
+if command -v datamodel-codegen; then
+    GEN_CMD="datamodel-codegen"
+else
+    GEN_CMD="docker run --rm -ti koxudaxi/datamodel-code-generator"
+fi
+
+${GEN_CMD} --input="${1}" --output "${2}" \
+            --input-file-type="openapi" \
+            --openapi-scopes="schemas" \
+            --schema-version="3.0" \
+            --schema-version-mode="strict" \
+            --formatter="ruff-format" \
+            --use-generic-base-class \
+            --use-annotated \
+            --use-union-operator \
+            --use-specialized-enum \
+            --use-standard-collections \
+            --use-schema-description \
+            --use-field-description \
+            --use-field-description-example \
+            --use-double-quotes \
+            --field-constraints \
+            --reuse-model \
+            --extra-fields="ignore" \
+            --field-type-collision-strategy="rename-type" \
+            --naming-strategy="full-path" \
+            --enum-field-as-literal="none" \
+            --set-default-enum-member \
+            --capitalize-enum-members \
+            --target-python-version="${PY_VER}" \
+            --custom-template-dir="${TEMPLATE_DIR}/template" \
+            --additional-imports="typing.ClassVar,typing.Any,pydantic.field_serializer" \
+            --enable-version-header \
+            --enable-generated-header-marker \
+            --disable-timestamp \
+            --disable-warnings
