@@ -100,7 +100,7 @@ async def _create_pew_worker(pew: PEW,
     """Create PTX Edge Computing worker"""
     logger.info(f"Received {PEW.__name__} create request with name: {name}")
     logger.debug("=" * 100)
-    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2)}")
+    logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2, exclude_none=True)}")
     logger.debug("Creating manifest body...")
     manifest: dict[str, typing.Any] = {
         'apiVersion': f"{PEW.group}/{PEW.version}",

@@ -81,6 +81,7 @@ spec:
               containerPort: 5000
             - name: port-api
               containerPort: 8000
+      restartPolicy: Never
       schedulerName: ${PTX}-${SCHEDULER}
       affinity:
         nodeAffinity:

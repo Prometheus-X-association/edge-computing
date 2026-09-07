@@ -205,6 +205,7 @@ containers:
         protocol: TCP
     {% endfor %}
     {% endif %}
+restartPolicy: Never
 {% if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required %}
 {% if spec.dataspace.privacy.scheduler | upper != "DEFAULT" %}
 schedulerName: {{ cfg.scheduler.name if cfg.scheduler and cfg.scheduler.name else "ptx-edge-scheduler" }}
