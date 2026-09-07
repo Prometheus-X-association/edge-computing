@@ -25,7 +25,7 @@
       },
       "dst": {
         "method": "LOCAL",
-        "path": "/var/cache/data/"
+        "path": "/data/"
       }
     },
     "worker": {

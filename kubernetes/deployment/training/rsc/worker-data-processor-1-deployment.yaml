@@ -56,7 +56,7 @@ spec:
             - name: BUILD_DATA_AUTH_INSECURE
               value: "${DS_API_INSECURE}"
             - name: BUILD_DATA_DST
-              value: "/var/cache/data/"
+              value: "/data/"
             - name: BUILD_WORKER_METHOD
               value: "SKIP"
             - name: BUILD_WORKER_SRC

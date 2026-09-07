@@ -24,7 +24,7 @@ spec:
       size: 100
     dst:
       method: LOCAL
-      path: "/var/cache/data/"
+      path: "/data/"
   worker:
     src:
       method: SKIP
