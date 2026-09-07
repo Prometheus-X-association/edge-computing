@@ -21,6 +21,7 @@ PEW_MODEL := $(realpath ${PROJECT_ROOT}/../controller/app/model/ptxedgeworker.py
 
 # Docker commands
 build:
+	${MAKE} -c "${PROJECT_ROOT}/src/controller" convert
 	cp ${PEW_MODEL} ./app/model/
 	docker build -t ${IMG} .
 	docker images --no-trunc ${IMG}

@@ -23,8 +23,9 @@ LOG "Building docker images..."
 log "Remove cached cert files..."
 rm -rfv "${SCRIPT_DIR}/creds/cert"
 
-log "Build PTX-edge components..."
+log "Build PTX-edge components"
 for comp in "${COMPONENTS[@]}"; do
+    log "Building ${comp}..."
     make -C "${ROOT_DIR}/src/${comp}" build
 done
 
