@@ -15,16 +15,15 @@ import enum
 import os
 import pathlib
 import secrets
-import sys
 import typing
 import warnings
 
+import sys
 from fastapi import FastAPI, HTTPException, status, Depends, APIRouter, Path, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.staticfiles import StaticFiles
 
 __version__ = '1.0.0'
 
@@ -35,7 +34,7 @@ if not (GW_DOMAIN := os.getenv("GW_DOMAIN", "")):
     warnings.warn("GW_DOMAIN environment variable is not set!")
     sys.exit(-1)
 
-# noinspection PyTypeChecker
+# noinspection PyTypeChecker,PydanticTypeChecker
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=list({"localhost", "*.localhost",
                                                               "host.k3d.internal",
                                                               GW_DOMAIN, f"*.{GW_DOMAIN}"}))

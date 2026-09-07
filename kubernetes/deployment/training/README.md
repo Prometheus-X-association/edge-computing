@@ -5,8 +5,8 @@ with the capabilities of communicating with the [PTX dataspace](https://visionst
 
 The figure below depicts the schematic architecture of the created infrastructure.
 
-Each physical node is configured as a separate docker image playing the role of a cluster node.
-The Edge computing building block (ptx-edge) is represented with standalone components distributed in these nodes.
+Each physical node is configured as a separate docker image playing the role of a cluster node. The Edge computing
+building block (ptx-edge) is represented with standalone components distributed in these nodes.
 
 - _k3d-training-server-0_: main control plane node running ptx-edge management components.
 - _k3d-node-*_: worker nodes belonging to different privacy zones (data-0/1, and federated).
@@ -17,8 +17,8 @@ The currently supported training setup si the following:
 
 ## Dependencies
 
-The setup script ([install_deps.sh](scripts/install_deps.sh)) installs required system packages and dependencies
-for the following tools:
+The setup script ([install_deps.sh](scripts/install_deps.sh)) installs required system packages and dependencies for the
+following tools:
 
 - `docker`: container manager
 - `k3d`: managing local clusters with docker-in-docker based on the Kubernetes variant k3s
@@ -44,8 +44,8 @@ $ ./install_deps.sh -u
 
 For detailed configuration options, see `./install_deps.sh -h`
 
-It is important to note that, as the warning log indicates at the end of the installation script,
-the current shell session **must be reloaded** for the added docker group privilege to take effect!
+It is important to note that, as the warning log indicates at the end of the installation script, the current shell
+session **must be reloaded** for the added docker group privilege to take effect!
 
 For this reason, the user should run the `$ newgrp docker` command after successful installation!
 
@@ -104,8 +104,8 @@ $ make local-setup  # Invoke 0-build -> 1-init -> 2-viewer -> 3-edge -> datasour
 This target initiates the local datasource API and use global envvars: `LOCAL_SETUP` and `USE_SANDBOX`
 to configure local deployment in a VM with sandboxed PTX core components.
 
-These global variables can/should be overwritten in scripts in `./creds` to enforce
-local setup for numbered subscripts used by make.
+These global variables can/should be overwritten in scripts in `./creds` to enforce local setup for numbered subscripts
+used by make.
 
 ## Further useful targets:
 
