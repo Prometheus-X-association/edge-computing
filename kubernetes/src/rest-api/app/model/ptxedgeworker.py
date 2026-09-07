@@ -256,7 +256,7 @@ class PEWSpecWorkerSrc(BaseModel):
         Field(
             examples=["busybox:latest"],
             min_length=1,
-            pattern="^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$",
+            pattern="^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*:([^:/]+)$",
         ),
     ] = None
     """
@@ -577,7 +577,7 @@ class PEWSpecDataspacePrivacyZone(BaseModel):
     Privacy zone
     """
 
-    name: Annotated[str, Field(examples=["zone-1"], min_length=1)]
+    name: Annotated[str, Field(examples=["zone-1"], min_length=1, pattern="^[^:/]+$")]
     """
     Unique zone name
 

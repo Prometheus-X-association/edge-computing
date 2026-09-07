@@ -259,7 +259,7 @@
                         "type": "string",
                         "description": "Image resource location",
                         "minLength": 1,
-                        "pattern": "^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$",
+                        "pattern": "^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*:([^:/]+)$",
                         "example": "busybox:latest"
                       },
                       "auth": {
@@ -611,7 +611,7 @@
                               "type": "string",
                               "description": "Unique zone name",
                               "minLength": 1,
-                              "patters": "^[^:/]+$",
+                              "pattern": "^[^:/]+$",
                               "example": "zone-1"
                             },
                             "preferred": {

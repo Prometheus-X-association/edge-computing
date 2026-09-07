@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-07T14:25:17'
+  x-creation-date: '2026-09-07T14:43:59'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -819,6 +819,7 @@ components:
         name:
           type: string
           minLength: 1
+          pattern: ^[^:/]+$
           title: Name
           examples:
           - zone-1
@@ -1070,7 +1071,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$
+            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*:([^:/]+)$
           - type: 'null'
           title: Image
           examples:
@@ -1094,7 +1095,7 @@ components:
           anyOf:
           - type: string
             minLength: 1
-            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)+:([^:/]+)$
+            pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*:([^:/]+)$
           - type: 'null'
           title: Image
           examples:
