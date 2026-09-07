@@ -22,6 +22,8 @@ spec:
         env: ${ENV}
         tier: worker
     spec:
+      serviceAccountName: ${BUILDER}
+      schedulerName: ${PTX}-${SCHEDULER}
       initContainers:
         - name: ${BUILDER}
           image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
@@ -33,6 +35,9 @@ spec:
               readOnly: false
             - name: registry-ca
               mountPath: /usr/share/ca-certificates/ptx-edge
+              readOnly: true
+            - name: kube-api-client-cfg
+              mountPath: /var/run/secrets/projected
               readOnly: true
           env:
             - name: BUILD_CONNECTION_TIMEOUT
@@ -81,8 +86,6 @@ spec:
               containerPort: 5000
             - name: port-api
               containerPort: 8000
-      restartPolicy: Never
-      schedulerName: ${PTX}-${SCHEDULER}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -102,6 +105,24 @@ spec:
             items:
               - key: ca.crt
                 path: registry_CA.crt
+        - name: kube-api-client-cfg
+          projected:
+            defaultMode: 420
+            sources:
+              - serviceAccountToken:
+                  expirationSeconds: 3600
+                  path: token
+              - configMap:
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                  name: kube-root-ca.crt
+              - downwardAPI:
+                  items:
+                    - fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+                      path: namespace
 ---
 apiVersion: v1
 kind: Service

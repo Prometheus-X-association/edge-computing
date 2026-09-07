@@ -117,6 +117,13 @@ ${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
 
 ########################################################################################################################
 
+log "Deploy Builder"
+${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-builder-serviceaccount.yaml")
+echo
+${KCTL} get serviceaccount,roles,rolebindings -l "app.kubernetes.io/name=${BUILDER}"
+
+########################################################################################################################
+
 log "Deploy REST-API"
 ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-restapi-deployment.yaml" )
 ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"

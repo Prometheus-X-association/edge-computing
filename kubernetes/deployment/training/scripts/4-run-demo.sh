@@ -36,7 +36,8 @@ log "Initiate Data Processing Function 0..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
 #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
 DP0_REQ_BODY=$(envsubst <"request/${DP0}.json")
-echo "Parsed body:" && echo "${DP0_REQ_BODY}" | jq -r .
+echo "Prepared body:" && echo "${DP0_REQ_BODY}" | jq -r .
+echo -e "\nReceived response:"
 curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H "Content-Type: application/json" \
@@ -47,6 +48,7 @@ repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "pt
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP0}"
+sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" \
@@ -63,7 +65,8 @@ log "Initiate Data Processing Function 1..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
 #${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
 DP1_REQ_BODY=$(envsubst <"request/${DP1}.json")
-echo "Parsed body:" && echo "${DP1_REQ_BODY}" | jq -r .
+echo "Prepared body:" && echo "${DP1_REQ_BODY}" | jq -r .
+echo -e "\nReceived response:"
 curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H "Content-Type: application/json" \
@@ -74,6 +77,7 @@ repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "pt
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP1}"
+sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" \
@@ -90,7 +94,8 @@ log "Initiate Aggregator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
 #${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
 AGG_REQ_BODY=$(envsubst <"request/${AGG}.json")
-echo "Parsed body:" && echo "${AGG_REQ_BODY}" | jq -r .
+echo "Prepared body:" && echo "${AGG_REQ_BODY}" | jq -r .
+echo -e "\nReceived response:"
 curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H "Content-Type: application/json" \
@@ -101,6 +106,7 @@ repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "pt
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${AGG}"
+sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${AGG}" \
@@ -113,7 +119,7 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
 
 log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
-sleep 10
+sleep 5
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
 _AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
 log ">>> Aggregator is available on ${_AGG_URL}"
@@ -130,7 +136,8 @@ log "Initiate Orchestrator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
 #${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
 ORCH_REQ_BODY=$(envsubst <"request/${ORCH}.json")
-echo "Parsed body:" && echo "${ORCH_REQ_BODY}" | jq -r .
+echo "Prepared body:" && echo "${ORCH_REQ_BODY}" | jq -r .
+echo -e "\nReceived response:"
 curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H "Content-Type: application/json" \
@@ -141,6 +148,7 @@ repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "pt
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${ORCH}"
+sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${ORCH}" \
@@ -153,7 +161,7 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"
 
 log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${ORCH}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
-sleep 10
+sleep 5
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${ORCH}"
 _ORCH_URL="https://${CLUSTER_HOST}/worker/${ORCH}/docs"
 log ">>> Orchestrator is available on ${_ORCH_URL}"

@@ -31,6 +31,7 @@ CONFIG = {
         'name': 'ptx-edge-scheduler'
     },
     'builder': {
+        "account": "builder",
         'prefix': 'builder',
         'image': 'ptx-edge/builder:1.0',
         'port': 9999

@@ -22,6 +22,8 @@ spec:
         env: ${ENV}
         tier: worker
     spec:
+      serviceAccountName: ${BUILDER}
+      schedulerName: ${PTX}-${SCHEDULER}
       initContainers:
         - name: ${BUILDER}
           image: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
@@ -72,8 +74,6 @@ spec:
           ports:
             - name: port-api
               containerPort: 8000
-      restartPolicy: Never
-      schedulerName: ${PTX}-${SCHEDULER}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

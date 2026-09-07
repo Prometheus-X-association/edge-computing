@@ -19,6 +19,7 @@ spec:
       labels:
         ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
     spec:
+      restartPolicy: Always
       {% filter indent(width=6, first=true) %}
         {% include "worker_containers.yaml.jinja2" %}
       {% endfilter %}

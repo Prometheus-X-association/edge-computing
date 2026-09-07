@@ -138,6 +138,8 @@ spec:
               value: "${REGISTRY}:${REGISTRY_PORT}"
             - name: CFG_SCHEDULER_NAME
               value: "${PTX}-${SCHEDULER}"
+            - name: CFG_BUILDER_ACCOUNT
+              value: "${BUILDER}"
             - name: CFG_BUILDER_PREFIX
               value: "${BUILDER}"
             - name: CFG_BUILDER_IMAGE
