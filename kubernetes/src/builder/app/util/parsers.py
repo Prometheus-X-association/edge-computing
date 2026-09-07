@@ -45,7 +45,7 @@ class DataSourceAuth(object):
             else:
                 raise ValueError(f'Invalid datasource auth cfg: [!][scheme:]<user>:<secret> -- {cfg}')
         elif isinstance(cfg, dict):
-            scheme = DataSourceAuthScheme(cfg.pop('scheme'))
+            scheme = DataSourceAuthScheme(cfg.pop('scheme', "").upper())
             return cls(scheme=scheme, **cfg)
         elif cfg is None:
             return cls()

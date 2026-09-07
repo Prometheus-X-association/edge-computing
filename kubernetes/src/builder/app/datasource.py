@@ -139,7 +139,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
                 tmp.flush()
                 dst_path = collect_data_from_filesystem(src=tmp.name, dst=dst)
         case 'URL' | 'REST':
-            url, auth = data_content.get('url'), DataSourceAuth.parse(data_content.get('auth', "").upper())
+            url, auth = data_content.get('url'), DataSourceAuth.parse(data_content.get('auth', ""))
             dst_path = collect_data_from_url(url=url, dst=dst, auth=auth, retry=retry, timeout=timeout)
         case 'DOCKER':
             raise NotImplementedError

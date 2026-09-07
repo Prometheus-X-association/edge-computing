@@ -43,7 +43,7 @@ def build() -> bool:
         _end = time.perf_counter()
         log.debug(f"Data collection delta: {datetime.timedelta(seconds=_end - _start)}")
     except Exception as ex:
-        log.error(f"Build failed unexpectedly: {ex}")
+        log.exception(f"Build failed unexpectedly: {ex}")
         return False
     if data_path is SKIPPED:
         log.warning("Data collection skipped. Continue builder...")
@@ -58,7 +58,7 @@ def build() -> bool:
         _end = time.perf_counter()
         log.debug(f"Worker collection delta: {datetime.timedelta(seconds=_end - _start)}")
     except Exception as ex:
-        log.error(f"Build failed unexpectedly: {ex}")
+        log.exception(f"Build failed unexpectedly: {ex}")
         return False
     if result is SKIPPED:
         log.warning("Worker collection skipped. Continue builder...")
