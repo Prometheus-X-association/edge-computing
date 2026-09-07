@@ -25,7 +25,7 @@ dependencies = [
     'urllib3',
     'certifi',
     'PyYAML~=6.0.3',
-    'kubernetes==37.0.0a1',
+    'kubernetes~=36.0.0',
     'pytest~=9.0.3'
 ]
 
