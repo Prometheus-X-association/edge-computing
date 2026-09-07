@@ -16,8 +16,8 @@ import pprint
 import typing
 
 import fastapi
-import kubernetes
 import urllib3
+from kubernetes.aio import client
 
 from app import __version__
 from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
@@ -138,7 +138,7 @@ async def _create_pew_worker(pew: PEW,
                     "group": grp,
                     "version": ver
                 }}
-    except kubernetes.client.ApiException as e:
+    except client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -165,7 +165,7 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj
-    except kubernetes.client.ApiException as e:
+    except client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -223,7 +223,7 @@ async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern
                     "group": obj['details']['group'],
                     "kind": obj['details']['kind']
                 }}
-    except kubernetes.client.ApiException as e:
+    except client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -256,7 +256,7 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
-    except kubernetes.client.ApiException as e:
+    except client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)
@@ -287,7 +287,7 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
-    except kubernetes.client.ApiException as e:
+    except client.ApiException as e:
         raise_for_failed_k8s_request(e)
     except urllib3.exceptions.MaxRetryError as e:
         raise_for_network_error(e)

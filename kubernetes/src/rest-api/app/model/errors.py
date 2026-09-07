@@ -16,8 +16,8 @@ import json
 import typing
 
 import fastapi
-import kubernetes
 import urllib3
+from kubernetes.aio import client
 from pydantic import BaseModel, Field
 
 from app.model.responses import PTXEdgeWorkerResponseStatus
@@ -50,7 +50,7 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
                                             }})
 
 
-def raise_for_failed_k8s_request(ex: kubernetes.client.ApiException) -> None:
+def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
     logger.error(convert_k8s_api_error(ex))
     error = json.loads(str(ex.body))
     code = error.get('code')
@@ -81,7 +81,7 @@ def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
                                         }})
 
 
-def convert_k8s_api_error(e: kubernetes.client.ApiException) -> str:
+def convert_k8s_api_error(e: client.ApiException) -> str:
     return '\n'.join((f"Error received with status: {e.status} and reason: {e.reason}",
                       "HTTP response body:",
                       json.dumps(json.loads(str(e.body)) if e.body else '{}', indent=2)))
