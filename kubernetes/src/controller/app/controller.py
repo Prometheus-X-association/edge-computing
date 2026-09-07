@@ -165,8 +165,8 @@ async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger:
     logger.debug("-" * 100)
 
 
-async def _create_service(pew: PEW, template: str, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
-                          **_: Any):
+async def __create_service(pew: PEW, template: str, *, name: str, namespace: str, forced_name: bool = True,
+                           logger: kopf.Logger, memo: kopf.Memo):
     logger.debug("-" * 100)
     logger.info(f"Rendering service manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name=template)
@@ -175,7 +175,7 @@ async def _create_service(pew: PEW, template: str, *, name: str, namespace: str,
                                                 spec=pew.spec,
                                                 cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
-    kopf.adopt(body, strict=True, forced=True)
+    kopf.adopt(body, strict=True, forced=forced_name)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
@@ -198,6 +198,18 @@ async def _create_service(pew: PEW, template: str, *, name: str, namespace: str,
     logger.debug("-" * 100)
 
 
+async def _create_builder_service(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
+                                  **_: Any):
+    await __create_service(pew, "builder_service.yaml.jinja2", forced_name=False,
+                           name=name, namespace=namespace, logger=logger, memo=memo)
+
+
+async def _create_worker_service(pew: PEW, *, name: str, namespace: str,
+                                 logger: kopf.Logger, memo: kopf.Memo, **_: Any):
+    await __create_service(pew, "worker_service.yaml.jinja2", forced_name=True,
+                           name=name, namespace=namespace, logger=logger, memo=memo)
+
+
 async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
                              **_: Any):
     logger.debug("-" * 100)
@@ -208,7 +220,7 @@ async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kop
                                                 spec=pew.spec,
                                                 cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
-    kopf.adopt(body, strict=False, forced=False)
+    kopf.adopt(body, strict=True, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
@@ -244,7 +256,7 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
                                                 spec=pew.spec,
                                                 cfg=memo.CONFIG)
     body: dict = await asyncify(yaml.safe_load)(stream=manifest)
-    kopf.adopt(body, strict=False, forced=False)
+    kopf.adopt(body, strict=True, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
     try:
@@ -287,27 +299,25 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
         if memo.model.spec.worker.config and memo.model.spec.worker.config.file:
             memo.handlers['config'] = functools.partial(_create_worker_configuration,
                                                         pew=memo.model)
+        if 'PTX' in (memo.model.spec.data.src.method, memo.model.spec.worker.src.method):
+            memo.handlers['builder'] = functools.partial(_create_builder_service,
+                                                         pew=memo.model)
+        if memo.model.spec.service and memo.model.spec.service.interfaces:
+            if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
+                public_port: PEWSpecServiceInterface
+                memo.handlers['service'] = functools.partial(_create_worker_service,
+                                                             pew=memo.model)
+                if public_port.stripped:
+                    memo.handlers['middleware'] = functools.partial(_create_middleware,
+                                                                    pew=memo.model)
+                memo.handlers['ingress'] = functools.partial(_create_ingress,
+                                                             pew=memo.model)
         if memo.model.spec.service and memo.model.spec.service.enabled:
             memo.handlers['deployment'] = functools.partial(_create_worker_deployment,
                                                             pew=memo.model)
         else:
             memo.handlers['job'] = functools.partial(_create_job_deployment,
                                                      pew=memo.model)
-        if 'PTX' in (memo.model.spec.data.src.method, memo.model.spec.worker.src.method):
-            memo.handlers['builder'] = functools.partial(_create_service,
-                                                         pew=memo.model,
-                                                         template="builder_service.yaml.jinja2")
-        if memo.model.spec.service and memo.model.spec.service.interfaces:
-            if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
-                public_port: PEWSpecServiceInterface
-                memo.handlers['service'] = functools.partial(_create_service,
-                                                             pew=memo.model,
-                                                             template="worker_service.yaml.jinja2")
-                if public_port.stripped:
-                    memo.handlers['middleware'] = functools.partial(_create_middleware,
-                                                                    pew=memo.model)
-                memo.handlers['ingress'] = functools.partial(_create_ingress,
-                                                             pew=memo.model)
         logger.debug(f"Registered sub-handlers: {[k for k in memo.handlers.keys()]}")
     else:
         logger.debug(f"Processing cached sub-handlers: {[k for k in memo.handlers.keys()]}")

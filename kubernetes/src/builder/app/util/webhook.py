@@ -42,7 +42,7 @@ class WebHookServer(http.server.HTTPServer):
         self.webhook_headers: email.message.Message | None = None
         self.__webhook_data: dict | None = None
         self.__received: bool = False
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__.lower())
         self.logger.debug("Webhook server initialized.")
 
     def set_data(self, data: dict):
@@ -51,7 +51,7 @@ class WebHookServer(http.server.HTTPServer):
         self.logger.debug(f"Webhook data received with size: {sys.getsizeof(self.__webhook_data)}.")
 
     def wait_for_hook(self) -> dict | None:
-        self.logger.info("Webhook server listening on http://{0}:{1}{2}...".format(*self.server_address, self.webhook))
+        self.logger.info("Webhook server listening on http://{0}:{1}{2}".format(*self.server_address, self.webhook))
         # self.serve_forever()
         while True:
             try:

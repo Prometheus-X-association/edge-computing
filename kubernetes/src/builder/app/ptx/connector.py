@@ -150,7 +150,7 @@ def reload_connector(token: str, timeout: int | None = None) -> bool:
     if resp.status_code != requests.codes.OK:
         log.error(f"Failed to reload PDC: {resp.status_code}")
         resp.raise_for_status()
-    log.info("Login to PDC was successful!")
+    log.info("PDC was reloaded!")
     log.debug(f"Response body:\n{pprint.pformat(resp.json())}")
     return True
 
@@ -221,7 +221,6 @@ def perform_configured_exchange(exchange: str, timeout: int | None = None) -> di
         tokens = login_to_connector(timeout=timeout)
         bearer = tokens['token']
         log.debug(f"Assigned token: {bearer}")
-        log.info(f"Login to connector was successful!")
         #
         # success = update_connector_endpoint(endpoint=BASE_ENDPOINT.format(host=CONFIG['pdc.host'],
         #                                                                   port=CONFIG['pdc.port']),
