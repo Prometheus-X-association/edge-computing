@@ -198,7 +198,7 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
     else
         #DP0_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp0/train_data.npz"
         DP0_DATA_METHOD="PTX"
-        DP0_DATA_SRC=""
+        DP0_DATA_SRC="ptx://exchange"
 fi
 DP0_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP0_MLFLOW_INT="http://localhost:5000"

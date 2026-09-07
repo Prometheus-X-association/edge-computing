@@ -35,10 +35,11 @@ echo -e "Validation successful!\n"
 log "Initiate Data Processing Function 0..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
 #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
-curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
-                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                -H "Content-Type: application/json" -H 'Accept: application/json' \
-                --data-binary @<(envsubst <"request/${DP0}.json" | jq -c .) | jq
+curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H "Content-Type: application/json" \
+                            -H 'Accept: application/json' \
+                            --data-binary @<(envsubst <"request/${DP0}.json" | jq -c . ) | jq
 
 repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
@@ -59,10 +60,11 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 log "Initiate Data Processing Function 1..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
 #${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
-curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
-                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                -H "Content-Type: application/json" -H 'Accept: application/json' \
-                --data-binary @<(envsubst <"request/${DP1}.json" | jq -c .) | jq
+curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H "Content-Type: application/json" \
+                            -H 'Accept: application/json' \
+                            --data-binary @<(envsubst <"request/${DP1}.json" | jq -c .) | jq
 
 repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
@@ -83,10 +85,11 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 log "Initiate Aggregator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
 #${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
-curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
-                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                -H "Content-Type: application/json" -H 'Accept: application/json' \
-                --data-binary @<(envsubst <"request/${AGG}.json" | jq -c .) | jq
+curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H "Content-Type: application/json" \
+                            -H 'Accept: application/json' \
+                            --data-binary @<(envsubst <"request/${AGG}.json" | jq -c .) | jq
 
 repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
@@ -120,10 +123,11 @@ log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 log "Initiate Orchestrator..."
 #${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
 #${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
-curl -fSsL -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
-                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                -H "Content-Type: application/json" -H 'Accept: application/json' \
-                --data-binary @<(envsubst <"request/${ORCH}.json" | jq -c .) | jq
+curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H "Content-Type: application/json" \
+                            -H 'Accept: application/json' \
+                            --data-binary @<(envsubst <"request/${ORCH}.json" | jq -c .) | jq
 
 repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"

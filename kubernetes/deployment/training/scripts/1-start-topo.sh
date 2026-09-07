@@ -77,7 +77,8 @@ done
 echo
 
 log "Stored images in cluster"
-curl -Sskf --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
+curl -Ss --fail-with-body --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" \
+                                                        -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 
 log "Created cluster nodes"
 ${KCTL} get nodes -L "${LAB_PZ}/${PZ_DATA_0}" -L "${LAB_PZ}/${PZ_DATA_1}" -L "${LAB_PZ}/${PZ_FED}"
