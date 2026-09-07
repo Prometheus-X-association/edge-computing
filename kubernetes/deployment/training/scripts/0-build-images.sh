@@ -23,12 +23,12 @@ LOG "Building docker images..."
 log "Remove cached cert files..."
 rm -rfv "${SCRIPT_DIR}/creds/cert"
 
-log "Build PTX-edge components"
+log "Build PTX-edge components..."
 for comp in "${COMPONENTS[@]}"; do
     make -C "${ROOT_DIR}/src/${comp}" build
 done
 
-log "Cache used registry CA files locally"
+log "Cache used registry CA files locally..."
 mkdir -p "${SCRIPT_DIR}/creds/cert/ca" "${SCRIPT_DIR}/creds/cert/registry"
 cp -vR "${ROOT_DIR}/src/registry/.certs/ca/ca.crt" "${SCRIPT_DIR}/creds/cert/ca/ca.crt"
 cp -vR "${ROOT_DIR}/src/registry/.certs/ca.key" "${SCRIPT_DIR}/creds/cert/ca.key"
@@ -38,6 +38,9 @@ cp -vR "${ROOT_DIR}/src/registry/.certs/auth/server.cert" "${SCRIPT_DIR}/creds/c
 #for img in "${FED_COMPONENTS[@]}"; do
 #    docker pull "${img}"
 #done
+
+log "Update PtxEdgeWorker CRD..."
+cp -vR "${ROOT_DIR}/src/controller/crd/ptx-edge-worker.yaml" "${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml"
 
 ########################################################################################################################
 
