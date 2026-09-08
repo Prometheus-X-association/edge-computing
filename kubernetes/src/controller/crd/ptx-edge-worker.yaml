@@ -454,8 +454,11 @@ spec:
                           x-kubernetes-list-type: map
                           x-kubernetes-list-map-keys: [ name ]
                           x-kubernetes-validations:
-                            - rule: 'size(self.filter(i, i.preferred)) <= 1'
+                            - rule: 'size(self.filter(i, has(i.preferred) && i.preferred)) <= 1'
                               message: 'Only one zone can be preferred!'
+                            - rule: 'self.exists(i, has(i.preferred) && i.preferred == true) 
+                                      || self.all(i, has(i.preferred) && i.preferred == false)'
+                              message: 'Either one zone is preferred or all are set to be false explicitly!'
                           items:
                             type: object
                             description: "Privacy zone"
@@ -471,7 +474,7 @@ spec:
                               preferred:
                                 type: boolean
                                 description: "Prefer zone during scheduling and data transition"
-                                default: false
+                                #default: false
             status:
               type: object
               description: "Runtime information"

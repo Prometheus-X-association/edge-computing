@@ -68,7 +68,8 @@
         "required": true,
         "zones": [
           {
-            "name": "${PZ_DATA_1}"
+            "name": "${PZ_DATA_1}",
+            "preferred": true
           }
         ]
       }

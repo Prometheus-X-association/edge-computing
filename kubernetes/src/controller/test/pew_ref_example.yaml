@@ -17,8 +17,10 @@ spec:
         stripped: false
   data:
     src:
-      method: HTTPS
-      path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+#      method: HTTPS
+#      path: "https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz"
+      method: PTX
+      path: "ptx://exchange"
       size: 75
       auth:
         scheme: BASIC
@@ -86,5 +88,6 @@ spec:
       scheduler: DEFAULT
       zones:
         - name: zone1
+          #preferred: false
         - name: zone2
           preferred: true
