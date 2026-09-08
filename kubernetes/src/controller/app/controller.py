@@ -25,9 +25,9 @@ import yaml
 from asyncer import asyncify
 from kubernetes import client
 
-from config import load_config_from_env, ENV_PREFIX
 from model.ptxedgeworker import PEW, PEWSpecServiceInterface
-from utils import sanitize_model, ExcludeProbesFilter, convert_k8s_api_error
+from utils.config import load_config_from_env, ENV_PREFIX
+from utils.utils import sanitize_model, ExcludeProbesFilter, convert_k8s_api_error
 
 
 ########################################################################################################################
@@ -167,8 +167,6 @@ async def _create_job_deployment(pew: PEW, *, name: str, namespace: str, logger:
 
 async def __create_service(pew: PEW, template: str, *, name: str, namespace: str, forced_name: bool = True,
                            logger: kopf.Logger, memo: kopf.Memo):
-    logger.debug("-" * 100)
-    logger.info(f"Rendering service manifest...")
     template: jinja2.Template = await asyncify(memo.TEMPLATES.get_template)(name=template)
     manifest: str = await template.render_async(name=name,
                                                 namespace=namespace,
@@ -194,20 +192,26 @@ async def __create_service(pew: PEW, template: str, *, name: str, namespace: str
     except client.ApiException as e:
         logger.error(convert_k8s_api_error(e))
         raise kopf.TemporaryError(str(e)) from e
-    ###
-    logger.debug("-" * 100)
 
 
 async def _create_builder_service(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
                                   **_: Any):
+    logger.debug("-" * 100)
+    logger.info(f"Rendering builder webhook manifest...")
     await __create_service(pew, "builder_service.yaml.jinja2", forced_name=False,
                            name=name, namespace=namespace, logger=logger, memo=memo)
+    ###
+    logger.debug("-" * 100)
 
 
 async def _create_worker_service(pew: PEW, *, name: str, namespace: str,
                                  logger: kopf.Logger, memo: kopf.Memo, **_: Any):
+    logger.debug("-" * 100)
+    logger.info(f"Rendering worker service manifest...")
     await __create_service(pew, "worker_service.yaml.jinja2", forced_name=True,
                            name=name, namespace=namespace, logger=logger, memo=memo)
+    ###
+    logger.debug("-" * 100)
 
 
 async def _create_middleware(pew: PEW, *, name: str, namespace: str, logger: kopf.Logger, memo: kopf.Memo,
