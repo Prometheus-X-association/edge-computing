@@ -54,7 +54,8 @@
         "required": true,
         "zones": [
           {
-            "name": "${PZ_FED}"
+            "name": "${PZ_FED}",
+            "preferred": true
           }
         ]
       }

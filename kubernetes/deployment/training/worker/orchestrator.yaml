@@ -33,3 +33,4 @@ spec:
       required: true
       zones:
         - name: "${PZ_FED}"
+          preferred: true
