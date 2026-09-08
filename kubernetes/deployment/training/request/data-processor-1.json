@@ -51,6 +51,19 @@
       }
     },
     "dataspace": {
+      "exchange": {
+        "data": {
+          "contract": "${PTX_CONTRACT_ID}",
+          "provider": {
+            "offer": "${PTX_DATA_OFFER_ID}",
+            "resource": "${PTX_DATA_DP1_ID}"
+          },
+          "consumer": {
+            "offer": "${PTX_SERVICE_OFFER_ID}",
+            "resource": "${PTX_SERVICE_DP1_ID}"
+          }
+        }
+      },
       "privacy": {
         "required": true,
         "zones": [

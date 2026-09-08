@@ -44,9 +44,9 @@ def check_connector_availability(retry: int = 5, timeout: int | None = None) -> 
                       ))
         with session.get(url, timeout=timeout, stream=True) as resp:
             if resp.status_code != requests.codes.ok:
-                log.warning(f"Received validation response: HTTP {resp.status_code}")
+                log.warning(f"Received response: HTTP {resp.status_code}")
                 resp.raise_for_status()
-            log.info(f"Connector validation was successful!")
+            log.info(f"Connector up and running!")
     return True
 
 

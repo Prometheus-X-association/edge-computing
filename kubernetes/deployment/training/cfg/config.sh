@@ -196,6 +196,7 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
         DP0_DATA_METHOD="HTTPS"
         DP0_DATA_SRC="https://host.k3d.internal:4443/dataset/dp0/train_data.npz"
     else
+        #DP0_DATA_METHOD="HTTPS"
         #DP0_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp0/train_data.npz"
         DP0_DATA_METHOD="PTX"
         DP0_DATA_SRC="ptx://exchange"
@@ -207,11 +208,13 @@ DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 DP1="data-processor-1"
 if [ "${LOCAL_SETUP}" = "true" ]; then
         #DP1_DATA_SRC="http://host.k3d.internal:8888/dp1/train_data.npz"
+        DP1_DATA_METHOD="HTTPS"
         DP1_DATA_SRC="https://host.k3d.internal:4443/dataset/dp1/train_data.npz"
-        DP1_DATA_METHOD="HTTPS"
     else
-        DP1_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp1/train_data.npz"
-        DP1_DATA_METHOD="HTTPS"
+        #DP1_DATA_METHOD="HTTPS"
+        #DP1_DATA_SRC="https://cloud-26952.vm.fured.cloud.bme.hu:9443/dataset/dp1/train_data.npz"
+        DP1_DATA_METHOD="PTX"
+        DP1_DATA_SRC="ptx://exchange"
 fi
 DP1_IMG="ghcr.io/alelevente/data_processor:1.0"
 DP1_MLFLOW_INT="http://localhost:5000"

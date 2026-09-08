@@ -17,6 +17,7 @@ import datetime
 import logging
 import os
 import pathlib
+import pprint
 import sys
 import time
 
@@ -51,7 +52,7 @@ def build() -> bool:
         log.error("No data resource is collected. Abort builder...")
         return False
     else:
-        log.info(f"Collected data resources: {data_path}")
+        log.info(f"Collected data resource:\n{pprint.pformat(data_path)}")
     try:
         _start = time.perf_counter()
         result = get_worker_resources(data_path=data_path)

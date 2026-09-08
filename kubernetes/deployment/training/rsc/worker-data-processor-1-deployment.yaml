@@ -40,12 +40,47 @@ spec:
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
+            # PDC configuration
+            - name: BUILD_PDC_HOST
+              value: "${PDC}-${PZ_DATA_1}.${PTX}.svc.cluster.local"
+            - name: BUILD_PDC_PORT
+              value: "${PDC_PORT}"
+            - name: BUILD_PDC_KEY_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: "${PDC_SECRET_NAME}"
+                  key: SERVICE_KEY
+            - name: BUILD_PDC_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "${PDC_SECRET_NAME}"
+                  key: SECRET_KEY
+            - name: BUILD_PDC_SYNC_ENABLED
+              value: "true"
+            - name: BUILD_PDC_SYNC_LOCK
+              value: "pdc-sync-lock"
+            - name: BUILD_PDC_SYNC_IDENTITY
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            # Data configuration
             - name: BUILD_DATA_METHOD
               value: "${DP1_DATA_METHOD}"
             - name: BUILD_DATA_SRC
               value: "${DP1_DATA_SRC}"
+            # PTX configuration
+            - name: BUILD_PTX_DATA_EXCHANGE_CONTRACT
+              value: "https://contract.visionstrust.com/contracts/${PTX_CONTRACT_ID}"
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
+              value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_DATA_OFFER_ID}"
+            - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
+              value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_DP1_ID}"
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
+              value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
+            - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
+              value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_DP1_ID}"
             # Direct datasource configuration
             - name: BUILD_DATA_AUTH_SCHEME
               value: "BASIC"

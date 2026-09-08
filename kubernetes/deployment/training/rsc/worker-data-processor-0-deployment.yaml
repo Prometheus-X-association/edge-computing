@@ -44,6 +44,7 @@ spec:
           #      name: ${PDC_SECRET_NAME}
           #    prefix: BUILD_PDC_
           env:
+            # PDC configuration
             - name: BUILD_PDC_HOST
               value: "${PDC}-${PZ_DATA_0}.${PTX}.svc.cluster.local"
             - name: BUILD_PDC_PORT
@@ -68,6 +69,7 @@ spec:
                   fieldPath: metadata.name
             - name: BUILD_CONNECTION_TIMEOUT
               value: "${BUILD_TIMEOUT}"
+            # Data configuration
             - name: BUILD_DATA_METHOD
               value: "${DP0_DATA_METHOD}"
             - name: BUILD_DATA_SRC
@@ -78,11 +80,11 @@ spec:
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_OFFER
               value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_DATA_OFFER_ID}"
             - name: BUILD_PTX_DATA_EXCHANGE_DATA_RESOURCE
-              value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_ID}"
+              value: "https://api.visionstrust.com/v1/catalog/dataresources/${PTX_DATA_DP0_ID}"
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_OFFER
               value: "https://api.visionstrust.com/v1/catalog/serviceofferings/${PTX_SERVICE_OFFER_ID}"
             - name: BUILD_PTX_DATA_EXCHANGE_SERVICE_RESOURCE
-              value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_ID}"
+              value: "https://api.visionstrust.com/v1/catalog/softwareresources/${PTX_SERVICE_DP0_ID}"
             # Direct datasource configuration
             - name: BUILD_DATA_AUTH_SCHEME
               value: "BASIC"

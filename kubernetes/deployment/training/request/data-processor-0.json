@@ -56,11 +56,11 @@
           "contract": "${PTX_CONTRACT_ID}",
           "provider": {
             "offer": "${PTX_DATA_OFFER_ID}",
-            "resource": "${PTX_DATA_ID}"
+            "resource": "${PTX_DATA_DP0_ID}"
           },
           "consumer": {
             "offer": "${PTX_SERVICE_OFFER_ID}",
-            "resource": "${PTX_SERVICE_ID}"
+            "resource": "${PTX_SERVICE_DP0_ID}"
           }
         }
       },
