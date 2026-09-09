@@ -339,7 +339,7 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
         logger.debug(f"Processing cached sub-handlers: {[k for k in memo.handlers.keys()]}")
     ####
     # noinspection bad-argument-type
-    res = await kopf.execute(fns=memo.handlers)
+    await kopf.execute(fns=memo.handlers)
     ####
     logger.info(f"{PEW.kind}[{name}] initiated successfully")
     kopf.info(body, reason="Initiated", message="Initiated successfully!")
@@ -351,6 +351,7 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
 ########################################################################################################################
 
 
-# @kopf.on.field('apps', 'v1', 'deployments', )
+# @kopf.on.field('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
+#                labels={})
 # async def detect_deployments():
 #     pass

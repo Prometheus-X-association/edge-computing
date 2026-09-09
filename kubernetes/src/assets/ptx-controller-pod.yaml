@@ -121,7 +121,7 @@ spec:
         - name: CFG_BUILDER_ACCOUNT
           value: "builder"
         - name: CFG_BUILDER_PREFIX
-          value: "builder"
+          value: "builder-"
         - name: CFG_BUILDER_IMAGE
           value: "ptx-edge/builder:1.0"
         - name: CFG_BUILDER_PORT

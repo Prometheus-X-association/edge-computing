@@ -141,7 +141,7 @@ spec:
             - name: CFG_BUILDER_ACCOUNT
               value: "${BUILDER}"
             - name: CFG_BUILDER_PREFIX
-              value: "${BUILDER}"
+              value: "${BUILDER}-"
             - name: CFG_BUILDER_IMAGE
               value: "${BUILD_IMG}"
             - name: CFG_BUILDER_PORT

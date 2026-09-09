@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
+        app.kubernetes.io/name: {{ name }}
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/part-of: {{ name }}
+        app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
     spec:
       restartPolicy: Always
       {% filter indent(width=6, first=true) %}
