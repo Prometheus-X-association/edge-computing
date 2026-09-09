@@ -81,7 +81,7 @@ def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
                                         }})
 
 
-def convert_k8s_api_error(e: client.ApiException) -> str:
-    return '\n'.join((f"Error received with status: {e.status} and reason: {e.reason}",
+def convert_k8s_api_error(ex: client.ApiException) -> str:
+    return '\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
                       "HTTP response body:",
-                      json.dumps(json.loads(str(e.body)) if e.body else '{}', indent=2)))
+                      json.dumps(json.loads(str(ex.body)) if ex.body else '{}', indent=2)))

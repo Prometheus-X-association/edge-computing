@@ -480,14 +480,15 @@ spec:
               description: "Runtime information"
               x-kubernetes-preserve-unknown-fields: true
               properties:
-                state:
+                worker:
                   type: string
-                  description: "Task state from [created | running | finished]"
+                  description: "Overall worker state"
+                  enum: [ Created, Failed, Initiated, Running, Error, Completed ]
       subresources:
         status: { }
       selectableFields:
         - jsonPath: .spec.service.enabled
-        - jsonPath: .status.state
+        - jsonPath: .status.worker
       additionalPrinterColumns:
         - name: Datasource
           type: string
@@ -516,8 +517,8 @@ spec:
           priority: 0
         - name: State
           type: string
-          description: "Controller state"
-          jsonPath: .status.worker.state
+          description: "Worker state"
+          jsonPath: .status.worker
           priority: 1
         - name: Age
           type: date

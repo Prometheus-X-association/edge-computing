@@ -596,12 +596,12 @@
                         ],
                         "x-kubernetes-validations": [
                           {
-                            "rule": "size(self.filter(i, i.preferred)) <= 1",
+                            "rule": "size(self.filter(i, has(i.preferred) && i.preferred)) <= 1",
                             "message": "Only one zone can be preferred!"
                           },
                           {
                             "rule": "self.exists(i, has(i.preferred) && i.preferred == true) || self.all(i, has(i.preferred) && i.preferred == false)",
-                            "message": "size(self.filter(i, i.preferred)) > 0 || "
+                            "message": "Either one zone is preferred or all are set to be false explicitly!"
                           }
                         ],
                         "items": {
@@ -636,9 +636,17 @@
             "description": "Runtime information",
             "x-kubernetes-preserve-unknown-fields": true,
             "properties": {
-              "state": {
+              "worker": {
                 "type": "string",
-                "description": "Task state from [created | running | finished]"
+                "description": "Overall worker state",
+                "enum": [
+                  "Created",
+                  "Failed",
+                  "Initiated",
+                  "Running",
+                  "Error",
+                  "Completed"
+                ]
               }
             }
           }

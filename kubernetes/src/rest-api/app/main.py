@@ -138,10 +138,10 @@ async def _create_pew_worker(pew: PEW,
                     "group": grp,
                     "version": ver
                 }}
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
 
 
 @app.get("/workers/{name}",
@@ -165,10 +165,10 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         return obj
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
 
 
 @app.put("/workers/{name}",
@@ -223,10 +223,10 @@ async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern
                     "group": obj['details']['group'],
                     "kind": obj['details']['kind']
                 }}
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
 
 
 ########################################################################################################################
@@ -256,10 +256,10 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
 
 
 @app.delete("/workers",
@@ -287,10 +287,10 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret
-    except client.ApiException as e:
-        raise_for_failed_k8s_request(e)
-    except urllib3.exceptions.MaxRetryError as e:
-        raise_for_network_error(e)
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
 
 
 ########################################################################################################################

@@ -144,3 +144,34 @@ spec:
       hostPath:
         path: /usr/local/share/ptx-edge/controller/app
         type: Directory
+---
+# Dependent resources
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: builder
+  labels:
+    app: builder
+    env: test
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/basic-auth
+metadata:
+  name: api-basic-auth
+  namespace: ptx-edge
+stringData:
+  username: admin
+  password: admin
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-basic-auth
+  namespace: ptx-edge
+spec:
+  basicAuth:
+    secret: api-basic-auth
+    realm: ptx-edge
+---

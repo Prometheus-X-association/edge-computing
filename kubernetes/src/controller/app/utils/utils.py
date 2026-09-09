@@ -16,7 +16,7 @@ import logging
 import pprint
 import typing
 
-from kubernetes import client
+from kubernetes.aio import client
 
 
 def deep_json_filter(data: object, keep: typing.Callable = bool) -> object:

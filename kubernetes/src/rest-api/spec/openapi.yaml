@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-08T11:43:33'
+  x-creation-date: '2026-09-09T11:43:55'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1191,14 +1191,24 @@ components:
       description: Image pull approach
     PEWStatus:
       properties:
-        state:
+        worker:
           anyOf:
-          - type: string
+          - $ref: '#/components/schemas/PEWStatusWorker'
           - type: 'null'
-          title: State
       type: object
       title: PEWStatus
       description: Runtime information
+    PEWStatusWorker:
+      type: string
+      enum:
+      - CREATED
+      - FAILED
+      - Initiated
+      - Running
+      - error
+      - completed
+      title: PEWStatusWorker
+      description: Overall worker state
     PTXEdgeAPIError:
       properties:
         detail:

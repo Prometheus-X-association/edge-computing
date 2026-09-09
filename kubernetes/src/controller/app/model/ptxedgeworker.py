@@ -650,14 +650,27 @@ class PEWSpec(BaseModel):
     """
 
 
+class PEWStatusWorker(StrEnum):
+    """
+    Overall worker state
+    """
+
+    CREATED = "Created"
+    FAILED = "Failed"
+    INITIATED = "Initiated"
+    RUNNING = "Running"
+    ERROR = "Error"
+    COMPLETED = "Completed"
+
+
 class PEWStatus(BaseModel):
     """
     Runtime information
     """
 
-    state: str | None = None
+    worker: PEWStatusWorker | None = None
     """
-    Task state from [created | running | finished]
+    Overall worker state
     """
 
 
