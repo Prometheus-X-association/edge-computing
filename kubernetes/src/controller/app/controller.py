@@ -12,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
+import enum
 import functools
 import http
 import logging
@@ -25,9 +27,10 @@ import yaml
 from asyncer import asyncify
 from kubernetes.aio import client, config
 
-from model.ptxedgeworker import PEW, PEWSpecServiceInterface, PEWStatusWorker
+from model.notifier import ResourceNotifier, NotifierTask, PatchingRequestInterrupt
+from model.ptxedgeworker import PEW, PEWSpecServiceInterface, PEWStatusOperator, PEWStatusOperatorState
 from utils.config import load_config_from_env, ENV_PREFIX
-from utils.utils import sanitize_model, ExcludeProbesFilter, convert_k8s_api_error
+from utils.utils import sanitize_model, ExcludeProbesFilter, convert_k8s_api_error, str2bool
 
 
 ########################################################################################################################
@@ -297,19 +300,19 @@ async def _create_ingress(pew: PEW, *, name: str, namespace: str, logger: kopf.L
 
 ########################################################################################################################
 
-@kopf.on.create(*PEW.SELECTOR, id="worker")
+@kopf.on.create(*PEW.SELECTOR, id="operator")
 async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logger: kopf.Logger,
-                               **_: Any) -> str:
+                               **_: Any) -> dict[str, Any]:
     logger.debug("=" * 100)
     ####
-    if not hasattr(memo, 'model'):
+    if "model" not in memo:
         logger.info(f"Parsing {PEW.kind} model...")
         memo.model = PEW.model_validate(body, strict=False)
         logger.debug(f"Parsed model:\n{memo.model.model_dump_json(indent=2)}")
     else:
         logger.info(f"Using cached {PEW.kind} model")
     ####
-    if not hasattr(memo, 'handlers'):
+    if 'handlers' not in memo:
         memo.handlers = {}
         logger.info(f"Registering object handlers...")
         if memo.model.spec.worker.config and memo.model.spec.worker.config.file:
@@ -338,20 +341,84 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
     else:
         logger.debug(f"Processing cached sub-handlers: {[k for k in memo.handlers.keys()]}")
     ####
-    # noinspection bad-argument-type
     await kopf.execute(fns=memo.handlers)
     ####
+    del memo.handlers
     logger.info(f"{PEW.kind}[{name}] initiated successfully")
+    memo.state = ResourceState(memo.get("state", 0)) | ResourceState.CREATED
+    logger.debug(f"[HANDLER] {memo.state}")
     kopf.info(body, reason="Initiated", message="Initiated successfully!")
     logger.debug("=" * 100)
     ###
-    return PEWStatusWorker.INITIATED.capitalize()
+    return PEWStatusOperator(state=PEWStatusOperatorState.FINISHED).model_dump(mode="json", exclude_none=True)
 
+
+class ResourceState(enum.Flag):
+    INDEXED = enum.auto()
+    MANAGED = enum.auto()
+    CREATED = enum.auto()
+
+
+@kopf.index(*PEW.SELECTOR)
+async def pew_index(name: str, memo: kopf.Memo, logger: kopf.Logger, **_: Any):
+    if ResourceState.INDEXED in memo.get('state', []):
+        return None
+    memo.state = ResourceState(memo.get("state", 0)) | ResourceState.INDEXED
+    logger.info(f"[INDEX] Registering state notifier...")
+    return {name: ResourceNotifier()}
+
+
+@kopf.daemon(*PEW.SELECTOR, cancellation_timeout=1)
+async def pew_manager(name: str, pew_index: kopf.Index, memo: kopf.Memo, stopped: kopf.DaemonStopped,
+                      patch: kopf.Patch, logger: kopf.Logger, **_: Any):
+    memo.state = ResourceState(memo.get("state", 0)) | ResourceState.MANAGED
+    logger.debug(f"[DAEMON] {memo.get("state")}")
+    if (notif := next(iter(pew_index[name]), None)) is None:
+        raise kopf.TemporaryError(f"[DAEMON] State notifier is missing from index!", delay=3)
+    while not stopped:
+        tasks = {
+            asyncio.create_task(notif.worker.wait(), name=NotifierTask.WORKER)
+        }
+        try:
+            logger.info("[DAEMON] Waiting for notifications...")
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            logger.debug(f"[DAEMON] {done = }")
+            logger.info(f"[DAEMON] Notified by {[t.get_name() for t in done]}")
+            for task in done:
+                if task.get_name() == NotifierTask.WORKER:
+                    notif.worker.clear()
+                    logger.info("[DAEMON] Updating resource status...")
+                    # patch.status['available'] = True
+                    raise PatchingRequestInterrupt
+            for t in pending:
+                t.cancel()
+        except asyncio.CancelledError:
+            logger.info(f"[DAEMON] State notifier cancelled!")
+            for t in tasks:
+                t.cancel()
+    memo.state &= ~ResourceState.MANAGED
+
+
+@kopf.on.event('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
+               labels={"app.kubernetes.io/component": "worker"})
+async def watch_deployment(event: kopf.RawEvent, logger: kopf.Logger, pew_index: kopf.Index, **_: Any):
+    progressing = next((con['status'] for con in event['object']['status'].get('conditions', [])
+                        if con['type'] == 'Progressing'), None)
+    available = next((con['status'] for con in event['object']['status'].get('conditions', [])
+                      if con['type'] == 'Available'), None)
+    logger.info(f"[EVENT] Deployment {event['type']} - {progressing=}, {available=}")
+    parent = next((owner.get('name') for owner in event['object']["metadata"].get('ownerReferences', [])
+                   if owner.get('kind') == PEW.kind), None)
+    if not parent:
+        raise kopf.PermanentError("[EVENT] Owner reference is missing from Deployment!")
+    elif parent not in pew_index:
+        if event['type'] == 'DELETED':
+            logger.debug(f"[EVENT] Deployment's owner[{parent}] has been already deleted!")
+            return
+        raise kopf.TemporaryError(f"[EVENT] Deployment's owner[{parent}] is missing from index!", delay=3)
+    if all(map(str2bool, (progressing, available))):
+        logger.info("[EVENT] Deployment got available!")
+        if (notif := next(iter(pew_index[parent]), None)) is not None:
+            notif.worker.set()
 
 ########################################################################################################################
-
-
-# @kopf.on.field('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
-#                labels={})
-# async def detect_deployments():
-#     pass

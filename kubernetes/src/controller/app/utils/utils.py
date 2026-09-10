@@ -69,3 +69,7 @@ def convert_k8s_api_error(ex: client.ApiException) -> str:
     return '\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
                       "HTTP response body:",
                       json.dumps(json.loads(str(ex.body)) if ex.body else '{}', indent=2)))
+
+
+def str2bool(s: str | bool | None, *, __true=frozenset(('true', 'yes', 'on', 'y', '1'))) -> bool:
+    return str(s).lower() in __true
