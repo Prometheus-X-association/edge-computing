@@ -18,18 +18,31 @@ import enum
 import kopf
 
 
-class ResourceState(enum.Flag):
+class WorkerHandlingState(enum.Flag):
     INDEXED = enum.auto()
     MANAGED = enum.auto()
     CREATED = enum.auto()
 
 
+class WorkerEventType(enum.StrEnum):
+    READY = "ready"
+    EXPOSED = "exposed"
+
+
 @dataclasses.dataclass(init=True, repr=True, frozen=True)
-class ResourceNotifier:
-    worker: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+class WorkerStatusNotifier:
+    ready: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    exposed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+
+    @property
+    def events(self):
+        return self.ready, self.exposed
+
+    def get(self, _type: WorkerEventType) -> asyncio.Event:
+        return getattr(self, _type.value)
 
 
 class PatchingRequestInterrupt(kopf.TemporaryError):
 
     def __init__(self):
-        super().__init__("Requesting resource patching", 0)
+        super().__init__("Enforce handler reload to allow patching...", 0)

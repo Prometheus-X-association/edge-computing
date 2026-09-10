@@ -638,7 +638,11 @@
             "properties": {
               "ready": {
                 "type": "boolean",
-                "description": "Overall worker result"
+                "description": "Whether worker is deployed successfully or not"
+              },
+              "exposed": {
+                "type": "boolean",
+                "description": "Public interfaces are available"
               },
               "operator": {
                 "type": "array",

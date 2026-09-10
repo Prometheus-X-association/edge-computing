@@ -734,7 +734,11 @@ class PEWStatus(BaseModel):
 
     ready: bool | None = None
     """
-    Overall worker result
+    Whether worker is deployed successfully or not
+    """
+    exposed: bool | None = None
+    """
+    Public interfaces are available
     """
     operator: list[PEWStatusOperatorItem] | None = None
     """

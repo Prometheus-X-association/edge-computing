@@ -478,11 +478,13 @@ spec:
             status:
               type: object
               description: "Runtime information"
-              x-kubernetes-preserve-unknown-fields: true
               properties:
                 ready:
                   type: boolean
-                  description: "Overall worker result"
+                  description: "Whether worker is deployed successfully or not"
+                exposed:
+                  type: boolean
+                  description: "Public interfaces are available"
                 operator:
                   type: array
                   description: "State of operator subprocesses"
@@ -533,7 +535,8 @@ spec:
         status: { }
       selectableFields:
         - jsonPath: .spec.service.enabled
-        - jsonPath: .status.worker
+        - jsonPath: .status.ready
+        - jsonPath: .status.exposed
       additionalPrinterColumns:
         - name: Datasource
           type: string
