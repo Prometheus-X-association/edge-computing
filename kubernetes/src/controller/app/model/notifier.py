@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +18,12 @@ import enum
 import kopf
 
 
+class ResourceState(enum.Flag):
+    INDEXED = enum.auto()
+    MANAGED = enum.auto()
+    CREATED = enum.auto()
+
+
 @dataclasses.dataclass(init=True, repr=True, frozen=True)
 class ResourceNotifier:
     worker: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
@@ -28,7 +33,3 @@ class PatchingRequestInterrupt(kopf.TemporaryError):
 
     def __init__(self):
         super().__init__("Requesting resource patching", 0)
-
-
-class NotifierTask(enum.StrEnum):
-    WORKER = enum.auto()

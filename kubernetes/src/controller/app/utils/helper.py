@@ -60,11 +60,6 @@ def sanitize_model(data: object, indent: int = 2) -> str:
     return pprint.pformat(deep_openapi_filter(data), indent=indent)
 
 
-class ExcludeProbesFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        return 'GET /healthz ' not in record.getMessage()
-
-
 def convert_k8s_api_error(ex: client.ApiException) -> str:
     return '\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
                       "HTTP response body:",
