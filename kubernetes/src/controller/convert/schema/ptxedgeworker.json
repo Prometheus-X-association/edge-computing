@@ -636,17 +636,84 @@
             "description": "Runtime information",
             "x-kubernetes-preserve-unknown-fields": true,
             "properties": {
-              "worker": {
-                "type": "string",
-                "description": "Overall worker state",
-                "enum": [
-                  "Created",
-                  "Failed",
-                  "Initiated",
-                  "Running",
-                  "Error",
-                  "Completed"
-                ]
+              "ready": {
+                "type": "boolean",
+                "description": "Overall worker result"
+              },
+              "operator": {
+                "type": "array",
+                "description": "State of operator subprocesses",
+                "items": {
+                  "type": "object",
+                  "description": "Subprocess result",
+                  "required": [
+                    "handler",
+                    "result"
+                  ],
+                  "properties": {
+                    "handler": {
+                      "type": "string",
+                      "description": "Subprocess ID"
+                    },
+                    "result": {
+                      "type": "string",
+                      "description": "Subprocess result",
+                      "enum": [
+                        "Success",
+                        "Failed"
+                      ]
+                    }
+                  }
+                }
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "status",
+                    "lastTransitionTime",
+                    "reason",
+                    "message"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Condition type",
+                      "enum": [
+                        "Created",
+                        "Processed",
+                        "Ready",
+                        "Exposed",
+                        "Failed",
+                        "Completed"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Condition state",
+                      "enum": [
+                        "True",
+                        "False",
+                        "Unknown"
+                      ]
+                    },
+                    "lastTransitionTime": {
+                      "type": "string",
+                      "description": "Last transition time",
+                      "format": "date-time"
+                    },
+                    "reason": {
+                      "description": "Condition reason",
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Condition message"
+                    }
+                  }
+                }
               }
             }
           }

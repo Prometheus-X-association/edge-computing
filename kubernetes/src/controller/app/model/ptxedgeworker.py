@@ -5,7 +5,14 @@
 from typing import Any, ClassVar
 from pydantic import field_serializer
 from typing import Annotated
-from pydantic import BaseModel as _BaseModel, ConfigDict, Field, RootModel, SecretStr
+from pydantic import (
+    AwareDatetime,
+    BaseModel as _BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    SecretStr,
+)
 from enum import StrEnum
 
 
@@ -650,17 +657,74 @@ class PEWSpec(BaseModel):
     """
 
 
-class PEWStatusWorker(StrEnum):
+class PEWStatusOperatorItemResult(StrEnum):
     """
-    Overall worker state
+    Subprocess result
+    """
+
+    SUCCESS = "Success"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorItem(BaseModel):
+    """
+    Subprocess result
+    """
+
+    handler: str
+    """
+    Subprocess ID
+    """
+    result: PEWStatusOperatorItemResult
+    """
+    Subprocess result
+    """
+
+
+class PEWStatusConditionType(StrEnum):
+    """
+    Condition type
     """
 
     CREATED = "Created"
+    PROCESSED = "Processed"
+    READY = "Ready"
+    EXPOSED = "Exposed"
     FAILED = "Failed"
-    INITIATED = "Initiated"
-    RUNNING = "Running"
-    ERROR = "Error"
     COMPLETED = "Completed"
+
+
+class PEWStatusConditionStatus(StrEnum):
+    """
+    Condition state
+    """
+
+    TRUE = "True"
+    FALSE = "False"
+    UNKNOWN = "Unknown"
+
+
+class PEWStatusCondition(BaseModel):
+    type: PEWStatusConditionType
+    """
+    Condition type
+    """
+    status: PEWStatusConditionStatus
+    """
+    Condition state
+    """
+    lastTransitionTime: AwareDatetime
+    """
+    Last transition time
+    """
+    reason: str
+    """
+    Condition reason
+    """
+    message: str
+    """
+    Condition message
+    """
 
 
 class PEWStatus(BaseModel):
@@ -668,10 +732,15 @@ class PEWStatus(BaseModel):
     Runtime information
     """
 
-    worker: PEWStatusWorker | None = None
+    ready: bool | None = None
     """
-    Overall worker state
+    Overall worker result
     """
+    operator: list[PEWStatusOperatorItem] | None = None
+    """
+    State of operator subprocesses
+    """
+    conditions: list[PEWStatusCondition] | None = None
 
 
 class PEW(BaseModel):
