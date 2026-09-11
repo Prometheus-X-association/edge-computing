@@ -516,7 +516,7 @@ spec:
                       type:
                         type: string
                         description: "Condition type"
-                        enum: [ Created, Processed, Ready, Exposed, Failed, Completed ]
+                        enum: [ Processed, Ready, Exposed, Failed, Completed ]
                       status:
                         type: string
                         description: "Condition state"
@@ -563,11 +563,11 @@ spec:
           jsonPath: .spec.service.enabled
           description: "Deployed as a service"
           priority: 0
-        - name: State
+        - name: Ready
           type: string
           description: "Worker state"
-          jsonPath: .status.worker
-          priority: 1
+          jsonPath: .status.ready
+          priority: 0
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp

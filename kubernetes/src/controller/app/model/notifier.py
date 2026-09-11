@@ -24,21 +24,20 @@ class WorkerHandlingState(enum.Flag):
     CREATED = enum.auto()
 
 
-class WorkerEventType(enum.StrEnum):
-    READY = "ready"
-    EXPOSED = "exposed"
-
-
 @dataclasses.dataclass(init=True, repr=True, frozen=True)
-class WorkerStatusNotifier:
-    ready: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+class WorkerNotifier:
+    class EventType(enum.StrEnum):
+        READINESS = enum.auto()
+        EXPOSED = enum.auto()
+
+    readiness: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
     exposed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
 
     @property
     def events(self):
-        return self.ready, self.exposed
+        return self.readiness, self.exposed
 
-    def get(self, _type: WorkerEventType) -> asyncio.Event:
+    def get(self, _type: EventType) -> asyncio.Event:
         return getattr(self, _type.value)
 
 

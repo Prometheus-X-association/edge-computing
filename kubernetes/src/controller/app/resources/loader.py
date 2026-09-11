@@ -48,7 +48,9 @@ TEMPLATE_FACTORY = {
 
 
 async def render_template(_type: ResourceType,
-                          pew: PEW, name: str, namespace: str, memo: kopf.Memo) -> dict[str, typing.Any]:
+                          pew: PEW, name: str,
+                          namespace: str,
+                          memo: kopf.Memo) -> dict[str, typing.Any]:
     template = await asyncify(memo.TEMPLATES.get_template)(name=TEMPLATE_FACTORY[_type])
     manifest = await template.render_async(name=name, namespace=namespace, spec=pew.spec, cfg=memo.CONFIG)
     body = await asyncify(yaml.safe_load)(stream=manifest)
@@ -57,12 +59,21 @@ async def render_template(_type: ResourceType,
 
 ########################################################################################################################
 
-async def create_worker_configuration(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                                      logger: kopf.Logger, **_: typing.Any):
+async def create_worker_configuration(pew: PEW,
+                                      *,
+                                      name: str,
+                                      namespace: str,
+                                      memo: kopf.Memo,
+                                      patch: kopf.Patch,
+                                      logger: kopf.Logger,
+                                      **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering worker configuration manifest...")
-    body: dict[str, typing.Any] = await render_template(ResourceType.CONFIG,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+    body = await render_template(ResourceType.CONFIG,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=True, nested="spec.template")
     logger.debug(f"Rendered configuration object:\n{sanitize_model(body)}")
     ####
@@ -74,7 +85,8 @@ async def create_worker_configuration(pew: PEW, *, name: str, namespace: str, me
             obj, status, _ = await api.create_namespaced_config_map_with_http_info(
                 namespace=namespace,
                 body=body,
-                field_manager=memo.CONFIG.controller.manager)
+                field_manager=memo.CONFIG.controller.manager
+            )
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
@@ -84,20 +96,29 @@ async def create_worker_configuration(pew: PEW, *, name: str, namespace: str, me
         logger.error(convert_k8s_api_error(ex))
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.CONFIG,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def create_worker_deployment(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                                   logger: kopf.Logger, **_: typing.Any):
+async def create_worker_deployment(pew: PEW,
+                                   *, name: str,
+                                   namespace: str,
+                                   memo: kopf.Memo,
+                                   patch: kopf.Patch,
+                                   logger: kopf.Logger,
+                                   **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering worker deployment manifest...")
-    body: dict[str, typing.Any] = await render_template(ResourceType.DEPLOYMENT,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+    body = await render_template(ResourceType.DEPLOYMENT,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=True, nested="spec.template")
     logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
     ####
@@ -119,20 +140,30 @@ async def create_worker_deployment(pew: PEW, *, name: str, namespace: str, memo:
         logger.error(convert_k8s_api_error(ex))
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.DEPLOYMENT,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def create_worker_job(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                            logger: kopf.Logger, **_: typing.Any):
+async def create_worker_job(pew: PEW,
+                            *,
+                            name: str,
+                            namespace: str,
+                            memo: kopf.Memo,
+                            patch: kopf.Patch,
+                            logger: kopf.Logger,
+                            **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering worker job manifest...")
-    body: dict[str, typing.Any] = await render_template(ResourceType.JOB,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+    body = await render_template(ResourceType.JOB,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=True, nested="spec.template")
     logger.debug(f"Rendered deployment object:\n{sanitize_model(body)}")
     ####
@@ -154,18 +185,28 @@ async def create_worker_job(pew: PEW, *, name: str, namespace: str, memo: kopf.M
         logger.error(convert_k8s_api_error(ex))
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.JOB,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def _create_service(pew: PEW, _type: ResourceType, *, name: str, namespace: str, forced_name: bool = True,
-                          logger: kopf.Logger, memo: kopf.Memo):
-    body: dict[str, typing.Any] = await render_template(_type,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+async def _create_service(pew: PEW,
+                          _type: ResourceType,
+                          *,
+                          name: str,
+                          namespace: str,
+                          forced_name: bool = True,
+                          logger: kopf.Logger,
+                          memo: kopf.Memo) -> None:
+    body = await render_template(_type,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=forced_name)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
@@ -188,42 +229,75 @@ async def _create_service(pew: PEW, _type: ResourceType, *, name: str, namespace
         raise kopf.TemporaryError(str(ex)) from ex
 
 
-async def create_builder_service(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                                 logger: kopf.Logger, **_: typing.Any):
+async def create_builder_service(pew: PEW,
+                                 *,
+                                 name: str,
+                                 namespace: str,
+                                 memo: kopf.Memo,
+                                 patch: kopf.Patch,
+                                 logger: kopf.Logger,
+                                 **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering builder webhook manifest...")
-    await _create_service(pew, ResourceType.BUILDER, forced_name=False,
-                          name=name, namespace=namespace, logger=logger, memo=memo)
+    await _create_service(pew,
+                          ResourceType.BUILDER,
+                          forced_name=False,
+                          name=name,
+                          namespace=namespace,
+                          logger=logger,
+                          memo=memo)
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.BUILDER,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def create_worker_service(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                                logger: kopf.Logger, **_: typing.Any):
+async def create_worker_service(pew: PEW,
+                                *,
+                                name: str,
+                                namespace: str,
+                                memo: kopf.Memo,
+                                patch: kopf.Patch,
+                                logger: kopf.Logger,
+                                **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering worker service manifest...")
-    await _create_service(pew, ResourceType.SERVICE, forced_name=True,
-                          name=name, namespace=namespace, logger=logger, memo=memo)
+    await _create_service(pew,
+                          ResourceType.SERVICE,
+                          forced_name=True,
+                          name=name,
+                          namespace=namespace,
+                          logger=logger,
+                          memo=memo)
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.SERVICE,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def create_middleware(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                            logger: kopf.Logger, **_: typing.Any):
+async def create_middleware(pew: PEW,
+                            *,
+                            name: str,
+                            namespace: str,
+                            memo: kopf.Memo,
+                            patch: kopf.Patch,
+                            logger: kopf.Logger,
+                            **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering middleware manifest...")
-    body: dict[str, typing.Any] = await render_template(ResourceType.MIDDLEWARE,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+    body = await render_template(ResourceType.MIDDLEWARE,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
@@ -248,20 +322,30 @@ async def create_middleware(pew: PEW, *, name: str, namespace: str, memo: kopf.M
         logger.error(convert_k8s_api_error(ex))
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.MIDDLEWARE,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 
 
-async def create_ingress(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo, patch: kopf.Patch,
-                         logger: kopf.Logger, **_: typing.Any):
+async def create_ingress(pew: PEW,
+                         *,
+                         name: str,
+                         namespace: str,
+                         memo: kopf.Memo,
+                         patch: kopf.Patch,
+                         logger: kopf.Logger,
+                         **_: typing.Any) -> None:
     logger.debug("-" * 100)
     logger.info(f"Rendering ingress manifest...")
-    body: dict[str, typing.Any] = await render_template(ResourceType.INGRESS,
-                                                        pew=pew, name=name, namespace=namespace, memo=memo)
+    body = await render_template(ResourceType.INGRESS,
+                                 pew=pew,
+                                 name=name,
+                                 namespace=namespace,
+                                 memo=memo)
     kopf.adopt(body, strict=True, forced=False)
     logger.debug(f"Rendered service object:\n{sanitize_model(body)}")
     ####
@@ -283,10 +367,11 @@ async def create_ingress(pew: PEW, *, name: str, namespace: str, memo: kopf.Memo
         logger.error(convert_k8s_api_error(ex))
         raise kopf.TemporaryError(ex.reason) from ex
     ###
-    patch.status["operator"] = [
+    memo.setdefault("operator", []).append(
         PEWStatusOperatorItem(handler=ResourceType.INGRESS,
                               result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    ]
+    )
+    patch.status['operator'] = memo.operator
     ###
     logger.debug("-" * 100)
 

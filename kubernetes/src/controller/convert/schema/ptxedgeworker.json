@@ -634,7 +634,6 @@
           "status": {
             "type": "object",
             "description": "Runtime information",
-            "x-kubernetes-preserve-unknown-fields": true,
             "properties": {
               "ready": {
                 "type": "boolean",
@@ -686,7 +685,6 @@
                       "type": "string",
                       "description": "Condition type",
                       "enum": [
-                        "Created",
                         "Processed",
                         "Ready",
                         "Exposed",

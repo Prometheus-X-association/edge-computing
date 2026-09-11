@@ -18,9 +18,10 @@ import typing
 
 import kopf
 
-from model.notifier import WorkerStatusNotifier, PatchingRequestInterrupt, WorkerHandlingState, WorkerEventType
+from model.condition import patch_processed, patch_ready, patch_exposed
+from model.notifier import WorkerNotifier, PatchingRequestInterrupt, WorkerHandlingState
 from model.ptxedgeworker import PEW, PEWSpecServiceInterface
-from resource.factory import ResourceType, load_and_create
+from resources.loader import ResourceType, load_and_create
 from utils.config import load_k8s_config, load_operator_config, load_templates
 from utils.helper import str2bool
 
@@ -28,7 +29,9 @@ from utils.helper import str2bool
 ########################################################################################################################
 
 @kopf.on.startup(errors=kopf.ErrorsMode.PERMANENT)
-async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger,
+async def setup(settings: kopf.OperatorSettings,
+                memo: kopf.Memo,
+                logger: kopf.Logger,
                 **_: typing.Any) -> None:
     await asyncio.gather(
         load_k8s_config(logger=logger),
@@ -41,8 +44,12 @@ async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.L
 
 
 @kopf.on.create(*PEW.SELECTOR, id="operator")
-async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logger: kopf.Logger,
-                               **_: typing.Any):
+async def create_ptxedgeworker(body: kopf.Body,
+                               name: str,
+                               memo: kopf.Memo,
+                               patch: kopf.Patch,
+                               logger: kopf.Logger,
+                               **_: typing.Any) -> None:
     logger.debug("=" * 100)
     ####
     if "model" not in memo:
@@ -56,27 +63,34 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
         memo.handlers = {}
         logger.info(f"Registering object handlers...")
         if memo.model.spec.worker.config and memo.model.spec.worker.config.file:
-            memo.handlers[ResourceType.CONFIG] = functools.partial(load_and_create(ResourceType.CONFIG),
-                                                                   pew=memo.model)
+            memo.handlers[ResourceType.CONFIG] = functools.partial(
+                load_and_create(ResourceType.CONFIG),
+                pew=memo.model)
         if 'PTX' in (memo.model.spec.data.src.method, memo.model.spec.worker.src.method):
-            memo.handlers[ResourceType.BUILDER] = functools.partial(load_and_create(ResourceType.BUILDER),
-                                                                    pew=memo.model)
+            memo.handlers[ResourceType.BUILDER] = functools.partial(
+                load_and_create(ResourceType.BUILDER),
+                pew=memo.model)
         if memo.model.spec.service and memo.model.spec.service.interfaces:
-            memo.handlers[ResourceType.SERVICE] = functools.partial(load_and_create(ResourceType.SERVICE),
-                                                                    pew=memo.model)
+            memo.handlers[ResourceType.SERVICE] = functools.partial(
+                load_and_create(ResourceType.SERVICE),
+                pew=memo.model)
             if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
                 public_port: PEWSpecServiceInterface
                 if public_port.stripped:
-                    memo.handlers[ResourceType.MIDDLEWARE] = functools.partial(load_and_create(ResourceType.MIDDLEWARE),
-                                                                               pew=memo.model)
-                memo.handlers[ResourceType.INGRESS] = functools.partial(load_and_create(ResourceType.INGRESS),
-                                                                        pew=memo.model)
+                    memo.handlers[ResourceType.MIDDLEWARE] = functools.partial(
+                        load_and_create(ResourceType.MIDDLEWARE),
+                        pew=memo.model)
+                memo.handlers[ResourceType.INGRESS] = functools.partial(
+                    load_and_create(ResourceType.INGRESS),
+                    pew=memo.model)
         if memo.model.spec.service and memo.model.spec.service.enabled:
-            memo.handlers[ResourceType.DEPLOYMENT] = functools.partial(load_and_create(ResourceType.DEPLOYMENT),
-                                                                       pew=memo.model)
+            memo.handlers[ResourceType.DEPLOYMENT] = functools.partial(
+                load_and_create(ResourceType.DEPLOYMENT),
+                pew=memo.model)
         else:
-            memo.handlers[ResourceType.JOB] = functools.partial(load_and_create(ResourceType.JOB),
-                                                                pew=memo.model)
+            memo.handlers[ResourceType.JOB] = functools.partial(
+                load_and_create(ResourceType.JOB),
+                pew=memo.model)
         logger.debug(f"Registered sub-handlers: {[k for k in memo.handlers.keys()]}")
     else:
         logger.debug(f"Processing cached sub-handlers: {[k for k in memo.handlers.keys()]}")
@@ -86,6 +100,7 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
     del memo.handlers
     logger.info(f"{PEW.kind}[{name}] initiated successfully")
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.CREATED
+    patch.fns.append(patch_processed)
     logger.debug(f"[HANDLER] {memo.state}")
     kopf.info(body, reason="Initiated", message="Initiated successfully!")
     logger.debug("=" * 100)
@@ -94,42 +109,51 @@ async def create_ptxedgeworker(body: kopf.Body, name: str, memo: kopf.Memo, logg
 ########################################################################################################################
 
 @kopf.index(*PEW.SELECTOR)
-async def pew_index(name: str, memo: kopf.Memo, logger: kopf.Logger,
-                    **_: typing.Any):
+async def pew_index(name: str,
+                    memo: kopf.Memo,
+                    logger: kopf.Logger,
+                    **_: typing.Any) -> dict[str, typing.Any] | None:
     if WorkerHandlingState.INDEXED in memo.get('state', []):
         return None
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.INDEXED
     logger.info(f"[INDEX] Registering state notifier...")
-    return {name: WorkerStatusNotifier()}
+    return {name: WorkerNotifier()}
 
 
 @kopf.daemon(*PEW.SELECTOR, cancellation_timeout=1)
-async def pew_manager(name: str, pew_index: kopf.Index[str, WorkerStatusNotifier], memo: kopf.Memo,
-                      stopped: kopf.DaemonStopped, patch: kopf.Patch, logger: kopf.Logger,
-                      **_: typing.Any):
+async def pew_manager(name: str,
+                      memo: kopf.Memo,
+                      pew_index: kopf.Index[str, WorkerNotifier],
+                      stopped: kopf.DaemonStopped,
+                      patch: kopf.Patch,
+                      logger: kopf.Logger,
+                      **_: typing.Any) -> None:
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.MANAGED
     logger.debug(f"[DAEMON] {memo.get("state")}")
     if (notifier := next(iter(pew_index[name]), None)) is None:
         raise kopf.TemporaryError(f"[DAEMON] State notifier is missing from index!", delay=3)
     while not stopped:
-        tasks = {asyncio.create_task(notifier.get(et).wait(), name=et) for et in WorkerEventType}
+        tasks = {asyncio.create_task(notifier.get(et).wait(), name=et) for et in WorkerNotifier.EventType}
         try:
             logger.info("[DAEMON] Waiting for notifications...")
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(tasks,
+                                               return_when=asyncio.FIRST_COMPLETED)
             for t in pending:
                 t.cancel()
             logger.debug(f"[DAEMON] {done = }")
             logger.info(f"[DAEMON] Notified by events: {[t.get_name() for t in done]}")
             for task in done:
                 match task.get_name():
-                    case WorkerEventType.READY:
-                        notifier.ready.clear()
-                        logger.info("[DAEMON] Updating <ready> status...")
-                        patch.status['ready'] = True
-                    case WorkerEventType.EXPOSED:
+                    case WorkerNotifier.EventType.READINESS:
+                        memo.ready = not memo.get('ready')
+                        logger.info(f"[DAEMON] Updating ready={memo.ready} status...")
+                        patch.fns.append(functools.partial(patch_ready, value=memo.ready))
+                        notifier.readiness.clear()
+                    case WorkerNotifier.EventType.EXPOSED:
+                        logger.info(f"[DAEMON] Updating exposed={memo.exposed} status...")
+                        memo.exposed = not memo.get('exposed')
+                        patch.fns.append(patch_exposed)
                         notifier.exposed.clear()
-                        logger.info("[DAEMON] Updating <exposed> status...")
-                        patch.status['exposed'] = True
             raise PatchingRequestInterrupt
         except asyncio.CancelledError:
             for t in tasks:
@@ -142,14 +166,17 @@ async def pew_manager(name: str, pew_index: kopf.Index[str, WorkerStatusNotifier
 
 @kopf.on.event('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
                labels={"app.kubernetes.io/component": "worker"})
-async def watch_deployment(event: kopf.RawEvent, logger: kopf.Logger,
-                           pew_index: kopf.Index[str, WorkerStatusNotifier],
-                           **_: typing.Any):
+async def watch_deployment(event: kopf.RawEvent,
+                           memo: kopf.Memo,
+                           pew_index: kopf.Index[str, WorkerNotifier],
+                           logger: kopf.Logger,
+                           **_: typing.Any) -> None:
     progressing = next((con['status'] for con in event['object']['status'].get('conditions', [])
                         if con['type'] == 'Progressing'), None)
     available = next((con['status'] for con in event['object']['status'].get('conditions', [])
                       if con['type'] == 'Available'), None)
-    logger.info(f"[EVENT] Deployment {event['type']} - {progressing=}, {available=}")
+    ready = int(event['object']['status'].get('readyReplicas', 0))
+    logger.info(f"[EVENT] Deployment {event['type']} - {progressing=}, {available=}, {ready=}")
     # noinspection typed-dict
     parent: str | None = next((owner.get('name') for owner in event['object']["metadata"].get('ownerReferences', [])
                                if owner.get('kind') == PEW.kind), None)
@@ -161,6 +188,13 @@ async def watch_deployment(event: kopf.RawEvent, logger: kopf.Logger,
             return
         raise kopf.TemporaryError(f"[EVENT] Deployment's owner[{parent}] is missing from index!", delay=3)
     if all(map(str2bool, (progressing, available))):
-        logger.info("[EVENT] Deployment got available!")
+        if (prior := memo.get('ready', 0)) == ready:
+            return  # No state change, skip notification
+        elif bool(prior) < bool(ready):
+            logger.info("[EVENT] Deployment got ready!")
+        elif bool(prior) > bool(ready):
+            logger.warning("[EVENT] Deployment got unavailable!")
+        memo.ready = ready
         if (notifier := next(iter(pew_index[parent]), None)) is not None:
-            notifier.ready.set()
+            logger.debug("[EVENT] Notify daemon...")
+            notifier.readiness.set()

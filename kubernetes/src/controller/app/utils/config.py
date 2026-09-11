@@ -51,9 +51,10 @@ def load_config_from_env():
 
 ########################################################################################################################
 
-async def load_k8s_config(logger: kopf.Logger, **_):
+async def load_k8s_config(logger: kopf.Logger,
+                          **_) -> None:
     logger.info("Loading k8s in-cluster config...")
-    config.load_incluster_config()
+    config.load_incluster_config(try_refresh_token=True)
 
 
 class ExcludeProbesFilter(logging.Filter):
@@ -61,7 +62,10 @@ class ExcludeProbesFilter(logging.Filter):
         return 'GET /healthz ' not in record.getMessage()
 
 
-async def load_operator_config(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger, **_):
+async def load_operator_config(settings: kopf.OperatorSettings,
+                               memo: kopf.Memo,
+                               logger: kopf.Logger,
+                               **_) -> None:
     logger.info(f"Loading operator configuration...")
     # PTX-edge/controller related configurations
     # Read config items from envvars dynamically using global default values
@@ -78,7 +82,9 @@ async def load_operator_config(settings: kopf.OperatorSettings, memo: kopf.Memo,
     logging.getLogger('kubernetes.aio.client.rest').setLevel(logging.WARNING)  # Disable k8s client dump logs
 
 
-async def load_templates(memo: kopf.Memo, logger: kopf.Logger, **_):
+async def load_templates(memo: kopf.Memo,
+                         logger: kopf.Logger,
+                         **_) -> None:
     logger.info("Loading manifest templates...")
     memo.TEMPLATES = jinja2.sandbox.ImmutableSandboxedEnvironment(
         loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent.parent / "templates"),

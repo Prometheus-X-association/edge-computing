@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-09T11:43:55'
+  x-creation-date: '2026-09-11T12:19:14'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1191,24 +1191,95 @@ components:
       description: Image pull approach
     PEWStatus:
       properties:
-        worker:
+        ready:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusWorker'
+          - type: boolean
           - type: 'null'
+          title: Ready
+        exposed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Exposed
+        operator:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWStatusOperatorItem'
+            type: array
+          - type: 'null'
+          title: Operator
+        conditions:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PEWStatusCondition'
+            type: array
+          - type: 'null'
+          title: Conditions
       type: object
       title: PEWStatus
       description: Runtime information
-    PEWStatusWorker:
+    PEWStatusCondition:
+      properties:
+        type:
+          $ref: '#/components/schemas/PEWStatusConditionType'
+        status:
+          $ref: '#/components/schemas/PEWStatusConditionStatus'
+        lastTransitionTime:
+          type: string
+          format: date-time
+          title: Lasttransitiontime
+        reason:
+          type: string
+          title: Reason
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - type
+      - status
+      - lastTransitionTime
+      - reason
+      - message
+      title: PEWStatusCondition
+    PEWStatusConditionStatus:
       type: string
       enum:
-      - CREATED
-      - FAILED
-      - Initiated
-      - Running
-      - error
-      - completed
-      title: PEWStatusWorker
-      description: Overall worker state
+      - 'True'
+      - 'False'
+      - Unknown
+      title: PEWStatusConditionStatus
+      description: Condition state
+    PEWStatusConditionType:
+      type: string
+      enum:
+      - Processed
+      - Ready
+      - Exposed
+      - Failed
+      - Completed
+      title: PEWStatusConditionType
+      description: Condition type
+    PEWStatusOperatorItem:
+      properties:
+        handler:
+          type: string
+          title: Handler
+        result:
+          $ref: '#/components/schemas/PEWStatusOperatorItemResult'
+      type: object
+      required:
+      - handler
+      - result
+      title: PEWStatusOperatorItem
+      description: Subprocess result
+    PEWStatusOperatorItemResult:
+      type: string
+      enum:
+      - Success
+      - Failed
+      title: PEWStatusOperatorItemResult
+      description: Subprocess result
     PTXEdgeAPIError:
       properties:
         detail:

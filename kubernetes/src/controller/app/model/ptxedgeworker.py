@@ -686,7 +686,6 @@ class PEWStatusConditionType(StrEnum):
     Condition type
     """
 
-    CREATED = "Created"
     PROCESSED = "Processed"
     READY = "Ready"
     EXPOSED = "Exposed"
