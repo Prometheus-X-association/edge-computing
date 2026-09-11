@@ -30,12 +30,14 @@ class WorkerNotifier:
     class EventType(enum.StrEnum):
         READINESS = enum.auto()
         EXPOSED = enum.auto()
-        COMPLETED = enum.auto()
+        SUCCEEDED = enum.auto()
+        FAILED = enum.auto()
         RESULTED = enum.auto()
 
     readiness: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
     exposed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
-    completed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    succeeded: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    failed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
     #
     resulted: asyncio.Queue = dataclasses.field(default_factory=asyncio.Queue)
 

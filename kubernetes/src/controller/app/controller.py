@@ -18,7 +18,7 @@ import typing
 
 import kopf
 
-from model.condition import patch_processed, patch_ready, patch_exposed, patch_resulted, patch_completed
+from model.condition import patch_processed, patch_ready, patch_exposed, patch_resulted, patch_succeeded, patch_failed
 from model.notifier import WorkerNotifier, PatchingRequestInterrupt, WorkerHandlingState
 from model.ptxedgeworker import PEW
 from resources.loader import ResourceType, load_and_create
@@ -153,15 +153,22 @@ async def pew_manager(name: str,
                         logger.info(f"[DAEMON] Updating exposed={memo.exposed} status...")
                         patch.fns.append(functools.partial(patch_exposed, value=memo.exposed))
                         notifier.exposed.clear()
-                    case WorkerNotifier.EventType.COMPLETED:
-                        memo.completed = not memo.get('completed')
-                        logger.info(f"[DAEMON] Updating completed={memo.completed} status...")
-                        patch.fns.append(functools.partial(patch_completed, value=memo.completed))
-                        notifier.completed.clear()
+                    case WorkerNotifier.EventType.SUCCEEDED:
+                        memo.succeeded = not memo.get('succeeded')
+                        logger.info(f"[DAEMON] Updating succeeded={memo.succeeded} status...")
+                        patch.fns.append(functools.partial(patch_succeeded, value=memo.succeeded))
+                        notifier.succeeded.clear()
+                    case WorkerNotifier.EventType.FAILED:
+                        memo.failed = not memo.get('failed')
+                        logger.info(f"[DAEMON] Updating failed={memo.failed} status...")
+                        patch.fns.append(functools.partial(patch_failed, value=memo.failed))
+                        notifier.failed.clear()
                     case WorkerNotifier.EventType.RESULTED:
                         result = task.result()
                         logger.info(f"[DAEMON] Updating result={result} status...")
                         patch.fns.append(functools.partial(patch_resulted, result=result))
+                    case _:
+                        raise kopf.PermanentError("Unknown event type!")
             raise PatchingRequestInterrupt
         except asyncio.CancelledError:
             for t in tasks:
@@ -233,7 +240,8 @@ async def watch_jobs(event: kopf.RawEvent,
     active = int(event['object']['status'].get('active', 0))
     ready = int(event['object']['status'].get('ready', 0))
     succeeded = int(event['object']['status'].get('succeeded', 0))
-    logger.info(f"[EVENT] Job {event['type']} - {active=}, {ready=}, {succeeded=}")
+    failed = int(event['object']['status'].get('failed', 0))
+    logger.info(f"[EVENT] Job {event['type']} - {active=}, {ready=}, {succeeded=}, {failed=}")
     if (notifier := next(iter(pew_index[parent]), None)) is None:
         return  # Skip due to unintended state
     if active and ready:
@@ -241,8 +249,11 @@ async def watch_jobs(event: kopf.RawEvent,
         notifier.readiness.set()
     elif not (active or ready):
         if bool(succeeded):
-            logger.info("[EVENT] Job is completed! Notify daemon...")
-            notifier.completed.set()
+            logger.info("[EVENT] Job is completed successfully! Notify daemon...")
+            notifier.succeeded.set()
+        elif bool(failed):
+            logger.info("[EVENT] Job is failed! Notify daemon...")
+            notifier.failed.set()
         else:
             logger.info("[EVENT] Job is inactive! Notify daemon...")
             notifier.readiness.set()

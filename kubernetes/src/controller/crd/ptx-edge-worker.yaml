@@ -485,9 +485,12 @@ spec:
                 exposed:
                   type: boolean
                   description: "Public interfaces are exposed"
-                completed:
+                succeeded:
                   type: boolean
-                  description: "Worker is finished running."
+                  description: "Worker is completed successfully"
+                failed:
+                  type: boolean
+                  description: "Worker is failed"
                 operator:
                   type: object
                   description: "State of operator subprocesses"
@@ -528,7 +531,7 @@ spec:
                       type:
                         type: string
                         description: "Condition type"
-                        enum: [ Processed, Ready, Exposed, Failed, Completed ]
+                        enum: [ Processed, Ready, Exposed, Succeeded, Failed ]
                       status:
                         type: string
                         description: "Condition state"

@@ -643,9 +643,13 @@
                 "type": "boolean",
                 "description": "Public interfaces are exposed"
               },
-              "completed": {
+              "succeeded": {
                 "type": "boolean",
-                "description": "Worker is finished running."
+                "description": "Worker is completed successfully"
+              },
+              "failed": {
+                "type": "boolean",
+                "description": "Worker is failed"
               },
               "operator": {
                 "type": "object",
@@ -704,6 +708,7 @@
               },
               "conditions": {
                 "type": "array",
+                "description": "Registered conditions",
                 "items": {
                   "type": "object",
                   "required": [
@@ -721,8 +726,8 @@
                         "Processed",
                         "Ready",
                         "Exposed",
-                        "Failed",
-                        "Completed"
+                        "Succeeded",
+                        "Failed"
                       ]
                     },
                     "status": {

@@ -684,8 +684,8 @@ class PEWStatusConditionType(StrEnum):
     PROCESSED = "Processed"
     READY = "Ready"
     EXPOSED = "Exposed"
+    SUCCEEDED = "Succeeded"
     FAILED = "Failed"
-    COMPLETED = "Completed"
 
 
 class PEWStatusConditionStatus(StrEnum):
@@ -734,15 +734,22 @@ class PEWStatus(BaseModel):
     """
     Public interfaces are exposed
     """
-    completed: bool | None = None
+    succeeded: bool | None = None
     """
-    Worker is finished running.
+    Worker is completed successfully
+    """
+    failed: bool | None = None
+    """
+    Worker is failed
     """
     operator: PEWStatusOperator | None = None
     """
     State of operator subprocesses
     """
     conditions: list[PEWStatusCondition] | None = None
+    """
+    Registered conditions
+    """
 
 
 class PEW(BaseModel):

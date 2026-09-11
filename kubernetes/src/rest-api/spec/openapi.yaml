@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-11T15:21:54'
+  x-creation-date: '2026-09-11T21:04:11'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1201,6 +1201,11 @@ components:
           - type: boolean
           - type: 'null'
           title: Exposed
+        completed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Completed
         operator:
           anyOf:
           - $ref: '#/components/schemas/PEWStatusOperator'
@@ -1253,8 +1258,8 @@ components:
       - Processed
       - Ready
       - Exposed
+      - Succeeded
       - Failed
-      - Completed
       title: PEWStatusConditionType
       description: Condition type
     PEWStatusOperator:

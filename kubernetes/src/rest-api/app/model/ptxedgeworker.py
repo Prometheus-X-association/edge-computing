@@ -2,9 +2,10 @@
 #   filename:  ptxedgeworker.json
 #   version:   0.77.0
 
-from typing import Any, ClassVar
-from pydantic import field_serializer
+from enum import StrEnum
 from typing import Annotated
+from typing import Any, ClassVar
+
 from pydantic import (
     AwareDatetime,
     BaseModel as _BaseModel,
@@ -13,7 +14,7 @@ from pydantic import (
     RootModel,
     SecretStr,
 )
-from enum import StrEnum
+from pydantic import field_serializer
 
 
 class BaseModel(_BaseModel):
@@ -684,8 +685,8 @@ class PEWStatusConditionType(StrEnum):
     PROCESSED = "Processed"
     READY = "Ready"
     EXPOSED = "Exposed"
+    SUCCEEDED = "Succeeded"
     FAILED = "Failed"
-    COMPLETED = "Completed"
 
 
 class PEWStatusConditionStatus(StrEnum):
@@ -728,17 +729,24 @@ class PEWStatus(BaseModel):
 
     ready: bool | None = None
     """
-    Whether worker is deployed successfully or not
+    Worker is deployed successfully and running
     """
     exposed: bool | None = None
     """
-    Public interfaces are available
+    Public interfaces are exposed
+    """
+    completed: bool | None = None
+    """
+    Worker is finished running.
     """
     operator: PEWStatusOperator | None = None
     """
     State of operator subprocesses
     """
     conditions: list[PEWStatusCondition] | None = None
+    """
+    Registered conditions
+    """
 
 
 class PEW(BaseModel):

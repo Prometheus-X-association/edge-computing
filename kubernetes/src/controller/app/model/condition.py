@@ -66,14 +66,26 @@ def patch_exposed(body: kopf.RawBody, /, *, value: bool = True) -> None:
                     ))
 
 
-def patch_completed(body: kopf.RawBody, /, *, value: bool = True) -> None:
-    body.setdefault("status", {})["completed"] = value
+def patch_succeeded(body: kopf.RawBody, /, *, value: bool = True) -> None:
+    body.setdefault("status", {})["succeeded"] = value
     patch_condition(body,
                     PEWStatusCondition(
-                        type=PEWStatusConditionType.COMPLETED,
-                        status=PEWStatusConditionStatus.TRUE if value else PEWStatusConditionStatus.FALSE,
+                        type=PEWStatusConditionType.SUCCEEDED,
+                        status=PEWStatusConditionStatus.TRUE,
                         lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
-                        reason=f"WorkersCompletedWith{'Success' if value else 'Failure'}",
+                        reason=f"WorkersCompletedWithSuccess",
+                        message="Worker is stopped running."
+                    ))
+
+
+def patch_failed(body: kopf.RawBody, /, *, value: bool = True) -> None:
+    body.setdefault("status", {})["failed"] = value
+    patch_condition(body,
+                    PEWStatusCondition(
+                        type=PEWStatusConditionType.FAILED,
+                        status=PEWStatusConditionStatus.TRUE,
+                        lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
+                        reason=f"WorkersCompletedWithFailure",
                         message="Worker is stopped running."
                     ))
 
