@@ -64,7 +64,7 @@ def patch_handler_status(memo: kopf.Memo,
     memo.setdefault("operator", PEWStatusOperator())
     setattr(memo.operator,
             handler.value,
-            PEWStatusOperatorConfig.FAILED if failed else PEWStatusOperatorConfig.SUCCESS)
+            PEWStatusOperatorConfig.FAILED if failed else PEWStatusOperatorConfig.FINISHED)
     patch.status['operator'] = memo.operator.model_dump(mode="json")
 
 

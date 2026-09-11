@@ -657,8 +657,31 @@ class PEWSpec(BaseModel):
     """
 
 
+class PEWStatusWorker(BaseModel):
+    """
+    Worker states
+    """
+
+    ready: bool | None = None
+    """
+    Worker is deployed successfully and running
+    """
+    exposed: bool | None = None
+    """
+    Public interfaces are exposed
+    """
+    succeeded: bool | None = None
+    """
+    Worker is completed successfully
+    """
+    failed: bool | None = None
+    """
+    Worker is failed
+    """
+
+
 class PEWStatusOperatorConfig(StrEnum):
-    SUCCESS = "Success"
+    FINISHED = "Finished"
     FAILED = "Failed"
 
 
@@ -726,21 +749,9 @@ class PEWStatus(BaseModel):
     Runtime information
     """
 
-    ready: bool | None = None
+    worker: PEWStatusWorker | None = None
     """
-    Worker is deployed successfully and running
-    """
-    exposed: bool | None = None
-    """
-    Public interfaces are exposed
-    """
-    succeeded: bool | None = None
-    """
-    Worker is completed successfully
-    """
-    failed: bool | None = None
-    """
-    Worker is failed
+    Worker states
     """
     operator: PEWStatusOperator | None = None
     """

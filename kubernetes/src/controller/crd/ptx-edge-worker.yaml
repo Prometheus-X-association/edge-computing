@@ -479,43 +479,47 @@ spec:
               type: object
               description: "Runtime information"
               properties:
-                ready:
-                  type: boolean
-                  description: "Worker is deployed successfully and running"
-                exposed:
-                  type: boolean
-                  description: "Public interfaces are exposed"
-                succeeded:
-                  type: boolean
-                  description: "Worker is completed successfully"
-                failed:
-                  type: boolean
-                  description: "Worker is failed"
+                worker:
+                  type: object
+                  description: "Worker states"
+                  properties:
+                    ready:
+                      type: boolean
+                      description: "Worker is deployed successfully and running"
+                    exposed:
+                      type: boolean
+                      description: "Public interfaces are exposed"
+                    succeeded:
+                      type: boolean
+                      description: "Worker is completed successfully"
+                    failed:
+                      type: boolean
+                      description: "Worker is failed"
                 operator:
                   type: object
                   description: "State of operator subprocesses"
                   properties:
                     config:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     builder:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     service:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     middleware:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     ingress:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     deployment:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                     job:
                       type: string
-                      enum: [ Success, Failed ]
+                      enum: [ Finished, Failed ]
                 conditions:
                   type: array
                   description: "Registered conditions"
@@ -550,8 +554,8 @@ spec:
         status: { }
       selectableFields:
         - jsonPath: .spec.service.enabled
-        - jsonPath: .status.ready
-        - jsonPath: .status.exposed
+        - jsonPath: .status.worker.ready
+        - jsonPath: .status.worker.exposed
       additionalPrinterColumns:
         - name: Datasource
           type: string
@@ -581,7 +585,7 @@ spec:
         - name: Ready
           type: string
           description: "Worker state"
-          jsonPath: .status.ready
+          jsonPath: .status.worker.ready
           priority: 0
         - name: Age
           type: date

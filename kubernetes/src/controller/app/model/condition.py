@@ -43,7 +43,7 @@ def patch_processed(body: kopf.RawBody, /, *, value: bool = True) -> None:
 
 
 def patch_ready(body: kopf.RawBody, /, *, value: bool = True) -> None:
-    body.setdefault("status", {})["ready"] = value
+    body.setdefault("status", {}).setdefault("worker", {})["ready"] = value
     patch_condition(body,
                     PEWStatusCondition(
                         type=PEWStatusConditionType.READY,
@@ -55,7 +55,7 @@ def patch_ready(body: kopf.RawBody, /, *, value: bool = True) -> None:
 
 
 def patch_exposed(body: kopf.RawBody, /, *, value: bool = True) -> None:
-    body.setdefault("status", {})["exposed"] = value
+    body.setdefault("status", {}).setdefault("worker", {})["exposed"] = value
     patch_condition(body,
                     PEWStatusCondition(
                         type=PEWStatusConditionType.EXPOSED,
@@ -67,7 +67,7 @@ def patch_exposed(body: kopf.RawBody, /, *, value: bool = True) -> None:
 
 
 def patch_succeeded(body: kopf.RawBody, /, *, value: bool = True) -> None:
-    body.setdefault("status", {})["succeeded"] = value
+    body.setdefault("status", {}).setdefault("worker", {})["succeeded"] = value
     patch_condition(body,
                     PEWStatusCondition(
                         type=PEWStatusConditionType.SUCCEEDED,
@@ -79,7 +79,7 @@ def patch_succeeded(body: kopf.RawBody, /, *, value: bool = True) -> None:
 
 
 def patch_failed(body: kopf.RawBody, /, *, value: bool = True) -> None:
-    body.setdefault("status", {})["failed"] = value
+    body.setdefault("status", {}).setdefault("worker", {})["failed"] = value
     patch_condition(body,
                     PEWStatusCondition(
                         type=PEWStatusConditionType.FAILED,

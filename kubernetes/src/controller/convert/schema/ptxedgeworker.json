@@ -635,21 +635,27 @@
             "type": "object",
             "description": "Runtime information",
             "properties": {
-              "ready": {
-                "type": "boolean",
-                "description": "Worker is deployed successfully and running"
-              },
-              "exposed": {
-                "type": "boolean",
-                "description": "Public interfaces are exposed"
-              },
-              "succeeded": {
-                "type": "boolean",
-                "description": "Worker is completed successfully"
-              },
-              "failed": {
-                "type": "boolean",
-                "description": "Worker is failed"
+              "worker": {
+                "type": "object",
+                "description": "Worker states",
+                "properties": {
+                  "ready": {
+                    "type": "boolean",
+                    "description": "Worker is deployed successfully and running"
+                  },
+                  "exposed": {
+                    "type": "boolean",
+                    "description": "Public interfaces are exposed"
+                  },
+                  "succeeded": {
+                    "type": "boolean",
+                    "description": "Worker is completed successfully"
+                  },
+                  "failed": {
+                    "type": "boolean",
+                    "description": "Worker is failed"
+                  }
+                }
               },
               "operator": {
                 "type": "object",
@@ -658,49 +664,49 @@
                   "config": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "builder": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "service": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "middleware": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "ingress": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "deployment": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   },
                   "job": {
                     "type": "string",
                     "enum": [
-                      "Success",
+                      "Finished",
                       "Failed"
                     ]
                   }
