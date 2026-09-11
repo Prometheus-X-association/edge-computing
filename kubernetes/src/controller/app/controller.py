@@ -18,7 +18,7 @@ import typing
 
 import kopf
 
-from model.condition import patch_processed, patch_ready, patch_exposed
+from model.condition import patch_processed, patch_ready, patch_exposed, patch_resulted, patch_completed
 from model.notifier import WorkerNotifier, PatchingRequestInterrupt, WorkerHandlingState
 from model.ptxedgeworker import PEW
 from resources.loader import ResourceType, load_and_create
@@ -132,7 +132,7 @@ async def pew_manager(name: str,
     if (notifier := next(iter(pew_index[name]), None)) is None:
         raise kopf.TemporaryError(f"[DAEMON] State notifier is missing from index!", delay=3)
     while not stopped:
-        tasks = {asyncio.create_task(notifier.get(et).wait(), name=et) for et in WorkerNotifier.EventType}
+        tasks = set(notifier.generate_tasks())
         try:
             logger.info("[DAEMON] Waiting for notifications...")
             done, pending = await asyncio.wait(tasks,
@@ -151,8 +151,17 @@ async def pew_manager(name: str,
                     case WorkerNotifier.EventType.EXPOSED:
                         memo.exposed = not memo.get('exposed')
                         logger.info(f"[DAEMON] Updating exposed={memo.exposed} status...")
-                        patch.fns.append(patch_exposed)
+                        patch.fns.append(functools.partial(patch_exposed, value=memo.exposed))
                         notifier.exposed.clear()
+                    case WorkerNotifier.EventType.COMPLETED:
+                        memo.completed = not memo.get('completed')
+                        logger.info(f"[DAEMON] Updating completed={memo.completed} status...")
+                        patch.fns.append(functools.partial(patch_completed, value=memo.completed))
+                        notifier.completed.clear()
+                    case WorkerNotifier.EventType.RESULTED:
+                        result = task.result()
+                        logger.info(f"[DAEMON] Updating result={result} status...")
+                        patch.fns.append(functools.partial(patch_resulted, result=result))
             raise PatchingRequestInterrupt
         except asyncio.CancelledError:
             for t in tasks:
@@ -165,17 +174,13 @@ async def pew_manager(name: str,
 
 @kopf.on.event('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
                labels={"app.kubernetes.io/component": "worker"})
-async def watch_deployment(event: kopf.RawEvent,
-                           memo: kopf.Memo,
-                           pew_index: kopf.Index[str, WorkerNotifier],
-                           logger: kopf.Logger,
-                           **_: typing.Any) -> None:
-    progressing = next((con['status'] for con in event['object']['status'].get('conditions', [])
-                        if con['type'] == 'Progressing'), None)
-    available = next((con['status'] for con in event['object']['status'].get('conditions', [])
-                      if con['type'] == 'Available'), None)
-    ready = int(event['object']['status'].get('readyReplicas', 0))
-    logger.info(f"[EVENT] Deployment {event['type']} - {progressing=}, {available=}, {ready=}")
+async def watch_deployments(event: kopf.RawEvent,
+                            memo: kopf.Memo,
+                            pew_index: kopf.Index[str, WorkerNotifier],
+                            logger: kopf.Logger,
+                            **_: typing.Any) -> None:
+    if event['type'] == 'ADDED':
+        return  # Skip initial state
     # noinspection typed-dict
     parent: str | None = next((owner.get('name') for owner in event['object']["metadata"].get('ownerReferences', [])
                                if owner.get('kind') == PEW.kind), None)
@@ -186,16 +191,60 @@ async def watch_deployment(event: kopf.RawEvent,
             logger.debug(f"[EVENT] Deployment's owner[{parent}] has been already deleted!")
             return
         raise kopf.TemporaryError(f"[EVENT] Deployment's owner[{parent}] is missing from index!", delay=3)
+    ###
+    progressing = next((con['status'] for con in event['object']['status'].get('conditions', [])
+                        if con['type'] == 'Progressing'), None)
+    available = next((con['status'] for con in event['object']['status'].get('conditions', [])
+                      if con['type'] == 'Available'), None)
+    ready = int(event['object']['status'].get('readyReplicas', 0))
+    logger.info(f"[EVENT] Deployment {event['type']} - {progressing=}, {available=}, {ready=}")
+    if (notifier := next(iter(pew_index[parent]), None)) is None:
+        return  # Skip due to unintended state
     if all(map(str2bool, (progressing, available))):
         if (prior := memo.get('ready', 0)) == ready:
             return  # No state change, skip notification
         elif bool(prior) < bool(ready):
-            logger.info("[EVENT] Deployment is ready!")
+            logger.info("[EVENT] Deployment is ready! Notify daemon..")
         elif bool(prior) > bool(ready):
-            logger.warning("[EVENT] Deployment is unavailable!")
+            logger.warning("[EVENT] Deployment is unavailable! Notify daemon..")
         memo.ready = ready
-        if (notifier := next(iter(pew_index[parent]), None)) is not None:
-            logger.debug("[EVENT] Notify daemon...")
+        notifier.readiness.set()
+
+
+@kopf.on.event('batch', 'v1', 'jobs', field="status", value=kopf.PRESENT,
+               labels={"app.kubernetes.io/component": "worker"})
+async def watch_jobs(event: kopf.RawEvent,
+                     pew_index: kopf.Index[str, WorkerNotifier],
+                     logger: kopf.Logger,
+                     **_: typing.Any) -> None:
+    if event['type'] == 'ADDED':
+        return  # Skip initial state
+    # noinspection typed-dict
+    parent: str | None = next((owner.get('name') for owner in event['object']["metadata"].get('ownerReferences', [])
+                               if owner.get('kind') == PEW.kind), None)
+    if parent is None:
+        raise kopf.PermanentError("[EVENT] Owner reference is missing from Deployment!")
+    elif parent not in pew_index:
+        if event['type'] == 'DELETED':
+            logger.debug(f"[EVENT] Deployment's owner[{parent}] has been already deleted!")
+            return
+        raise kopf.TemporaryError(f"[EVENT] Deployment's owner[{parent}] is missing from index!", delay=3)
+    ###
+    active = int(event['object']['status'].get('active', 0))
+    ready = int(event['object']['status'].get('ready', 0))
+    succeeded = int(event['object']['status'].get('succeeded', 0))
+    logger.info(f"[EVENT] Job {event['type']} - {active=}, {ready=}, {succeeded=}")
+    if (notifier := next(iter(pew_index[parent]), None)) is None:
+        return  # Skip due to unintended state
+    if active and ready:
+        logger.info("[EVENT] Job is ready! Notify daemon...")
+        notifier.readiness.set()
+    elif not (active or ready):
+        if bool(succeeded):
+            logger.info("[EVENT] Job is completed! Notify daemon...")
+            notifier.completed.set()
+        else:
+            logger.info("[EVENT] Job is inactive! Notify daemon...")
             notifier.readiness.set()
 
 

@@ -728,11 +728,15 @@ class PEWStatus(BaseModel):
 
     ready: bool | None = None
     """
-    Whether worker is deployed successfully or not
+    Worker is deployed successfully and running
     """
     exposed: bool | None = None
     """
-    Public interfaces are available
+    Public interfaces are exposed
+    """
+    completed: bool | None = None
+    """
+    Worker is finished running.
     """
     operator: PEWStatusOperator | None = None
     """

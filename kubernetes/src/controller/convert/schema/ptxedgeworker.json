@@ -637,11 +637,15 @@
             "properties": {
               "ready": {
                 "type": "boolean",
-                "description": "Whether worker is deployed successfully or not"
+                "description": "Worker is deployed successfully and running"
               },
               "exposed": {
                 "type": "boolean",
-                "description": "Public interfaces are available"
+                "description": "Public interfaces are exposed"
+              },
+              "completed": {
+                "type": "boolean",
+                "description": "Worker is finished running."
               },
               "operator": {
                 "type": "object",

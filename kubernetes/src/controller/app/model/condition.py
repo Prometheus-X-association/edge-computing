@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import typing
 from datetime import datetime, timezone
 
 import kopf
@@ -49,7 +50,7 @@ def patch_ready(body: kopf.RawBody, /, *, value: bool = True) -> None:
                         status=PEWStatusConditionStatus.TRUE if value else PEWStatusConditionStatus.FALSE,
                         lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
                         reason=f"Workers{'' if value else 'Not'}Available",
-                        message="Worker state is changed."
+                        message="Worker is started running."
                     ))
 
 
@@ -63,3 +64,20 @@ def patch_exposed(body: kopf.RawBody, /, *, value: bool = True) -> None:
                         reason=f"PublicInterfaces{'' if value else 'Not'}Exposed",
                         message="Interface availability is changed."
                     ))
+
+
+def patch_completed(body: kopf.RawBody, /, *, value: bool = True) -> None:
+    body.setdefault("status", {})["completed"] = value
+    patch_condition(body,
+                    PEWStatusCondition(
+                        type=PEWStatusConditionType.COMPLETED,
+                        status=PEWStatusConditionStatus.TRUE if value else PEWStatusConditionStatus.FALSE,
+                        lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
+                        reason=f"WorkersCompletedWith{'Success' if value else 'Failure'}",
+                        message="Worker is stopped running."
+                    ))
+
+
+def patch_resulted(body: kopf.RawBody, /, *, result: typing.Any) -> None:
+    ...
+    # TODO

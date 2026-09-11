@@ -14,6 +14,7 @@
 import asyncio
 import dataclasses
 import enum
+import typing
 
 import kopf
 
@@ -29,16 +30,25 @@ class WorkerNotifier:
     class EventType(enum.StrEnum):
         READINESS = enum.auto()
         EXPOSED = enum.auto()
+        COMPLETED = enum.auto()
+        RESULTED = enum.auto()
 
     readiness: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
     exposed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    completed: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    #
+    resulted: asyncio.Queue = dataclasses.field(default_factory=asyncio.Queue)
 
-    @property
-    def events(self):
-        return self.readiness, self.exposed
-
-    def get(self, _type: EventType) -> asyncio.Event:
+    def get(self, _type: EventType) -> asyncio.Event | asyncio.Queue:
         return getattr(self, _type.value)
+
+    def generate_tasks(self) -> typing.Generator[asyncio.Task]:
+        return (
+            asyncio.create_task(
+                getattr(self, f.name).wait() if f.type is asyncio.Event else getattr(self, f.name).get(),
+                name=self.EventType(f.name))
+            for f in dataclasses.fields(self)
+        )
 
 
 class PatchingRequestInterrupt(kopf.TemporaryError):
