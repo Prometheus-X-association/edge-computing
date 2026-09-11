@@ -127,6 +127,9 @@ async def pew_manager(name: str,
                       patch: kopf.Patch,
                       logger: kopf.Logger,
                       **_: typing.Any) -> None:
+    if bool(patch):
+        logger.debug("[DAEMON] Force-reload to apply remaining patches...")
+        raise PatchingRequestInterrupt
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.MANAGED
     logger.debug(f"[DAEMON] {memo.get("state")}")
     if (notifier := next(iter(pew_index[name]), None)) is None:
