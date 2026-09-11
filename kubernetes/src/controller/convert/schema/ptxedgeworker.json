@@ -644,28 +644,57 @@
                 "description": "Public interfaces are available"
               },
               "operator": {
-                "type": "array",
+                "type": "object",
                 "description": "State of operator subprocesses",
-                "items": {
-                  "type": "object",
-                  "description": "Subprocess result",
-                  "required": [
-                    "handler",
-                    "result"
-                  ],
-                  "properties": {
-                    "handler": {
-                      "type": "string",
-                      "description": "Subprocess ID"
-                    },
-                    "result": {
-                      "type": "string",
-                      "description": "Subprocess result",
-                      "enum": [
-                        "Success",
-                        "Failed"
-                      ]
-                    }
+                "properties": {
+                  "config": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "builder": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "service": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "middleware": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "ingress": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
+                  },
+                  "job": {
+                    "type": "string",
+                    "enum": [
+                      "Success",
+                      "Failed"
+                    ]
                   }
                 }
               },

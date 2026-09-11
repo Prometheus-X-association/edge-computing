@@ -657,28 +657,23 @@ class PEWSpec(BaseModel):
     """
 
 
-class PEWStatusOperatorItemResult(StrEnum):
-    """
-    Subprocess result
-    """
-
+class PEWStatusOperatorConfig(StrEnum):
     SUCCESS = "Success"
     FAILED = "Failed"
 
 
-class PEWStatusOperatorItem(BaseModel):
+class PEWStatusOperator(BaseModel):
     """
-    Subprocess result
+    State of operator subprocesses
     """
 
-    handler: str
-    """
-    Subprocess ID
-    """
-    result: PEWStatusOperatorItemResult
-    """
-    Subprocess result
-    """
+    config: PEWStatusOperatorConfig | None = None
+    builder: PEWStatusOperatorConfig | None = None
+    service: PEWStatusOperatorConfig | None = None
+    middleware: PEWStatusOperatorConfig | None = None
+    ingress: PEWStatusOperatorConfig | None = None
+    deployment: PEWStatusOperatorConfig | None = None
+    job: PEWStatusOperatorConfig | None = None
 
 
 class PEWStatusConditionType(StrEnum):
@@ -739,7 +734,7 @@ class PEWStatus(BaseModel):
     """
     Public interfaces are available
     """
-    operator: list[PEWStatusOperatorItem] | None = None
+    operator: PEWStatusOperator | None = None
     """
     State of operator subprocesses
     """

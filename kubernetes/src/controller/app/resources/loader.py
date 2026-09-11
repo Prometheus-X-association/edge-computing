@@ -20,7 +20,7 @@ import yaml
 from asyncer import asyncify
 from kubernetes.aio import client
 
-from model.ptxedgeworker import PEW, PEWStatusOperatorItem, PEWStatusOperatorItemResult
+from model.ptxedgeworker import PEW, PEWStatusOperatorConfig, PEWStatusOperator
 from utils.helper import sanitize_model, convert_k8s_api_error
 
 
@@ -57,6 +57,17 @@ async def render_template(_type: ResourceType,
     return body
 
 
+def patch_handler_status(memo: kopf.Memo,
+                         patch: kopf.Patch,
+                         handler: ResourceType,
+                         failed: bool = False) -> None:
+    memo.setdefault("operator", PEWStatusOperator())
+    setattr(memo.operator,
+            handler.value,
+            PEWStatusOperatorConfig.FAILED if failed else PEWStatusOperatorConfig.SUCCESS)
+    patch.status['operator'] = memo.operator.model_dump(mode="json")
+
+
 ########################################################################################################################
 
 async def create_worker_configuration(pew: PEW,
@@ -90,17 +101,15 @@ async def create_worker_configuration(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=ResourceType.CONFIG, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=ResourceType.CONFIG, failed=True)
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.CONFIG,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.CONFIG)
     ###
     logger.debug("-" * 100)
 
@@ -134,17 +143,15 @@ async def create_worker_deployment(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=ResourceType.DEPLOYMENT, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=ResourceType.DEPLOYMENT, failed=True)
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.DEPLOYMENT,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.DEPLOYMENT)
     ###
     logger.debug("-" * 100)
 
@@ -179,17 +186,15 @@ async def create_worker_job(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=ResourceType.JOB, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=ResourceType.JOB, failed=True)
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.JOB,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.JOB)
     ###
     logger.debug("-" * 100)
 
@@ -199,9 +204,10 @@ async def _create_service(pew: PEW,
                           *,
                           name: str,
                           namespace: str,
-                          forced_name: bool = True,
+                          memo: kopf.Memo,
+                          patch: kopf.Patch,
                           logger: kopf.Logger,
-                          memo: kopf.Memo) -> None:
+                          forced_name: bool = True) -> None:
     body = await render_template(_type,
                                  pew=pew,
                                  name=name,
@@ -222,10 +228,12 @@ async def _create_service(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=_type, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=_type, failed=True)
         raise kopf.TemporaryError(str(ex)) from ex
 
 
@@ -244,15 +252,11 @@ async def create_builder_service(pew: PEW,
                           forced_name=False,
                           name=name,
                           namespace=namespace,
-                          logger=logger,
-                          memo=memo)
+                          memo=memo,
+                          patch=patch,
+                          logger=logger)
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.BUILDER,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
-    ###
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.BUILDER)
     logger.debug("-" * 100)
 
 
@@ -271,14 +275,11 @@ async def create_worker_service(pew: PEW,
                           forced_name=True,
                           name=name,
                           namespace=namespace,
-                          logger=logger,
-                          memo=memo)
+                          patch=patch,
+                          memo=memo,
+                          logger=logger)
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.SERVICE,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.SERVICE)
     ###
     logger.debug("-" * 100)
 
@@ -316,17 +317,15 @@ async def create_middleware(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=ResourceType.MIDDLEWARE, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.get('kind')}/{obj.get('metadata', {}).get('name')}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=ResourceType.MIDDLEWARE, failed=True)
         raise kopf.TemporaryError(str(ex)) from ex
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.MIDDLEWARE,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.MIDDLEWARE)
     ###
     logger.debug("-" * 100)
 
@@ -361,17 +360,15 @@ async def create_ingress(pew: PEW,
             status = http.HTTPStatus(status)
             logger.debug(f"Received response: HTTP/{status} - {status.name}")
             if not status.is_success:
+                patch_handler_status(memo=memo, patch=patch, handler=ResourceType.INGRESS, failed=True)
                 raise kopf.TemporaryError(f"Kube API response: {status}")
             logger.info(f"Created resource: {obj.kind}/{obj.metadata.name}")
     except client.ApiException as ex:
         logger.error(convert_k8s_api_error(ex))
+        patch_handler_status(memo=memo, patch=patch, handler=ResourceType.INGRESS, failed=True)
         raise kopf.TemporaryError(ex.reason) from ex
     ###
-    memo.setdefault("operator", []).append(
-        PEWStatusOperatorItem(handler=ResourceType.INGRESS,
-                              result=PEWStatusOperatorItemResult.SUCCESS).model_dump(mode="json")
-    )
-    patch.status['operator'] = memo.operator
+    patch_handler_status(memo=memo, patch=patch, handler=ResourceType.INGRESS)
     ###
     logger.debug("-" * 100)
 

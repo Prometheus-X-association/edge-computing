@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-11T12:19:14'
+  x-creation-date: '2026-09-11T15:21:54'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1203,11 +1203,8 @@ components:
           title: Exposed
         operator:
           anyOf:
-          - items:
-              $ref: '#/components/schemas/PEWStatusOperatorItem'
-            type: array
+          - $ref: '#/components/schemas/PEWStatusOperator'
           - type: 'null'
-          title: Operator
         conditions:
           anyOf:
           - items:
@@ -1260,26 +1257,45 @@ components:
       - Completed
       title: PEWStatusConditionType
       description: Condition type
-    PEWStatusOperatorItem:
+    PEWStatusOperator:
       properties:
-        handler:
-          type: string
-          title: Handler
-        result:
-          $ref: '#/components/schemas/PEWStatusOperatorItemResult'
+        config:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        builder:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        service:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        middleware:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        ingress:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        deployment:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
+        job:
+          anyOf:
+          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - type: 'null'
       type: object
-      required:
-      - handler
-      - result
-      title: PEWStatusOperatorItem
-      description: Subprocess result
-    PEWStatusOperatorItemResult:
+      title: PEWStatusOperator
+      description: State of operator subprocesses
+    PEWStatusOperatorConfig:
       type: string
       enum:
       - Success
       - Failed
-      title: PEWStatusOperatorItemResult
-      description: Subprocess result
+      title: PEWStatusOperatorConfig
     PTXEdgeAPIError:
       properties:
         detail:

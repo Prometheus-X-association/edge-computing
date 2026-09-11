@@ -20,7 +20,7 @@ import kopf
 
 from model.condition import patch_processed, patch_ready, patch_exposed
 from model.notifier import WorkerNotifier, PatchingRequestInterrupt, WorkerHandlingState
-from model.ptxedgeworker import PEW, PEWSpecServiceInterface
+from model.ptxedgeworker import PEW
 from resources.loader import ResourceType, load_and_create
 from utils.config import load_k8s_config, load_operator_config, load_templates
 from utils.helper import str2bool
@@ -75,7 +75,6 @@ async def create_ptxedgeworker(body: kopf.Body,
                 load_and_create(ResourceType.SERVICE),
                 pew=memo.model)
             if public_port := next(filter(lambda i: i.public, memo.model.spec.service.interfaces), None):
-                public_port: PEWSpecServiceInterface
                 if public_port.stripped:
                     memo.handlers[ResourceType.MIDDLEWARE] = functools.partial(
                         load_and_create(ResourceType.MIDDLEWARE),
@@ -202,11 +201,11 @@ async def watch_deployment(event: kopf.RawEvent,
 
 @kopf.on.event('networking.k8s.io', 'v1', 'ingresses', field="status", value=kopf.PRESENT,
                labels={"app.kubernetes.io/component": "worker"})
-async def watch_deployment(event: kopf.RawEvent,
-                           memo: kopf.Memo,
-                           pew_index: kopf.Index[str, WorkerNotifier],
-                           logger: kopf.Logger,
-                           **_: typing.Any) -> None:
+async def watch_ingresses(event: kopf.RawEvent,
+                          memo: kopf.Memo,
+                          pew_index: kopf.Index[str, WorkerNotifier],
+                          logger: kopf.Logger,
+                          **_: typing.Any) -> None:
     ingress = event['object']['status'].get('loadBalancer', {}).get('ingress', [])
     logger.info(f"[EVENT] Ingress {event['type']} - {ingress=}")
     # noinspection typed-dict
