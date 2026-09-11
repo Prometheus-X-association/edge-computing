@@ -29,10 +29,12 @@ from utils.helper import str2bool
 
 @kopf.on.startup(errors=kopf.ErrorsMode.PERMANENT)
 async def setup(settings: kopf.OperatorSettings, memo: kopf.Memo, logger: kopf.Logger,
-                **_: typing.Any):
-    await load_k8s_config(logger=logger)
-    await load_operator_config(settings=settings, memo=memo, logger=logger)
-    await load_templates(logger=logger, memo=memo)
+                **_: typing.Any) -> None:
+    await asyncio.gather(
+        load_k8s_config(logger=logger),
+        load_operator_config(settings=settings, memo=memo, logger=logger),
+        load_templates(logger=logger, memo=memo)
+    )
 
 
 ########################################################################################################################
