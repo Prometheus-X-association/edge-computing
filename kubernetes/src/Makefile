@@ -180,8 +180,8 @@ run-api ::
 	@echo
 	@echo ">>> REST-API is exposed on http://localhost:8888/ptx-edge/api/v1/ui/"
 	@#sleep 3
-	#wget -T3 -qS -O- --user=admin --password=admin http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
-	#curl -LSs -u admin:admin "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
+	@#wget -T3 -qS -O- --user=admin --password=admin http://localhost:8888/ptx-edge/api/v1/ui/ >/dev/null
+	@#curl -LSs -u admin:admin "http://localhost:8888/ptx-edge/api/v1/versions" | python3 -m json.tool
 	@echo
 	kubectl apply -n ptx-edge -f ${PROJECT_ROOT}/controller/crd/ptx-edge-worker.yaml
 	sleep 3s

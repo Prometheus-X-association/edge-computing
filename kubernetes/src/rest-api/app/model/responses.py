@@ -33,11 +33,13 @@ class PTXEdgeWorkerResponseStatus(enum.StrEnum):
     TERMINATING = enum.auto()
 
 
+# noinspection argument-list
 PTXEdgeWorkerNameType = typing.Annotated[str, Field(description="Worker name",
                                                     pattern=r"^[a-zA-Z0-9_-]+$",
                                                     example="worker")]
 
 
+# noinspection argument-list
 class PTXEdgeWorkerResponseResource(BaseModel):
     name: PTXEdgeWorkerNameType
     kind: typing.Annotated[str, Field(description="Resource type",
@@ -58,7 +60,7 @@ class PTXEdgeWorkerResponse(BaseModel):
 class PTXEdgeWorkerState(BaseModel):
     """Worker state"""
     name: typing.Annotated[PTXEdgeWorkerNameType, Field(description="Worker name")]
-    state: typing.Annotated[str | None, Field(description="Worker state", default=None)]
+    status: typing.Annotated[dict[str, bool] | None, Field(description="Worker state", default=None)]
 
 
 class PTXEdgeWorkerCollectionResponse(BaseModel):

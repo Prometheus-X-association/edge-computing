@@ -22,7 +22,7 @@ from kubernetes.aio import client
 from app import __version__
 from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
                               PTXEdgeAPIError)
-from app.model.ptxedgeworker import PEW
+from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse,
                                  PTXEdgeWorkerCollectionResponse)
 from app.utils.config import CONFIG
@@ -118,6 +118,8 @@ async def _create_pew_worker(pew: PEW,
         manifest['metadata']['generateName'] = "worker-"
     if labels:
         manifest['metadata']['labels'].update(dict((l.split('=', maxsplit=1) for l in labels if '=' in l)))
+    logger.debug("Remove optional status from model...")
+    pew.status = PEWStatus()
     manifest.update(pew.model_dump(mode="json",
                                    context=dict(expose_secrets=True),
                                    exclude={"status"},
@@ -163,8 +165,36 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        del obj['status']
         logger.debug("=" * 100)
         return obj
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
+
+
+@app.get("/workers/{name}/status",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+         response_model=PEWStatus,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def get_worker_status_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.info(f"Received {PEW.__name__} get request with name: {name}")
+    logger.debug("=" * 100)
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
+                                            name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("status")
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
@@ -250,9 +280,15 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
-        ret = {"workers": [{"name": w['metadata']['name'],
-                            "state": w.get('status', {}).get('worker', {}).get('state')}
-                           for w in obj.get("items", [])]}
+        ret = {
+            "workers": [
+                {
+                    "name": w['metadata']['name'],
+                    "status": w.get('status', {}).get('worker', {})
+                }
+                for w in obj.get("items", [])
+            ]
+        }
         if resource:
             ret.update({"resources": obj.get("items", [])})
         return ret

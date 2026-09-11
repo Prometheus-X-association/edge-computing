@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-11T21:04:11'
+  x-creation-date: '2026-09-11T21:51:55'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -191,6 +191,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Found
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /workers/{name}/status:
+    get:
+      tags:
+      - Customer
+      summary: Get Worker Status By Name
+      description: Obtain deployed PTX-Edge worker with given name
+      operationId: get_worker_status_by_name_workers__name__status_get
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+          title: Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PEWStatus'
         '404':
           content:
             application/json:
@@ -1191,21 +1231,10 @@ components:
       description: Image pull approach
     PEWStatus:
       properties:
-        ready:
+        worker:
           anyOf:
-          - type: boolean
+          - $ref: '#/components/schemas/PEWStatusWorker'
           - type: 'null'
-          title: Ready
-        exposed:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Exposed
-        completed:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Completed
         operator:
           anyOf:
           - $ref: '#/components/schemas/PEWStatusOperator'
@@ -1298,9 +1327,34 @@ components:
     PEWStatusOperatorConfig:
       type: string
       enum:
-      - Success
+      - Finished
       - Failed
       title: PEWStatusOperatorConfig
+    PEWStatusWorker:
+      properties:
+        ready:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Ready
+        exposed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Exposed
+        succeeded:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Succeeded
+        failed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Failed
+      type: object
+      title: PEWStatusWorker
+      description: Worker states
     PTXEdgeAPIError:
       properties:
         detail:
@@ -1425,11 +1479,13 @@ components:
           title: Name
           description: Worker name
           example: worker
-        state:
+        status:
           anyOf:
-          - type: string
+          - additionalProperties:
+              type: boolean
+            type: object
           - type: 'null'
-          title: State
+          title: Status
           description: Worker state
       type: object
       required:
