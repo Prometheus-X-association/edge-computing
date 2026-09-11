@@ -62,7 +62,7 @@ rules:
     verbs: [ create ]
   - apiGroups: [ networking.k8s.io ]
     resources: [ ingresses ]
-    verbs: [ create ]
+    verbs: [ create, list, watch ]
   - apiGroups: [ traefik.io ]
     resources: [ middlewares ]
     verbs: [ create ]

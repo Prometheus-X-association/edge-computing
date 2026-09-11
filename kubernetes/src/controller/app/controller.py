@@ -150,8 +150,8 @@ async def pew_manager(name: str,
                         patch.fns.append(functools.partial(patch_ready, value=memo.ready))
                         notifier.readiness.clear()
                     case WorkerNotifier.EventType.EXPOSED:
-                        logger.info(f"[DAEMON] Updating exposed={memo.exposed} status...")
                         memo.exposed = not memo.get('exposed')
+                        logger.info(f"[DAEMON] Updating exposed={memo.exposed} status...")
                         patch.fns.append(patch_exposed)
                         notifier.exposed.clear()
             raise PatchingRequestInterrupt
@@ -191,10 +191,42 @@ async def watch_deployment(event: kopf.RawEvent,
         if (prior := memo.get('ready', 0)) == ready:
             return  # No state change, skip notification
         elif bool(prior) < bool(ready):
-            logger.info("[EVENT] Deployment got ready!")
+            logger.info("[EVENT] Deployment is ready!")
         elif bool(prior) > bool(ready):
-            logger.warning("[EVENT] Deployment got unavailable!")
+            logger.warning("[EVENT] Deployment is unavailable!")
         memo.ready = ready
         if (notifier := next(iter(pew_index[parent]), None)) is not None:
             logger.debug("[EVENT] Notify daemon...")
             notifier.readiness.set()
+
+
+@kopf.on.event('networking.k8s.io', 'v1', 'ingresses', field="status", value=kopf.PRESENT,
+               labels={"app.kubernetes.io/component": "worker"})
+async def watch_deployment(event: kopf.RawEvent,
+                           memo: kopf.Memo,
+                           pew_index: kopf.Index[str, WorkerNotifier],
+                           logger: kopf.Logger,
+                           **_: typing.Any) -> None:
+    ingress = event['object']['status'].get('loadBalancer', {}).get('ingress', [])
+    logger.info(f"[EVENT] Ingress {event['type']} - {ingress=}")
+    # noinspection typed-dict
+    parent: str | None = next((owner.get('name') for owner in event['object']["metadata"].get('ownerReferences', [])
+                               if owner.get('kind') == PEW.kind), None)
+    if parent is None:
+        raise kopf.PermanentError("[EVENT] Owner reference is missing from Ingress!")
+    elif parent not in pew_index:
+        if event['type'] == 'DELETED':
+            logger.debug(f"[EVENT] Ingress' owner[{parent}] has been already deleted!")
+            return
+        raise kopf.TemporaryError(f"[EVENT] Ingress' owner[{parent}] is missing from index!", delay=3)
+    if ingress:
+        if (prior := len(memo.get('ingress', []))) == (ips := len(ingress)):
+            return  # No state change, skip notification
+        elif bool(prior) < bool(ips):
+            logger.info("[EVENT] Worker is exposed!")
+        elif bool(prior) > bool(ips):
+            logger.warning("[EVENT] Ingress is unavailable!")
+        memo.ingress = ingress
+        if (notifier := next(iter(pew_index[parent]), None)) is not None:
+            logger.debug("[EVENT] Notify daemon...")
+            notifier.exposed.set()
