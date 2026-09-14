@@ -17,16 +17,17 @@ import typing
 
 import fastapi
 import urllib3
-from kubernetes.aio import client
+from kubernetes_asyncio import client
 
 from app import __version__
 from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
                               PTXEdgeAPIError)
 from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse,
-                                 PTXEdgeWorkerCollectionResponse)
+                                 PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerState)
 from app.utils.config import CONFIG
-from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType
+from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType, \
+    watch_for_resource_state, PTXStatusWorkerStates
 from app.utils.logger import logger, sanitize_model
 
 
@@ -183,9 +184,9 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_status_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+async def get_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
     """Obtain deployed PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} get request with name: {name}")
+    logger.info(f"Received {PEW.__name__} status request with name: {name}")
     logger.debug("=" * 100)
     try:
         obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
@@ -196,6 +197,37 @@ async def get_worker_status_by_name(name: typing.Annotated[str, fastapi.Path(pat
         logger.debug("=" * 100)
         return obj.get("status")
     except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
+
+
+@app.get("/workers/{name}/watcher",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+         response_model=PTXEdgeWorkerState,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def watch_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+                              state: typing.Annotated[
+                                  PTXStatusWorkerStates, fastapi.Query()] = PTXStatusWorkerStates.READY,
+                              timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
+    logger.debug("=" * 100)
+    try:
+        _result = await watch_for_resource_state(name=name,
+                                                 state=PTXStatusWorkerStates(state),
+                                                 timeout=timeout)
+        logger.debug(f"Obtained response: {state}:{_result}")
+        logger.debug("=" * 100)
+        return {"name": name,
+                "status": {state: _result if _result is not None else False}}
+    except client.ApiException as ex:
+        logger.exception(ex)
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
         raise_for_network_error(ex)
@@ -247,7 +279,7 @@ async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
-        return {"status": PTXEdgeWorkerResponseStatus.TERMINATING,
+        return {"status": PTXEdgeWorkerResponseStatus.DELETED,
                 "resource": {
                     "name": obj['details']['name'],
                     "group": obj['details']['group'],

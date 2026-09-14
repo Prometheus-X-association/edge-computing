@@ -263,11 +263,6 @@ class K8sLeaderElectorManager(object):
         self._task = functools.partial(task, *args, **kwargs) if task else None
         return self
 
-    def with_augmented_task(self, task: typing.Callable | None = None, *args, **kwargs) -> K8sLeaderElectorManager:
-        """Helper function to define task inline with context manager definition."""
-        self._task = functools.partial(task, self, *args, **kwargs) if task else None
-        return self
-
     def _on_start_handler(self):
         """Execute task and set waited event."""
         self.__leader = True
@@ -312,7 +307,7 @@ class K8sLeaderElectorManager(object):
         """Blocking wait for allocated lock and finished task."""
         if not self._executed.wait(timeout=self._timeout + 1):
             log.error(f"Wait timeout[{self._timeout}] reached!")
-        return self.__result if self._executed.is_set() else None
+        return self.__result if self.executed else None
 
     def release(self, lock) -> bool:
         """Release lease lock."""

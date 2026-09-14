@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-14T16:34:57'
+  x-creation-date: '2026-09-14T22:20:52'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -213,9 +213,9 @@ paths:
     get:
       tags:
       - Customer
-      summary: Get Worker Status By Name
+      summary: Get Worker Status
       description: Obtain deployed PTX-Edge worker with given name
-      operationId: get_worker_status_by_name_workers__name__status_get
+      operationId: get_worker_status_workers__name__status_get
       parameters:
       - name: name
         in: path
@@ -231,6 +231,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PEWStatus'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Found
+        '424':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Failed Dependency
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /workers/{name}/watcher:
+    get:
+      tags:
+      - Customer
+      summary: Watch Worker Status
+      description: Obtain deployed PTX-Edge worker with given name
+      operationId: watch_worker_status_workers__name__watcher_get
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+          title: Name
+      - name: state
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PTXStatusWorkerStates'
+          default: ready
+      - name: timeout
+        in: query
+        required: false
+        schema:
+          type: integer
+          exclusiveMinimum: 0
+          default: 30
+          title: Timeout
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerState'
         '404':
           content:
             application/json:
@@ -1518,7 +1572,9 @@ components:
       enum:
       - created
       - error
-      - terminating
+      - modified
+      - deleted
+      - timeout
       title: PTXEdgeWorkerResponseStatus
     PTXEdgeWorkerState:
       properties:
@@ -1541,6 +1597,14 @@ components:
       - name
       title: PTXEdgeWorkerState
       description: Worker state
+    PTXStatusWorkerStates:
+      type: string
+      enum:
+      - ready
+      - exposed
+      - succeeded
+      - failed
+      title: PTXStatusWorkerStates
     ValidationError:
       properties:
         loc:

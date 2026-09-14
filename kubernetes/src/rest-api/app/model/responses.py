@@ -30,7 +30,9 @@ class VersionsResponse(BaseModel):
 class PTXEdgeWorkerResponseStatus(enum.StrEnum):
     CREATED = enum.auto()
     ERROR = enum.auto()
-    TERMINATING = enum.auto()
+    MODIFIED = enum.auto()
+    DELETED = enum.auto()
+    TIMEOUT = enum.auto()
 
 
 # noinspection argument-list

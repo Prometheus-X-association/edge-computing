@@ -18,10 +18,10 @@ metadata:
 rules:
   - apiGroups: [ dataspace.ptx.org ]
     resources: [ ptxedgeworkers ]
-    verbs: [ get, list, create, delete, deletecollection ]
+    verbs: [ get, list, create, watch, delete, deletecollection ]
   - apiGroups: [ dataspace.ptx.org ]
     resources: [ ptxedgeworkers/status ]
-    verbs: [ list ]
+    verbs: [ get, list, watch ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

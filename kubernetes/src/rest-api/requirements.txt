@@ -4,7 +4,7 @@ starlette
 uvicorn
 uvloop
 urllib3
-kubernetes~=36.0.0
+kubernetes_asyncio~=36.1.0
 pydantic-settings~=2.15.0
 #hypercorn~=0.17.3              # Optional ASGI server
 #granian~=1.6.3                 # Optional ASGI server

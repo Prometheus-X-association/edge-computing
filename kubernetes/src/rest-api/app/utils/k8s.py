@@ -18,10 +18,11 @@ import sys
 import typing
 
 from fastapi import Query
-from kubernetes.aio import client, config
+from kubernetes_asyncio import client, config, watch
 
 from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
+from app.utils.helper import str2bool
 from app.utils.logger import logger
 
 
@@ -54,7 +55,10 @@ async def invoke_k8s_api(method: K8sAPIMethod,
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         logger.info(f"Invoke k8s {api.__class__.__name__}...")
-        params = dict(group=PEW.group, version=PEW.version, namespace=CONFIG.WORKER_NS, plural=PEW.plural)
+        params = dict(group=PEW.group,
+                      version=PEW.version,
+                      namespace=CONFIG.WORKER_NS,
+                      plural=PEW.plural)
         if body:
             params["body"] = body
         if name:
@@ -67,3 +71,47 @@ async def invoke_k8s_api(method: K8sAPIMethod,
         api_caller = getattr(api, f"{method.value}_namespaced_custom_object_with_http_info")
         obj, status, _ = await api_caller(**params)
         return obj, status
+
+
+class K8sEventType(enum.StrEnum):
+    ADDED = "ADDED"
+    MODIFIED = "MODIFIED"
+    DELETED = "DELETED"
+
+
+class PTXStatusWorkerStates(enum.StrEnum):
+    READY = enum.auto()
+    EXPOSED = enum.auto()
+    SUCCEEDED = enum.auto()
+    FAILED = enum.auto()
+
+
+async def watch_for_resource_state(name: str,
+                                   state: PTXStatusWorkerStates = PTXStatusWorkerStates.READY,
+                                   timeout: int = 3) -> bool | None:
+    async with client.ApiClient() as api_client:
+        api = client.CustomObjectsApi(api_client=api_client)
+        params = dict(group=PEW.group,
+                      version=PEW.version,
+                      namespace=CONFIG.WORKER_NS,
+                      plural=PEW.plural)
+        logger.info(f"Obtaining status for resource: {name} in namespace: {CONFIG.WORKER_NS}...")
+        obj = await api.get_namespaced_custom_object_status(name=name, **params)
+        if str2bool(obj.get('status', {}).get("worker", {}).get(state)):
+            return True
+        async with watch.Watch() as watcher:
+            logger.info(f"Watching for resource events: {name} in namespace: {CONFIG.WORKER_NS}...")
+            async for event in watcher.stream(api.list_namespaced_custom_object,
+                                              field_selector=f"metadata.name={name}",
+                                              timeout_seconds=timeout,
+                                              **params):
+                logger.debug(f"Received event: {event['type']}")
+                match event['type']:
+                    case K8sEventType.ADDED | K8sEventType.MODIFIED:
+                        _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
+                        if str2bool(_state_value):
+                            return True
+                    case K8sEventType.DELETED:
+                        return False
+        logger.warning(f"Resource watching of [{name}] timed out...")
+        return None

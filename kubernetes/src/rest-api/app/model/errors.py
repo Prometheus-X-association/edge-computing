@@ -17,7 +17,7 @@ import typing
 
 import fastapi
 import urllib3
-from kubernetes.aio import client
+from kubernetes_asyncio import client
 from pydantic import BaseModel, Field
 
 from app.model.responses import PTXEdgeWorkerResponseStatus

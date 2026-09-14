@@ -25,7 +25,7 @@ dependencies = [
     "uvicorn",
     "uvloop",
     "urllib3",
-    "kubernetes~=36.0.0",
+    "kubernetes_asyncio~=36.1.0",
     "pydantic-settings~=2.15.0"
 ]
 
