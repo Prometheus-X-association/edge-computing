@@ -133,7 +133,7 @@ async def _create_pew_worker(pew: PEW,
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
         grp, ver = obj['apiVersion'].split('/', maxsplit=1)
-        return {"status": PTXEdgeWorkerResponseStatus.INITIALIZED,
+        return {"status": PTXEdgeWorkerResponseStatus.CREATED,
                 "resource": {
                     "name": obj['metadata']['name'],
                     "kind": obj['kind'],

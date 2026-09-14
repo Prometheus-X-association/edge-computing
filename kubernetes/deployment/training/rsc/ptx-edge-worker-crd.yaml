@@ -454,13 +454,21 @@ spec:
                           x-kubernetes-list-type: map
                           x-kubernetes-list-map-keys: [ name ]
                           x-kubernetes-validations:
-                            - rule: 'size(self.filter(i, i.preferred)) <= 1'
+                            - rule: 'size(self.filter(i, has(i.preferred) && i.preferred)) <= 1'
                               message: 'Only one zone can be preferred!'
+                            - rule: 'self.exists(i, has(i.preferred) && i.preferred == true) 
+                                      || self.all(i, has(i.preferred) && i.preferred == false)'
+                              message: 'Either one zone is preferred or all are set to be false explicitly!'
                           items:
                             type: object
                             description: "Privacy zone"
                             required:
                               - name
+                            x-kubernetes-validations:
+                              - rule: "(!has(self.preferred) && self.adherent == false) 
+                                        || (has(self.preferred) && self.preferred >= self.adherent)"
+                                message: "Only preferred zone can be adherent!"
+                                fieldPath: ".adherent"
                             properties:
                               name:
                                 type: string
@@ -471,20 +479,99 @@ spec:
                               preferred:
                                 type: boolean
                                 description: "Prefer zone during scheduling and data transition"
+                                #default: false
+                              adherent:
+                                type: boolean
+                                description: "Demands the closest deployment scenario to the connector"
                                 default: false
             status:
               type: object
               description: "Runtime information"
-              x-kubernetes-preserve-unknown-fields: true
               properties:
-                state:
-                  type: string
-                  description: "Task state from [created | running | finished]"
+                worker:
+                  type: object
+                  description: "Worker states"
+                  properties:
+                    ready:
+                      type: boolean
+                      description: "Worker is deployed successfully and running"
+                    exposed:
+                      type: boolean
+                      description: "Public interfaces are exposed"
+                    succeeded:
+                      type: boolean
+                      description: "Worker is completed successfully"
+                    failed:
+                      type: boolean
+                      description: "Worker is failed"
+                operator:
+                  type: object
+                  description: "State of operator subprocesses"
+                  properties:
+                    config:
+                      type: string
+                      description: "Configuration setup status"
+                      enum: [ Finished, Failed ]
+                    builder:
+                      type: string
+                      description: "Builder setup status"
+                      enum: [ Finished, Failed ]
+                    service:
+                      type: string
+                      description: "Interface setup status"
+                      enum: [ Finished, Failed ]
+                    middleware:
+                      type: string
+                      description: "Interface configuration setup status"
+                      enum: [ Finished, Failed ]
+                    ingress:
+                      type: string
+                      description: "Exposure setup status"
+                      enum: [ Finished, Failed ]
+                    deployment:
+                      type: string
+                      description: "Service worker setup status"
+                      enum: [ Finished, Failed ]
+                    job:
+                      type: string
+                      description: "Task worker setup status"
+                      enum: [ Finished, Failed ]
+                conditions:
+                  type: array
+                  description: "Registered conditions"
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                      - lastTransitionTime
+                      - reason
+                      - message
+                    properties:
+                      type:
+                        type: string
+                        description: "Condition type"
+                        enum: [ Processed, Ready, Exposed, Succeeded, Failed ]
+                      status:
+                        type: string
+                        description: "Condition state"
+                        enum: [ 'True', 'False', 'Unknown' ]
+                      lastTransitionTime:
+                        type: string
+                        description: "Last transition time"
+                        format: date-time
+                      reason:
+                        description: "Condition reason"
+                        type: string
+                      message:
+                        type: string
+                        description: "Condition message"
       subresources:
         status: { }
       selectableFields:
         - jsonPath: .spec.service.enabled
-        - jsonPath: .status.state
+        - jsonPath: .status.worker.ready
+        - jsonPath: .status.worker.exposed
       additionalPrinterColumns:
         - name: Datasource
           type: string
@@ -511,11 +598,11 @@ spec:
           jsonPath: .spec.service.enabled
           description: "Deployed as a service"
           priority: 0
-        - name: State
+        - name: Ready
           type: string
-          description: "Controller state"
-          jsonPath: .status.worker.state
-          priority: 1
+          description: "Worker state"
+          jsonPath: .status.worker.ready
+          priority: 0
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp

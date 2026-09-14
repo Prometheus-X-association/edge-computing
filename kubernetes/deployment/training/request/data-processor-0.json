@@ -69,7 +69,8 @@
         "zones": [
           {
             "name": "${PZ_DATA_0}",
-            "preferred": true
+            "preferred": true,
+            "adherent": true
           }
         ]
       }

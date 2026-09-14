@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-14T16:08:38'
+  x-creation-date: '2026-09-14T16:34:57'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1516,7 +1516,7 @@ components:
     PTXEdgeWorkerResponseStatus:
       type: string
       enum:
-      - initialized
+      - created
       - error
       - terminating
       title: PTXEdgeWorkerResponseStatus

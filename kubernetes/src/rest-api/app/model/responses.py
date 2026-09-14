@@ -28,7 +28,7 @@ class VersionsResponse(BaseModel):
 
 
 class PTXEdgeWorkerResponseStatus(enum.StrEnum):
-    INITIALIZED = enum.auto()
+    CREATED = enum.auto()
     ERROR = enum.auto()
     TERMINATING = enum.auto()
 

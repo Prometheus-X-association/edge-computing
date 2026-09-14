@@ -44,7 +44,7 @@ curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${D
                             -H 'Accept: application/json' \
                             --data-binary @<(echo "${DP0_REQ_BODY}" | jq -c .) | jq
 
-repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP0}"
+repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP0}"
@@ -73,7 +73,7 @@ curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${D
                             -H 'Accept: application/json' \
                             --data-binary @<(echo "${DP1_REQ_BODY}" | jq -c .) | jq
 
-repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${DP1}"
+repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP1}"
@@ -102,7 +102,7 @@ curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${A
                             -H 'Accept: application/json' \
                             --data-binary @<(echo "${AGG_REQ_BODY}" | jq -c .) | jq
 
-repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${AGG}"
+repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${AGG}"
@@ -144,7 +144,7 @@ curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${O
                             -H 'Accept: application/json' \
                             --data-binary @<(echo "${ORCH_REQ_BODY}" | jq -c .) | jq
 
-repeat_wait 5 ${KCTL} wait --for=jsonpath='{.status.worker.state}=Initiated' "ptxedgeworker/${ORCH}"
+repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${ORCH}"

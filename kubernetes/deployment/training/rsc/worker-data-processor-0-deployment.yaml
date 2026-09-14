@@ -138,6 +138,10 @@ spec:
                     operator: In
                     values:
                       - "true"
+                  - key: connector.dataspace.ptx.org/enabled
+                    operator: In
+                    values:
+                      - "true"
       volumes:
         - name: data-dir
           emptyDir:
