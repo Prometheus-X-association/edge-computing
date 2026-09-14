@@ -594,6 +594,10 @@ class PEWSpecDataspacePrivacyZone(BaseModel):
     """
     Prefer zone during scheduling and data transition
     """
+    adherent: bool | None = False
+    """
+    Demands the closest deployment scenario to the connector
+    """
 
 
 class PEWSpecDataspacePrivacy(BaseModel):
@@ -681,6 +685,64 @@ class PEWStatusWorker(BaseModel):
 
 
 class PEWStatusOperatorConfig(StrEnum):
+    """
+    Configuration setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorBuilder(StrEnum):
+    """
+    Builder setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorService(StrEnum):
+    """
+    Interface setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorMiddleware(StrEnum):
+    """
+    Interface configuration setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorIngress(StrEnum):
+    """
+    Exposure setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorDeployment(StrEnum):
+    """
+    Service worker setup status
+    """
+
+    FINISHED = "Finished"
+    FAILED = "Failed"
+
+
+class PEWStatusOperatorJob(StrEnum):
+    """
+    Task worker setup status
+    """
+
     FINISHED = "Finished"
     FAILED = "Failed"
 
@@ -691,12 +753,33 @@ class PEWStatusOperator(BaseModel):
     """
 
     config: PEWStatusOperatorConfig | None = None
-    builder: PEWStatusOperatorConfig | None = None
-    service: PEWStatusOperatorConfig | None = None
-    middleware: PEWStatusOperatorConfig | None = None
-    ingress: PEWStatusOperatorConfig | None = None
-    deployment: PEWStatusOperatorConfig | None = None
-    job: PEWStatusOperatorConfig | None = None
+    """
+    Configuration setup status
+    """
+    builder: PEWStatusOperatorBuilder | None = None
+    """
+    Builder setup status
+    """
+    service: PEWStatusOperatorService | None = None
+    """
+    Interface setup status
+    """
+    middleware: PEWStatusOperatorMiddleware | None = None
+    """
+    Interface configuration setup status
+    """
+    ingress: PEWStatusOperatorIngress | None = None
+    """
+    Exposure setup status
+    """
+    deployment: PEWStatusOperatorDeployment | None = None
+    """
+    Service worker setup status
+    """
+    job: PEWStatusOperatorJob | None = None
+    """
+    Task worker setup status
+    """
 
 
 class PEWStatusConditionType(StrEnum):

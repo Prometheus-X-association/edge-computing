@@ -22,6 +22,6 @@ spec:
       required: true
       scheduler: DEFAULT  # Use k8s default scheduler
       zones:
-        - name: zone-A  # Optional zone for deploying
         - name: zone-B
-          preferred: true # Use this privacy zone's PDC if relevant  (privacy preserving)
+          preferred: true # Use this privacy zone's PDC (privacy preserving)
+          adherent: true  # Demand deploying worker the closest to the zone's PDC (near-data processing)

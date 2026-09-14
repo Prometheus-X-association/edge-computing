@@ -610,6 +610,13 @@
                           "required": [
                             "name"
                           ],
+                          "x-kubernetes-validations": [
+                            {
+                              "rule": "(!has(self.preferred) && self.adherent == false) || self.preferred >= self.adherent",
+                              "message": "Only public port can be restricted!",
+                              "fieldPath": ".restricted"
+                            }
+                          ],
                           "properties": {
                             "name": {
                               "type": "string",
@@ -621,6 +628,11 @@
                             "preferred": {
                               "type": "boolean",
                               "description": "Prefer zone during scheduling and data transition"
+                            },
+                            "adherent": {
+                              "type": "boolean",
+                              "description": "Demands the closest deployment scenario to the connector",
+                              "default": false
                             }
                           }
                         }
@@ -663,6 +675,7 @@
                 "properties": {
                   "config": {
                     "type": "string",
+                    "description": "Configuration setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -670,6 +683,7 @@
                   },
                   "builder": {
                     "type": "string",
+                    "description": "Builder setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -677,6 +691,7 @@
                   },
                   "service": {
                     "type": "string",
+                    "description": "Interface setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -684,6 +699,7 @@
                   },
                   "middleware": {
                     "type": "string",
+                    "description": "Interface configuration setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -691,6 +707,7 @@
                   },
                   "ingress": {
                     "type": "string",
+                    "description": "Exposure setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -698,6 +715,7 @@
                   },
                   "deployment": {
                     "type": "string",
+                    "description": "Service worker setup status",
                     "enum": [
                       "Finished",
                       "Failed"
@@ -705,6 +723,7 @@
                   },
                   "job": {
                     "type": "string",
+                    "description": "Task worker setup status",
                     "enum": [
                       "Finished",
                       "Failed"

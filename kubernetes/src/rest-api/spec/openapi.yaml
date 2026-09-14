@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-11T21:51:55'
+  x-creation-date: '2026-09-14T16:08:38'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -868,6 +868,12 @@ components:
           - type: boolean
           - type: 'null'
           title: Preferred
+        adherent:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Adherent
+          default: false
       type: object
       required:
       - name
@@ -1299,37 +1305,80 @@ components:
           - type: 'null'
         builder:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorBuilder'
           - type: 'null'
         service:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorService'
           - type: 'null'
         middleware:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorMiddleware'
           - type: 'null'
         ingress:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorIngress'
           - type: 'null'
         deployment:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorDeployment'
           - type: 'null'
         job:
           anyOf:
-          - $ref: '#/components/schemas/PEWStatusOperatorConfig'
+          - $ref: '#/components/schemas/PEWStatusOperatorJob'
           - type: 'null'
       type: object
       title: PEWStatusOperator
       description: State of operator subprocesses
+    PEWStatusOperatorBuilder:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorBuilder
+      description: Builder setup status
     PEWStatusOperatorConfig:
       type: string
       enum:
       - Finished
       - Failed
       title: PEWStatusOperatorConfig
+      description: Configuration setup status
+    PEWStatusOperatorDeployment:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorDeployment
+      description: Service worker setup status
+    PEWStatusOperatorIngress:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorIngress
+      description: Exposure setup status
+    PEWStatusOperatorJob:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorJob
+      description: Task worker setup status
+    PEWStatusOperatorMiddleware:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorMiddleware
+      description: Interface configuration setup status
+    PEWStatusOperatorService:
+      type: string
+      enum:
+      - Finished
+      - Failed
+      title: PEWStatusOperatorService
+      description: Interface setup status
     PEWStatusWorker:
       properties:
         ready:

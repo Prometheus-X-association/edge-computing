@@ -228,6 +228,12 @@ affinity:
               operator: In
               values:
                 - "true"
+          {% if zone.adherent %}
+            - key: connector.dataspace.ptx.org/enabled
+              operator: In
+              values:
+                - "true"
+          {% endif %}
         {% endfor %}
 {% endif %}
 {% endif %}
