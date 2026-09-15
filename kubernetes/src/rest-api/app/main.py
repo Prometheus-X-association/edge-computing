@@ -26,6 +26,7 @@ from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse,
                                  PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerState)
 from app.utils.config import CONFIG
+from app.utils.helper import cancel_on_disconnect
 from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType, \
     watch_for_resource_state, PTXStatusWorkerStates
 from app.utils.logger import logger, sanitize_model
@@ -211,7 +212,8 @@ async def get_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def watch_for_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+async def watch_for_worker_status(request: fastapi.Request,
+                                  name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
                                   state: typing.Annotated[
                                       PTXStatusWorkerStates, fastapi.Query(
                                           description="Watched state")] = PTXStatusWorkerStates.READY,
@@ -220,11 +222,13 @@ async def watch_for_worker_status(name: typing.Annotated[str, fastapi.Path(patte
     logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
     logger.debug("=" * 100)
     try:
-        _result = await watch_for_resource_state(name=name,
-                                                 state=PTXStatusWorkerStates(state),
-                                                 timeout=timeout)
-        logger.debug(f"Obtained response: {state}: {_result}")
-        logger.debug("=" * 100)
+        _result = None
+        async with cancel_on_disconnect(request):
+            _result = await watch_for_resource_state(name=name,
+                                                     state=PTXStatusWorkerStates(state),
+                                                     timeout=timeout)
+            logger.debug(f"Obtained response: {state}: {_result}")
+            logger.debug("=" * 100)
         return {"name": name,
                 "status": {state: _result if _result is not None else False}}
     except client.ApiException as ex:

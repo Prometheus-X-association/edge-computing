@@ -11,6 +11,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+from contextlib import asynccontextmanager
+
+import anyio
+import fastapi
+
+logger = logging.getLogger(__name__)
+
 
 def str2bool(s: str | bool | None, *, __true=frozenset(('true', 'yes', 'on', 'y', '1'))) -> bool:
     return str(s).lower() in __true
+
+
+@asynccontextmanager
+async def cancel_on_disconnect(request: fastapi.Request):
+    """
+    Async context manager for async code that needs to be cancelled
+    if client disconnects prematurely.
+    Source: https://jasoncameron.dev/posts/fastapi-cancel-on-disconnect
+    """
+    async with anyio.create_task_group() as tg:
+        async def watch_disconnect():
+            while True:
+                message = await request.receive()
+                if message["type"] == "http.disconnect":
+                    client = f"{request.client.host}:{request.client.port}" if request.client else "-:-"
+                    logger.debug(f'{client} - "{request.method} {request.url.path}" 499 DISCONNECTED')
+                    tg.cancel_scope.cancel()
+                    break
+
+        tg.start_soon(watch_disconnect)
+        try:
+            yield
+        finally:
+            tg.cancel_scope.cancel()

@@ -88,7 +88,7 @@ class PTXStatusWorkerStates(enum.StrEnum):
 
 async def watch_for_resource_state(name: str,
                                    state: PTXStatusWorkerStates = PTXStatusWorkerStates.READY,
-                                   timeout: int = 3) -> bool | None:
+                                   timeout: int = 30) -> bool | None:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         params = dict(group=PEW.group,
@@ -102,18 +102,18 @@ async def watch_for_resource_state(name: str,
         else:
             logger.debug(f"State is missing from worker[{name}]")
         async with watch.Watch() as watcher:
-            logger.info(f"Watching for worker resource events: {name}...")
+            logger.info(f"Watching for resource events: {name}...")
             async for event in watcher.stream(api.list_namespaced_custom_object,
                                               field_selector=f"metadata.name={name}",
                                               timeout_seconds=timeout,
                                               **params):
-                logger.debug(f"Received worker event: {event['type']}")
+                _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
+                logger.debug(f"Received event from worker[{name}]: {event['type']} - {state}: {_state_value}")
                 match event['type']:
                     case K8sEventType.ADDED | K8sEventType.MODIFIED:
-                        _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
                         if str2bool(_state_value):
                             return True
                     case K8sEventType.DELETED:
                         return False
-        logger.warning(f"Watching worker resource[{name}] timed out...")
+        logger.warning(f"Watching worker[{name}] timed out...")
         return None
