@@ -95,17 +95,19 @@ async def watch_for_resource_state(name: str,
                       version=PEW.version,
                       namespace=CONFIG.WORKER_NS,
                       plural=PEW.plural)
-        logger.info(f"Obtaining status for resource: {name} in namespace: {CONFIG.WORKER_NS}...")
+        logger.info(f"Obtaining status for worker: {name}...")
         obj = await api.get_namespaced_custom_object_status(name=name, **params)
         if str2bool(obj.get('status', {}).get("worker", {}).get(state)):
             return True
+        else:
+            logger.debug(f"State is missing from worker[{name}]")
         async with watch.Watch() as watcher:
-            logger.info(f"Watching for resource events: {name} in namespace: {CONFIG.WORKER_NS}...")
+            logger.info(f"Watching for worker resource events: {name}...")
             async for event in watcher.stream(api.list_namespaced_custom_object,
                                               field_selector=f"metadata.name={name}",
                                               timeout_seconds=timeout,
                                               **params):
-                logger.debug(f"Received event: {event['type']}")
+                logger.debug(f"Received worker event: {event['type']}")
                 match event['type']:
                     case K8sEventType.ADDED | K8sEventType.MODIFIED:
                         _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
@@ -113,5 +115,5 @@ async def watch_for_resource_state(name: str,
                             return True
                     case K8sEventType.DELETED:
                         return False
-        logger.warning(f"Resource watching of [{name}] timed out...")
+        logger.warning(f"Watching worker resource[{name}] timed out...")
         return None

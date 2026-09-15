@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-14T22:20:52'
+  x-creation-date: '2026-09-15T10:36:27'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -253,9 +253,9 @@ paths:
     get:
       tags:
       - Customer
-      summary: Watch Worker Status
+      summary: Watch For Worker Status
       description: Obtain deployed PTX-Edge worker with given name
-      operationId: watch_worker_status_workers__name__watcher_get
+      operationId: watch_for_worker_status_workers__name__watcher_get
       parameters:
       - name: name
         in: path
@@ -269,7 +269,9 @@ paths:
         required: false
         schema:
           $ref: '#/components/schemas/PTXStatusWorkerStates'
+          description: Watched state
           default: ready
+        description: Watched state
       - name: timeout
         in: query
         required: false

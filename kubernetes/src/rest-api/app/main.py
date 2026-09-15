@@ -211,10 +211,11 @@ async def get_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def watch_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
-                              state: typing.Annotated[
-                                  PTXStatusWorkerStates, fastapi.Query()] = PTXStatusWorkerStates.READY,
-                              timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
+async def watch_for_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+                                  state: typing.Annotated[
+                                      PTXStatusWorkerStates, fastapi.Query(
+                                          description="Watched state")] = PTXStatusWorkerStates.READY,
+                                  timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
     """Obtain deployed PTX-Edge worker with given name"""
     logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
     logger.debug("=" * 100)
@@ -222,7 +223,7 @@ async def watch_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r
         _result = await watch_for_resource_state(name=name,
                                                  state=PTXStatusWorkerStates(state),
                                                  timeout=timeout)
-        logger.debug(f"Obtained response: {state}:{_result}")
+        logger.debug(f"Obtained response: {state}: {_result}")
         logger.debug("=" * 100)
         return {"name": name,
                 "status": {state: _result if _result is not None else False}}
