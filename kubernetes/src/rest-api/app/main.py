@@ -223,12 +223,12 @@ async def watch_for_worker_status(request: fastapi.Request,
     logger.debug("=" * 100)
     try:
         _result = None
-        async with cancel_on_disconnect(request):
+        async with cancel_on_disconnect(request=request, logger=logger):
             _result = await watch_for_resource_state(name=name,
                                                      state=PTXStatusWorkerStates(state),
                                                      timeout=timeout)
-            logger.debug(f"Obtained response: {state}: {_result}")
-            logger.debug("=" * 100)
+        logger.debug(f"Obtained response: {state}: {_result}")
+        logger.debug("=" * 100)
         return {"name": name,
                 "status": {state: _result if _result is not None else False}}
     except client.ApiException as ex:
