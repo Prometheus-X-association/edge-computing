@@ -100,7 +100,7 @@ async def watch_for_resource_state(name: str,
         if str2bool(obj.get('status', {}).get("worker", {}).get(state)):
             return True
         else:
-            logger.debug(f"State is missing from worker[{name}]")
+            logger.debug(f"State: {state} is missing from worker[{name}]")
         async with watch.Watch() as watcher:
             logger.info(f"Watching for resource events: {name}...")
             async for event in watcher.stream(api.list_namespaced_custom_object,

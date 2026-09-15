@@ -29,11 +29,13 @@ async def cancel_on_disconnect(request: fastapi.Request, logger: logging.Logger 
     """
     async with anyio.create_task_group() as tg:
         async def watch_disconnect():
-            while True:
-                if await request.is_disconnected():
+            while not await request.is_disconnected():
+                message = await request.receive()
+                if message["type"] == "http.disconnect":
                     client = f"{request.client.host}:{request.client.port}" if request.client else "-:-"
                     logger.debug(f'{client} - "{request.method} {request.url.path}" 499 DISCONNECTED')
                     tg.cancel_scope.cancel()
+                    logger.warning(f'Request canceled due to client disconnect!')
                     break
 
         tg.start_soon(watch_disconnect)
