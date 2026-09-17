@@ -24,11 +24,11 @@ from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request,
                               PTXEdgeAPIError)
 from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse,
-                                 PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerState)
+                                 PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerState, PTXEdgeWorkerNameType)
 from app.utils.config import CONFIG
 from app.utils.helper import cancel_on_disconnect
-from app.utils.k8s import setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType, \
-    watch_for_resource_state, PTXStatusWorkerStates
+from app.utils.k8s import (setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType,
+                           watch_for_resource_state, PTXStatusWorkerStates)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -53,6 +53,7 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       root_path=CONFIG.ROOT_PATH,
                       servers=[dict(url=CONFIG.ROOT_PATH,
                                     description="PTX Edge Computing")],
+                      # redirect_slashes=False,
                       openapi_tags=[dict(name="Customer",
                                          description="Customer-facing API (EdgeAPI)",
                                          external_docs=dict(
@@ -73,10 +74,6 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
          tags=["Internal"],
          response_model=VersionsResponse,
          status_code=fastapi.status.HTTP_200_OK)
-@app.head("/version",
-          tags=["Internal"],
-          response_model=VersionsResponse,
-          status_code=fastapi.status.HTTP_200_OK)
 async def get_versions() -> VersionsResponse:
     """Versions of the REST-API component"""
     return VersionsResponse()
@@ -97,8 +94,8 @@ async def health() -> None:
 
 
 async def _create_pew_worker(pew: PEW,
-                             name: str | None = None,
-                             labels: tuple[str] | None = None) -> dict[str, typing.Any] | None:
+                             name: PTXEdgeWorkerNameType | None,
+                             labels: K8sLabelCollectionType = None) -> dict[str, typing.Any] | None:
     """Create PTX Edge Computing worker"""
     logger.info(f"Received {PEW.__name__} create request with name: {name}")
     logger.debug("=" * 100)
@@ -117,6 +114,7 @@ async def _create_pew_worker(pew: PEW,
     if name:
         manifest['metadata']['name'] = manifest['metadata']['labels']['app.kubernetes.io/name'] = name
     else:
+        logger.debug("Setting up auto-generated name for resource!")
         manifest['metadata']['generateName'] = "worker-"
     if labels:
         manifest['metadata']['labels'].update(dict((l.split('=', maxsplit=1) for l in labels if '=' in l)))
@@ -157,7 +155,8 @@ async def _create_pew_worker(pew: PEW,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+async def get_worker_by_name(request: fastapi.Request,
+                             name: PTXEdgeWorkerNameType):
     """Obtain deployed PTX-Edge worker with given name"""
     logger.info(f"Received {PEW.__name__} get request with name: {name}")
     logger.debug("=" * 100)
@@ -168,6 +167,7 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         del obj['status']
+        pprint.pprint(request)
         logger.debug("=" * 100)
         return obj
     except client.ApiException as ex:
@@ -185,7 +185,7 @@ async def get_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+async def get_worker_status(name: PTXEdgeWorkerNameType):
     """Obtain deployed PTX-Edge worker with given name"""
     logger.info(f"Received {PEW.__name__} status request with name: {name}")
     logger.debug("=" * 100)
@@ -213,7 +213,7 @@ async def get_worker_status(name: typing.Annotated[str, fastapi.Path(pattern=r"^
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
 async def watch_for_worker_status(request: fastapi.Request,
-                                  name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+                                  name: PTXEdgeWorkerNameType,
                                   state: typing.Annotated[
                                       PTXStatusWorkerStates, fastapi.Query(
                                           description="Watched state")] = PTXStatusWorkerStates.READY,
@@ -246,10 +246,12 @@ async def watch_for_worker_status(request: fastapi.Request,
              fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
          response_model=PTXEdgeWorkerResponse,
          status_code=fastapi.status.HTTP_201_CREATED)
-async def create_worker_with_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")],
+async def create_worker_with_name(name: PTXEdgeWorkerNameType,
                                   pew: typing.Annotated[PEW, fastapi.Body],
                                   label: K8sLabelCollectionType = None):
     """Create PTX-Edge worker with given name"""
+    if pew.spec.name and pew.spec.name != name:
+        logger.warning(f"Resource defines name: {pew.spec.name} different from <name> parameter: {name}!")
     return await _create_pew_worker(pew=pew, name=name, labels=label)
 
 
@@ -262,8 +264,10 @@ async def create_worker_with_name(name: typing.Annotated[str, fastapi.Path(patte
           status_code=fastapi.status.HTTP_201_CREATED)
 async def create_worker(pew: typing.Annotated[PEW, fastapi.Body],
                         label: K8sLabelCollectionType = None):
-    """Create PTX-Edge worker with autogenerated name"""
-    return await _create_pew_worker(pew=pew, labels=label)
+    """Create PTX-Edge worker with the implicit or an autogenerated name"""
+    if pew.spec.name:
+        logger.info(f"Using resource defined name: {pew.spec.name}")
+    return await _create_pew_worker(pew=pew, name=pew.spec.name, labels=label)
 
 
 @app.delete("/workers/{name}",
@@ -273,7 +277,7 @@ async def create_worker(pew: typing.Annotated[PEW, fastapi.Body],
                 fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
             response_model=PTXEdgeWorkerResponse,
             status_code=fastapi.status.HTTP_200_OK)
-async def delete_worker_by_name(name: typing.Annotated[str, fastapi.Path(pattern=r"^[a-zA-Z0-9_-]+$")]):
+async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
     """Delete PTX-Edge worker with given name"""
     logger.info(f"Received {PEW.__name__} delete request with name: {name}")
     logger.debug("=" * 100)

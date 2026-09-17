@@ -63,7 +63,7 @@ def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
             code = http.HTTPStatus.FAILED_DEPENDENCY
     raise fastapi.HTTPException(status_code=code,
                                 detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
-                                        "error_code": error.get('code'),
+                                        "error_code": error.get('code', http.HTTPStatus.INTERNAL_SERVER_ERROR),
                                         "reason": error['reason'],
                                         "message": error['message'],
                                         "resource": error['details']
@@ -74,6 +74,7 @@ def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError) -> None:
     logger.error(f"Max retries exceeded: {ex}")
     raise fastapi.HTTPException(status_code=http.HTTPStatus.FAILED_DEPENDENCY,
                                 detail={"status": PTXEdgeWorkerResponseStatus.ERROR,
+                                        "error_code": http.HTTPStatus.FAILED_DEPENDENCY,
                                         "reason": f"{ex.__class__.__name__}",
                                         "message": str(ex.reason),
                                         "resource": {

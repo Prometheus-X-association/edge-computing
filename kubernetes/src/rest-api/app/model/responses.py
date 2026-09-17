@@ -36,9 +36,11 @@ class PTXEdgeWorkerResponseStatus(enum.StrEnum):
 
 
 # noinspection argument-list
-PTXEdgeWorkerNameType = typing.Annotated[str, Field(description="Worker name",
-                                                    pattern=r"^[a-zA-Z0-9_-]+$",
-                                                    example="worker")]
+PTXEdgeWorkerNameType = typing.Annotated[str, Field(
+    description="Worker name",
+    pattern=r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+    example="worker")
+]
 
 
 # noinspection argument-list

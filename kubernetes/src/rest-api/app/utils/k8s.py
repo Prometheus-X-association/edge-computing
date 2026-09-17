@@ -44,7 +44,7 @@ class K8sAPIMethod(enum.StrEnum):
 
 
 K8sLabelCollectionType = typing.Annotated[
-    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+)$")]] | None,
+    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
     Query(examples=["tier=worker"])]
 
 
@@ -109,11 +109,14 @@ async def watch_for_resource_state(name: str,
                                               **params):
                 _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
                 logger.debug(f"Received event from worker[{name}]: {event['type']} - {state}: {_state_value}")
-                match event['type']:
+                match PTXStatusWorkerStates(event['type']):
                     case K8sEventType.ADDED | K8sEventType.MODIFIED:
                         if str2bool(_state_value):
                             return True
                     case K8sEventType.DELETED:
+                        return False
+                    case _:
+                        logger.error(f"Unknown event type: {event['type']}!")
                         return False
         logger.warning(f"Watching worker[{name}] timed out...")
         return None
