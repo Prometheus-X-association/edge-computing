@@ -56,6 +56,10 @@ log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" \
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+echo "Watching for <ready> state...."
+curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}/watcher?state=ready&timeout=10" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H 'Accept: application/json' | jq
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
@@ -85,6 +89,10 @@ log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" \
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
+echo "Watching for <ready> state...."
+curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}/watcher?state=ready&timeout=10" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H 'Accept: application/json' | jq
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
@@ -106,6 +114,10 @@ repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${AGG}"
+echo "Watching for <exposed> state...."
+curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}/watcher?state=exposed&timeout=10" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H 'Accept: application/json' | jq
 sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
 
@@ -148,6 +160,10 @@ repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${ORCH}"
+echo "Watching for <exposed> state...."
+curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}/watcher?state=exposed&timeout=10" \
+                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                            -H 'Accept: application/json' | jq
 sleep 1
 ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
 

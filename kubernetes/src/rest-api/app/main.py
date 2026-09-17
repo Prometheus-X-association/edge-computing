@@ -28,7 +28,7 @@ from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerRespo
 from app.utils.config import CONFIG
 from app.utils.helper import cancel_on_disconnect
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType,
-                           watch_for_resource_state, PTXStatusWorkerStates)
+                           watch_for_resource_state, PTXStatusWorkerStates, PEWWatcherTimeout)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -186,6 +186,8 @@ async def watch_for_worker_status(request: fastapi.Request,
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
         raise_for_network_error(ex)
+    except PEWWatcherTimeout:
+        return fastapi.Response(status_code=fastapi.status.HTTP_408_REQUEST_TIMEOUT)
 
 
 ########################################################################################################################

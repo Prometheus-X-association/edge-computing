@@ -86,9 +86,14 @@ class PTXStatusWorkerStates(enum.StrEnum):
     FAILED = enum.auto()
 
 
+class PEWWatcherTimeout(RuntimeError):
+    pass
+
+
 async def watch_for_resource_state(name: str,
                                    state: PTXStatusWorkerStates = PTXStatusWorkerStates.READY,
-                                   timeout: int = 30) -> bool | None:
+                                   timeout: int = 30,
+                                   raise_for_timeout: bool = True) -> bool | None:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         params = dict(group=PEW.group,
@@ -109,7 +114,7 @@ async def watch_for_resource_state(name: str,
                                               **params):
                 _state_value = event['raw_object'].get('status', {}).get("worker", {}).get(state)
                 logger.debug(f"Received event from worker[{name}]: {event['type']} - {state}: {_state_value}")
-                match PTXStatusWorkerStates(event['type']):
+                match K8sEventType(event['type']):
                     case K8sEventType.ADDED | K8sEventType.MODIFIED:
                         if str2bool(_state_value):
                             return True
@@ -119,4 +124,6 @@ async def watch_for_resource_state(name: str,
                         logger.error(f"Unknown event type: {event['type']}!")
                         return False
         logger.warning(f"Watching worker[{name}] timed out...")
+        if raise_for_timeout:
+            raise PEWWatcherTimeout
         return None
