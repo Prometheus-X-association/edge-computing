@@ -140,7 +140,7 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
         raise_for_k8s_error(obj=obj, status=_status)
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         logger.debug("=" * 100)
-        return obj.get("status")
+        return obj.get("status", {})
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
