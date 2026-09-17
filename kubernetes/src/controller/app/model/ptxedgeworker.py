@@ -643,6 +643,18 @@ class PEWSpec(BaseModel):
     Specification of PTX Edge Worker
     """
 
+    name: Annotated[
+        str | None,
+        Field(
+            examples=["worker-123"],
+            pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+        ),
+    ] = None
+    """
+    Unique resource name
+
+    Example: 'worker-123'
+    """
     service: PEWSpecService | None = None
     """
     Initiate worker as a service, not a single-executed task

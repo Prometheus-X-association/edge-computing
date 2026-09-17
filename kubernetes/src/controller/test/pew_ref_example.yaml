@@ -6,6 +6,7 @@ metadata:
   labels:
     env: test
 spec:
+  name: "example"
   service:
     enabled: true
     interfaces:
@@ -92,4 +93,4 @@ spec:
           adherent: true
         - name: zone2
           preferred: true
-#          adherent: false
+          #adherent: false

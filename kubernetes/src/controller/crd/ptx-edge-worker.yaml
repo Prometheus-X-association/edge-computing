@@ -41,6 +41,11 @@ spec:
                   message: "Worker collection method: PTX requires a dataspace contract!"
                   fieldPath: ".dataspace.exchange.worker"
               properties:
+                name:
+                  type: string
+                  description: "Unique resource name"
+                  pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+                  example: "worker-123"
                 service:
                   type: object
                   description: "Initiate worker as a service, not a single-executed task"
