@@ -59,6 +59,7 @@ class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     status: typing.Annotated[PTXEdgeWorkerResponseStatus, Field(description="Worker deployment status")]
     resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource", default=None)]
+    url: typing.Annotated[str, Field(description="Worker access URL")]
 
 
 class PTXEdgeWorkerState(BaseModel):

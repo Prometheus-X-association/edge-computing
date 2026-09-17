@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-17T10:59:35'
+  x-creation-date: '2026-09-17T13:16:59'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1544,9 +1544,14 @@ components:
         resource:
           $ref: '#/components/schemas/PTXEdgeWorkerResponseResource'
           description: Worker resource
+        url:
+          type: string
+          title: Url
+          description: Worker access URL
       type: object
       required:
       - status
+      - url
       title: PTXEdgeWorkerResponse
       description: Created PTXEdgeWorker status
     PTXEdgeWorkerResponseResource:

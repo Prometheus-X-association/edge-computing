@@ -93,12 +93,117 @@ async def health() -> None:
 ########################################################################################################################
 
 
+@app.get("/workers/{name}",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+         response_model=PEW,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def get_worker_by_name(request: fastapi.Request,
+                             name: PTXEdgeWorkerNameType):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} get request with name: {name}")
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
+                                            name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        del obj['status']
+        logger.debug("=" * 100)
+        return obj
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
+
+
+@app.get("/workers/{name}/status",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+         response_model=PEWStatus,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def get_worker_status(name: PTXEdgeWorkerNameType):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} status request with name: {name}")
+    try:
+        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
+                                            name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        logger.debug("=" * 100)
+        return obj.get("status")
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
+
+
+@app.get("/workers/{name}/watcher",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+         response_model=PTXEdgeWorkerState,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def watch_for_worker_status(request: fastapi.Request,
+                                  name: PTXEdgeWorkerNameType,
+                                  state: typing.Annotated[
+                                      PTXStatusWorkerStates, fastapi.Query(
+                                          description="Watched state")] = PTXStatusWorkerStates.READY,
+                                  timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
+    try:
+        _result = None
+        async with cancel_on_disconnect(request=request, logger=logger):
+            _result = await watch_for_resource_state(name=name,
+                                                     state=PTXStatusWorkerStates(state),
+                                                     timeout=timeout)
+        logger.debug(f"Obtained status: {state}: {_result}")
+        response = {
+            "name": name,
+            "status": {
+                state: _result if _result is not None else False
+            }
+        }
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+        logger.debug("=" * 100)
+        return response
+    except client.ApiException as ex:
+        logger.exception(ex)
+        raise_for_failed_k8s_request(ex)
+    except urllib3.exceptions.MaxRetryError as ex:
+        raise_for_network_error(ex)
+
+
+########################################################################################################################
+
+def create_resource_url(request: fastapi.Request,
+                        name: str) -> str:
+    if not (proto := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-proto'), b"")):
+        proto = request.scope['scheme']
+    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
+        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
+    return f"{proto.decode()}://{base.decode()}{CONFIG.ROOT_PATH}/workers/{name}"
+
+
 async def _create_pew_worker(pew: PEW,
                              name: PTXEdgeWorkerNameType | None,
                              labels: K8sLabelCollectionType = None) -> dict[str, typing.Any] | None:
     """Create PTX Edge Computing worker"""
     logger.info(f"Received {PEW.__name__} create request with name: {name}")
-    logger.debug("=" * 100)
     logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2, exclude_none=True)}")
     logger.debug("Creating manifest body...")
     manifest: dict[str, typing.Any] = {
@@ -129,110 +234,21 @@ async def _create_pew_worker(pew: PEW,
         obj, _status = await invoke_k8s_api(method=K8sAPIMethod.CREATE,
                                             body=manifest)
         raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Created resource: {obj['kind']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        logger.debug("=" * 100)
+        logger.info(f"Created worker: {obj['kind']}/{obj['metadata']['name']}")
+        logger.debug(f"Obtained resource:\n{sanitize_model(obj, indent=2)}")
         grp, ver = obj['apiVersion'].split('/', maxsplit=1)
-        return {"status": PTXEdgeWorkerResponseStatus.CREATED,
-                "resource": {
-                    "name": obj['metadata']['name'],
-                    "kind": obj['kind'],
-                    "group": grp,
-                    "version": ver
-                }}
+        response = {
+            "status": PTXEdgeWorkerResponseStatus.CREATED,
+            "resource": {
+                "name": obj['metadata']['name'],
+                "kind": obj['kind'],
+                "group": grp,
+                "version": ver
+            }
+        }
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+        return response
     except client.ApiException as ex:
-        raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
-        raise_for_network_error(ex)
-
-
-@app.get("/workers/{name}",
-         tags=["Customer"],
-         responses={
-             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
-         response_model=PEW,
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_by_name(request: fastapi.Request,
-                             name: PTXEdgeWorkerNameType):
-    """Obtain deployed PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} get request with name: {name}")
-    logger.debug("=" * 100)
-    try:
-        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
-                                            name=name)
-        raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        del obj['status']
-        pprint.pprint(request)
-        logger.debug("=" * 100)
-        return obj
-    except client.ApiException as ex:
-        raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
-        raise_for_network_error(ex)
-
-
-@app.get("/workers/{name}/status",
-         tags=["Customer"],
-         responses={
-             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
-         response_model=PEWStatus,
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_status(name: PTXEdgeWorkerNameType):
-    """Obtain deployed PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} status request with name: {name}")
-    logger.debug("=" * 100)
-    try:
-        obj, _status = await invoke_k8s_api(method=K8sAPIMethod.GET,
-                                            name=name)
-        raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['metadata']['name']}")
-        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        logger.debug("=" * 100)
-        return obj.get("status")
-    except client.ApiException as ex:
-        raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
-        raise_for_network_error(ex)
-
-
-@app.get("/workers/{name}/watcher",
-         tags=["Customer"],
-         responses={
-             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
-         response_model=PTXEdgeWorkerState,
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=fastapi.status.HTTP_200_OK)
-async def watch_for_worker_status(request: fastapi.Request,
-                                  name: PTXEdgeWorkerNameType,
-                                  state: typing.Annotated[
-                                      PTXStatusWorkerStates, fastapi.Query(
-                                          description="Watched state")] = PTXStatusWorkerStates.READY,
-                                  timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
-    """Obtain deployed PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
-    logger.debug("=" * 100)
-    try:
-        _result = None
-        async with cancel_on_disconnect(request=request, logger=logger):
-            _result = await watch_for_resource_state(name=name,
-                                                     state=PTXStatusWorkerStates(state),
-                                                     timeout=timeout)
-        logger.debug(f"Obtained response: {state}: {_result}")
-        logger.debug("=" * 100)
-        return {"name": name,
-                "status": {state: _result if _result is not None else False}}
-    except client.ApiException as ex:
-        logger.exception(ex)
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
         raise_for_network_error(ex)
@@ -246,13 +262,20 @@ async def watch_for_worker_status(request: fastapi.Request,
              fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
          response_model=PTXEdgeWorkerResponse,
          status_code=fastapi.status.HTTP_201_CREATED)
-async def create_worker_with_name(name: PTXEdgeWorkerNameType,
+async def create_worker_with_name(request: fastapi.Request,
+                                  name: PTXEdgeWorkerNameType,
                                   pew: typing.Annotated[PEW, fastapi.Body],
                                   label: K8sLabelCollectionType = None):
     """Create PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
     if pew.spec.name and pew.spec.name != name:
         logger.warning(f"Resource defines name: {pew.spec.name} different from <name> parameter: {name}!")
-    return await _create_pew_worker(pew=pew, name=name, labels=label)
+    response = await _create_pew_worker(pew=pew, name=name, labels=label)
+    if response:
+        response['url'] = create_resource_url(request=request, name=response['resource']['name'])
+    logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+    logger.debug("=" * 100)
+    return response
 
 
 @app.post("/workers",
@@ -262,12 +285,19 @@ async def create_worker_with_name(name: PTXEdgeWorkerNameType,
               fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
           response_model=PTXEdgeWorkerResponse,
           status_code=fastapi.status.HTTP_201_CREATED)
-async def create_worker(pew: typing.Annotated[PEW, fastapi.Body],
+async def create_worker(request: fastapi.Request,
+                        pew: typing.Annotated[PEW, fastapi.Body],
                         label: K8sLabelCollectionType = None):
     """Create PTX-Edge worker with the implicit or an autogenerated name"""
+    logger.debug("=" * 100)
     if pew.spec.name:
         logger.info(f"Using resource defined name: {pew.spec.name}")
-    return await _create_pew_worker(pew=pew, name=pew.spec.name, labels=label)
+    response = await _create_pew_worker(pew=pew, name=pew.spec.name, labels=label)
+    if response:
+        response['url'] = create_resource_url(request=request, name=response['resource']['name'])
+    logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+    logger.debug("=" * 100)
+    return response
 
 
 @app.delete("/workers/{name}",
@@ -279,21 +309,25 @@ async def create_worker(pew: typing.Annotated[PEW, fastapi.Body],
             status_code=fastapi.status.HTTP_200_OK)
 async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
     """Delete PTX-Edge worker with given name"""
-    logger.info(f"Received {PEW.__name__} delete request with name: {name}")
     logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} delete request with name: {name}")
     try:
         obj, _status = await invoke_k8s_api(method=K8sAPIMethod.DELETE,
                                             name=name)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        response = {
+            "status": PTXEdgeWorkerResponseStatus.DELETED,
+            "resource": {
+                "name": obj['details']['name'],
+                "group": obj['details']['group'],
+                "kind": obj['details']['kind']
+            }
+        }
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
         logger.debug("=" * 100)
-        return {"status": PTXEdgeWorkerResponseStatus.DELETED,
-                "resource": {
-                    "name": obj['details']['name'],
-                    "group": obj['details']['group'],
-                    "kind": obj['details']['kind']
-                }}
+        return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
@@ -312,16 +346,15 @@ async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
 async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = False,
                            label: K8sLabelCollectionType = None):
     """Obtain deployed PTX-Edge workers"""
-    logger.info(f"Received {PEW.__name__} list request")
     logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} list request")
     try:
         obj, _status = await invoke_k8s_api(method=K8sAPIMethod.LIST,
                                             label_selector=label)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        logger.debug("=" * 100)
-        ret = {
+        response = {
             "workers": [
                 {
                     "name": w['metadata']['name'],
@@ -331,8 +364,10 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
             ]
         }
         if resource:
-            ret.update({"resources": obj.get("items", [])})
-        return ret
+            response.update({"resources": obj.get("items", [])})
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+        logger.debug("=" * 100)
+        return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
@@ -350,20 +385,27 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
 async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = False,
                              label: K8sLabelCollectionType = None):
     """Delete all deployed PTX-Edge workers"""
-    logger.info(f"Received {PEW.__name__} delete all request")
     logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} delete all request")
     try:
         obj, _status = await invoke_k8s_api(method=K8sAPIMethod.DELETE_ALL,
                                             label_selector=label)
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {obj['apiVersion']}/{obj['kind']} with size: {len(obj.get("items", []))}")
         logger.debug(f"Obtained response:\n{pprint.pformat(obj, indent=2)}")
-        logger.debug("=" * 100)
-        ret = {"workers": [{"name": w['metadata']['name']}
-                           for w in obj.get("items", [])]}
+        response = {
+            "workers": [
+                {
+                    "name": w['metadata']['name']
+                }
+                for w in obj.get("items", [])
+            ]
+        }
         if resource:
-            ret.update({"resources": obj.get("items", [])})
-        return ret
+            response.update({"resources": obj.get("items", [])})
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
+        logger.debug("=" * 100)
+        return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
     except urllib3.exceptions.MaxRetryError as ex:
