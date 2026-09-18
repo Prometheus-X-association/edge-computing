@@ -17,13 +17,19 @@ import logging
 import anyio
 import fastapi
 
+from app.model.errors import ClientDisconnectedError
+from app.utils.config import CONFIG
+
 
 def str2bool(s: str | bool | None, *, __true=frozenset(('true', 'yes', 'on', 'y', '1'))) -> bool:
+    """Convert a string representing true value to bool"""
     return str(s).lower() in __true
 
 
 @contextlib.asynccontextmanager
-async def cancel_on_disconnect(request: fastapi.Request, logger: logging.Logger = logging.getLogger(__name__)):
+async def cancel_on_disconnect(request: fastapi.Request,
+                               logger: logging.Logger = logging.getLogger(__name__),
+                               raise_for_disconnect: bool = True):
     """
     Based on: https://jasoncameron.dev/posts/fastapi-cancel-on-disconnect
     """
@@ -35,7 +41,9 @@ async def cancel_on_disconnect(request: fastapi.Request, logger: logging.Logger 
                     client = f"{request.client.host}:{request.client.port}" if request.client else "-:-"
                     logger.debug(f'{client} - "{request.method} {request.url.path}" 499 DISCONNECTED')
                     tg.cancel_scope.cancel()
-                    logger.warning(f'Request canceled due to client disconnect!')
+                    logger.warning(f'Request canceled due to disconnected client!')
+                    if raise_for_disconnect:
+                        raise ClientDisconnectedError
                     break
 
         tg.start_soon(watch_disconnect)
@@ -43,3 +51,13 @@ async def cancel_on_disconnect(request: fastapi.Request, logger: logging.Logger 
             yield
         finally:
             tg.cancel_scope.cancel()
+
+
+def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
+    if not (proto := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-proto'), b"")):
+        proto = request.scope['scheme']
+    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
+        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
+    if not (root_path := request.scope.get('root_path')):
+        root_path = CONFIG.ROOT_PATH
+    return f"{proto.decode()}://{base.decode()}{root_path}/workers/{name}"

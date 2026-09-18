@@ -25,6 +25,12 @@ from app.utils.config import CONFIG
 from app.utils.helper import str2bool
 from app.utils.logger import logger
 
+K8sLabelCollectionType = typing.Annotated[
+    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
+    Query(examples=["tier=worker"])]
+
+
+########################################################################################################################
 
 async def setup_k8s_client() -> None:
     try:
@@ -41,11 +47,6 @@ class K8sAPIMethod(enum.StrEnum):
     LIST = "list"
     DELETE = "delete"
     DELETE_ALL = "delete_collection"
-
-
-K8sLabelCollectionType = typing.Annotated[
-    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
-    Query(examples=["tier=worker"])]
 
 
 async def invoke_k8s_api(method: K8sAPIMethod,
@@ -73,27 +74,28 @@ async def invoke_k8s_api(method: K8sAPIMethod,
         return obj, status
 
 
-class K8sEventType(enum.StrEnum):
-    ADDED = "ADDED"
-    MODIFIED = "MODIFIED"
-    DELETED = "DELETED"
+########################################################################################################################
 
-
-class PTXStatusWorkerStates(enum.StrEnum):
+class PTXWorkerStatusState(enum.StrEnum):
     READY = enum.auto()
     EXPOSED = enum.auto()
     SUCCEEDED = enum.auto()
     FAILED = enum.auto()
 
 
-class PEWWatcherTimeout(RuntimeError):
+class WatcherTimeout(RuntimeError):
     pass
 
 
 async def watch_for_resource_state(name: str,
-                                   state: PTXStatusWorkerStates = PTXStatusWorkerStates.READY,
+                                   state: PTXWorkerStatusState = PTXWorkerStatusState.READY,
                                    timeout: int = 30,
                                    raise_for_timeout: bool = True) -> bool | None:
+    class K8sEventType(enum.StrEnum):
+        ADDED = "ADDED"
+        MODIFIED = "MODIFIED"
+        DELETED = "DELETED"
+
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         params = dict(group=PEW.group,
@@ -125,5 +127,5 @@ async def watch_for_resource_state(name: str,
                         return False
         logger.warning(f"Watching worker[{name}] timed out...")
         if raise_for_timeout:
-            raise PEWWatcherTimeout
+            raise WatcherTimeout
         return None

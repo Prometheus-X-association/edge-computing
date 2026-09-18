@@ -15,20 +15,21 @@ import contextlib
 import pprint
 import typing
 
+import aiohttp
 import fastapi
 import urllib3
 from kubernetes_asyncio import client
 
 from app import __version__
-from app.model.errors import (raise_for_k8s_error, raise_for_failed_k8s_request, raise_for_network_error,
-                              PTXEdgeAPIError)
+from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_failed_k8s_request,
+                              raise_for_network_error, raise_for_timeout_error)
 from app.model.ptxedgeworker import PEW, PEWStatus
-from app.model.responses import (PTXEdgeWorkerResponseStatus, PTXEdgeWorkerResponse, VersionsResponse,
-                                 PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerState, PTXEdgeWorkerNameType)
+from app.model.responses import (PTXEdgeWorkerResponseState, PTXEdgeWorkerResponse, VersionsResponse,
+                                 PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerNameType, PTXEdgeWorkerStatus)
 from app.utils.config import CONFIG
-from app.utils.helper import cancel_on_disconnect
+from app.utils.helper import cancel_on_disconnect, ClientDisconnectedError, assemble_worker_resource_url
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_api, K8sAPIMethod, K8sLabelCollectionType,
-                           watch_for_resource_state, PTXStatusWorkerStates, PEWWatcherTimeout)
+                           watch_for_resource_state, PTXWorkerStatusState, WatcherTimeout)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -97,13 +98,13 @@ async def health() -> None:
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+         },
          response_model=PEW,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
-async def get_worker_by_name(request: fastapi.Request,
-                             name: PTXEdgeWorkerNameType):
+async def get_worker_by_name(name: PTXEdgeWorkerNameType):
     """Obtain deployed PTX-Edge worker with given name"""
     logger.debug("=" * 100)
     logger.info(f"Received {PEW.__name__} get request with name: {name}")
@@ -117,7 +118,7 @@ async def get_worker_by_name(request: fastapi.Request,
         return obj
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
@@ -125,7 +126,8 @@ async def get_worker_by_name(request: fastapi.Request,
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+         },
          response_model=PEWStatus,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
@@ -143,7 +145,7 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
         return obj.get("status", {})
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
@@ -151,54 +153,60 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
-         response_model=PTXEdgeWorkerState,
+             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+         },
+         response_model=PTXEdgeWorkerStatus,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
          status_code=fastapi.status.HTTP_200_OK)
 async def watch_for_worker_status(request: fastapi.Request,
                                   name: PTXEdgeWorkerNameType,
                                   state: typing.Annotated[
-                                      PTXStatusWorkerStates, fastapi.Query(
-                                          description="Watched state")] = PTXStatusWorkerStates.READY,
+                                      PTXWorkerStatusState,
+                                      fastapi.Query(description="Watched state")
+                                  ] = PTXWorkerStatusState.READY,
                                   timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
     """Obtain deployed PTX-Edge worker with given name"""
     logger.debug("=" * 100)
+    pprint.pprint(request.__dict__)
     logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
     try:
         _result = None
-        async with cancel_on_disconnect(request=request, logger=logger):
+        async with cancel_on_disconnect(request=request, logger=logger, raise_for_disconnect=True):
             _result = await watch_for_resource_state(name=name,
-                                                     state=PTXStatusWorkerStates(state),
-                                                     timeout=timeout)
+                                                     state=PTXWorkerStatusState(state),
+                                                     timeout=timeout,
+                                                     raise_for_timeout=True)
         logger.debug(f"Obtained status: {state}: {_result}")
         response = {
             "name": name,
+            "state": PTXEdgeWorkerResponseState.MODIFIED if _result else PTXEdgeWorkerResponseState.TIMEOUT,
             "status": {
-                state: _result if _result is not None else False
+                state: _result
             }
         }
         logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
         logger.debug("=" * 100)
         return response
-    except client.ApiException as ex:
-        logger.exception(ex)
-        raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
-        raise_for_network_error(ex)
-    except PEWWatcherTimeout:
-        return fastapi.Response(status_code=fastapi.status.HTTP_408_REQUEST_TIMEOUT)
+    except* (WatcherTimeout, client.ApiException,
+             aiohttp.ClientError, urllib3.exceptions.MaxRetryError,
+             ClientDisconnectedError) as exgroup:
+        if len(exgroup.exceptions) > 1:
+            logger.warning(f"Got more than one exception: {exgroup.exceptions}")
+        for ex in exgroup.exceptions:
+            if isinstance(ex, WatcherTimeout):
+                raise_for_timeout_error(name=name, state=state, timeout=timeout)
+            if isinstance(ex, client.ApiException):
+                raise_for_failed_k8s_request(ex)
+            elif isinstance(ex, (aiohttp.ClientError, urllib3.exceptions.MaxRetryError)):
+                raise_for_network_error(ex)
+            if isinstance(ex, ClientDisconnectedError):
+                raise fastapi.HTTPException(status_code=fastapi.status.HTTP_204_NO_CONTENT)
+            else:
+                logger.exception(ex)
 
 
 ########################################################################################################################
-
-def create_resource_url(request: fastapi.Request,
-                        name: str) -> str:
-    if not (proto := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-proto'), b"")):
-        proto = request.scope['scheme']
-    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
-        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
-    return f"{proto.decode()}://{base.decode()}{CONFIG.ROOT_PATH}/workers/{name}"
 
 
 async def _create_pew_worker(pew: PEW,
@@ -240,7 +248,7 @@ async def _create_pew_worker(pew: PEW,
         logger.debug(f"Obtained resource:\n{sanitize_model(obj, indent=2)}")
         grp, ver = obj['apiVersion'].split('/', maxsplit=1)
         response = {
-            "status": PTXEdgeWorkerResponseStatus.CREATED,
+            "state": PTXEdgeWorkerResponseState.CREATED,
             "resource": {
                 "name": obj['metadata']['name'],
                 "kind": obj['kind'],
@@ -252,16 +260,17 @@ async def _create_pew_worker(pew: PEW,
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
 @app.put("/workers/{name}",
          tags=["Customer"],
          responses={
-             fastapi.status.HTTP_406_NOT_ACCEPTABLE: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+         },
          response_model=PTXEdgeWorkerResponse,
          status_code=fastapi.status.HTTP_201_CREATED)
 async def create_worker_with_name(request: fastapi.Request,
@@ -274,7 +283,7 @@ async def create_worker_with_name(request: fastapi.Request,
         logger.warning(f"Resource defines name: {pew.spec.name} different from <name> parameter: {name}!")
     response = await _create_pew_worker(pew=pew, name=name, labels=label)
     if response:
-        response['url'] = create_resource_url(request=request, name=response['resource']['name'])
+        response['url'] = assemble_worker_resource_url(request=request, name=response['resource']['name'])
     logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
     logger.debug("=" * 100)
     return response
@@ -283,8 +292,9 @@ async def create_worker_with_name(request: fastapi.Request,
 @app.post("/workers",
           tags=["Customer"],
           responses={
-              fastapi.status.HTTP_406_NOT_ACCEPTABLE: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+          },
           response_model=PTXEdgeWorkerResponse,
           status_code=fastapi.status.HTTP_201_CREATED)
 async def create_worker(request: fastapi.Request,
@@ -296,7 +306,7 @@ async def create_worker(request: fastapi.Request,
         logger.info(f"Using resource defined name: {pew.spec.name}")
     response = await _create_pew_worker(pew=pew, name=pew.spec.name, labels=label)
     if response:
-        response['url'] = create_resource_url(request=request, name=response['resource']['name'])
+        response['url'] = assemble_worker_resource_url(request=request, name=response['resource']['name'])
     logger.debug(f"Assembled response body:\n{pprint.pformat(response)}")
     logger.debug("=" * 100)
     return response
@@ -306,7 +316,8 @@ async def create_worker(request: fastapi.Request,
             tags=["Customer"],
             responses={
                 fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-                fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+                fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+            },
             response_model=PTXEdgeWorkerResponse,
             status_code=fastapi.status.HTTP_200_OK)
 async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
@@ -320,7 +331,7 @@ async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
         logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
         response = {
-            "status": PTXEdgeWorkerResponseStatus.DELETED,
+            "state": PTXEdgeWorkerResponseState.DELETED,
             "resource": {
                 "name": obj['details']['name'],
                 "group": obj['details']['group'],
@@ -332,7 +343,7 @@ async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
@@ -340,7 +351,8 @@ async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
 @app.get("/workers",
          tags=["Cluster"],
          responses={
-             fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+         },
          response_model=PTXEdgeWorkerCollectionResponse,
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
@@ -360,6 +372,7 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
             "workers": [
                 {
                     "name": w['metadata']['name'],
+                    "state": PTXEdgeWorkerResponseState.CREATED,
                     "status": w.get('status', {}).get('worker', {})
                 }
                 for w in obj.get("items", [])
@@ -372,14 +385,15 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
 @app.delete("/workers",
             tags=["Cluster"],
             responses={
-                fastapi.status.HTTP_424_FAILED_DEPENDENCY: {"model": PTXEdgeAPIError}},
+                fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+            },
             response_model=PTXEdgeWorkerCollectionResponse,
             response_model_exclude_unset=True,
             response_model_exclude_none=True,
@@ -398,7 +412,8 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         response = {
             "workers": [
                 {
-                    "name": w['metadata']['name']
+                    "name": w['metadata']['name'],
+                    "state": PTXEdgeWorkerResponseState.DELETED
                 }
                 for w in obj.get("items", [])
             ]
@@ -410,7 +425,7 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
-    except urllib3.exceptions.MaxRetryError as ex:
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
 
 
