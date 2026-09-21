@@ -11,13 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import collections
 import contextlib
 import logging
 
 import anyio
 import fastapi
+import pydantic_core
 
 from app.model.errors import ClientDisconnectedError
+from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
 
 
@@ -61,3 +64,27 @@ def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
     if not (root_path := request.scope.get('root_path')):
         root_path = CONFIG.ROOT_PATH
     return f"{proto.decode()}://{base.decode()}{root_path}/workers/{name}"
+
+
+def validate_pews_list(pews: list[PEW]) -> list[PEW]:
+    missing_names = [(i, pew) for i, pew in enumerate(pews) if not pew.spec.name]
+    if len(missing_names):
+        raise fastapi.exceptions.RequestValidationError([
+            pydantic_core.ErrorDetails(
+                type="missing",
+                loc=(idx, "spec", "name"),
+                msg="Worker <spec.name> must be defined for each batch request!",
+                input=pew.spec.name
+            )
+            for idx, pew in missing_names
+        ])
+    if len(name_occurrences := collections.Counter(pew.spec.name for pew in pews)) < len(pews):
+        raise fastapi.exceptions.RequestValidationError([
+            pydantic_core.ErrorDetails(
+                type="duplicated",
+                loc=("spec", "name"),
+                msg="Worker <spec.name> must be unique!",
+                input=[name for name, count in name_occurrences.items() if count > 1]
+            )
+        ])
+    return pews

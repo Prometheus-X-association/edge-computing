@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-18T12:17:33'
+  x-creation-date: '2026-09-21T14:26:09'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -338,6 +338,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Unprocessable Content
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Conflict
         '503':
           content:
             application/json:
@@ -440,6 +446,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /workers/batch:
+    post:
+      tags:
+      - Customer
+      summary: Create Batched Workers
+      description: Create batch of PTX-Edge workers in parallel
+      operationId: create_batched_workers_workers_batch_post
+      parameters:
+      - name: label
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            prefixItems:
+            - type: string
+              pattern: ^(.+)=(.+){1,63}$
+            minItems: 1
+            maxItems: 1
+          - type: 'null'
+          examples:
+          - tier=worker
+          title: Label
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PEW-Input'
+              title: Pews
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+                title: Response Create Batched Workers Workers Batch Post
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Unprocessable Content
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Conflict
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Service Unavailable
 components:
   schemas:
     HTTPValidationError:
@@ -1464,7 +1530,12 @@ components:
     PTXEdgeAPIError:
       properties:
         detail:
-          $ref: '#/components/schemas/PTXEdgeAPIErrorDetail'
+          anyOf:
+          - $ref: '#/components/schemas/PTXEdgeAPIErrorDetail'
+          - items:
+              $ref: '#/components/schemas/PTXEdgeAPIErrorDetail'
+            type: array
+          title: Detail
           description: Error details
       type: object
       required:
@@ -1472,7 +1543,7 @@ components:
       title: PTXEdgeAPIError
     PTXEdgeAPIErrorDetail:
       properties:
-        status:
+        state:
           $ref: '#/components/schemas/PTXEdgeWorkerResponseState'
           description: Worker Status
         error_code:
@@ -1502,7 +1573,7 @@ components:
           description: Worker resource
       type: object
       required:
-      - status
+      - state
       title: PTXEdgeAPIErrorDetail
     PTXEdgeWorkerCollectionResponse:
       properties:

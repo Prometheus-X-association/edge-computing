@@ -31,7 +31,7 @@ class ClientDisconnectedError(RuntimeError):
 
 
 class PTXEdgeAPIErrorDetail(BaseModel):
-    status: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker Status")]
+    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker Status")]
     error_code: typing.Annotated[int | None, Field(description="Status code", default=None)]
     reason: typing.Annotated[str | None, Field(description="Cause of error", default=None)]
     message: typing.Annotated[str | None, Field(description="Detailed error message", default=None)]
@@ -39,25 +39,26 @@ class PTXEdgeAPIErrorDetail(BaseModel):
 
 
 class PTXEdgeAPIError(BaseModel):
-    detail: typing.Annotated[PTXEdgeAPIErrorDetail, Field(description="Error details")]
+    detail: typing.Annotated[PTXEdgeAPIErrorDetail | list[PTXEdgeAPIErrorDetail], Field(description="Error details")]
 
 
 ########################################################################################################################
 
 def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
-    logger.debug(f"Received response: HTTP/{result} - {result.name}")
+    logger.debug(f"Received response: HTTP/{result} - {result.name} for worker {obj['metadata']['name']}")
     if not result.is_success:
-        raise fastapi.HTTPException(status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
-                                    detail={
-                                        "status": PTXEdgeWorkerResponseState.ERROR,
-                                        "error_code": status,
-                                        "resource": {
-                                            "name": obj['details']['name'],
-                                            "group": obj['details']['group'],
-                                            "kind": obj['details']['kind']
-                                        }
-                                    })
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "state": PTXEdgeWorkerResponseState.ERROR,
+                "error_code": status,
+                "resource": {
+                    "name": obj['details']['name'],
+                    "group": obj['details']['group'],
+                    "kind": obj['details']['kind']
+                }
+            })
 
 
 def convert_k8s_api_error(ex: client.ApiException) -> str:
@@ -69,44 +70,43 @@ def convert_k8s_api_error(ex: client.ApiException) -> str:
 def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
     logger.error(convert_k8s_api_error(ex))
     error = json.loads(str(ex.body))
-    code = int(error.get('code'))
-    match code:
-        case 422 | 409 | 404:
-            code = code
-        case _:
-            code = fastapi.status.HTTP_503_SERVICE_UNAVAILABLE
-    raise fastapi.HTTPException(status_code=code,
-                                detail={
-                                    "status": PTXEdgeWorkerResponseState.ERROR,
-                                    "error_code": error.get('code', http.HTTPStatus.INTERNAL_SERVER_ERROR),
-                                    "reason": error['reason'],
-                                    "message": error['message'],
-                                    "resource": error['details']
-                                })
+    if (code := int(error.get('code'))) not in (422, 409, 404):
+        code = fastapi.status.HTTP_503_SERVICE_UNAVAILABLE
+    raise fastapi.HTTPException(
+        status_code=code,
+        detail={
+            "state": PTXEdgeWorkerResponseState.ERROR,
+            "error_code": code,
+            "reason": error['reason'],
+            "message": error['message'],
+            "resource": error['details']
+        }) from ex
 
 
 def raise_for_network_error(ex: urllib3.exceptions.MaxRetryError | aiohttp.ClientError) -> None:
     logger.error(f"Network error received: {ex}")
-    raise fastapi.HTTPException(status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
-                                detail={
-                                    "status": PTXEdgeWorkerResponseState.ERROR,
-                                    "error_code": fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
-                                    "reason": f"{ex.__class__.__name__}",
-                                    "message": str(ex.reason) if hasattr(ex, 'reason') else str(ex),
-                                    "resource": {}
-                                })
+    raise fastapi.HTTPException(
+        status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "state": PTXEdgeWorkerResponseState.ERROR,
+            "error_code": fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
+            "reason": f"{ex.__class__.__name__}",
+            "message": str(ex.reason) if hasattr(ex, 'reason') else str(ex),
+            "resource": {}
+        }) from ex
 
 
 def raise_for_timeout_error(name: str, state: str, timeout: int) -> None:
-    raise fastapi.HTTPException(status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
-                                detail={
-                                    "status": PTXEdgeWorkerResponseState.TIMEOUT,
-                                    "error_code": fastapi.status.HTTP_408_REQUEST_TIMEOUT,
-                                    "reason": f"RequestTimeout",
-                                    "message": f"Waiting for change of {state=!s} in worker[{name}] reached timeout: {timeout}s!",
-                                    "resource": {
-                                        "name": name,
-                                        "group": PEW.group,
-                                        "kind": PEW.kind,
-                                    }
-                                })
+    raise fastapi.HTTPException(
+        status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "state": PTXEdgeWorkerResponseState.TIMEOUT,
+            "error_code": fastapi.status.HTTP_408_REQUEST_TIMEOUT,
+            "reason": f"RequestTimeout",
+            "message": f"Waiting for change of {state=!s} in worker[{name}] reached timeout: {timeout}s!",
+            "resource": {
+                "name": name,
+                "group": PEW.group,
+                "kind": PEW.kind,
+            }
+        })

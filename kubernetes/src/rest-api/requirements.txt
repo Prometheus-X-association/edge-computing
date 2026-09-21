@@ -4,6 +4,7 @@ starlette
 uvicorn
 uvloop
 urllib3
+anyio
 kubernetes_asyncio~=36.1.0
 pydantic-settings~=2.15.0
 #hypercorn~=0.17.3              # Optional ASGI server

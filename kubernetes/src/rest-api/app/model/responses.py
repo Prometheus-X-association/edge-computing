@@ -69,3 +69,9 @@ class PTXEdgeWorkerStatus(BaseModel):
 class PTXEdgeWorkerCollectionResponse(BaseModel):
     workers: typing.Annotated[list[PTXEdgeWorkerStatus], Field(description="List of worker states")]
     resources: typing.Annotated[list[PEW] | None, Field(description="List of PtxEdgeWorkers", default=None)]
+
+
+async def response_collector_wrapper(func: typing.Callable[[typing.Any, ...], typing.Awaitable],
+                                     responses: list[dict[str, typing.Any] | None],
+                                     *args, **kwarg) -> None:
+    responses.append(await func(*args, **kwarg))
