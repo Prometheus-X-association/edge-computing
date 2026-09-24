@@ -111,4 +111,4 @@ def assemble_worker_endpoint_url(request: fastapi.Request, name: str, secured: b
     proto = "https" if secured else "http"
     if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
         base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
-    return f"{proto}://{base}/worker/{name}"
+    return f"{proto}://{base.decode()}/worker/{name}"

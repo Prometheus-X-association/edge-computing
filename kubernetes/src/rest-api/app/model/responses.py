@@ -14,9 +14,8 @@
 import enum
 import typing
 
-import pydantic
 from fastapi import __version__ as fastapi_version
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 
 from app import __version__
 from app.model.ptxedgeworker import PEW, PEWSpecServiceInterface
@@ -24,8 +23,8 @@ from app.model.ptxedgeworker import PEW, PEWSpecServiceInterface
 
 class VersionsResponse(BaseModel):
     """API and used framework versions"""
-    api: typing.Annotated[str, Field(default=__version__)]
-    framework: typing.Annotated[str, Field(default=fastapi_version)]
+    api: typing.Annotated[str, Field()] = __version__
+    framework: typing.Annotated[str, Field()] = fastapi_version
 
 
 ########################################################################################################################
@@ -58,20 +57,24 @@ class PTXEdgeWorkerResponseResource(BaseModel):
 
 class PTXEdgeWorkerEndpoint(BaseModel):
     interface: typing.Annotated[PEWSpecServiceInterface, Field(description="Endpoint interface")]
-    exposed: typing.Annotated[bool, Field(description="Interface state", default=False)]
-    url: typing.Annotated[pydantic.HttpUrl | None, Field(description="Exposed interface's URL")] = None
+    exposed: typing.Annotated[bool, Field(description="Interface state")] = False
+    url: typing.Annotated[HttpUrl | None, Field(description="Exposed interface's URL")] = None
+    #
+    model_config = ConfigDict(url_preserve_empty_path=True)
 
 
 class PTXEdgeWorkerResponseApi(BaseModel):
-    resource: typing.Annotated[pydantic.HttpUrl | None, Field(description="Worker resource URL")] = None
+    worker: typing.Annotated[HttpUrl, Field(description="Worker resource URL")]
     endpoints: typing.Annotated[list[PTXEdgeWorkerEndpoint] | None, Field(description="Worker endpoints")] = None
+    #
+    model_config = ConfigDict(url_preserve_empty_path=True)
 
 
 class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker deployment state")]
-    resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource", default=None)]
-    api: typing.Annotated[PTXEdgeWorkerResponseApi, Field(description="Worker's exposed URLs", default=None)]
+    resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource")]
+    api: typing.Annotated[PTXEdgeWorkerResponseApi, Field(description="Worker's exposed URLs")]
 
 
 ########################################################################################################################
@@ -79,10 +82,10 @@ class PTXEdgeWorkerResponse(BaseModel):
 class PTXEdgeWorkerCollectionResponseStatus(BaseModel):
     """Worker state"""
     name: typing.Annotated[PTXEdgeWorkerNameType, Field(description="Worker name")]
-    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker state", default=None)]
-    status: typing.Annotated[dict[str, bool] | None, Field(description="Worker status", default=None)]
+    state: typing.Annotated[PTXEdgeWorkerResponseState | None, Field(description="Worker state")] = None
+    status: typing.Annotated[dict[str, bool] | None, Field(description="Worker status")] = None
 
 
 class PTXEdgeWorkerCollectionResponse(BaseModel):
     workers: typing.Annotated[list[PTXEdgeWorkerCollectionResponseStatus], Field(description="List of worker states")]
-    resources: typing.Annotated[list[PEW] | None, Field(description="List of worker resource objects", default=None)]
+    resources: typing.Annotated[list[PEW] | None, Field(description="List of worker resource objects")] = None

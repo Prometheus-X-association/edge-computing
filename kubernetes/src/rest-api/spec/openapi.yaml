@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-24T14:00:15'
+  x-creation-date: '2026-09-24T15:30:35'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -81,12 +81,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Not Found
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -149,12 +149,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Conflict
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
     delete:
       tags:
       - Customer
@@ -184,12 +184,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Not Found
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -226,12 +226,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Not Found
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -271,12 +271,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Not Found
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -329,12 +329,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Not Found
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -389,12 +389,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Conflict
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
     get:
       tags:
       - Cluster
@@ -431,12 +431,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -479,12 +479,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
         '422':
           description: Validation Error
           content:
@@ -545,12 +545,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Conflict
-        '503':
+        '502':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Service Unavailable
+          description: Bad Gateway
 components:
   schemas:
     HTTPValidationError:
@@ -1649,7 +1649,9 @@ components:
           description: Worker name
           example: worker
         state:
-          $ref: '#/components/schemas/PTXEdgeWorkerResponseState'
+          anyOf:
+          - $ref: '#/components/schemas/PTXEdgeWorkerResponseState'
+          - type: 'null'
           description: Worker state
         status:
           anyOf:
@@ -1701,18 +1703,18 @@ components:
       type: object
       required:
       - state
+      - resource
+      - api
       title: PTXEdgeWorkerResponse
       description: Created PTXEdgeWorker status
     PTXEdgeWorkerResponseApi:
       properties:
-        resource:
-          anyOf:
-          - type: string
-            maxLength: 2083
-            minLength: 1
-            format: uri
-          - type: 'null'
-          title: Resource
+        worker:
+          type: string
+          maxLength: 2083
+          minLength: 1
+          format: uri
+          title: Worker
           description: Worker resource URL
         endpoints:
           anyOf:
@@ -1723,6 +1725,8 @@ components:
           title: Endpoints
           description: Worker endpoints
       type: object
+      required:
+      - worker
       title: PTXEdgeWorkerResponseApi
     PTXEdgeWorkerResponseResource:
       properties:

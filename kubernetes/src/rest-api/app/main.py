@@ -103,7 +103,7 @@ async def health() -> None:
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=PEW,
          response_model_exclude_unset=True,
@@ -131,7 +131,7 @@ async def get_worker_by_name(name: PTXEdgeWorkerNameType):
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=PEWStatus,
          response_model_exclude_unset=True,
@@ -159,7 +159,7 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=list[PTXEdgeWorkerEndpoint],
          response_model_exclude_unset=True,
@@ -184,7 +184,7 @@ async def get_worker_endpoints(request: fastapi.Request, name: PTXEdgeWorkerName
          tags=["Customer"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=PTXEdgeWorkerCollectionResponseStatus,
          response_model_exclude_unset=True,
@@ -286,7 +286,7 @@ async def _create_pew_worker(request: fastapi.Request,
                 "version": ver,
             },
             "api": {
-                "resource": assemble_worker_resource_url(request=request, name=obj['metadata']['name']),
+                "worker": assemble_worker_resource_url(request=request, name=obj['metadata']['name']),
                 "endpoints": await assemble_worker_endpoints(request=request, name=obj['metadata']['name'], obj=obj)
             }
         }
@@ -302,7 +302,7 @@ async def _create_pew_worker(request: fastapi.Request,
          responses={
              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=PTXEdgeWorkerResponse,
          status_code=fastapi.status.HTTP_201_CREATED)
@@ -326,7 +326,7 @@ async def create_worker_with_name(request: fastapi.Request,
           responses={
               fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
           },
           response_model=PTXEdgeWorkerResponse,
           status_code=fastapi.status.HTTP_201_CREATED)
@@ -349,7 +349,7 @@ async def create_worker(request: fastapi.Request,
           responses={
               fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
           },
           response_model=list[PTXEdgeWorkerResponse],
           status_code=fastapi.status.HTTP_201_CREATED)
@@ -410,7 +410,7 @@ async def create_workers_batch(request: fastapi.Request,
             tags=["Customer"],
             responses={
                 fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-                fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+                fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
             },
             response_model=PTXEdgeWorkerResponse,
             status_code=fastapi.status.HTTP_200_OK)
@@ -445,7 +445,7 @@ async def delete_worker_by_name(name: PTXEdgeWorkerNameType):
 @app.get("/workers",
          tags=["Cluster"],
          responses={
-             fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
          },
          response_model=PTXEdgeWorkerCollectionResponse,
          response_model_exclude_unset=True,
@@ -486,7 +486,7 @@ async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = F
 @app.delete("/workers",
             tags=["Cluster"],
             responses={
-                fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {"model": PTXEdgeAPIError}
+                fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
             },
             response_model=PTXEdgeWorkerCollectionResponse,
             response_model_exclude_unset=True,

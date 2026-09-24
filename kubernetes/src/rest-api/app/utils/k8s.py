@@ -91,7 +91,7 @@ async def assemble_worker_endpoints(request: fastapi.Request,
         elif not pew.spec.service.interfaces or len(pew.spec.service.interfaces) < 1:
             logger.debug(f"No interface is defined for worker[{name}]!")
         else:
-            exposed = pew.status and pew.status.worker and pew.status.worker.exposed
+            exposed = bool(pew.status and pew.status.worker and pew.status.worker.exposed)
             if not exposed:
                 logger.debug(f"Worker[{name}] is not exposed yet!")
             endpoints = [{
