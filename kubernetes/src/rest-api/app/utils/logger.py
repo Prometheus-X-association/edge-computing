@@ -61,4 +61,6 @@ def deep_openapi_filter(data: object, keep: typing.Callable = bool) -> object:
 
 
 def sanitize_model(data: object, indent: int = 2) -> str:
-    return pprint.pformat(deep_openapi_filter(data, keep=lambda _v: isinstance(_v, bool) or bool(_v)), indent=indent)
+    return pprint.pformat(deep_openapi_filter(data, keep=lambda _v: isinstance(_v, bool) or bool(_v)),
+                          indent=indent,
+                          sort_dicts=False)

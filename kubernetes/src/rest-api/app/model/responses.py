@@ -14,11 +14,21 @@
 import enum
 import typing
 
+import pydantic
 from fastapi import __version__ as fastapi_version
 from pydantic import BaseModel, Field
 
 from app import __version__
-from app.model.ptxedgeworker import PEW
+from app.model.ptxedgeworker import PEW, PEWSpecServiceInterface
+
+
+class VersionsResponse(BaseModel):
+    """API and used framework versions"""
+    api: typing.Annotated[str, Field(default=__version__)]
+    framework: typing.Annotated[str, Field(default=fastapi_version)]
+
+
+########################################################################################################################
 
 # noinspection argument-list
 PTXEdgeWorkerNameType = typing.Annotated[str, Field(
@@ -26,12 +36,6 @@ PTXEdgeWorkerNameType = typing.Annotated[str, Field(
     pattern=r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
     example="worker")
 ]
-
-
-class VersionsResponse(BaseModel):
-    """API and used framework versions"""
-    api: typing.Annotated[str, Field(default=__version__)]
-    framework: typing.Annotated[str, Field(default=fastapi_version)]
 
 
 class PTXEdgeWorkerResponseState(enum.StrEnum):
@@ -45,33 +49,40 @@ class PTXEdgeWorkerResponseState(enum.StrEnum):
 # noinspection argument-list
 class PTXEdgeWorkerResponseResource(BaseModel):
     name: PTXEdgeWorkerNameType
-    kind: typing.Annotated[str, Field(description="Resource type",
+    kind: typing.Annotated[str, Field(description="Worker type",
                                       example="PtxEdgeWorker")]
     version: typing.Annotated[str | None, Field(description="Resource version",
                                                 example="dataspace.ptx.org/v1alpha1")] = None
     group: typing.Annotated[str | None, Field(description="Resource group", example="dataspace.ptx.org")] = None
 
 
+class PTXEdgeWorkerEndpoint(BaseModel):
+    interface: typing.Annotated[PEWSpecServiceInterface, Field(description="Endpoint interface")]
+    exposed: typing.Annotated[bool, Field(description="Interface state", default=False)]
+    url: typing.Annotated[pydantic.HttpUrl | None, Field(description="Exposed interface's URL")] = None
+
+
+class PTXEdgeWorkerResponseApi(BaseModel):
+    resource: typing.Annotated[pydantic.HttpUrl | None, Field(description="Worker resource URL")] = None
+    endpoints: typing.Annotated[list[PTXEdgeWorkerEndpoint] | None, Field(description="Worker endpoints")] = None
+
+
 class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
-    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker deployment status")]
+    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker deployment state")]
     resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource", default=None)]
-    url: typing.Annotated[str, Field(description="Worker access URL")]
+    api: typing.Annotated[PTXEdgeWorkerResponseApi, Field(description="Worker's exposed URLs", default=None)]
 
 
-class PTXEdgeWorkerStatus(BaseModel):
+########################################################################################################################
+
+class PTXEdgeWorkerCollectionResponseStatus(BaseModel):
     """Worker state"""
     name: typing.Annotated[PTXEdgeWorkerNameType, Field(description="Worker name")]
-    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="State source", default=None)]
+    state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker state", default=None)]
     status: typing.Annotated[dict[str, bool] | None, Field(description="Worker status", default=None)]
 
 
 class PTXEdgeWorkerCollectionResponse(BaseModel):
-    workers: typing.Annotated[list[PTXEdgeWorkerStatus], Field(description="List of worker states")]
-    resources: typing.Annotated[list[PEW] | None, Field(description="List of PtxEdgeWorkers", default=None)]
-
-
-async def response_collector_wrapper(func: typing.Callable[[typing.Any, ...], typing.Awaitable],
-                                     responses: list[dict[str, typing.Any] | None],
-                                     *args, **kwarg) -> None:
-    responses.append(await func(*args, **kwarg))
+    workers: typing.Annotated[list[PTXEdgeWorkerCollectionResponseStatus], Field(description="List of worker states")]
+    resources: typing.Annotated[list[PEW] | None, Field(description="List of worker resource objects", default=None)]

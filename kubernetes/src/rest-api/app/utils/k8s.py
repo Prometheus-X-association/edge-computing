@@ -17,13 +17,15 @@ import pprint
 import sys
 import typing
 
+import fastapi
 from fastapi import Query
 from kubernetes_asyncio import client, config, watch
 
+from app.model.errors import raise_for_k8s_error
 from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
-from app.utils.helper import str2bool
-from app.utils.logger import logger
+from app.utils.helper import str2bool, assemble_worker_endpoint_url
+from app.utils.logger import logger, sanitize_model
 
 K8sLabelCollectionType = typing.Annotated[
     tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
@@ -49,10 +51,11 @@ class K8sAPIMethod(enum.StrEnum):
     DELETE_ALL = "delete_collection"
 
 
-async def invoke_k8s_api(method: K8sAPIMethod,
-                         body: dict[str, typing.Any] | None = None,
-                         name: str | None = None,
-                         label_selector: tuple[str] | None = None) -> tuple[dict[str, typing.Any], int]:
+async def invoke_k8s_pew_api(method: K8sAPIMethod,
+                             body: dict[str, typing.Any] | None = None,
+                             name: str | None = None,
+                             status: bool = False,
+                             label_selector: tuple[str] | None = None) -> tuple[dict[str, typing.Any], int]:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         logger.info(f"Invoke k8s {api.__class__.__name__}...")
@@ -68,15 +71,41 @@ async def invoke_k8s_api(method: K8sAPIMethod,
             params["label_selector"] = label_selector if isinstance(label_selector, str) else ",".join(label_selector)
         if method is K8sAPIMethod.CREATE:
             params['field_manager'] = CONFIG.field_manager
-        logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, indent=2)}")
-        api_caller = getattr(api, f"{method.value}_namespaced_custom_object_with_http_info")
+        logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
+        caller = "namespaced_custom_object_status" if status else "namespaced_custom_object"
+        api_caller = getattr(api, f"{method.value}_{caller}_with_http_info")
         obj, status, _ = await api_caller(**params)
         return obj, status
 
 
+async def assemble_worker_endpoints(request: fastapi.Request,
+                                    name: str,
+                                    obj: dict[str, typing.Any] | None = None) -> list[dict[str, typing.Any]]:
+    if not obj:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.GET, name=name, status=True)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+    if (pew := PEW(**obj)) and pew.spec.service:
+        if not pew.spec.service.enabled:
+            logger.debug(f"Service not enabled for worker[{name}]!")
+        elif not pew.spec.service.interfaces or len(pew.spec.service.interfaces) < 1:
+            logger.debug(f"No interface is defined for worker[{name}]!")
+        else:
+            exposed = pew.status and pew.status.worker and pew.status.worker.exposed
+            if not exposed:
+                logger.debug(f"Worker[{name}] is not exposed yet!")
+            endpoints = [{
+                "interface": interface,
+                "exposed": exposed,
+                "url": assemble_worker_endpoint_url(request=request, name=name, secured=interface.secured),
+            } for interface in pew.spec.service.interfaces if interface.public]
+            return endpoints
+    return []
+
+
 ########################################################################################################################
 
-class PTXWorkerStatusState(enum.StrEnum):
+class PTXEdgeWorkerState(enum.StrEnum):
     READY = enum.auto()
     EXPOSED = enum.auto()
     SUCCEEDED = enum.auto()
@@ -88,7 +117,7 @@ class WatcherTimeout(RuntimeError):
 
 
 async def watch_for_resource_state(name: str,
-                                   state: PTXWorkerStatusState = PTXWorkerStatusState.READY,
+                                   state: PTXEdgeWorkerState = PTXEdgeWorkerState.READY,
                                    timeout: int = 30,
                                    raise_for_timeout: bool = True) -> bool | None:
     class K8sEventType(enum.StrEnum):

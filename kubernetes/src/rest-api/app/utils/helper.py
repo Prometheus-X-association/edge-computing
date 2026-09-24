@@ -14,6 +14,7 @@
 import collections
 import contextlib
 import logging
+import typing
 
 import anyio
 import fastapi
@@ -41,7 +42,8 @@ async def cancel_on_disconnect(request: fastapi.Request,
             while not await request.is_disconnected():
                 message = await request.receive()
                 if message["type"] == "http.disconnect":
-                    client = f"{request.client.host}:{request.client.port}" if request.client else "-:-"
+                    # noinspection unresolved-references
+                    client = f"{request.client.host}:{request.client.port}" if request.client is not None else "-:-"
                     logger.debug(f'{client} - "{request.method} {request.url.path}" 499 DISCONNECTED')
                     tg.cancel_scope.cancel()
                     logger.warning(f'Request canceled due to disconnected client!')
@@ -56,17 +58,20 @@ async def cancel_on_disconnect(request: fastapi.Request,
             tg.cancel_scope.cancel()
 
 
-def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
-    if not (proto := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-proto'), b"")):
-        proto = request.scope['scheme']
-    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
-        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
-    if not (root_path := request.scope.get('root_path')):
-        root_path = CONFIG.ROOT_PATH
-    return f"{proto.decode()}://{base.decode()}{root_path}/workers/{name}"
+async def response_collector_wrapper(responses: list[dict[str, typing.Any] | None],
+                                     func: typing.Callable[[typing.Any, ...], typing.Awaitable],
+                                     *args, **kwarg) -> None:
+    responses.append(await func(*args, **kwarg))
 
 
 def validate_pews_list(pews: list[PEW]) -> list[PEW]:
+    if len(pews) < 1:
+        raise fastapi.exceptions.RequestValidationError([pydantic_core.ErrorDetails(
+            type="missing",
+            loc=(0,),
+            msg="No worker is defined in the batch!",
+            input=pews
+        )])
     missing_names = [(i, pew) for i, pew in enumerate(pews) if not pew.spec.name]
     if len(missing_names):
         raise fastapi.exceptions.RequestValidationError([
@@ -88,3 +93,22 @@ def validate_pews_list(pews: list[PEW]) -> list[PEW]:
             )
         ])
     return pews
+
+
+########################################################################################################################
+
+def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
+    if not (proto := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-proto'), b"")):
+        proto = request.scope['scheme']
+    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
+        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
+    if not (root_path := request.scope.get('root_path')):
+        root_path = CONFIG.ROOT_PATH
+    return f"{proto.decode()}://{base.decode()}{root_path}/workers/{name}"
+
+
+def assemble_worker_endpoint_url(request: fastapi.Request, name: str, secured: bool | None) -> str:
+    proto = "https" if secured else "http"
+    if not (base := next((v for h, v in request.scope['headers'] if h == b'x-forwarded-host'), b"")):
+        base = next((v for h, v in request.scope['headers'] if h == b'host'), b"")
+    return f"{proto}://{base}/worker/{name}"

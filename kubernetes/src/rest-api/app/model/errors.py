@@ -46,7 +46,7 @@ class PTXEdgeAPIError(BaseModel):
 
 def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
-    logger.debug(f"Received response: HTTP/{result} - {result.name} for worker {obj['metadata']['name']}")
+    logger.debug(f"Received response: HTTP/{result} - {result.name} for {obj['kind']}/{obj['metadata'].get('name')}")
     if not result.is_success:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -103,7 +103,7 @@ def raise_for_timeout_error(name: str, state: str, timeout: int) -> None:
             "state": PTXEdgeWorkerResponseState.TIMEOUT,
             "error_code": fastapi.status.HTTP_408_REQUEST_TIMEOUT,
             "reason": f"RequestTimeout",
-            "message": f"Waiting for change of {state=!s} in worker[{name}] reached timeout: {timeout}s!",
+            "message": f"Waiting for {state=!s} in worker[{name}] reached timeout: {timeout}s!",
             "resource": {
                 "name": name,
                 "group": PEW.group,
