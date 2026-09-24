@@ -14,8 +14,9 @@ import json
 import logging
 import os
 import pathlib
-import sys
 import typing
+
+import sys
 
 from kubernetes import config
 
@@ -27,7 +28,7 @@ DEF_SCHEDULER_METHOD = "genetic"
 DEF_FALLBACK_METHOD = "random"
 NS_CONFIG_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
-CONFIG = {
+CONFIG: dict[str, typing.Any] = {
     'scheduler': os.getenv('SCHEDULER', DEF_SCHEDULER_NAME),
     'namespace': os.getenv('NAMESPACE', DEF_WATCHED_NAMESPACE),
     'method': os.getenv('METHOD', DEF_SCHEDULER_METHOD),
@@ -68,7 +69,7 @@ def setup_config(params: dict[str, typing.Any]):
         sys.exit(os.EX_CONFIG)
 
 
-def param_parser(method: str = None, params: str = None) -> dict:
+def param_parser(method: str | None = None, params: str | None = None) -> dict:
     """
 
     :param method:

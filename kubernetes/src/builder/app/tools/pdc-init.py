@@ -226,7 +226,7 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
 ########################################################################################################################
 
 def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str | None = None, force: bool = False,
-                                 **kwargs):
+                                 **_):
     """
 
     :param port:
@@ -234,7 +234,6 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str | 
     :param namespace:
     :param app:
     :param force:
-    :param kwargs:
     :return:
     """
     try:
@@ -276,7 +275,7 @@ def create_headless_pdc_services(port: int, ip: str, namespace: str, app: str | 
 
 
 def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int, app: str, force: bool = False,
-                                  **kwargs):
+                                  **_):
     try:
         zones = _collect_privacy_zone_labels(node=node)
         if len(zones) == 0 and not force:

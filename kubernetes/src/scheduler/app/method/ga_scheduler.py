@@ -22,12 +22,13 @@
 #    pip install networkx
 #
 import functools as ft
-import itertools as it
 import logging
-import math
 import operator as op
 import random as rnd
+import typing
 
+import itertools as it
+import math
 import networkx as nx
 
 from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
@@ -43,7 +44,7 @@ FACTOR_GEN = 5
 # -------------------------------------------------------------
 #  Constraint checks
 # -------------------------------------------------------------
-def satisfies_hard_constraints(pod: dict[str, ...], node_attr: dict[str, ...]) -> bool:
+def satisfies_hard_constraints(pod: dict[str, typing.Any], node_attr: dict[str, typing.Any]) -> bool:
     """
 
     :param pod:
@@ -62,7 +63,7 @@ def satisfies_hard_constraints(pod: dict[str, ...], node_attr: dict[str, ...]) -
 # -------------------------------------------------------------
 #  Fitness
 # -------------------------------------------------------------
-def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
+def fitness(pod: dict[str, typing.Any], node_attr: dict[str, typing.Any]) -> float:
     """
 
     :param node_attr:
@@ -81,8 +82,12 @@ def fitness(pod: dict[str, ...], node_attr: dict[str, ...]) -> float:
 # -------------------------------------------------------------
 #  GA
 # -------------------------------------------------------------
-def ga_schedule(topology: nx.Graph, pod: dict[str, ...], population_size: int = None, tournament_ratio: float = 1.0,
-                pheno_groups: int = 2, generations: int = None, **kwargs) -> str | None:
+def ga_schedule(topology: nx.Graph,
+                pod: dict[str, typing.Any],
+                population_size: int | None = None,
+                tournament_ratio: float = 1.0,
+                pheno_groups: int = 2,
+                generations: int | None = None, **_) -> str | None:
     """
 
     :param topology:

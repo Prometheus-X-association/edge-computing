@@ -23,8 +23,7 @@ def patch_condition(body: kopf.RawBody, condition: PEWStatusCondition) -> None:
     conditions = body.setdefault("status", {}).setdefault("conditions", [])
     if (existing_idx := next((i for i, c in enumerate(conditions)
                               if c['type'] == condition.type.value), None)) is not None:
-        conditions.pop(existing_idx)
-        conditions.insert(existing_idx, condition.model_dump(mode="json"))
+        conditions[existing_idx] = condition.model_dump(mode="json")
     else:
         conditions.append(condition.model_dump(mode="json"))
 
@@ -93,3 +92,4 @@ def patch_failed(body: kopf.RawBody, /, *, value: bool = True) -> None:
 def patch_resulted(body: kopf.RawBody, /, *, result: typing.Any) -> None:
     ...
     # TODO
+    raise NotImplementedError

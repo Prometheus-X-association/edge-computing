@@ -15,21 +15,21 @@
 import datetime
 import enum
 import pathlib
-import sys
 
 import click
+import sys
 
 PROJECT_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent.resolve()
 
 
 class EXTFORMAT(enum.StrEnum):
     """Options for openapi specification format"""
-    yaml: str = "yaml"
-    json: str = "json"
+    yaml = "yaml"
+    json = "json"
 
 
 @click.command(help="Generate OpenAPI specification")
-@click.option("-t", "--type", "_type", type=click.Choice(tuple(EXTFORMAT.__annotations__),
+@click.option("-t", "--type", "_type", type=click.Choice(tuple(EXTFORMAT.__members__.values()),
                                                          case_sensitive=False),
               required=False, default="yaml", help="Specification format")
 @click.option("-d", "--dir", "_dir", type=click.Path(path_type=pathlib.Path, dir_okay=True,
@@ -39,7 +39,7 @@ def generate_openapi(_type: str, _dir: str | pathlib.Path) -> None:
     """Generate OpenAPI specification"""
     sys.path.insert(0, str(PROJECT_DIR))
     from app.main import app
-    with open(_dir / f"openapi.{_type}", "w") as f:
+    with open(pathlib.Path(_dir) / f"openapi.{_type}", "w") as f:
         api_spec = app.openapi()
         api_spec['info']['x-creation-date'] = datetime.datetime.today().isoformat(timespec='seconds')
         if _type == EXTFORMAT.yaml:

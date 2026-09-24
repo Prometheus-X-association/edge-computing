@@ -33,7 +33,7 @@ class WebHookServer(http.server.HTTPServer):
 
     def __init__(self, address: str = DEF_SERVER_ADDR, port: int = DEF_SERVER_PORT,
                  webhook_path: str | None = None, wait_time: int | None = None):
-        # noinspection PyTypeChecker
+        # noinspection PyTypeChecker,PydanticTypeChecker
         super().__init__((address, port), HandleWebHook)
         self.timeout: int = self.REQUEST_WAIT_STEP
         self.webhook = webhook_path if webhook_path else self.DEF_WEBHOOK_PATH

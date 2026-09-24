@@ -66,7 +66,7 @@ def test_template(template: str, values: str | pathlib.Path):
     print(f"Generated raw manifest:\n---\n{manifest}\n---")
     print('=' * 80)
     manifest = yaml.safe_load(manifest)
-    #print(f"Generated manifest:\n---\n{yaml.safe_dump(manifest, indent=2)}---")
+    # print(f"Generated manifest:\n---\n{yaml.safe_dump(manifest, indent=2)}---")
     print(f"Generated manifest:\n---\n{pprint.pformat(manifest, indent=2)}---")
 
 

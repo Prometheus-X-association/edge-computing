@@ -14,6 +14,7 @@
 import os
 
 from app.datasource import collect_data_from_filesystem, collect_data_from_url
+from app.util.parsers import DataSourceAuth
 
 
 def test_builder_datasource_file():
@@ -22,5 +23,7 @@ def test_builder_datasource_file():
 
 
 def test_builder_datasource_url():
-    collect_data_from_url("https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz", "./dst_file.txt")
+    collect_data_from_url("https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz",
+                          "./dst_file.txt",
+                          DataSourceAuth())
     os.remove("./dst_file.txt")

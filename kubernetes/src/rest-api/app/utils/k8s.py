@@ -14,10 +14,10 @@
 import enum
 import os
 import pprint
-import sys
 import typing
 
 import fastapi
+import sys
 from fastapi import Query
 from kubernetes_asyncio import client, config, watch
 

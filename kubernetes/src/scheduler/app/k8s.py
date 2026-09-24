@@ -12,12 +12,12 @@
 import datetime
 import json
 import logging
-import time
 import typing
 
-from kubernetes import client
+import time
 
 from app.utils import deep_filter
+from kubernetes import client
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def get_pods_by_node(node: str, ns: str) -> typing.Generator[client.V1Pod, None,
             yield pod
 
 
-def assign_pod_to_node(pod: client.V1Pod, ns: str, node_meta: dict[str, ...], scheduler: str,
+def assign_pod_to_node(pod: client.V1Pod, ns: str, node_meta: dict[str, typing.Any], scheduler: str,
                        method: str) -> bool | None:
     """
     
@@ -73,7 +73,7 @@ def assign_pod_to_node(pod: client.V1Pod, ns: str, node_meta: dict[str, ...], sc
     except client.ApiException as e:
         log.error(f"Error received:\n{e}")
         raise_failed_k8s_scheduling_event(pod=pod, ns=ns, scheduler=scheduler, method=method, reason=e.reason,
-                                          msg=json.loads(e.body).get("message"))
+                                          msg=json.loads(str(e.body)).get("message"))
 
 
 def create_scheduling_event(pod: client.V1Pod, ns: str, scheduler: str,

@@ -17,12 +17,63 @@ from model.ptxedgeworker import PEW, PEWSpec
 raw_kopf_obj = {
     'data': {
         'src': {
-            'method': "HTTPS"
+            'method': "HTTPS",
+            'path': 'https://my.api.localhost:8080/data/example.csv'
+
         }
     },
     'worker': {
         'src': {
-            'method': 'DOCKER'
+            'method': 'DOCKER',
+            'image': 'busybox:latest'
+        }
+    }
+}
+
+raw_kopf_obj_status = {
+    "spec": {
+        'data': {
+            'src': {
+                'method': "SKIP"
+            }
+        },
+        'worker': {
+            'src': {
+                'method': 'SKIP'
+            }
+        }
+    },
+    'status': {
+        'worker': {
+            'ready': True,
+            'exposed': True,
+            'succeeded': True,
+            'failed': False
+        },
+        'conditions': [
+            {
+                'type': 'Ready',
+                'status': 'True',
+                'lastTransitionTime': '2026-09-24T12:49:27Z',
+                'reason': 'ReadyTest',
+                'message': 'ready test'
+            },
+            {
+                'type': 'Failed',
+                'status': 'False',
+                'lastTransitionTime': '2026-09-24T12:49:27Z',
+                'reason': 'FailedTest',
+                'message': 'failed test'
+            }
+        ],
+        'operator': {
+            'deployment': 'Finished',
+            'service': 'Finished',
+            'config': 'Finished',
+            'builder': 'Finished',
+            'ingress': 'Finished',
+            'job': 'Finished',
+            'middleware': 'Finished'
         }
     }
 }
@@ -174,6 +225,10 @@ def test_ewt_spec_parsing():
     print(PEW(spec=PEWSpec(**raw_kopf_obj)).model_dump_json(indent=2, exclude_none=True, exclude_defaults=True))
 
 
+def test_ewt_status_parsing():
+    print(PEW(**raw_kopf_obj_status).model_dump_json(indent=2, exclude_none=True, exclude_defaults=True))
+
+
 def test_k8s_raw_parsing():
     k8s_model = PEW.model_validate_json(raw_k8s_obj, strict=True, extra="ignore")
     print("Parsed datasource:", k8s_model.spec.data.src.path)
@@ -183,4 +238,7 @@ def test_k8s_raw_parsing():
 
 if __name__ == '__main__':
     test_ewt_spec_parsing()
+    print("=" * 80)
+    test_ewt_status_parsing()
+    print("=" * 80)
     test_k8s_raw_parsing()

@@ -18,9 +18,9 @@ import importlib
 import logging
 import os
 import pathlib
-import sys
+import typing
 
-from kubernetes import client, watch
+import sys
 
 from app import __version__
 from app.config import CONFIG, DEF_SCHEDULER_METHOD, DEF_SCHEDULER_NAME, setup_config, param_parser
@@ -28,6 +28,7 @@ from app.convert import convert_topo_to_nx, convert_pod_to_nx
 from app.k8s import assign_pod_to_node, raise_failed_k8s_scheduling_event
 from app.logger import setup_logging
 from app.utils import nx_graph_to_str
+from kubernetes import client, watch
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class SchedulerStrategy(enum.Enum):
             raise NotImplementedError(f"Unknown scheduler algorithm!")
 
 
-def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
+def schedule_pod(pod: client.V1Pod, params: dict[str, typing.Any]) -> str:
     """
 
     :param pod:
@@ -101,7 +102,7 @@ def schedule_pod(pod: client.V1Pod, params: dict[str, ...]) -> str:
     return "Success" if ret is not None else "Failed"
 
 
-def serve_forever(params: dict[str, ...]):
+def serve_forever(params: dict[str, typing.Any]):
     """
 
     :param params:

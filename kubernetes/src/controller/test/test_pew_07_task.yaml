@@ -6,7 +6,7 @@ metadata:
   labels:
     env: test
 spec:
-  service:  # Default to assume task execution, i.e., no services
+  service: # Default to assume task execution, i.e., no services
     enabled: false
   data:
     src:

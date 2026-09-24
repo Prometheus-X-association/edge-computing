@@ -13,12 +13,13 @@
 import copy
 import logging
 import pathlib
+import typing
 
 import networkx as nx
-from kubernetes import client
 
 from app.k8s import get_available_nodes, get_pods_by_node
 from app.utils import str2bool, cpu2int, bits2int, none2str
+from kubernetes import client
 
 log = logging.getLogger(__name__)
 
@@ -33,13 +34,13 @@ RESOURCES = ('cpu', 'memory', 'storage')
 CAPABILITIES = ('ssd', 'gpu')
 
 
-def __create_pod_data(pod: client.V1Pod) -> dict[str, ...]:
+def __create_pod_data(pod: client.V1Pod) -> dict[str, typing.Any]:
     """
 
     :param pod:
     :return:
     """
-    pod_data = {
+    pod_data: dict[str, typing.Any] = {
         'priority': int(pod.spec.priority),
         'demand': {
             'cpu': sum(cpu2int(c.resources.requests.get('cpu', 0))
@@ -188,7 +189,7 @@ def convert_topo_to_nx(ns: str) -> nx.Graph:
     return topo_obj
 
 
-def __parse_pod_data(pod_data: dict[str, ...]) -> dict[str, ...]:
+def __parse_pod_data(pod_data: dict[str, typing.Any]) -> dict[str, typing.Any]:
     pod_data['collocated'] = bool(pod_data['collocated'])
     for const in ('demand', 'prefer'):
         for attr in ('ssd', 'gpu'):

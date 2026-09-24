@@ -9,12 +9,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import itertools as it
 import logging
 import random as rnd
 import typing
 from operator import le
 
+import itertools as it
 import networkx as nx
 
 from app.convert import read_topo_from_file, read_pod_from_file, RESOURCES, CAPABILITIES
@@ -62,7 +62,7 @@ def random_schedule(nodes: list[str]) -> str | None:
         return None
 
 
-def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, seed: int = None, **kwargs) -> str | None:
+def do_random_pod_schedule(topo: nx.Graph, pod: nx.Graph, seed: int | None = None, **_) -> str | None:
     """
 
     :param topo:

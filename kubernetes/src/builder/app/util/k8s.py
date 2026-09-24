@@ -371,7 +371,7 @@ def test_elector_manager():
                                   timeout=20,
                                   retry=5).with_task(lambda _, c, v: time.sleep(10))
     mgr.start()
-    result = mgr.wait()
+    mgr.wait()
     mgr.stop()
 
 
@@ -381,7 +381,7 @@ def test_elector_context_manager():
                                   timeout=20,
                                   retry=5)
     with mgr.with_task(lambda _, c, v: time.sleep(10)) as mgr:
-        result = mgr.wait()
+        mgr.wait()
 
 
 if __name__ == '__main__':
