@@ -40,9 +40,11 @@ PTXEdgeWorkerNameType = typing.Annotated[str, Field(
 class PTXEdgeWorkerResponseState(enum.StrEnum):
     CREATED = enum.auto()
     ERROR = enum.auto()
-    MODIFIED = enum.auto()
-    DELETED = enum.auto()
+    RUNNING = enum.auto()
     TIMEOUT = enum.auto()
+    FINISHED = enum.auto()
+    TERMINATING = enum.auto()
+    DELETED = enum.auto()
 
 
 # noinspection argument-list
@@ -74,7 +76,7 @@ class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker deployment state")]
     resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource")]
-    api: typing.Annotated[PTXEdgeWorkerResponseApi, Field(description="Worker's exposed URLs")]
+    api: typing.Annotated[PTXEdgeWorkerResponseApi, Field(description="Worker's exposed URLs")] = None
 
 
 ########################################################################################################################

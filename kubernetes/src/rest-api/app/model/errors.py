@@ -46,7 +46,8 @@ class PTXEdgeAPIError(BaseModel):
 
 def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
-    logger.debug(f"Received response: HTTP/{result} - {result.name} for {obj['kind']}/{obj['metadata'].get('name')}")
+    name = obj.get('metadata', {}).get('name') if 'metadata' in obj else obj.get('details', {}).get('name')
+    logger.debug(f"Received response: HTTP/{result} - {result.name} for {name}")
     if not result.is_success:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_502_BAD_GATEWAY,

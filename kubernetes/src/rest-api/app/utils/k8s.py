@@ -14,10 +14,10 @@
 import enum
 import os
 import pprint
+import sys
 import typing
 
 import fastapi
-import sys
 from fastapi import Query
 from kubernetes_asyncio import client, config, watch
 
@@ -52,10 +52,11 @@ class K8sAPIMethod(enum.StrEnum):
 
 
 async def invoke_k8s_pew_api(method: K8sAPIMethod,
-                             body: dict[str, typing.Any] | None = None,
+                             body: dict[str, typing.Any] | object | None = None,
                              name: str | None = None,
                              status: bool = False,
-                             label_selector: tuple[str] | None = None) -> tuple[dict[str, typing.Any], int]:
+                             label_selector: tuple[str] | None = None,
+                             **call_args) -> tuple[dict[str, typing.Any], int]:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         logger.info(f"Invoke k8s {api.__class__.__name__}...")
@@ -71,6 +72,7 @@ async def invoke_k8s_pew_api(method: K8sAPIMethod,
             params["label_selector"] = label_selector if isinstance(label_selector, str) else ",".join(label_selector)
         if method is K8sAPIMethod.CREATE:
             params['field_manager'] = CONFIG.field_manager
+        params.update(call_args)
         logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
         caller = "namespaced_custom_object_status" if status else "namespaced_custom_object"
         api_caller = getattr(api, f"{method.value}_{caller}_with_http_info")
@@ -112,19 +114,20 @@ class PTXEdgeWorkerState(enum.StrEnum):
     FAILED = enum.auto()
 
 
+class K8sEventType(enum.StrEnum):
+    ADDED = "ADDED"
+    MODIFIED = "MODIFIED"
+    DELETED = "DELETED"
+
+
 class WatcherTimeout(RuntimeError):
     pass
 
 
-async def watch_for_resource_state(name: str,
-                                   state: PTXEdgeWorkerState = PTXEdgeWorkerState.READY,
-                                   timeout: int = 30,
-                                   raise_for_timeout: bool = True) -> bool | None:
-    class K8sEventType(enum.StrEnum):
-        ADDED = "ADDED"
-        MODIFIED = "MODIFIED"
-        DELETED = "DELETED"
-
+async def watch_for_pew_resource_state(name: str,
+                                       state: PTXEdgeWorkerState = PTXEdgeWorkerState.READY,
+                                       timeout: int = 30,
+                                       raise_for_timeout: bool = True) -> bool | None:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
         params = dict(group=PEW.group,
