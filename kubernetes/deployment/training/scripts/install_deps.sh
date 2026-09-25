@@ -21,12 +21,12 @@ DEPS=(docker k3d kubectl kubecolor helm skopeo)
 
 TIMEOUT=120
 
-DOCKER_VER='29.8.0'
+DOCKER_VER='29.8.1'
 K3D_VER='v5.9.0'
 KUBECTL_VER='v1.35.5'	# used by k3d v5.9.0 / k3s v1.35.5
-HELM_VER='v4.1.0'
-SKOPEO_VER='v1.24.0'
-KCOLOR_VER='0.7.1'
+HELM_VER='v4.3.0'
+SKOPEO_VER='v1.24.1'
+KCOLOR_VER='0.8.0'
 
 PKG_FREEZE=false
 NO_CHECK=false
