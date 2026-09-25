@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import functools
+import json
 import pprint
 import typing
 
@@ -249,7 +250,7 @@ async def _create_pew_worker(request: fastapi.Request,
                              name: PTXEdgeWorkerNameType | None,
                              labels: K8sLabelCollectionType = None) -> dict[str, typing.Any] | None:
     """Create PTX Edge Computing worker"""
-    logger.info(f"Creating resource with name: {name}")
+    logger.info(f"Creating worker with name: {name}")
     logger.debug(f"Parsed model:\n{pew.model_dump_json(indent=2, exclude_none=True)}")
     logger.debug("Creating manifest body...")
     manifest: dict[str, typing.Any] = {
@@ -270,7 +271,7 @@ async def _create_pew_worker(request: fastapi.Request,
     if labels:
         manifest['metadata']['labels'].update(dict((l.split('=', maxsplit=1) for l in labels if '=' in l)))
     if pew.status:
-        logger.debug("Remove optional status from model...")
+        logger.debug("Remove optional status from resource...")
         pew.status = PEWStatus()
     manifest.update(pew.model_dump(mode="json",
                                    context=dict(expose_secrets=True),
@@ -302,30 +303,6 @@ async def _create_pew_worker(request: fastapi.Request,
         raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
-
-
-@app.put("/workers/{name}",
-         tags=["Customer"],
-         responses={
-             fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
-         },
-         response_model=PTXEdgeWorkerResponse,
-         status_code=fastapi.status.HTTP_201_CREATED)
-async def create_worker_with_name(request: fastapi.Request,
-                                  name: PTXEdgeWorkerNameType,
-                                  pew: typing.Annotated[PEW, fastapi.Body],
-                                  label: K8sLabelCollectionType = None):
-    """Create PTX-Edge worker with given name"""
-    logger.debug("=" * 100)
-    logger.info(f"Received {PEW.__name__} create request with name: {name}")
-    if pew.spec.name and pew.spec.name != name:
-        logger.warning(f"Resource defines name: {pew.spec.name} different from <name> parameter: {name}!")
-    response = await _create_pew_worker(request=request, pew=pew, name=name, labels=label)
-    logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
-    logger.debug("=" * 100)
-    return response
 
 
 @app.post("/workers",
@@ -414,6 +391,48 @@ async def create_workers_batch(request: fastapi.Request,
         raise fastapi.HTTPException(
             status_code=getattr(exgroup.exceptions[0], 'status_code', fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR),
             detail=details)
+
+
+@app.put("/workers/{name}",
+         tags=["Customer"],
+         responses={
+             fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+         },
+         response_model=PTXEdgeWorkerResponse,
+         status_code=fastapi.status.HTTP_201_CREATED)
+async def recreate_worker_with_name(request: fastapi.Request,
+                                    name: PTXEdgeWorkerNameType,
+                                    pew: typing.Annotated[PEW, fastapi.Body],
+                                    label: K8sLabelCollectionType = None,
+                                    tolerance: typing.Annotated[
+                                        int, fastapi.Query(description="Grace period", ge=1)] = 10):
+    """Re-create PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} re-create request with name: {name}")
+    if pew.spec.name and pew.spec.name != name:
+        logger.warning(f"Resource defines name: {pew.spec.name} different from <name> parameter: {name}!")
+    try:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.DELETE,
+                                                name=name,
+                                                body=client.V1DeleteOptions(
+                                                    propagation_policy="Foreground",
+                                                    grace_period_seconds=tolerance).to_dict())
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+    except client.ApiException as ex:
+        error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body)) if ex.body else {}
+        if int(error.get('code', 0)) != fastapi.status.HTTP_404_NOT_FOUND:
+            raise_for_failed_k8s_request(ex)
+        else:
+            logger.debug(f"Worker[{name}] is not found! Skip deletion step.")
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
+        raise_for_network_error(ex)
+    response = await _create_pew_worker(request=request, pew=pew, name=name, labels=label)
+    logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
+    logger.debug("=" * 100)
+    return response
 
 
 @app.delete("/workers/{name}",

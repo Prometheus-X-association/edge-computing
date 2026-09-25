@@ -47,7 +47,7 @@ class PTXEdgeAPIError(BaseModel):
 def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
     result = http.HTTPStatus(status)
     name = obj.get('metadata', {}).get('name') if 'metadata' in obj else obj.get('details', {}).get('name')
-    logger.debug(f"Received response: HTTP/{result} - {result.name} for {name}")
+    logger.debug(f"Received response: HTTP/{result} - {result.name} for {obj.get('kind')}/{name}")
     if not result.is_success:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_502_BAD_GATEWAY,
@@ -62,20 +62,14 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
             })
 
 
-def convert_k8s_api_error(ex: client.ApiException) -> str:
-    return '\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
-                      "Received HTTP body:",
-                      json.dumps(json.loads(str(ex.body)) if ex.body else '{}', indent=2)))
-
-
 def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
-    logger.error(convert_k8s_api_error(ex))
-    error = json.loads(str(ex.body))
-    if (code := int(error.get('code'))) not in (
-            fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT,
-            fastapi.status.HTTP_409_CONFLICT,
-            fastapi.status.HTTP_404_NOT_FOUND
-    ):
+    error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body)) if ex.body else {}
+    logger.error('\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
+                            "Received HTTP body:",
+                            json.dumps(error, indent=2))))
+    if (code := int(error.get('code', 0))) not in (fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT,
+                                                   fastapi.status.HTTP_409_CONFLICT,
+                                                   fastapi.status.HTTP_404_NOT_FOUND):
         code = fastapi.status.HTTP_502_BAD_GATEWAY
     raise fastapi.HTTPException(
         status_code=code,
