@@ -168,9 +168,11 @@ Resource configuration defines the representation of the consumer's data-receivi
 Execute test using targets starts with `test-` (or directly with the helper scripts):
 
 ```bash
-$ make test-config
-$ make test-credential
-$ make test-exchange
+$ make test-config-api
+$ make test-config-file
+$ make test-credentials
+$ make test-exchange-consumer
+$ make test-exchange-api-consumption
 ...
 ```
 
@@ -192,4 +194,9 @@ To redeploy the infrastructure, use the helper target (`teardown` + `setup`):
 
 ```bash
 $ make restart
+```
+
+To stop the exchange setup containers and remove their images for cleanup, use the dedicated target: 
+```bash
+$ make purge
 ```

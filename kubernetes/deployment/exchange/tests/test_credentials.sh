@@ -20,7 +20,7 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Credential"
+LOG "Test Credentials"
 
 _BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 

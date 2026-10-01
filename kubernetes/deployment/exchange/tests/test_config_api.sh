@@ -95,7 +95,7 @@ EOF
 echo -e "Prepared config body:"
 echo "${CFG_BODY}" | jq
 
-echo -e"\nUsed URL: [PUT] ${_URL}"
+echo -e "\nUsed URL: [PUT] ${_URL}"
 
 RESP=$(curl -Ss -X PUT \
                 "${_URL}" \

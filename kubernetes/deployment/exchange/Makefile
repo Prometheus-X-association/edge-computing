@@ -42,20 +42,20 @@ test-config-api ::
 test-config-file ::
 	./tests/test_config_file.sh
 
-test-credential ::
-	./tests/test_credential.sh
+test-credentials ::
+	./tests/test_credentials.sh
 
 test-exchange-consumer ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
-	./tests/test_exchange.sh
+	./tests/test_exchange_consumer.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
-test-exchange-provider ::
+test-exchange-api-consumption ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
-	./tests/test_exchange_reversed.sh
+	./tests/test_exchange_api_consumption.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
@@ -85,13 +85,7 @@ teardown ::
 	${COMPOSE_EXCHANGE} --profile extra down -v
 
 purge ::
-	docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f || true
-	docker rmi mongo:latest \
-				ngrok/ngrok:alpine \
-				busybox:latest \
-				traefik/whoami:latest \
-				traefik:v3.7 \
-				alpine/tshark:latest || true
+	${COMPOSE_EXCHANGE} --profile extra down -v --rmi=all
 
 ########################################################################################################################
 
