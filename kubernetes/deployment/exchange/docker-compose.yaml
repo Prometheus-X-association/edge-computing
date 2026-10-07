@@ -20,14 +20,14 @@ services:
         target: /usr/src/app/static/healthz
       - source: dp0.json
         target: /usr/src/app/static/dp0.json
-        uid: '1001'
-        gid: '1001'
-        mode: 0444
+        #uid: '1001'
+        #gid: '1001'
+        #mode: 0444
       - source: dp0-data.csv
         target: /usr/src/app/static/dp0/data.csv
-        uid: '1001'
-        gid: '1001'
-        mode: 0444
+        #uid: '1001'
+        #gid: '1001'
+        #mode: 0444
     networks:
       - nw-provider
     deploy:
@@ -82,8 +82,8 @@ services:
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
-    stop_signal: SIGKILL
     entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
     configs:
       - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
@@ -105,21 +105,34 @@ services:
       api-provider:
         condition: service_healthy
 
-  ## Main data consumer API accepting any PDC callbacks and returning env data
-  #api-consumer:
-  #  container_name: api-consumer
-  #  image: traefik/whoami:latest
-  #  restart: no # fail fast
-  #  labels:
-  #    setup: exchange
-  #  command: [ '--port=8080', '--name=consumer', '--verbose' ]
-  #  networks:
-  #    - nw-consumer
-  #  depends_on:
-  #    pdc-consumer:
-  #      condition: service_healthy
-  #    api-provider:
-  #      condition: service_healthy
+#  # Main data consumer API accepting any PDC callbacks and returning env data
+#  api-consumer-infra:
+#    container_name: api-consumer-infra
+#    image: traefik/whoami:latest
+#    restart: no # fail fast
+#    user: 1001:1001
+#    security_opt:
+#      - no-new-privileges:true
+#    environment:
+#      WHOAMI_NAME: infrastructure-service
+#      WHOAMI_PORT_NUMBER: 8080
+#    command: [ "--verbose" ]
+#    networks:
+#      - nw-consumer
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: 1.0
+#          memory: 100m
+#    healthcheck:
+#      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/health' ]
+#      start_period: 5s
+#      interval: 5m
+#    depends_on:
+#      pdc-consumer:
+#        condition: service_healthy
+#      api-consumer:
+#        condition: service_healthy
 
 ########################################################################################################################
 

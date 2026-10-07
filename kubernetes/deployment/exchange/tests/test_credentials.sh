@@ -39,11 +39,11 @@ echo "Used URL: [PORT] ${_URL}"
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
 
-RESP=$(curl -Ss -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -d "${LOGIN_BODY}")
+RESP=$(curl -Ss --fail-with-body -X POST \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
@@ -77,12 +77,12 @@ echo "Used URL: [POST] ${_URL}"
 echo -e "\nPrepared credential body:"
 echo "${CREDENTIAL_BODY}" | jq
 
-RESP=$(curl -Ss -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer ${TOKEN}" \
-                -d "${CREDENTIAL_BODY}")
+RESP=$(curl -Ss --fail-with-body -X POST \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -H "Authorization: Bearer ${TOKEN}" \
+                                -d "${CREDENTIAL_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
@@ -104,10 +104,10 @@ log "Validate PDC configuration..."
 _URL="${_BASE_URL}/private/credentials"
 echo -e "\nUsed URL: [GET] ${_URL}"
 
-RESP=$(curl -Ss -X GET \
-                "${_URL}" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer ${TOKEN}")
+RESP=$(curl -Ss --fail-with-body -X GET \
+                                "${_URL}" \
+                                -H "Accept: application/json" \
+                                -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq

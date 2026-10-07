@@ -20,7 +20,7 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Exchange"
+LOG "Test API Consumption"
 
 _BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
@@ -39,11 +39,11 @@ echo "Used URL: [POST] ${_URL}"
 echo -e "\nPrepared login body:"
 echo "${LOGIN_BODY}" | jq
 
-RESP=$(curl -Ssf -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -d "${LOGIN_BODY}")
+RESP=$(curl -Ss --fail-with-body -X POST \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
@@ -60,22 +60,24 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Initiate consumer exchange for descriptor (JSON)..."
+log "Initiate API consumption exchange for dataset (CSV)..."
 
 echo "Used consumer parameter: ${PARAM=$(date +%s)}"
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
     "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
-    "purposeId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${CONSUMER_OFFER_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
-            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_RESOURCE_ID}",
+            "resource": "https://api.visionstrust.com/v1/catalog/dataresources/${PROVIDER_RESOURCE_CSV_ID}"
+        }
+    ],
+    "purposeId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${CONSUMER_OFFER_ID}",
+    "purposes": [
+        {
+            "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_RESOURCE_CSV_ID}",
             "params": {
                 "query": [
-                    {
-                        "test": "true"
-                    },
                     {
                         "param": "${PARAM}"
                     }
@@ -83,11 +85,13 @@ EXCHANGE_BODY=$(jq -n "$(cat <<EOF
             }
         }
     ],
-    "purposes": [
-        {
-             "resource": "https://api.visionstrust.com/v1/catalog/softwareresources/${CONSUMER_RESOURCE_ID}"
-        }
-    ],
+    "providerParams": {
+        "query": [
+            {
+                "test": "true"
+            }
+        ]
+    },
     "consumerParams": {
         "query": [
             {
@@ -105,12 +109,12 @@ echo "Used URL: [POST] ${_URL}"
 echo -e "\nPrepared exchange body:"
 echo "${EXCHANGE_BODY}" | jq
 
-RESP=$(curl -s -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer ${TOKEN}" \
-                -d "${EXCHANGE_BODY}")
+RESP=$(curl -Ss --fail-with-body -X POST \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -H "Authorization: Bearer ${TOKEN}" \
+                                -d "${EXCHANGE_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq

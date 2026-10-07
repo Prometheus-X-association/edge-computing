@@ -24,13 +24,13 @@ build ::
 	${COMPOSE_EXCHANGE} build sniffer-provider sniffer-provider
 
 setup-base ::
-	${COMPOSE_BASE} up --force-recreate --abort-on-container-failure  || true
+	${COMPOSE_BASE} up --renew-anon-volumes --force-recreate --abort-on-container-failure  || true
 
 setup ::
-	${COMPOSE_EXCHANGE} up --force-recreate --abort-on-container-failure || true
+	${COMPOSE_EXCHANGE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
 
 setup-all ::
-	${COMPOSE_EXCHANGE} --profile extra up --force-recreate --abort-on-container-failure || true
+	${COMPOSE_EXCHANGE} --profile extra up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
 
 restart :: | teardown setup
 
@@ -77,6 +77,9 @@ logs ::
 	${COMPOSE_EXCHANGE} logs sniffer-provider --since="${SINCE}"
 	@echo
 	${COMPOSE_EXCHANGE} logs sniffer-consumer --since="${SINCE}"
+
+attached ::
+	${COMPOSE_EXCHANGE} logs --follow -t || true
 
 status ::
 	${COMPOSE_EXCHANGE} ps -a

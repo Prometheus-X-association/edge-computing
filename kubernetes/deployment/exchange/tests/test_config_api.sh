@@ -39,11 +39,11 @@ echo "${LOGIN_BODY}" | jq
 _URL="${_BASE_URL}/login"
 echo -e "\nUsed URL: [POST] ${_URL}"
 
-RESP=$(curl -Ss -X POST \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -d "${LOGIN_BODY}")
+RESP=$(curl -Ss --fail-with-body -X POST \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -d "${LOGIN_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
@@ -65,10 +65,10 @@ log "Request PDC configuration..."
 _URL="${_BASE_URL}/private/configuration"
 echo "Used URL: [GET] ${_URL}"
 
-RESP=$(curl -Ss -X GET \
-                "${_URL}" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer ${TOKEN}")
+RESP=$(curl -Ss --fail-with-body -X GET \
+                                "${_URL}" \
+                                -H "Accept: application/json" \
+                                -H "Authorization: Bearer ${TOKEN}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
@@ -97,12 +97,12 @@ echo "${CFG_BODY}" | jq
 
 echo -e "\nUsed URL: [PUT] ${_URL}"
 
-RESP=$(curl -Ss -X PUT \
-                "${_URL}" \
-                -H "Content-Type: application/json" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer ${TOKEN}" \
-                -d "${CFG_BODY}")
+RESP=$(curl -Ss --fail-with-body -X PUT \
+                                "${_URL}" \
+                                -H "Content-Type: application/json" \
+                                -H "Accept: application/json" \
+                                -H "Authorization: Bearer ${TOKEN}" \
+                                -d "${CFG_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
