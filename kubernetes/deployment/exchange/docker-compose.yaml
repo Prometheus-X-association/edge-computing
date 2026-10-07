@@ -162,7 +162,7 @@ configs:
       #!/usr/bin/env sh
       while true; do
         echo -e '\n\nWaiting for webhooks...'
-        printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080;
+        printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080
       done
 
   # Simple consumer API config
@@ -171,8 +171,8 @@ configs:
       #!/usr/bin/env sh
       while true; do
         echo -e '\n\nWaiting for connections...'
-        body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }";
-        len="$$(printf '%s\n' "$${body}" | wc -c)";
+        body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }"
+        len="$$(printf '%s\n' "$${body}" | wc -c)"
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
-        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080;
+        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080
       done

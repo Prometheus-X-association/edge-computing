@@ -122,22 +122,25 @@ services:
     security_opt:
       - no-new-privileges:true
     command:
-      - "--global.checkNewVersion=false"
-      - "--global.sendAnonymousUsage=false"
-      - "--ping=true"
-      - "--log.level=INFO"
-      - "--accesslog=true"
-      - "--api.dashboard=true"
-      #- "--api.insecure=true"
-      - "--entryPoints.web.address=:80"
-      - "--providers.file.filename=/etc/traefik/routes.yml"
-      - "--providers.file.watch=false"
-      #- "--providers.docker=true"
-      #- "--providers.docker.exposedbydefault=false"
-      #- "--providers.docker.network=nw-proxy"
+      - "--configfile=/etc/traefik/config.yml"
+      #- "--global.checkNewVersion=false"
+      #- "--global.sendAnonymousUsage=false"
+      #- "--ping=true"
+      #- "--log.level=INFO"
+      #- "--accesslog=true"
+      #- "--api.dashboard=true"
+      ##- "--api.insecure=true"
+      #- "--entryPoints.web.address=:80"
+      #- "--providers.file.filename=/etc/traefik/routes.yml"
+      #- "--providers.file.watch=false"
+      ##- "--providers.docker=true"
+      ##- "--providers.docker.exposedbydefault=false"
+      ##- "--providers.docker.network=nw-proxy"
     configs:
       - source: cfg-traefik-routers.yaml
         target: /etc/traefik/routes.yml
+      - source: cfg-traefik-config.yaml
+        target: /etc/traefik/config.yml
     #volumes:
     #  - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
@@ -339,6 +342,42 @@ configs:
       JWT_REFRESH_TOKEN_EXPIRATION=3h
       EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
+
+  cfg-traefik-config.yaml:
+    content: |
+      global:
+        checkNewVersion: false
+        sendAnonymousUsage: false
+      ping: {}
+      log:
+        level: "INFO"
+      accesslog: {}
+      api:
+        dashboard: true
+      entryPoints:
+        web:
+          address: ":80"
+          observability:
+            accessLogs: true
+            metrics: false
+            tracing: false
+          http:
+            # Explicitly set to get rid of warnings
+            encodedCharacters:
+              allowEncodedSlash: false
+            aliasHeadersStrategy: "delete"
+        traefik:
+          address: ":8080"
+          observability:
+            accessLogs: false
+            metrics: false
+            tracing: false
+          http:
+            aliasHeadersStrategy: "delete"
+      providers:
+        file:
+          filename: "/etc/traefik/routes.yml"
+          watch: false
 
   cfg-traefik-routers.yaml:
     content: |
