@@ -49,7 +49,7 @@ docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f
 ########################################################################################################################
 
 if ! grep -q "install -g pnpm@" <"${PDC_DIR}/docker/app/Dockerfile"; then
-    log "Adjust docker setup..."
+    log "Adjust PDC's docker image to use froze-lockfile correctly..."
     cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
 ################ Changed for exchange deployment ################
 # Use the official Node.js image as base image
@@ -87,6 +87,24 @@ CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
     ls -alht "${PDC_DIR}/docker/app/Dockerfile"
 fi
+
+########################################################################################################################
+
+log "Update PDC dpdc dependency..."
+
+sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${PDC_DIR}/package.json"
+
+ls -alht "${PDC_DIR}/package.json"
+echo
+grep "dpcp-library" "${PDC_DIR}/package.json"
+
+sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${PDC_DIR}/docker/app/Dockerfile"
+
+ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+echo
+grep "lockfile" "${PDC_DIR}/docker/app/Dockerfile"
+
+########################################################################################################################
 
 log "Create config files..."
 cat <<EOF >"${PDC_DIR}/src/config.${PDC_ENV}.json"
