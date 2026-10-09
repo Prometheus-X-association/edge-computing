@@ -59,21 +59,37 @@ test-exchange-api-consumption ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
+test-service-chain-basic-consumer ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_service_chain_basic_consumer.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
+test-service-chain-basic-provider ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_service_chain_basic_provider.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
 ########################################################################################################################
 
 logs ::
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs api-provider --since="${SINCE}"
 	@echo
-	${COMPOSE_EXCHANGE} logs pdc-provider --since="${SINCE}"
-	@echo
-	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
-	@echo
-	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
-	@echo
 	${COMPOSE_EXCHANGE} logs api-provider-status --since="${SINCE}"
-	@echo
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	${COMPOSE_EXCHANGE} logs pdc-provider --since="${SINCE}"
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
+
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs traefik-proxy --since="${SINCE}"
-	@echo
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs sniffer-provider --since="${SINCE}"
 	@echo
 	${COMPOSE_EXCHANGE} logs sniffer-consumer --since="${SINCE}"
