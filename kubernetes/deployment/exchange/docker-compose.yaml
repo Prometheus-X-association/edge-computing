@@ -1,6 +1,7 @@
 include:
   - basic-infra.yaml
 services:
+
   # Main datasource API serving data with different extensions and authentication
   api-provider:
     container_name: api-provider
@@ -11,7 +12,6 @@ services:
     security_opt:
       - no-new-privileges:true
     working_dir: /usr/src/app/static
-    #command: [ 'httpd', '-vv', '-f', '-u', '1001:1001', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     configs:
       - source: cfg-httpd.conf
@@ -20,14 +20,8 @@ services:
         target: /usr/src/app/static/healthz
       - source: dp0.json
         target: /usr/src/app/static/dp0.json
-        #uid: '1001'
-        #gid: '1001'
-        #mode: 0444
       - source: dp0-data.csv
         target: /usr/src/app/static/dp0/data.csv
-        #uid: '1001'
-        #gid: '1001'
-        #mode: 0444
     networks:
       - nw-provider
     deploy:
@@ -41,35 +35,6 @@ services:
       interval: 5m
     depends_on:
       ngrok-tunnel:
-        condition: service_healthy
-
-  # Main API accepting any GET/POST and returning static JSON
-  api-provider-status:
-    container_name: api-provider-status
-    image: busybox:latest
-    restart: no # fail fast
-    user: 1001:1001
-    security_opt:
-      - no-new-privileges:true
-    configs:
-      - source: provider-status-server.sh
-        target: /usr/app/entrypoint.sh
-        mode: 0555
-    entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
-    networks:
-      - nw-provider
-    deploy:
-      resources:
-        limits:
-          cpus: 1.0
-          memory: 100m
-    healthcheck:
-      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
-      start_period: 5s
-      interval: 5m
-    depends_on:
-      api-provider:
         condition: service_healthy
 
   ######################################################################################################################
@@ -105,6 +70,8 @@ services:
       api-provider:
         condition: service_healthy
 
+  ######################################################################################################################
+
   # Main Infrastructure consumer API
   api-consumer-infra:
     container_name: api-consumer-infra
@@ -122,8 +89,8 @@ services:
     stop_signal: SIGINT
     configs:
       - source: consumer-infra-hooks.yaml
-        target: /usr/webhook/hooks.json
-    command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.json" ]
+        target: /usr/webhook/hooks.yaml
+    command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.yaml" ]
     networks:
       - nw-consumer
     deploy:
@@ -141,32 +108,63 @@ services:
       api-provider:
         condition: service_healthy
 
-#  # Main Infrastructure consumer API
-#  api-consumer-infra:
-#    container_name: api-consumer-infra
-#    image: traefik/whoami:latest
-#    restart: no # fail fast
-#    user: 1001:1001
-#    security_opt:
-#      - no-new-privileges:true
-#    environment:
-#      WHOAMI_NAME: infrastructure-service
-#      WHOAMI_PORT_NUMBER: 8080
-#    command: [ "--verbose" ]
-#    networks:
-#      - nw-consumer
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: 1.0
-#          memory: 100m
-#    healthcheck:
-#      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/health' ]
-#      start_period: 5s
-#      interval: 5m
-#    depends_on:
-#      pdc-consumer:
-#        condition: service_healthy
+  #  # Main Infrastructure consumer API
+  #  api-consumer-infra:
+  #    container_name: api-consumer-infra
+  #    image: traefik/whoami:latest
+  #    restart: no # fail fast
+  #    user: 1001:1001
+  #    security_opt:
+  #      - no-new-privileges:true
+  #    environment:
+  #      WHOAMI_NAME: infrastructure-service
+  #      WHOAMI_PORT_NUMBER: 8080
+  #    command: [ "--verbose" ]
+  #    networks:
+  #      - nw-consumer
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          cpus: 1.0
+  #          memory: 100m
+  #    healthcheck:
+  #      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/health' ]
+  #      start_period: 5s
+  #      interval: 5m
+  #    depends_on:
+  #      pdc-consumer:
+  #        condition: service_healthy
+
+  ########################################################################################################################
+
+  # Main API accepting any GET/POST and returning static JSON
+  api-provider-status:
+    container_name: api-provider-status
+    image: busybox:latest
+    restart: no # fail fast
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
+    configs:
+      - source: provider-status-server.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
+    stop_signal: SIGKILL
+    networks:
+      - nw-provider
+    deploy:
+      resources:
+        limits:
+          cpus: 1.0
+          memory: 100m
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 5m
+    depends_on:
+      api-provider:
+        condition: service_healthy
 
 ########################################################################################################################
 
@@ -174,6 +172,7 @@ configs:
   # Provider API config
   cfg-hz:
     content: "OK"
+
   # - set proper mime type for non-HTML responses
   # - set basic authentication for specific path
   cfg-httpd.conf:
@@ -181,21 +180,11 @@ configs:
       .json:application/json;charset=utf-8
       .csv:text/csv;charset=utf-8
       /dp0/:admin:admin
+
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
-    content: |
-      {
-        "type": "REST",
-        "content": {
-          "url": "http://provider-api:8080/dp0/data.csv",
-          "auth": {
-            "scheme": "http",
-            "user": "admin",
-            "secret": "admin",
-            "insecure": false,
-          }
-        }
-      }
+    content: '{"type": "REST", "content": {"url": "http://provider-api:8080/dp0/data.csv"}}'
+
   dp0-data.csv:
     content: |
       Name,Age,Department
