@@ -52,7 +52,7 @@ services:
     security_opt:
       - no-new-privileges:true
     configs:
-      - source: provider-status-hook.sh
+      - source: provider-status-server.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
     entrypoint: /usr/app/entrypoint.sh
@@ -105,7 +105,43 @@ services:
       api-provider:
         condition: service_healthy
 
-#  # Main data consumer API accepting any PDC callbacks and returning env data
+  # Main Infrastructure consumer API
+  api-consumer-infra:
+    container_name: api-consumer-infra
+    image: alpine/webhook:latest
+    pull_policy: never
+    user: 1001:1001
+    security_opt:
+      - no-new-privileges:true
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM alpine:latest
+        RUN apk --no-cache add jo webhook
+    restart: no # fail fast
+    stop_signal: SIGINT
+    configs:
+      - source: consumer-infra-hooks.yaml
+        target: /usr/webhook/hooks.json
+    command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.json" ]
+    networks:
+      - nw-consumer
+    deploy:
+      resources:
+        limits:
+          cpus: 1.0
+          memory: 100m
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      start_period: 5s
+      interval: 5m
+    depends_on:
+      ngrok-tunnel:
+        condition: service_healthy
+      api-provider:
+        condition: service_healthy
+
+#  # Main Infrastructure consumer API
 #  api-consumer-infra:
 #    container_name: api-consumer-infra
 #    image: traefik/whoami:latest
@@ -130,8 +166,6 @@ services:
 #      interval: 5m
 #    depends_on:
 #      pdc-consumer:
-#        condition: service_healthy
-#      api-consumer:
 #        condition: service_healthy
 
 ########################################################################################################################
@@ -170,7 +204,7 @@ configs:
       Charlie,35,Sales
 
   # Simple consumer API config
-  provider-status-hook.sh:
+  provider-status-server.sh:
     content: |
       #!/usr/bin/env sh
       while true; do
@@ -189,3 +223,9 @@ configs:
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080
       done
+
+  # Define webhooks and bind handler scripts
+  consumer-infra-hooks.yaml:
+    content: |
+      - id: healthz
+        execute-command: "true"
