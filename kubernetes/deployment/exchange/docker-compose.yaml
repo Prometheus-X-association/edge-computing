@@ -11,9 +11,13 @@ services:
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
+    entrypoint: /usr/app/entrypoint.sh
     working_dir: /usr/src/app/static
     command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     configs:
+      - source: provider-server.sh
+        target: /usr/app/entrypoint.sh
+        mode: 0555
       - source: cfg-httpd.conf
         target: /etc/httpd.conf
       - source: cfg-hz
@@ -48,7 +52,6 @@ services:
     security_opt:
       - no-new-privileges:true
     entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
     configs:
       - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
@@ -72,7 +75,7 @@ services:
 
   ######################################################################################################################
 
-  # Main Infrastructure consumer API
+  # Main Infrastructure API
   api-consumer-infra:
     container_name: api-consumer-infra
     image: alpine/webhook:latest
@@ -86,7 +89,6 @@ services:
         FROM alpine:latest
         RUN apk --no-cache add jo webhook
     restart: no # fail fast
-    stop_signal: SIGINT
     configs:
       - source: consumer-infra-hooks.yaml
         target: /usr/webhook/hooks.yaml
@@ -150,7 +152,6 @@ services:
         target: /usr/app/entrypoint.sh
         mode: 0555
     entrypoint: /usr/app/entrypoint.sh
-    stop_signal: SIGKILL
     networks:
       - nw-provider
     deploy:
@@ -193,28 +194,40 @@ configs:
       Charlie,35,Sales
 
   # Simple consumer API config
+  provider-server.sh:
+    content: |
+      #!/usr/bin/env sh
+      trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
+      "$@" &
+      wait $${!}
+
+  # Simple consumer API config
   provider-status-server.sh:
     content: |
       #!/usr/bin/env sh
+      trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
       while true; do
         echo -e '\n\nWaiting for webhooks...'
-        printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080
+        printf 'HTTP/1.1 200 OK\r\n\r\n%s\n' | nc -vnl -p 8080 &
+        wait $${!}
       done
 
   # Simple consumer API config
   consumer-server.sh:
     content: |
       #!/usr/bin/env sh
+      trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
       while true; do
         echo -e '\n\nWaiting for connections...'
         body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }"
         len="$$(printf '%s\n' "$${body}" | wc -c)"
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
-        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080
+        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080 &
+        wait $!
       done
 
   # Define webhooks and bind handler scripts
   consumer-infra-hooks.yaml:
     content: |
-      - id: healthz
+      - id: /healthz
         execute-command: "true"

@@ -86,6 +86,8 @@ EXPOSE 3000
 CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
     ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+    echo
+    grep "pnpm" "${PDC_DIR}/docker/app/Dockerfile"
 fi
 
 ########################################################################################################################
@@ -93,13 +95,11 @@ fi
 log "Update PDC dpdc dependency..."
 
 sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${PDC_DIR}/package.json"
-
 ls -alht "${PDC_DIR}/package.json"
 echo
 grep "dpcp-library" "${PDC_DIR}/package.json"
 
 sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${PDC_DIR}/docker/app/Dockerfile"
-
 ls -alht "${PDC_DIR}/docker/app/Dockerfile"
 echo
 grep "lockfile" "${PDC_DIR}/docker/app/Dockerfile"

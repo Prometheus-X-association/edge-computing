@@ -16,7 +16,6 @@ services:
     configs:
       - source: cfg-mongo-init.js
         target: /docker-entrypoint-initdb.d/mongo-init.js
-        #mode: 0444
     volumes:
       - vol-mongo:/data/db
     networks:
