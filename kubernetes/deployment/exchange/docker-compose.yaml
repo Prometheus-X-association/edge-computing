@@ -92,6 +92,9 @@ services:
     configs:
       - source: consumer-infra-hooks.yaml
         target: /usr/webhook/hooks.yaml
+      - source: consumer-infra-handler.yaml
+        target: /usr/webhook/infra-handler.sh
+        mode: 0555
     command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.yaml" ]
     networks:
       - nw-consumer
@@ -101,7 +104,7 @@ services:
           cpus: 1.0
           memory: 100m
     healthcheck:
-      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/healthz' ]
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/hooks/healthz' ]
       start_period: 5s
       interval: 5m
     depends_on:
@@ -225,9 +228,38 @@ configs:
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080 &
         wait $!
       done
-
   # Define webhooks and bind handler scripts
   consumer-infra-hooks.yaml:
     content: |
-      - id: /healthz
+      - id: healthz
         execute-command: "true"
+      - id: infra/sync
+        execute-command: jo
+        include-command-output-in-response: true
+        pass-arguments-to-command:
+          - source: string
+            name: "participant=INFRA"
+          - source: string
+            name: "mode=sync"
+          - source: string
+            name: "status=Processed"
+        response-headers:
+          - name: Content-Type
+            value: application/json;charset=utf-8
+      - id: infra/async
+        execute-command: /usr/webhook/infra-handler.sh
+        pass-environment-to-command:
+          - source: entire-payload
+            envname: PAYLOAD
+        response-message: '{"code":200,"mode":"async","status":"Processing"}'
+        response-headers:
+          - name: Content-Type
+            value: application/json;charset=utf-8
+
+  consumer-infra-handler.yaml:
+    content: |
+      #!/usr/bin/env sh
+      # Simulating async processing
+      sleep 3s
+      # Generating response for resuming
+      jo participant=INFRA mode=async status=Processed data=$${PAYLOAD}
