@@ -52,6 +52,13 @@ test-exchange-consumer ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
+test-exchange-provider ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_exchange_provider.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
 test-exchange-api-consumption ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
@@ -59,17 +66,17 @@ test-exchange-api-consumption ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
-test-service-chain-basic-consumer ::
+test-chain-basic-consumer ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
-	./tests/test_service_chain_basic_consumer.sh
+	./tests/test_chain_basic_consumer.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
-test-service-chain-basic-provider ::
+test-chain-basic-provider ::
 	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
 	@echo "Test start time: ${SINCE}"
-	./tests/test_service_chain_basic_provider.sh
+	./tests/test_chain_basic_provider.sh
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 

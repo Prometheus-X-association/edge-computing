@@ -1,7 +1,7 @@
 include:
   - basic-infra.yaml
-services:
 
+services:
   # Main datasource API serving data with different extensions and authentication
   api-provider:
     container_name: api-provider
@@ -15,7 +15,7 @@ services:
     working_dir: /usr/src/app/static
     command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     configs:
-      - source: provider-server.sh
+      - source: provider-server-wrapper.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
       - source: cfg-httpd.conf
@@ -41,23 +41,21 @@ services:
       ngrok-tunnel:
         condition: service_healthy
 
-  ######################################################################################################################
-
-  # Main data consumer API accepting any callbacks and returning static JSON
-  api-consumer:
-    container_name: api-consumer
+  # Main API accepting any GET/POST and returning static JSON
+  api-provider-status:
+    container_name: api-provider-status
     image: busybox:latest
     restart: no # fail fast
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
-    entrypoint: /usr/app/entrypoint.sh
     configs:
-      - source: consumer-server.sh
+      - source: provider-status-server.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
     networks:
-      - nw-consumer
+      - nw-provider
     deploy:
       resources:
         limits:
@@ -68,16 +66,12 @@ services:
       start_period: 5s
       interval: 5m
     depends_on:
-      ngrok-tunnel:
-        condition: service_healthy
       api-provider:
         condition: service_healthy
 
-  ######################################################################################################################
-
-  # Main Infrastructure API
+  # Main Infrastructure API at Provider side
   api-consumer-infra:
-    container_name: api-consumer-infra
+    container_name: api-provider-infra
     image: alpine/webhook:latest
     pull_policy: never
     user: 1001:1001
@@ -90,14 +84,14 @@ services:
         RUN apk --no-cache add jo webhook
     restart: no # fail fast
     configs:
-      - source: consumer-infra-hooks.yaml
+      - source: provider-infra-hooks.yaml
         target: /usr/webhook/hooks.yaml
-      - source: consumer-infra-handler.yaml
+      - source: infra-async-handler.yaml
         target: /usr/webhook/infra-handler.sh
         mode: 0555
     command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.yaml" ]
     networks:
-      - nw-consumer
+      - nw-provider
     deploy:
       resources:
         limits:
@@ -140,23 +134,23 @@ services:
   #      pdc-consumer:
   #        condition: service_healthy
 
-  ########################################################################################################################
+  ######################################################################################################################
 
-  # Main API accepting any GET/POST and returning static JSON
-  api-provider-status:
-    container_name: api-provider-status
+  # Main data consumer API accepting any callbacks and returning static JSON
+  api-consumer:
+    container_name: api-consumer
     image: busybox:latest
     restart: no # fail fast
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
+    entrypoint: /usr/app/entrypoint.sh
     configs:
-      - source: provider-status-server.sh
+      - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
-    entrypoint: /usr/app/entrypoint.sh
     networks:
-      - nw-provider
+      - nw-consumer
     deploy:
       resources:
         limits:
@@ -167,6 +161,8 @@ services:
       start_period: 5s
       interval: 5m
     depends_on:
+      ngrok-tunnel:
+        condition: service_healthy
       api-provider:
         condition: service_healthy
 
@@ -197,7 +193,7 @@ configs:
       Charlie,35,Sales
 
   # Simple consumer API config
-  provider-server.sh:
+  provider-server-wrapper.sh:
     content: |
       #!/usr/bin/env sh
       trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
@@ -228,11 +224,14 @@ configs:
         printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080 &
         wait $!
       done
+
   # Define webhooks and bind handler scripts
-  consumer-infra-hooks.yaml:
+  provider-infra-hooks.yaml:
     content: |
+      # Healthcheck
       - id: healthz
         execute-command: "true"
+      # Infra webhook with service chain adapter
       - id: infra/sync
         execute-command: jo
         include-command-output-in-response: true
@@ -246,20 +245,44 @@ configs:
         response-headers:
           - name: Content-Type
             value: application/json;charset=utf-8
+      # Asynchronous Infra webhook
       - id: infra/async
         execute-command: /usr/webhook/infra-handler.sh
         pass-environment-to-command:
+          - source: string
+            name: http://pdc-provider:3000/node/communicate/resume
+            envname: PDC_URL
+          - source: header
+            name: x-ptx-service-chain-id
+            envname: CHAIN_ID
+          - source: header
+            name: x-ptx-target-id
+            envname: TARGET_ID
+          - source: payload
+            name: data
+            envname: HOOK_DATA
+          - source: payload
+            name: params
+            envname: HOOK_PARAMS
+          # Debugging purposes
           - source: entire-payload
             envname: PAYLOAD
-        response-message: '{"code":200,"mode":"async","status":"Processing"}'
+          - source: entire-headers
+            envname: HEADERS
+        response-message: '{"participant":"INFRA","mode":"async","status":"Processing"}'
         response-headers:
           - name: Content-Type
             value: application/json;charset=utf-8
 
-  consumer-infra-handler.yaml:
+  infra-async-handler.yaml:
     content: |
       #!/usr/bin/env sh
+      # Verbose 
+      echo -e "\n\nReceived headers: $${HEADERS}"
+      echo -e "\nReceived payload: $${PAYLOAD}"
       # Simulating async processing
       sleep 3s
-      # Generating response for resuming
-      jo participant=INFRA mode=async status=Processed data=$${PAYLOAD}
+      # Resuming
+      CB_BODY="$$(jo chainId=$${CHAIN_ID} targetId=$${TARGET_ID} data=$${HOOK_DATA} params=$${HOOK_PARAMS})"
+      echo -e "\nAssembled callback body: $${CB_BODY}\nInvoking callback for resuming service chain processing..."
+      wget -S -T5 -O- --header "Content-Type: application/json;charset=utf-8" --post-data "$${CB_BODY}" $${PDC_URL}

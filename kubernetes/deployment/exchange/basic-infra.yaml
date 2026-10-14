@@ -291,8 +291,8 @@ configs:
           }
         ],
         "expressLimitSize": "10mb",
-        "serviceChainAdapter": false,
-        "serviceChainAdapterTimeout": 3000
+        "serviceChainAdapter": true,
+        "serviceChainAdapterTimeout": 6000
       }
 
   cfg-pdc-provider.env:
@@ -323,7 +323,7 @@ configs:
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [],
-        "expressLimitSize": "100mb",
+        "expressLimitSize": "10mb",
         "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 3000
       }
