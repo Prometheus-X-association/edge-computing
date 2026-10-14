@@ -83,6 +83,12 @@ test-chain-basic-provider ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
+test-chain-infra-provider ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_chain_infra_provider.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
 ########################################################################################################################
 
 logs ::

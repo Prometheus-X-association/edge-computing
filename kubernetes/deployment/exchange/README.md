@@ -115,11 +115,11 @@ also checked from outside the local setup by using the `ngrok` domain:
 
 PDC also provides a swagger based self-documenting web interface, but only in `development` mode.
 See more in [configuration](#prerequisites).
-Please mind the **trailing `/`** at the end of the URLs!
 
 - Datasource web interface: **https://<NGROK_DOMAIN>/datasource/pdc/docs/**
 - Data consumer web interface: **https://<NGROK_DOMAIN>/service/pdc/docs/**
 
+Please mind the **trailing `/`** at the end of the URLs!
 
 ### Dataspace contract
 

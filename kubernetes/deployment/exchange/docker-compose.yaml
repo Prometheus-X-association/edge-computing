@@ -70,7 +70,7 @@ services:
         condition: service_healthy
 
   # Main Infrastructure API at Provider side
-  api-consumer-infra:
+  api-provider-infra:
     container_name: api-provider-infra
     image: alpine/webhook:latest
     pull_policy: never

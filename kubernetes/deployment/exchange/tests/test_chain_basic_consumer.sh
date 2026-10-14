@@ -65,7 +65,7 @@ log "Initiate basic service chain for dataset (CSV)..."
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
     "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
-    "serviceChainId": "${SERVICE_CHAIN_ID}",
+    "serviceChainId": "${SERVICE_CHAIN_BASIC_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {

@@ -291,7 +291,7 @@ configs:
           }
         ],
         "expressLimitSize": "10mb",
-        "serviceChainAdapter": true,
+        "serviceChainAdapter": false,
         "serviceChainAdapterTimeout": 6000
       }
 
