@@ -70,8 +70,8 @@ services:
         condition: service_healthy
 
   # Main Infrastructure API at Provider side
-  api-provider-infra:
-    container_name: api-provider-infra
+  api-infrastructure:
+    container_name: api-infrastructure
     image: alpine/webhook:latest
     pull_policy: never
     user: 1001:1001
@@ -84,7 +84,7 @@ services:
         RUN apk --no-cache add jo webhook
     restart: no # fail fast
     configs:
-      - source: provider-infra-hooks.yaml
+      - source: infra-hooks.yaml
         target: /usr/webhook/hooks.yaml
       - source: infra-async-handler.yaml
         target: /usr/webhook/infra-handler.sh
@@ -92,6 +92,7 @@ services:
     command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.yaml" ]
     networks:
       - nw-provider
+      - nw-consumer
     deploy:
       resources:
         limits:
@@ -226,7 +227,7 @@ configs:
       done
 
   # Define webhooks and bind handler scripts
-  provider-infra-hooks.yaml:
+  infra-hooks.yaml:
     content: |
       # Healthcheck
       - id: healthz

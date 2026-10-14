@@ -291,7 +291,7 @@ configs:
           }
         ],
         "expressLimitSize": "10mb",
-        "serviceChainAdapter": false,
+        "serviceChainAdapter": true,
         "serviceChainAdapterTimeout": 6000
       }
 
@@ -324,8 +324,8 @@ configs:
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [],
         "expressLimitSize": "10mb",
-        "serviceChainAdapter": false,
-        "serviceChainAdapterTimeout": 3000
+        "serviceChainAdapter": true,
+        "serviceChainAdapterTimeout": 6000
       }
 
   cfg-pdc-consumer.env:

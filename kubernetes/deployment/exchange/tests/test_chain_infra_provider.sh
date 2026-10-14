@@ -22,13 +22,13 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 LOG "Test Infra Service Chain with Adapter"
 
-_BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
+_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${PDC_SECRET_KEY}",
-    "serviceKey": "${PDC_SERVICE_KEY}"
+    "secretKey": "${DS_PDC_SECRET_KEY}",
+    "serviceKey": "${DS_PDC_SERVICE_KEY}"
 }
 EOF
 )")
@@ -64,8 +64,8 @@ log "Initiate infra service chain with adapter..."
 
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
-    "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
-    "serviceChainId": "${SERVICE_CHAIN_INFRA_ID}",
+    "contract": "https://contract.visionstrust.com/contracts/${SC_CONTRACT_ID}",
+    "serviceChainId": "${SC_CHAIN_INFRA_PROVIDER_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
