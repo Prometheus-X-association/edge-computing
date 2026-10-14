@@ -49,7 +49,7 @@ docker image ls -qf "reference=dataspace-connector" | xargs -r docker rmi -f
 ########################################################################################################################
 
 if ! grep -q "install -g pnpm@" <"${PDC_DIR}/docker/app/Dockerfile"; then
-    log "Adjust PDC's docker image to use froze-lockfile correctly..."
+    log "Adjust older PDC's docker image to use froze-lockfile correctly..."
     cat <<'EOF' >"${PDC_DIR}/docker/app/Dockerfile"
 ################ Changed for exchange deployment ################
 # Use the official Node.js image as base image
@@ -88,6 +88,30 @@ EOF
     ls -alht "${PDC_DIR}/docker/app/Dockerfile"
     echo
     grep "pnpm" "${PDC_DIR}/docker/app/Dockerfile"
+fi
+
+########################################################################################################################
+
+if ! grep -q "trap" <"${PDC_DIR}/docker/scripts/start.sh"; then
+    log "Adjust older PDC's docker init script to handle signals correctly..."
+    cat <<'EOF' >"${PDC_DIR}/docker/scripts/start.sh"
+#!/usr/bin/env bash
+################ Changed for exchange deployment ################
+set -e
+trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
+trap "echo 'Caught error! Exiting...'; exit 1;" ERR
+
+if [ "$ENV" = 'development' ]; then
+  npm run dev --development &
+else
+  npm run build && npm run start &
+fi
+
+wait ${!}
+EOF
+    ls -alht "${PDC_DIR}/docker/scripts/start.sh"
+    echo
+    grep "trap" "${PDC_DIR}/docker/scripts/start.sh"
 fi
 
 ########################################################################################################################

@@ -127,12 +127,13 @@ log "Test configuration after PDC restart..."
 _URL="${_BASE_URL}/private/configuration"
 echo "Used URL: [GET] ${_URL}"
 
-RESP=$(curl -s --retry 5 --retry-all-errors --retry-connrefused --retry-delay 3 --no-progress-meter \
-                                                                                -X GET \
-                                                                                "${_URL}" \
-                                                                                -H "Accept: application/json" \
-                                                                                -H "Authorization: Bearer ${TOKEN}"\
-                                                                                )
+RESP=$(curl -s --retry 5 --retry-all-errors --retry-connrefused --retry-delay 3 \
+            --fail-with-body --no-progress-meter \
+            -X GET \
+            "${_URL}" \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer ${TOKEN}"\
+            )
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq

@@ -14,7 +14,7 @@
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CREDS := exchange.env
 DOCKER_INFRA := docker compose --env-file=${ROOT_DIR}/creds/${CREDS}
-COMPOSE_BASE := $(DOCKER_INFRA) --compatibility -f ${ROOT_DIR}/basic-infra.yaml
+COMPOSE_BASE := $(DOCKER_INFRA) -f ${ROOT_DIR}/basic-infra.yaml
 COMPOSE_EXCHANGE := $(DOCKER_INFRA) -f ${ROOT_DIR}/docker-compose.yaml
 
 ########################################################################################################################
@@ -26,11 +26,14 @@ build ::
 setup-base ::
 	${COMPOSE_BASE} up --renew-anon-volumes --force-recreate --abort-on-container-failure  || true
 
+setup-dev ::
+	${COMPOSE_EXCHANGE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
+
 setup ::
 	${COMPOSE_EXCHANGE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
 
 setup-all ::
-	${COMPOSE_EXCHANGE} --profile extra up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
+	${COMPOSE_EXCHANGE} --profile extra up --renew-anon-volumes --force-recreate || true
 
 restart :: | teardown setup
 
