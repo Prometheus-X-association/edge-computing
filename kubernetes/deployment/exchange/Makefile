@@ -108,6 +108,13 @@ test-chain-infra-multi ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
+test-chain-infra-complex ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_chain_infra_complex.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
 ########################################################################################################################
 
 logs ::
@@ -121,6 +128,8 @@ logs ::
 	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	${COMPOSE_EXCHANGE} logs api-infrastructure --since="${SINCE}"
 
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs traefik-proxy --since="${SINCE}"
