@@ -277,8 +277,8 @@ configs:
     content: |
       {
         "endpoint": "https://${NGROK_DOMAIN:?}/datasource/pdc",
-        "serviceKey": "${DS_PDC_SERVICE_KEY:?}",
-        "secretKey": "${DS_PDC_SECRET_KEY:?}",
+        "serviceKey": "${PRO_PDC_SERVICE_KEY:?}",
+        "secretKey": "${PRO_PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
@@ -292,7 +292,7 @@ configs:
         ],
         "expressLimitSize": "10mb",
         "serviceChainAdapter": true,
-        "serviceChainAdapterTimeout": 6000
+        "serviceChainAdapterTimeout": 3000
       }
 
   cfg-pdc-provider.env:
@@ -305,7 +305,7 @@ configs:
       WINSTON_LOGS_MAX_SIZE=20m
       JWT_BEARER_TOKEN_EXPIRATION=1h
       JWT_REFRESH_TOKEN_EXPIRATION=3h
-      EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY:-}
+      EXCHANGE_TRIGGER_API_KEY=${PRO_PDC_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
   # Define consumer PDC's main configuration
@@ -317,15 +317,15 @@ configs:
     content: |
       {
         "endpoint": "https://${NGROK_DOMAIN:?}/service/pdc",
-        "serviceKey": "${PDC_SERVICE_KEY:?}",
-        "secretKey": "${PDC_SECRET_KEY:?}",
+        "serviceKey": "${CON_PDC_SERVICE_KEY:?}",
+        "secretKey": "${CON_PDC_SECRET_KEY:?}",
         "catalogUri": "https://api.visionstrust.com/v1/",
         "contractUri": "https://contract.visionstrust.com/",
         "consentUri": "https://consent.visionstrust.com/v1",
         "credentials": [],
         "expressLimitSize": "10mb",
         "serviceChainAdapter": true,
-        "serviceChainAdapterTimeout": 6000
+        "serviceChainAdapterTimeout": 3000
       }
 
   cfg-pdc-consumer.env:
@@ -338,7 +338,7 @@ configs:
       WINSTON_LOGS_MAX_SIZE=20m
       JWT_BEARER_TOKEN_EXPIRATION=1h
       JWT_REFRESH_TOKEN_EXPIRATION=3h
-      EXCHANGE_TRIGGER_API_KEY=${PDC_EXCHANGE_TRIGGER_API_KEY:-}
+      EXCHANGE_TRIGGER_API_KEY=${CON_PDC_TRIGGER_API_KEY:-}
       EXCHANGE_TIMEOUT=60
 
   cfg-traefik-config.yaml:

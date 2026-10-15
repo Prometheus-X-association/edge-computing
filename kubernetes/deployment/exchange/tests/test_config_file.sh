@@ -27,8 +27,8 @@ _BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${PDC_SECRET_KEY}",
-    "serviceKey": "${PDC_SERVICE_KEY}"
+    "secretKey": "${CON_PDC_SECRET_KEY}",
+    "serviceKey": "${CON_PDC_SERVICE_KEY}"
 }
 EOF
 )")

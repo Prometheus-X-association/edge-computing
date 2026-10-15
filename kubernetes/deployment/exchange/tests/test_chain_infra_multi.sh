@@ -27,8 +27,8 @@ _BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${DS_PDC_SECRET_KEY}",
-    "serviceKey": "${DS_PDC_SERVICE_KEY}"
+    "secretKey": "${PRO_PDC_SECRET_KEY}",
+    "serviceKey": "${PRO_PDC_SERVICE_KEY}"
 }
 EOF
 )")
@@ -65,7 +65,7 @@ log "Initiate infra service chain with adapter..."
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
     "contract": "https://contract.visionstrust.com/contracts/${SC_CONTRACT_ID}",
-    "serviceChainId": "${SC_CHAIN_BASIC_ID}",
+    "serviceChainId": "${SC_CHAIN_INFRA_MULTI_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {

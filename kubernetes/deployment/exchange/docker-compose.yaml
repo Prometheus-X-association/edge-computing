@@ -246,6 +246,10 @@ configs:
         response-headers:
           - name: Content-Type
             value: application/json;charset=utf-8
+        ### Debugging purposes
+        pass-environment-to-command:
+          - source: entire-payload
+            envname: PAYLOAD
       # Asynchronous Infra webhook
       - id: infra/async
         execute-command: /usr/webhook/infra-handler.sh
@@ -265,7 +269,7 @@ configs:
           - source: payload
             name: params
             envname: HOOK_PARAMS
-          # Debugging purposes
+          ### Debugging purposes
           - source: entire-payload
             envname: PAYLOAD
           - source: entire-headers

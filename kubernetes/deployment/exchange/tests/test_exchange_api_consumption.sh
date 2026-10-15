@@ -20,15 +20,15 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test API Consumption"
+LOG "Test Data Exchange with API Consumption"
 
 _BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${DS_PDC_SECRET_KEY}",
-    "serviceKey": "${DS_PDC_SERVICE_KEY}"
+    "secretKey": "${PRO_PDC_SECRET_KEY}",
+    "serviceKey": "${PRO_PDC_SERVICE_KEY}"
 }
 EOF
 )")
@@ -60,12 +60,12 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Initiate API consumption exchange for dataset (CSV)..."
+log "Initiate API Consumption Exchange for dataset (CSV)..."
 
-echo "Used consumer parameter: ${PARAM=$(date +%s)}"
+echo "Used request parameter: ${PARAM=$(date +%s)}"
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
-    "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
+    "contract": "https://contract.visionstrust.com/contracts/${EX_CONTRACT_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
@@ -124,7 +124,7 @@ if ! jq -e '.code' <<<"${RESP}" &>/dev/null || \
         [ "$(jq '.content.success' <<<"${RESP}")" != "true" ]; then
     error "Exchange request failed!" && exit 1
 else
-    echo -e "\nConsumer exchange was successful!"
+    echo -e "\nData exchange was successful!"
 fi
 
 echo -e "\nExchange status: $(jq -r '.content.dataExchange.status' <<<"${RESP}")"

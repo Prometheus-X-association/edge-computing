@@ -20,15 +20,15 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Basic Service Chain Execution"
+LOG "Test Basic Service Chain Execution from Provider"
 
 _BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${DS_PDC_SECRET_KEY}",
-    "serviceKey": "${DS_PDC_SERVICE_KEY}"
+    "secretKey": "${PRO_PDC_SECRET_KEY}",
+    "serviceKey": "${PRO_PDC_SERVICE_KEY}"
 }
 EOF
 )")
@@ -60,12 +60,12 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Initiate basic service chain for dataset (CSV)..."
+log "Initiate Basic Chain Execution for dataset (CSV)..."
 
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {
-    "contract": "https://contract.visionstrust.com/contracts/${CONTRACT_ID}",
-    "serviceChainId": "${SERVICE_CHAIN_BASIC_ID}",
+    "contract": "https://contract.visionstrust.com/contracts/${SC_CONTRACT_ID}",
+    "serviceChainId": "${SC_CHAIN_BASIC_ID}",
     "resourceId": "https://api.visionstrust.com/v1/catalog/serviceofferings/${PROVIDER_OFFER_ID}",
     "resources": [
         {
@@ -85,7 +85,7 @@ EOF
 _URL="${_BASE_URL}/exchange"
 echo "Used URL: [POST] ${_URL}"
 
-echo -e "\nPrepared exchange body:"
+echo -e "\nPrepared request body:"
 echo "${EXCHANGE_BODY}" | jq
 
 RESP=$(curl -Ss --fail-with-body -X POST \
