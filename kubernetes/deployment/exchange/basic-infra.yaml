@@ -210,15 +210,16 @@ services:
     cap_add:
       - NET_RAW
       - NET_ADMIN
-    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
-    network_mode: service:api-provider
+    command: [ 'tshark', '-i', 'any', '-Y', 'http', '-O', 'http', '-V' ]
+    network_mode: service:pdc-provider
     deploy:
       resources:
         limits:
           cpus: 1.0
           memory: 100m
     depends_on:
-      - api-provider
+      pdc-provider:
+        condition: service_healthy
     profiles:
       - extra
 
@@ -226,9 +227,10 @@ services:
     extends:
       service: sniffer-provider
     container_name: sniffer-consumer
-    network_mode: service:api-consumer
+    network_mode: service:pdc-consumer
     depends_on: !override
-      - api-consumer
+      pdc-consumer:
+        condition: service_healthy
 
 ########################################################################################################################
 
