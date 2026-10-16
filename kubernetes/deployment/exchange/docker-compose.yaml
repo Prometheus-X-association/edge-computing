@@ -105,8 +105,6 @@ services:
       start_period: 5s
       interval: 5m
     depends_on:
-      ngrok-tunnel:
-        condition: service_healthy
       api-provider:
         condition: service_healthy
 
@@ -122,9 +120,10 @@ services:
       - no-new-privileges:true
     build:
       context: .
-      dockerfile_inline: |
-        FROM alpine:latest
-        RUN apk --no-cache add jo webhook
+      no_cache: true
+      dockerfile_inline: "FROM alpine/webhook:latest"
+      additional_contexts:
+        alpine/webhook: service:api-provider-infra
     configs:
       - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
@@ -155,9 +154,9 @@ services:
     hostname: infra-consumer
     environment:
       PDC_URL: "http://pdc-consumer:3000"
-    networks:
+    networks: !override
       - nw-consumer
-    depends_on:
+    depends_on: !override
       api-consumer:
         condition: service_healthy
 

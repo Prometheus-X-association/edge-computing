@@ -223,35 +223,12 @@ services:
       - extra
 
   sniffer-consumer:
+    extends:
+      service: sniffer-provider
     container_name: sniffer-consumer
-    image: alpine/tshark:latest
-    pull_policy: never
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp  # Enable temporary file creation in read-only file system
-    build:
-      context: .
-      no_cache: true
-      dockerfile_inline: "FROM alpine/tshark:latest"
-      additional_contexts:
-        alpine/tshark: service:sniffer-provider
-    restart: no # fail fast
-    cap_add:
-      - NET_RAW
-      - NET_ADMIN
-    command: [ 'tshark', '-i', 'eth0', '-Y', 'http', '-O', 'http', '-V' ]
     network_mode: service:api-consumer
-    deploy:
-      resources:
-        limits:
-          cpus: 1.0
-          memory: 100m
-    depends_on:
+    depends_on: !override
       - api-consumer
-    profiles:
-      - extra
 
 ########################################################################################################################
 

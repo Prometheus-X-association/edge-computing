@@ -86,8 +86,8 @@ EXPOSE 3000
 CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
     ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+    grep --color=always "pnpm" "${PDC_DIR}/docker/app/Dockerfile"
     echo
-    grep "pnpm" "${PDC_DIR}/docker/app/Dockerfile"
 fi
 
 ########################################################################################################################
@@ -98,8 +98,8 @@ if ! grep -q "trap" <"${PDC_DIR}/docker/scripts/start.sh"; then
 #!/usr/bin/env bash
 ################ Changed for exchange deployment ################
 set -e
-trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
-trap "echo 'Caught error! Exiting...'; exit 1;" ERR
+trap 'echo "Caught stop signal! Exiting..."; exit 0;' INT TERM
+trap 'echo "Caught error! Exiting..."; exit 1;' ERR
 
 if [ "$ENV" = 'development' ]; then
   npm run dev --development &
@@ -110,8 +110,8 @@ fi
 wait ${!}
 EOF
     ls -alht "${PDC_DIR}/docker/scripts/start.sh"
+    grep --color=always "trap" "${PDC_DIR}/docker/scripts/start.sh"
     echo
-    grep "trap" "${PDC_DIR}/docker/scripts/start.sh"
 fi
 
 ########################################################################################################################
@@ -120,13 +120,13 @@ log "Update PDC dpdc dependency..."
 
 sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${PDC_DIR}/package.json"
 ls -alht "${PDC_DIR}/package.json"
+grep --color=always "dpcp-library" "${PDC_DIR}/package.json"
 echo
-grep "dpcp-library" "${PDC_DIR}/package.json"
 
 sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${PDC_DIR}/docker/app/Dockerfile"
 ls -alht "${PDC_DIR}/docker/app/Dockerfile"
+grep --color=always "frozen-lockfile" "${PDC_DIR}/docker/app/Dockerfile"
 echo
-grep "lockfile" "${PDC_DIR}/docker/app/Dockerfile"
 
 ########################################################################################################################
 
