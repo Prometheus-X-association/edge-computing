@@ -241,9 +241,9 @@ configs:
             envname: HOOK_DATA
           - source: entire-payload
             envname: PAYLOAD
-          # For debugging purposes
-          - source: entire-headers
-            envname: HEADERS
+          ## For debugging purposes
+          #- source: entire-headers
+          #  envname: HEADERS
       ############### Asynchronous Infra webhook ###############
       - id: infra/async
         execute-command: /usr/webhook/infra-handlers.sh
@@ -267,7 +267,7 @@ configs:
           - source: payload
             name: params
             envname: HOOK_PARAMS
-          # For debugging purposes
+          ## For debugging purposes
           #- source: entire-payload
           #  envname: PAYLOAD
           #- source: entire-headers
@@ -283,14 +283,15 @@ configs:
         exit 0
       fi
       # Simulating async processing
+      echo -e "\nWaiting for simulated async infra task..."
       sleep 3s
       # Resuming
-      RESUME_URL="$${PDC_URL}/node/communicate/resume"
+      RESUME_URL="$${PDC_URL}/service-chain/resume"
       # Escape jo-specific notations
       case "$${CHAIN_ID}" in [@:%]*) CHAIN_ID="\\$${CHAIN_ID}" ;; esac
       # Create resume callback body
       CB_BODY=$$(jo chainId="$${CHAIN_ID}" targetId="$${TARGET_ID}" data="$${PROCESSED_DATA}" params="$${HOOK_PARAMS}")
       echo -e "\nAssembled callback body:\n$$(echo "$${CB_BODY}" | jo -f- -p)" \
-              "\nInvoking callback for resuming service chain processing..."
+              "\n\nInvoking service chain resuming callback on $${RESUME_URL}..."
       # Invoke callback
-      wget -S -T5 -O- --header "Content-Type: application/json;charset=utf-8" --post-data "$${CB_BODY}" $${RESUME_URL}
+      wget -qS -T5 -O- --header "Content-Type: application/json;charset=utf-8" --post-data "$${CB_BODY}" $${RESUME_URL}

@@ -22,13 +22,13 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 LOG "Test Infra Service Chain with Adapter"
 
-_BASE_URL="https://${NGROK_DOMAIN}/datasource/pdc"
+_BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 
 log "Initiate login..."
 LOGIN_BODY=$(jq -n "$(cat <<EOF
 {
-    "secretKey": "${PRO_PDC_SECRET_KEY}",
-    "serviceKey": "${PRO_PDC_SERVICE_KEY}"
+    "secretKey": "${CON_PDC_SECRET_KEY}",
+    "serviceKey": "${CON_PDC_SERVICE_KEY}"
 }
 EOF
 )")

@@ -291,8 +291,7 @@ configs:
           }
         ],
         "expressLimitSize": "10mb",
-        "serviceChainAdapter": true,
-        "serviceChainAdapterTimeout": 3000
+        "serviceChainAdapter": false
       }
 
   cfg-pdc-provider.env:
