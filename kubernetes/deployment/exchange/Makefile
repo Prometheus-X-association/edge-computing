@@ -26,9 +26,6 @@ build ::
 setup-base ::
 	${COMPOSE_BASE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
 
-setup-dev ::
-	${COMPOSE_EXCHANGE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
-
 setup ::
 	${COMPOSE_EXCHANGE} up --renew-anon-volumes --force-recreate --abort-on-container-failure || true
 

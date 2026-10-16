@@ -93,7 +93,7 @@ echo "$(docker exec -ti pdc-consumer cat src/config.development.json)" | jq
 
 ########################################################################################################################
 
-log "Reload PDC..."
+log "Force Reload PDC..."
 
 _URL="${_BASE_URL}/private/configuration/reload"
 echo "Used URL: [POST] ${_URL}"
@@ -114,7 +114,7 @@ fi
 
 ########################################################################################################################
 
-log "Restart PDC container..."
+log "Restarting PDC container..."
 
 docker restart pdc-consumer
 ( docker logs pdc-consumer -f & ) | timeout 20 grep -m1 "Server running on"
