@@ -119,18 +119,19 @@ test-chain-infra-complex ::
 
 logs ::
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	${COMPOSE_EXCHANGE} logs api-provider --since="${SINCE}"
-	@echo
-	${COMPOSE_EXCHANGE} logs api-provider-status --since="${SINCE}"
-	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs pdc-provider --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs pdc-consumer --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
+	${COMPOSE_EXCHANGE} logs api-provider --since="${SINCE}"
+	@echo
+	${COMPOSE_EXCHANGE} logs api-provider-status --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	${COMPOSE_EXCHANGE} logs api-infrastructure --since="${SINCE}"
-
+	${COMPOSE_EXCHANGE} logs api-provider-infra --since="${SINCE}"
+	@echo
+	${COMPOSE_EXCHANGE} logs api-consumer-infra --since="${SINCE}"
+	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	${COMPOSE_EXCHANGE} logs api-consumer --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 	${COMPOSE_EXCHANGE} logs traefik-proxy --since="${SINCE}"
 	@echo -e "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"

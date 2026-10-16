@@ -11,9 +11,6 @@ services:
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
-    entrypoint: /usr/app/entrypoint.sh
-    working_dir: /usr/src/app/static
-    command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     configs:
       - source: provider-server-wrapper.sh
         target: /usr/app/entrypoint.sh
@@ -26,6 +23,9 @@ services:
         target: /usr/src/app/static/dp0.json
       - source: dp0-data.csv
         target: /usr/src/app/static/dp0/data.csv
+    entrypoint: /usr/app/entrypoint.sh
+    working_dir: /usr/src/app/static
+    command: [ 'httpd', '-vv', '-f', '-p', '0.0.0.0:8080', '-h', './', '-r', 'Provider API' ]
     networks:
       - nw-provider
     deploy:
@@ -70,9 +70,10 @@ services:
         condition: service_healthy
 
   # Main Infrastructure API at Provider side
-  api-infrastructure:
-    container_name: api-infrastructure
+  api-provider-infra:
+    container_name: api-provider-infra
     image: alpine/webhook:latest
+    hostname: infra-provider
     pull_policy: never
     user: 1001:1001
     security_opt:
@@ -86,13 +87,14 @@ services:
     configs:
       - source: infra-hooks.yaml
         target: /usr/webhook/hooks.yaml
-      - source: infra-async-handler.yaml
-        target: /usr/webhook/infra-handler.sh
+      - source: infra-handlers.sh
+        target: /usr/webhook/infra-handlers.sh
         mode: 0555
+    environment:
+      PDC_URL: "http://pdc-provider:3000"
     command: [ "webhook", "-verbose", "-port=8080", "-http-methods=GET,POST", "-hooks=/usr/webhook/hooks.yaml" ]
     networks:
       - nw-provider
-      - nw-consumer
     deploy:
       resources:
         limits:
@@ -108,48 +110,26 @@ services:
       api-provider:
         condition: service_healthy
 
-  #  # Main Infrastructure consumer API
-  #  api-consumer-infra:
-  #    container_name: api-consumer-infra
-  #    image: traefik/whoami:latest
-  #    restart: no # fail fast
-  #    user: 1001:1001
-  #    security_opt:
-  #      - no-new-privileges:true
-  #    environment:
-  #      WHOAMI_NAME: infrastructure-service
-  #      WHOAMI_PORT_NUMBER: 8080
-  #    command: [ "--verbose" ]
-  #    networks:
-  #      - nw-consumer
-  #    deploy:
-  #      resources:
-  #        limits:
-  #          cpus: 1.0
-  #          memory: 100m
-  #    healthcheck:
-  #      test: [ 'CMD', 'wget', '--spider', '-q', 'http://localhost:8080/health' ]
-  #      start_period: 5s
-  #      interval: 5m
-  #    depends_on:
-  #      pdc-consumer:
-  #        condition: service_healthy
-
   ######################################################################################################################
 
   # Main data consumer API accepting any callbacks and returning static JSON
   api-consumer:
     container_name: api-consumer
-    image: busybox:latest
+    image: alpine/webhook:latest
     restart: no # fail fast
     user: 1001:1001
     security_opt:
       - no-new-privileges:true
-    entrypoint: /usr/app/entrypoint.sh
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM alpine:latest
+        RUN apk --no-cache add jo webhook
     configs:
       - source: consumer-server.sh
         target: /usr/app/entrypoint.sh
         mode: 0555
+    entrypoint: /usr/app/entrypoint.sh
     networks:
       - nw-consumer
     deploy:
@@ -165,6 +145,20 @@ services:
       ngrok-tunnel:
         condition: service_healthy
       api-provider:
+        condition: service_healthy
+
+  # Main Infrastructure API at Provider side
+  api-consumer-infra:
+    extends:
+      service: api-provider-infra
+    container_name: api-consumer-infra
+    hostname: infra-consumer
+    environment:
+      PDC_URL: "http://pdc-consumer:3000"
+    networks:
+      - nw-consumer
+    depends_on:
+      api-consumer:
         condition: service_healthy
 
 ########################################################################################################################
@@ -219,49 +213,53 @@ configs:
       trap "echo 'Caught stop signal! Exiting...'; exit 0;" INT TERM
       while true; do
         echo -e '\n\nWaiting for connections...'
-        body="{ \"timestamp\": \"$$(date +%s)\", \"participant\": \"CONSUMER\", \"status\": \"OK\" }"
-        len="$$(printf '%s\n' "$${body}" | wc -c)"
+        body="$$(jo timestamp=$$(date +%s) participant=CONSUMER status=OK)"
         resp='HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %s\r\n\r\n%s\n'
-        printf "$${resp}" "$${len}" "$${body}" | nc -vnl -p 8080 &
-        wait $!
+        printf "$${resp}" "$$(echo "$${body}" | wc -c)" "$${body}" | nc -vnl -p 8080 &
+        wait $${!}
       done
 
   # Define webhooks and bind handler scripts
   infra-hooks.yaml:
     content: |
-      # Healthcheck
+      ############### Healthcheck ###############
       - id: healthz
         execute-command: "true"
-      # Infra webhook with service chain adapter
+      ############### Synchronous Infra webhook ###############
       - id: infra/sync
-        execute-command: jo
+        execute-command: /usr/webhook/infra-handlers.sh
         include-command-output-in-response: true
         pass-arguments-to-command:
           - source: string
-            name: "participant=INFRA"
-          - source: string
-            name: "mode=sync"
-          - source: string
-            name: "status=Processed"
+            name: sync
         response-headers:
           - name: Content-Type
             value: application/json;charset=utf-8
-        ### Debugging purposes
         pass-environment-to-command:
+          - source: payload
+            name: data
+            envname: HOOK_DATA
           - source: entire-payload
             envname: PAYLOAD
-      # Asynchronous Infra webhook
+          # For debugging purposes
+          - source: entire-headers
+            envname: HEADERS
+      ############### Asynchronous Infra webhook ###############
       - id: infra/async
-        execute-command: /usr/webhook/infra-handler.sh
-        pass-environment-to-command:
+        execute-command: /usr/webhook/infra-handlers.sh
+        response-message: '{"code":200,"content":{"mode":"async","status":"Processing"}}'
+        pass-arguments-to-command:
           - source: string
-            name: http://pdc-provider:3000/node/communicate/resume
-            envname: PDC_URL
+            name: async
+        response-headers:
+          - name: Content-Type
+            value: application/json;charset=utf-8
+        pass-environment-to-command:
           - source: header
-            name: x-ptx-service-chain-id
+            name: X-Ptx-Service-Chain-Id
             envname: CHAIN_ID
           - source: header
-            name: x-ptx-target-id
+            name: X-Ptx-Target-Id
             envname: TARGET_ID
           - source: payload
             name: data
@@ -269,25 +267,30 @@ configs:
           - source: payload
             name: params
             envname: HOOK_PARAMS
-          ### Debugging purposes
-          - source: entire-payload
-            envname: PAYLOAD
-          - source: entire-headers
-            envname: HEADERS
-        response-message: '{"participant":"INFRA","mode":"async","status":"Processing"}'
-        response-headers:
-          - name: Content-Type
-            value: application/json;charset=utf-8
+          # For debugging purposes
+          #- source: entire-payload
+          #  envname: PAYLOAD
+          #- source: entire-headers
+          #  envname: HEADERS
 
-  infra-async-handler.yaml:
+  infra-handlers.sh:
     content: |
       #!/usr/bin/env sh
-      # Verbose 
-      echo -e "\n\nReceived headers: $${HEADERS}"
-      echo -e "\nReceived payload: $${PAYLOAD}"
+      PROCESSED_DATA=$$(jo timestamp="$$(date +%s)" processed-by="$${HOSTNAME}" orig="$${HOOK_DATA}")
+      if [ "$${1:?}" = "sync" ]; then
+        # Overwrite payload data
+        echo $$(echo "$${PAYLOAD}" | jo -f- -D data="$${PROCESSED_DATA}")
+        exit 0
+      fi
       # Simulating async processing
       sleep 3s
       # Resuming
-      CB_BODY="$$(jo chainId=$${CHAIN_ID} targetId=$${TARGET_ID} data=$${HOOK_DATA} params=$${HOOK_PARAMS})"
-      echo -e "\nAssembled callback body: $${CB_BODY}\nInvoking callback for resuming service chain processing..."
-      wget -S -T5 -O- --header "Content-Type: application/json;charset=utf-8" --post-data "$${CB_BODY}" $${PDC_URL}
+      RESUME_URL="$${PDC_URL}/node/communicate/resume"
+      # Escape jo-specific notations
+      case "$${CHAIN_ID}" in [@:%]*) CHAIN_ID="\\$${CHAIN_ID}" ;; esac
+      # Create resume callback body
+      CB_BODY=$$(jo chainId="$${CHAIN_ID}" targetId="$${TARGET_ID}" data="$${PROCESSED_DATA}" params="$${HOOK_PARAMS}")
+      echo -e "\nAssembled callback body:\n$$(echo "$${CB_BODY}" | jo -f- -p)" \
+              "\nInvoking callback for resuming service chain processing..."
+      # Invoke callback
+      wget -S -T5 -O- --header "Content-Type: application/json;charset=utf-8" --post-data "$${CB_BODY}" $${RESUME_URL}
