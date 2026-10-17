@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-09-25T16:42:14'
+  x-creation-date: '2026-10-17T21:40:05'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1856,7 +1856,7 @@ components:
         framework:
           type: string
           title: Framework
-          default: 0.141.1
+          default: 0.143.3
       type: object
       title: VersionsResponse
       description: API and used framework versions

@@ -96,11 +96,14 @@ async def assemble_worker_endpoints(request: fastapi.Request,
             exposed = bool(pew.status and pew.status.worker and pew.status.worker.exposed)
             if not exposed:
                 logger.debug(f"Worker[{name}] is not exposed yet!")
-            endpoints = [{
-                "interface": interface,
-                "exposed": exposed,
-                "url": assemble_worker_endpoint_url(request=request, name=name, secured=interface.secured),
-            } for interface in pew.spec.service.interfaces if interface.public]
+            endpoints = [
+                {
+                    "interface": interface,
+                    "exposed": exposed,
+                    "url": assemble_worker_endpoint_url(request=request, name=name, secured=interface.secured)
+                }
+                for interface in pew.spec.service.interfaces if interface.public
+            ]
             return endpoints
     return []
 

@@ -90,7 +90,7 @@ spec:
       zones:
         - name: zone1
           #preferred: false
-          adherent: true
+          #adherent: false
         - name: zone2
           preferred: true
-          #adherent: false
+          adherent: true

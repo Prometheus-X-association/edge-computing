@@ -144,7 +144,8 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
     logger.info(f"Received {PEW.__name__} status request with name: {name}")
     try:
         obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.GET,
-                                                name=name)
+                                                name=name,
+                                                status=True)
         raise_for_k8s_error(obj=obj, status=_status)
         status = obj.get("status", {})
         logger.debug(f"Assembled response body:\n{sanitize_model(status, indent=2)}")
