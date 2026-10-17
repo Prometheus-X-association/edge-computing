@@ -33,8 +33,8 @@ or in a separate env file that is directly used by a `test_<...>.sh` script.
 
 Mandatory variables, that need to be given for initiating the exchange setup:
 - PDC **operation mode**: either `development` _(default)_ or `production`
-  - >[!NOTE] 
-    > Swagger API docs and verbose logging are only available in _development_ mode. 
+>[!NOTE]
+> Swagger API docs and verbose logging are only available in _development_ mode. 
 - PDCs' **service** and **secret** keys for the provider and consumer, which can be found (currently)
   [here](https://visionstrust.com/dashboard/profile/settings?tab=api).
 - ngrok's **authentication token** and a fix (dev) **domain name** that can be found (currently)
