@@ -51,6 +51,7 @@ async def cancel_on_disconnect(request: fastapi.Request,
                         raise ClientDisconnectedError
                     break
 
+        # noinspection async-call
         tg.start_soon(watch_disconnect)
         try:
             yield

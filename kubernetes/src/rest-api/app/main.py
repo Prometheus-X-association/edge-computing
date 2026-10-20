@@ -61,7 +61,7 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                       servers=[dict(url=CONFIG.ROOT_PATH,
                                     description="PTX Edge Computing")],
                       # redirect_slashes=False,
-                      openapi_tags=[dict(name="Customer",
+                      openapi_tags=[dict(name="Edge-Worker",
                                          description="Customer-facing API (EdgeAPI)",
                                          external_docs=dict(
                                              description="Prometheus-X",
@@ -101,7 +101,7 @@ async def health() -> None:
 
 
 @app.get("/workers/{name}",
-         tags=["Customer"],
+         tags=["Edge-Worker"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -129,7 +129,7 @@ async def get_worker_by_name(name: PTXEdgeWorkerNameType):
 
 
 @app.get("/workers/{name}/status",
-         tags=["Customer"],
+         tags=["Edge-Worker"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -158,7 +158,7 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
 
 
 @app.get("/workers/{name}/endpoints",
-         tags=["Customer"],
+         tags=["Edge-Worker"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -183,7 +183,7 @@ async def get_worker_endpoints(request: fastapi.Request, name: PTXEdgeWorkerName
 
 
 @app.get("/workers/{name}/watcher",
-         tags=["Customer"],
+         tags=["Edge-Worker"],
          responses={
              fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -307,7 +307,7 @@ async def _create_pew_worker(request: fastapi.Request,
 
 
 @app.post("/workers",
-          tags=["Customer"],
+          tags=["Edge-Worker"],
           responses={
               fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
@@ -330,7 +330,7 @@ async def create_worker(request: fastapi.Request,
 
 
 @app.post("/workers/batch",
-          tags=["Customer"],
+          tags=["Edge-Worker"],
           responses={
               fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
@@ -340,6 +340,7 @@ async def create_worker(request: fastapi.Request,
           status_code=fastapi.status.HTTP_201_CREATED)
 async def create_workers_batch(request: fastapi.Request,
                                pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
+                               parallel: typing.Annotated[bool, fastapi.Query] = False,
                                label: K8sLabelCollectionType = None):
     """Create batch of named PTX-Edge workers in parallel"""
     logger.debug("=" * 100)
@@ -347,12 +348,19 @@ async def create_workers_batch(request: fastapi.Request,
     logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
     responses: list[dict[str, typing.Any] | None] = []
     try:
-        async with anyio.create_task_group() as task_group:
+        if parallel:
+            logger.info(f"Initiate worker creation in <parallel> mode")
+            async with anyio.create_task_group() as task_group:
+                for pew in pews:
+                    # noinspection async-call
+                    task_group.start_soon(
+                        functools.partial(response_collector_wrapper, responses, _create_pew_worker),
+                        request, pew, pew.spec.name, label,
+                        name=pew.spec.name)
+        else:
+            logger.info(f"Initiate worker creation in <serial> mode")
             for pew in pews:
-                task_group.start_soon(
-                    functools.partial(response_collector_wrapper, responses, _create_pew_worker),
-                    request, pew, pew.spec.name, label,
-                    name=pew.spec.name)
+                responses.append(await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label))
         logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
         logger.debug("=" * 100)
         return responses
@@ -395,7 +403,7 @@ async def create_workers_batch(request: fastapi.Request,
 
 
 @app.put("/workers/{name}",
-         tags=["Customer"],
+         tags=["Edge-Worker"],
          responses={
              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -437,7 +445,7 @@ async def recreate_worker_with_name(request: fastapi.Request,
 
 
 @app.delete("/workers/{name}",
-            tags=["Customer"],
+            tags=["Edge-Worker"],
             responses={
                 fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
                 fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
