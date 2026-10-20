@@ -140,27 +140,28 @@ spec:
               hostPort: 30003
           volumeMounts:
             - name: pdc-env
-              mountPath: "/usr/src/app/.env.production"
-              subPath: .env.production
+              mountPath: "/usr/src/app/.env.tmp"
+              subPath: .env.tmp
               readOnly: true
             - name: pdc-config
-              mountPath: "/usr/src/app/dist/src/config.production.json"
-              subPath: config.production.json
+              mountPath: "/usr/src/app/dist/src/config.json.tmp"
+              subPath: config.json.tmp
               readOnly: true
-          command: [ "npm", "run", "start" ]
+          # Use entrypoint with config templates
+          #command: [ "npm", "run", "start" ]
       volumes:
         - name: pdc-env
           configMap:
             name: pdc-config
             items:
               - key: .env
-                path: .env.production
+                path: .env.tmp
         - name: pdc-config
           configMap:
             name: pdc-config
             items:
               - key: config.json
-                path: config.production.json
+                path: config.json.tmp
         - name: src
           hostPath:
             path: /usr/local/share/ptx-edge/builder/app

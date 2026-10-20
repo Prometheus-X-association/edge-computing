@@ -59,6 +59,7 @@ spec:
           mountPath: "/usr/src/app/dist/src/config.production.json"
           subPath: config.production.json
           readOnly: true
+      # Override entrypoint and run pdc process directly with mounted configs
       command: [ "npm", "run", "start" ]
   volumes:
     - name: pdc-env

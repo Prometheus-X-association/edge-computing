@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright 2026 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -eux
+set -eou
 
-envsubst <"dist/src/config.json.tmp" >"dist/src/config.json"
-envsubst <".env.tmp" >".env"
+if [ -f 'dist/src/config.json.tmp' ]; then
+    envsubst <"dist/src/config.json.tmp" >"dist/src/config.json"
+fi
+if [ -f '.env.tmp' ]; then
+    envsubst <".env.tmp" >".env"
+fi
 
-exec npm run start "$@"
+trap "echo 'Caught terminating signal! Exiting...'; exit 0;" TERM INT
+npm run start "$@" &
+wait ${!}

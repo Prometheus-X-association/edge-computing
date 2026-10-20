@@ -27,7 +27,9 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env sh
     envsubst <dist/src/config.json.tmp >dist/src/config.production.json
-    exec "$@"
+    trap "echo 'Caught terminating signal! Exiting...'; exit 0;" TERM INT
+    "$@" &
+    wait ${!}
 immutable: true
 ---
 apiVersion: v1
@@ -161,6 +163,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['connector.dataspace.ptx.org/id']
+          # Use own entrypoint script
           command: [ "/bin/sh", "/usr/src/app/docker/scripts/entrypoint.sh" ]
           args: [ "npm", "run", "start" ]
       volumes:
