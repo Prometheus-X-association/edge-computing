@@ -33,7 +33,7 @@ from app.model.responses import (PTXEdgeWorkerResponseState, PTXEdgeWorkerRespon
                                  PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint)
 from app.utils.config import CONFIG
 from app.utils.helper import (cancel_on_disconnect, ClientDisconnectedError, assemble_worker_resource_url,
-                              validate_pews_list, response_collector_wrapper)
+                              validate_pews_list, response_collector_wrapper, response_updater_wrapper)
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_pew_api, K8sAPIMethod, K8sLabelCollectionType, WatcherTimeout,
                            watch_for_pew_resource_state, PTXEdgeWorkerState, assemble_worker_endpoints)
 from app.utils.logger import logger, sanitize_model
@@ -182,28 +182,15 @@ async def get_worker_endpoints(request: fastapi.Request, name: PTXEdgeWorkerName
         raise_for_network_error(ex)
 
 
-@app.get("/workers/{name}/watcher",
-         tags=["Edge-Worker"],
-         responses={
-             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
-             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
-         },
-         response_model=PTXEdgeWorkerCollectionResponseStatus,
-         response_model_exclude_unset=True,
-         response_model_exclude_none=True,
-         status_code=fastapi.status.HTTP_200_OK)
-async def watch_for_worker_status(request: fastapi.Request,
-                                  name: PTXEdgeWorkerNameType,
-                                  state: typing.Annotated[
-                                      PTXEdgeWorkerState, fastapi.Query(description="Watched worker state")
-                                  ] = PTXEdgeWorkerState.READY,
-                                  timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
+async def _watch_for_worker_status(request: fastapi.Request,
+                                   name: PTXEdgeWorkerNameType,
+                                   state: PTXEdgeWorkerState,
+                                   timeout: int) -> dict[str, typing.Any] | None:
     """Obtain deployed PTX-Edge worker with given name"""
-    logger.debug("=" * 100)
-    logger.info(f"Received {PEW.__name__} watch request with name: {name} for state: {state}")
     try:
         _result = None
         async with cancel_on_disconnect(request=request, logger=logger, raise_for_disconnect=True):
+            logger.info(f"Watch resource with name: {name} for state: {state}")
             _result = await watch_for_pew_resource_state(name=name,
                                                          state=PTXEdgeWorkerState(state),
                                                          timeout=timeout,
@@ -222,8 +209,6 @@ async def watch_for_worker_status(request: fastapi.Request,
                 state: _result
             }
         }
-        logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
-        logger.debug("=" * 100)
         return response
     except* (WatcherTimeout, client.ApiException,
              aiohttp.ClientError, urllib3.exceptions.MaxRetryError,
@@ -231,17 +216,43 @@ async def watch_for_worker_status(request: fastapi.Request,
         if len(exgroup.exceptions) > 1:
             logger.warning(f"Got more than one exception: {exgroup.exceptions}")
         for ex in exgroup.exceptions:
-            if isinstance(ex, WatcherTimeout):
-                raise_for_timeout_error(name=name, state=state, timeout=timeout)
-            if isinstance(ex, client.ApiException):
-                raise_for_failed_k8s_request(ex)
-            elif isinstance(ex, (aiohttp.ClientError, urllib3.exceptions.MaxRetryError)):
-                raise_for_network_error(ex)
-            if isinstance(ex, ClientDisconnectedError):
-                # Add required status code but irrelevant due to client-initiated disconnect event
-                raise fastapi.HTTPException(status_code=fastapi.status.HTTP_204_NO_CONTENT)
-            else:
-                logger.exception(ex)
+            match ex:
+                case WatcherTimeout():
+                    raise_for_timeout_error(name=name, state=state, timeout=timeout)
+                case client.ApiException():
+                    raise_for_failed_k8s_request(ex)
+                case aiohttp.ClientError() | urllib3.exceptions.MaxRetryError():
+                    raise_for_network_error(ex)
+                case ClientDisconnectedError():
+                    # Add required status code but irrelevant due to client-initiated disconnect event
+                    raise fastapi.HTTPException(status_code=fastapi.status.HTTP_204_NO_CONTENT)
+                case _:
+                    logger.exception(ex)
+
+
+@app.get("/workers/{name}/watcher",
+         tags=["Edge-Worker"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+         },
+         response_model=PTXEdgeWorkerCollectionResponseStatus,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def watch_worker_status(request: fastapi.Request,
+                              name: PTXEdgeWorkerNameType,
+                              state: typing.Annotated[
+                                  PTXEdgeWorkerState, fastapi.Query(description="Watched worker state")
+                              ] = PTXEdgeWorkerState.READY,
+                              timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} resource watch request")
+    response = await _watch_for_worker_status(request=request, name=name, state=state, timeout=timeout)
+    logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
+    logger.debug("=" * 100)
+    return response
 
 
 ########################################################################################################################
@@ -341,6 +352,8 @@ async def create_worker(request: fastapi.Request,
 async def create_workers_batch(request: fastapi.Request,
                                pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
                                parallel: typing.Annotated[bool, fastapi.Query] = False,
+                               wait: typing.Annotated[bool, fastapi.Query] = False,
+                               timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
                                label: K8sLabelCollectionType = None):
     """Create batch of named PTX-Edge workers in parallel"""
     logger.debug("=" * 100)
@@ -349,7 +362,7 @@ async def create_workers_batch(request: fastapi.Request,
     responses: list[dict[str, typing.Any] | None] = []
     try:
         if parallel:
-            logger.info(f"Initiate worker creation in <parallel> mode")
+            logger.info(f"Initiate worker batch creation in <parallel> mode")
             async with anyio.create_task_group() as task_group:
                 for pew in pews:
                     # noinspection async-call
@@ -357,10 +370,26 @@ async def create_workers_batch(request: fastapi.Request,
                         functools.partial(response_collector_wrapper, responses, _create_pew_worker),
                         request, pew, pew.spec.name, label,
                         name=pew.spec.name)
+            logger.debug(f"Received create responses:\n{pprint.pformat(responses, sort_dicts=False)}")
+            if wait and timeout:
+                async with anyio.create_task_group() as task_group:
+                    for response in filter(bool, responses):
+                        # noinspection async-call
+                        task_group.start_soon(
+                            functools.partial(response_updater_wrapper, response, _watch_for_worker_status),
+                            request, response['resource']['name'], PTXEdgeWorkerState.READY, timeout,
+                            name=response['resource']['name'])
         else:
-            logger.info(f"Initiate worker creation in <serial> mode")
+            logger.info(f"Initiate worker batch creation in <serial> mode")
             for pew in pews:
-                responses.append(await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label))
+                response = await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label)
+                if response and wait and timeout:
+                    status = await _watch_for_worker_status(request=request,
+                                                            name=response['resource']['name'],
+                                                            state=PTXEdgeWorkerState.READY,
+                                                            timeout=timeout)
+                    response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
+                responses.append(response)
         logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
         logger.debug("=" * 100)
         return responses
@@ -369,7 +398,7 @@ async def create_workers_batch(request: fastapi.Request,
         logger.debug(f"Deployment status:\n{pprint.pformat(responses, sort_dicts=False)}")
         logger.info("Reverting worker batch request...")
         details = []
-        for response in filter(lambda _r: _r is not None, responses):
+        for response in filter(bool, responses):
             if response['state'] is not PTXEdgeWorkerResponseState.ERROR:
                 try:
                     logger.debug(f"Deleting resource: {response['resource']['name']}")
@@ -394,12 +423,14 @@ async def create_workers_batch(request: fastapi.Request,
         if len(exgroup.exceptions) > 1:
             logger.warning("Multiple exceptions occurred while creating worker batch!")
         logger.debug("Adding failed worker status to responses...")
-        details.append(getattr(exgroup.exceptions[0], 'detail', {}))
+        for ex in exgroup.exceptions:
+            details.append(getattr(ex, 'detail', {}))
         logger.debug(f"Assembled response body:\n{pprint.pformat(details, sort_dicts=False)}")
+        status_code = max((ex.status_code for ex in exgroup.exceptions if hasattr(ex, 'status_code')),
+                          default=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.debug(f"Calculated response status code: {status_code}")
         logger.debug("=" * 100)
-        raise fastapi.HTTPException(
-            status_code=getattr(exgroup.exceptions[0], 'status_code', fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR),
-            detail=details)
+        raise fastapi.HTTPException(status_code=status_code, detail=details)
 
 
 @app.put("/workers/{name}",

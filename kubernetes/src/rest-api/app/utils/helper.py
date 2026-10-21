@@ -65,6 +65,12 @@ async def response_collector_wrapper(responses: list[dict[str, typing.Any] | Non
     responses.append(await func(*args, **kwarg))
 
 
+async def response_updater_wrapper(response: dict[str, typing.Any],
+                                   func: typing.Callable[[typing.Any, ...], typing.Awaitable],
+                                   *args, **kwarg) -> None:
+    response['state'] = (await func(*args, **kwarg))['state']
+
+
 def validate_pews_list(pews: list[PEW]) -> list[PEW]:
     if len(pews) < 1:
         raise fastapi.exceptions.RequestValidationError([pydantic_core.ErrorDetails(

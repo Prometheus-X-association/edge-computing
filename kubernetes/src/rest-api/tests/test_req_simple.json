@@ -1,0 +1,19 @@
+{
+  "spec": {
+    "name": "worker-simple",
+    "service": {
+      "enabled": true
+    },
+    "data": {
+      "src": {
+        "method": "SKIP"
+      }
+    },
+    "worker": {
+      "src": {
+        "method": "SKIP",
+        "image": "k8s.gcr.io/pause:latest"
+      }
+    }
+  }
+}

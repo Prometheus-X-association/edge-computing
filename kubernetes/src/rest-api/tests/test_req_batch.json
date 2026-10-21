@@ -1,0 +1,40 @@
+[
+  {
+    "spec": {
+      "name": "worker-simple-1",
+      "service": {
+        "enabled": true
+      },
+      "data": {
+        "src": {
+          "method": "SKIP"
+        }
+      },
+      "worker": {
+        "src": {
+          "method": "SKIP",
+          "image": "k8s.gcr.io/pause:latest"
+        }
+      }
+    }
+  },
+  {
+    "spec": {
+      "name": "worker-simple-2",
+      "service": {
+        "enabled": true
+      },
+      "data": {
+        "src": {
+          "method": "SKIP"
+        }
+      },
+      "worker": {
+        "src": {
+          "method": "SKIP",
+          "image": "k8s.gcr.io/pause:latest"
+        }
+      }
+    }
+  }
+]
