@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import functools
+import hashlib
 import json
 import pprint
 import typing
@@ -22,9 +23,12 @@ import anyio
 import fastapi
 import pydantic
 import urllib3
+from fastapi import BackgroundTasks
 from kubernetes_asyncio import client
 
 from app import __version__
+from app.model.adapters import PTXServiceChainInfraRequest, PTXServiceChainInfraResponse, PTXServiceChainInfraHeaders, \
+    PTXServiceChainResumeCallback
 from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_failed_k8s_request,
                               raise_for_network_error, raise_for_timeout_error)
 from app.model.ptxedgeworker import PEW, PEWStatus
@@ -66,10 +70,12 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                          external_docs=dict(
                                              description="Prometheus-X",
                                              url="https://github.com/Prometheus-X-association/edge-computing")),
-                                    dict(name="Internal",
-                                         description="Internal management API"),
+                                    dict(name="Adapter",
+                                         description="Service chain adapter API"),
                                     dict(name="Cluster",
-                                         description="Cluster-wide management API")],
+                                         description="Cluster-wide management API"),
+                                    dict(name="Internal",
+                                         description="Internal management API")],
                       docs_url="/ui/",
                       redoc_url=None,
                       lifespan=lifespan)
@@ -271,7 +277,7 @@ async def _create_pew_worker(request: fastapi.Request,
         'metadata': {
             'namespace': CONFIG.WORKER_NS,
             'labels': {
-                'tier': 'worker'
+                'ptxedgeworkers.dataspace.ptx.org/tier': 'worker'
             }
         }
     }
@@ -439,6 +445,15 @@ async def create_worker_batch(request: fastapi.Request,
     logger.debug("=" * 100)
     logger.info(f"Received {PEW.__name__} batch create request")
     logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
+    batch_id = hashlib.sha256('\n'.join(p.model_dump_json(indent=None,
+                                                          ensure_ascii=True,
+                                                          exclude_none=True,
+                                                          exclude_unset=True) for p in pews).encode()).hexdigest()[:16]
+    logger.debug(f"Generated batch id: {batch_id}")
+    if label is None:
+        label = [f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}"]
+    else:
+        label.append(f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}")
     responses = await _create_workers_batch(request=request,
                                             pews=pews,
                                             parallel=parallel,
@@ -448,7 +463,6 @@ async def create_worker_batch(request: fastapi.Request,
     logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
     logger.debug("=" * 100)
     return responses
-
 
 
 @app.put("/workers/{name}",
@@ -623,6 +637,102 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
+
+
+########################################################################################################################
+
+
+@app.post("/adapters/infra",
+          tags=["Adapter"],
+          responses={
+              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+          },
+          response_model=PTXServiceChainInfraResponse,
+          status_code=fastapi.status.HTTP_201_CREATED)
+async def create_workers_via_infra_service(request: fastapi.Request,
+                                           body: typing.Annotated[PTXServiceChainInfraRequest, fastapi.Body()],
+                                           parallel: typing.Annotated[bool, fastapi.Query()] = True,
+                                           wait: typing.Annotated[bool, fastapi.Query()] = False,
+                                           label: K8sLabelCollectionType = None):
+    """Infrastructure service endpoint for creating worker batch synchronously by Service Chain Adapter"""
+    logger.debug("=" * 100)
+    logger.info(f"Received Infrastructure Service invocation request in foreground")
+    parallel = body.params.get("parallel", parallel)
+    wait = body.params.get("wait", wait)
+    logger.info(f"Worker execution mode: {parallel=}, {wait=}")
+    logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")
+    # TODO: add batch label
+    worker_status = await _create_workers_batch(request=request,
+                                                pews=body.data,
+                                                parallel=parallel,
+                                                wait=False,
+                                                label=label)
+    response = {
+        "contract": body.contract,
+        "data": worker_status,
+        "params": body.params
+    }
+    logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
+    logger.debug("=" * 100)
+    return response
+
+
+@app.post("/adapters/infra/tasks",
+          tags=["Adapter"],
+          responses={
+              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+          },
+          response_model=None,
+          status_code=fastapi.status.HTTP_202_ACCEPTED)
+async def schedule_workers_via_infra_service(request: fastapi.Request,
+                                             body: typing.Annotated[PTXServiceChainInfraRequest, fastapi.Body()],
+                                             headers: typing.Annotated[PTXServiceChainInfraHeaders, fastapi.Header()],
+                                             background: BackgroundTasks,
+                                             timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
+                                             label: K8sLabelCollectionType = None):
+    """Infrastructure service endpoint for creating worker batch asynchronously"""
+
+    async def create_workers_batch_in_background(timeout: int):
+        logger.debug("Background task is started")
+        try:
+            worker_status = await _create_workers_batch(request=request,
+                                                        pews=body.data,
+                                                        parallel=True,
+                                                        wait=True,
+                                                        timeout=timeout,
+                                                        label=label)
+            pdc_client = request.client
+            callback_url = f"http://{pdc_client.host}:{pdc_client.port}/service-chain/resume"
+            logger.debug(f"Assembled callback url: {callback_url}")
+            callback_body = PTXServiceChainResumeCallback.model_validate({
+                "chainId": headers.x_ptx_service_chain_id,
+                "targetId": headers.x_ptx_target_id,
+                "data": worker_status,
+                "params": body.params
+            })
+            logger.debug(f"Assembled callback body:\n{pprint.pformat(callback_body, sort_dicts=False)}")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(callback_url, json=callback_body.model_dump_json(exclude_none=True)) as resp:
+                    result = aiohttp.http.HTTPStatus(resp.status)
+                    logger.info(f"Received response: HTTP/{result} - {result.name} for callback: {callback_url}")
+                    logger.debug(f"Response body:\n{await resp.json()}")
+                    # TODO make annotations with instances for each fastapi dependency injection
+        except fastapi.HTTPException as ex:
+            logger.error(f"Error received in background task: {ex}")
+            # Notify service chain about failed task if possible...
+
+    logger.debug("=" * 100)
+    pprint.pprint(request.__dict__)
+    logger.info(f"Received Infrastructure Service invocation request as background task")
+    logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")
+    timeout = body.params.get("timeout", timeout)
+    logger.info(f"Schedule background task with execution mode: parallel=True, wait=True, {timeout=}")
+    background.add_task(create_workers_batch_in_background, timeout=timeout)
+    logger.debug("=" * 100)
 
 
 ########################################################################################################################

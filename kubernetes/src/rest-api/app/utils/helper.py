@@ -105,18 +105,17 @@ def validate_pews_list(pews: list[PEW]) -> list[PEW]:
 ########################################################################################################################
 
 def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
-    if not (proto := next((v for h, v in request.headers if h == 'x-forwarded-proto'), "")):
+    if not (proto := request.headers.get('x-forwarded-proto', "")):
         proto = request.scope['scheme']
-    if not (base := next((v for h, v in request.headers if h == 'x-forwarded-host'), "")):
-        base = next((v for h, v in request.headers if h == 'host'), "")
+    if not (base := request.headers.get('x-forwarded-host', "")):
+        base = request.headers['host']
     if not (root_path := request.scope.get('root_path')):
         root_path = CONFIG.ROOT_PATH
     return f"{proto}://{base}{root_path}/workers/{name}"
 
 
 def assemble_worker_endpoint_url(request: fastapi.Request, name: str, secured: bool | None) -> str:
-    proto = next((v for h, v in request.headers if h == 'x-forwarded-proto'),
-                 "https" if secured else "http")
-    if not (base := next((v for h, v in request.headers if h == 'x-forwarded-host'), "")):
-        base = next((v for h, v in request.headers if h == 'host'), "")
+    proto = request.headers.get('x-forwarded-proto', "https" if secured else "http")
+    if not (base := request.headers.get('x-forwarded-host', "")):
+        base = request.headers['host']
     return f"{proto}://{base}/worker/{name}"

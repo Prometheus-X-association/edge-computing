@@ -28,7 +28,7 @@ from app.utils.helper import str2bool, assemble_worker_endpoint_url
 from app.utils.logger import logger, sanitize_model
 
 K8sLabelCollectionType = typing.Annotated[
-    tuple[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
+    list[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
     Query(examples=["tier=worker"])]
 
 

@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-23T21:28:56'
+  x-creation-date: '2026-10-23T22:11:22'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -115,11 +115,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -379,11 +377,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -439,11 +435,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -487,11 +481,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -570,11 +562,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -645,11 +635,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
@@ -707,11 +695,9 @@ paths:
         schema:
           anyOf:
           - type: array
-            prefixItems:
-            - type: string
-              pattern: ^([^=/]+)=(.+){1,63}$
-            minItems: 1
-            maxItems: 1
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
           examples:
           - tier=worker
