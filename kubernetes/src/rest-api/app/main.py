@@ -340,26 +340,14 @@ async def create_worker(request: fastapi.Request,
     return response
 
 
-@app.post("/workers/batch",
-          tags=["Edge-Worker"],
-          responses={
-              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
-          },
-          response_model=list[PTXEdgeWorkerResponse],
-          status_code=fastapi.status.HTTP_201_CREATED)
-async def create_workers_batch(request: fastapi.Request,
-                               pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
-                               parallel: typing.Annotated[bool, fastapi.Query] = False,
-                               wait: typing.Annotated[bool, fastapi.Query] = False,
-                               timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
-                               label: K8sLabelCollectionType = None):
+async def _create_workers_batch(request: fastapi.Request,
+                                pews: list[PEW],
+                                parallel: bool = False,
+                                wait: bool = False,
+                                timeout: int = 30,
+                                label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
     """Create batch of named PTX-Edge workers in parallel"""
-    logger.debug("=" * 100)
-    logger.info(f"Received {PEW.__name__} batch create request")
-    logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
-    responses: list[dict[str, typing.Any] | None] = []
+    responses: list[dict[str, typing.Any]] = []
     try:
         if parallel:
             logger.info(f"Initiate worker batch creation in <parallel> mode")
@@ -383,15 +371,14 @@ async def create_workers_batch(request: fastapi.Request,
             logger.info(f"Initiate worker batch creation in <serial> mode")
             for pew in pews:
                 response = await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label)
-                if response and wait and timeout:
-                    status = await _watch_for_worker_status(request=request,
-                                                            name=response['resource']['name'],
-                                                            state=PTXEdgeWorkerState.READY,
-                                                            timeout=timeout)
-                    response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
-                responses.append(response)
-        logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
-        logger.debug("=" * 100)
+                if response:
+                    if wait and timeout:
+                        status = await _watch_for_worker_status(request=request,
+                                                                name=response['resource']['name'],
+                                                                state=PTXEdgeWorkerState.READY,
+                                                                timeout=timeout)
+                        response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
+                    responses.append(response)
         return responses
     except* fastapi.HTTPException as exgroup:
         logger.error(f"Error received during batch creation: {[e.__class__.__name__ for e in exgroup.exceptions]}!")
@@ -414,7 +401,7 @@ async def create_workers_batch(request: fastapi.Request,
                 except (client.ApiException, aiohttp.ClientError, urllib3.exceptions.MaxRetryError):
                     logger.error(f"Failed to delete resource: {response['resource']['name']}")
                     details.append({
-                        "state": PTXEdgeWorkerResponseState.TERMINATING,
+                        "state": PTXEdgeWorkerResponseState.ERROR,
                         "error_code": fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
                         "resource": response['resource']
                     })
@@ -431,6 +418,37 @@ async def create_workers_batch(request: fastapi.Request,
         logger.debug(f"Calculated response status code: {status_code}")
         logger.debug("=" * 100)
         raise fastapi.HTTPException(status_code=status_code, detail=details)
+
+
+@app.post("/workers/batch",
+          tags=["Edge-Worker"],
+          responses={
+              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+          },
+          response_model=list[PTXEdgeWorkerResponse],
+          status_code=fastapi.status.HTTP_201_CREATED)
+async def create_worker_batch(request: fastapi.Request,
+                              pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
+                              parallel: typing.Annotated[bool, fastapi.Query] = False,
+                              wait: typing.Annotated[bool, fastapi.Query] = False,
+                              timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
+                              label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
+    """Create batch of named PTX-Edge workers"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} batch create request")
+    logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
+    responses = await _create_workers_batch(request=request,
+                                            pews=pews,
+                                            parallel=parallel,
+                                            wait=wait,
+                                            timeout=timeout,
+                                            label=label)
+    logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
+    logger.debug("=" * 100)
+    return responses
+
 
 
 @app.put("/workers/{name}",

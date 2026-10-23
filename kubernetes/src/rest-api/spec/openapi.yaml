@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-21T21:47:58'
+  x-creation-date: '2026-10-23T21:28:56'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -117,7 +117,7 @@ paths:
           - type: array
             prefixItems:
             - type: string
-              pattern: ^(.+)=(.+){1,63}$
+              pattern: ^([^=/]+)=(.+){1,63}$
             minItems: 1
             maxItems: 1
           - type: 'null'
@@ -381,7 +381,7 @@ paths:
           - type: array
             prefixItems:
             - type: string
-              pattern: ^(.+)=(.+){1,63}$
+              pattern: ^([^=/]+)=(.+){1,63}$
             minItems: 1
             maxItems: 1
           - type: 'null'
@@ -441,7 +441,7 @@ paths:
           - type: array
             prefixItems:
             - type: string
-              pattern: ^(.+)=(.+){1,63}$
+              pattern: ^([^=/]+)=(.+){1,63}$
             minItems: 1
             maxItems: 1
           - type: 'null'
@@ -489,7 +489,7 @@ paths:
           - type: array
             prefixItems:
             - type: string
-              pattern: ^(.+)=(.+){1,63}$
+              pattern: ^([^=/]+)=(.+){1,63}$
             minItems: 1
             maxItems: 1
           - type: 'null'
@@ -538,9 +538,9 @@ paths:
     post:
       tags:
       - Edge-Worker
-      summary: Create Workers Batch
-      description: Create batch of named PTX-Edge workers in parallel
-      operationId: create_workers_batch_workers_batch_post
+      summary: Create Worker Batch
+      description: Create batch of named PTX-Edge workers
+      operationId: create_worker_batch_workers_batch_post
       parameters:
       - name: parallel
         in: query
@@ -572,7 +572,7 @@ paths:
           - type: array
             prefixItems:
             - type: string
-              pattern: ^(.+)=(.+){1,63}$
+              pattern: ^([^=/]+)=(.+){1,63}$
             minItems: 1
             maxItems: 1
           - type: 'null'
@@ -597,7 +597,167 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PTXEdgeWorkerResponse'
-                title: Response Create Workers Batch Workers Batch Post
+                title: Response Create Worker Batch Workers Batch Post
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Unprocessable Content
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Conflict
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
+  /adapters/infra:
+    post:
+      tags:
+      - Adapter
+      summary: Create Workers Via Infra Service
+      description: Infrastructure service endpoint for creating worker batch synchronously
+        by Service Chain Adapter
+      operationId: create_workers_via_infra_service_adapters_infra_post
+      parameters:
+      - name: parallel
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Parallel
+      - name: wait
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Wait
+      - name: label
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            prefixItems:
+            - type: string
+              pattern: ^([^=/]+)=(.+){1,63}$
+            minItems: 1
+            maxItems: 1
+          - type: 'null'
+          examples:
+          - tier=worker
+          title: Label
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PTXServiceChainInfraRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXServiceChainInfraResponse'
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Unprocessable Content
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Conflict
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
+  /adapters/infra/tasks:
+    post:
+      tags:
+      - Adapter
+      summary: Schedule Workers Via Infra Service
+      description: Infrastructure service endpoint for creating worker batch asynchronously
+      operationId: schedule_workers_via_infra_service_adapters_infra_tasks_post
+      parameters:
+      - name: timeout
+        in: query
+        required: false
+        schema:
+          type: integer
+          exclusiveMinimum: 0
+          default: 30
+          title: Timeout
+      - name: label
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            prefixItems:
+            - type: string
+              pattern: ^([^=/]+)=(.+){1,63}$
+            minItems: 1
+            maxItems: 1
+          - type: 'null'
+          examples:
+          - tier=worker
+          title: Label
+      - name: x-ptx-service-chain-id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID generated by the Data Processing Chain library
+          title: X Ptx Service Chain Id
+        description: ID generated by the Data Processing Chain library
+      - name: x-ptx-target-id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Current resource being processed
+          title: X Ptx Target Id
+        description: Current resource being processed
+      - name: x-ptx-contracturl
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Full URL with the ID of the current contract being used
+          title: X Ptx Contracturl
+        description: Full URL with the ID of the current contract being used
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PTXServiceChainInfraRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
         '422':
           content:
             application/json:
@@ -1843,6 +2003,65 @@ components:
       - succeeded
       - failed
       title: PTXEdgeWorkerState
+    PTXServiceChainInfraRequest:
+      properties:
+        contract:
+          type: string
+          maxLength: 2083
+          minLength: 1
+          format: uri
+          title: Contract
+          description: Dataspace contract URL
+        data:
+          items:
+            $ref: '#/components/schemas/PEW-Input'
+          type: array
+          title: Data
+          description: Worker configurations
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+          description: Infra key-value parameters
+        previousNodeParams:
+          anyOf:
+          - type: string
+          - additionalProperties: true
+            type: object
+          title: Previousnodeparams
+          description: Previous node parameters
+      type: object
+      required:
+      - contract
+      - data
+      title: PTXServiceChainInfraRequest
+    PTXServiceChainInfraResponse:
+      properties:
+        contract:
+          type: string
+          maxLength: 2083
+          minLength: 1
+          format: uri
+          title: Contract
+          description: Dataspace contract URL
+        data:
+          items:
+            $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+          type: array
+          title: Data
+          description: Worker states
+        params:
+          anyOf:
+          - type: string
+          - additionalProperties: true
+            type: object
+          title: Params
+          description: Infra key-value parameters
+      type: object
+      required:
+      - contract
+      - data
+      title: PTXServiceChainInfraResponse
     ValidationError:
       properties:
         loc:
@@ -1888,7 +2107,9 @@ tags:
   external_docs:
     description: Prometheus-X
     url: https://github.com/Prometheus-X-association/edge-computing
-- name: Internal
-  description: Internal management API
+- name: Adapter
+  description: Service chain adapter API
 - name: Cluster
   description: Cluster-wide management API
+- name: Internal
+  description: Internal management API
