@@ -29,7 +29,7 @@ from app.utils.logger import logger, sanitize_model
 
 K8sLabelCollectionType = typing.Annotated[
     list[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
-    Query(examples=["tier=worker"])]
+    Query(description="Additional k8s-compatible labels", examples=["tier=worker"])]
 
 
 ########################################################################################################################
@@ -55,7 +55,7 @@ async def invoke_k8s_pew_api(method: K8sAPIMethod,
                              body: dict[str, typing.Any] | object | None = None,
                              name: str | None = None,
                              status: bool = False,
-                             label_selector: tuple[str] | None = None,
+                             label_selector: typing.Sequence[str] | None = None,
                              **call_args) -> tuple[dict[str, typing.Any], int]:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)

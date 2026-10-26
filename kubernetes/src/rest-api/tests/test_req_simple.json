@@ -1,6 +1,6 @@
 {
   "spec": {
-    "name": "worker-simple",
+    "name": "worker",
     "service": {
       "enabled": true
     },

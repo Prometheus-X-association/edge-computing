@@ -30,6 +30,18 @@ def str2bool(s: str | bool | None, *, __true=frozenset(('true', 'yes', 'on', 'y'
     return str(s).lower() in __true
 
 
+def get_k8s_obj_name(obj: dict[str, typing.Any]) -> str:
+    return obj.get('metadata', {}).get('name') if 'metadata' in obj else obj.get('details', {}).get('name')
+
+
+def get_k8s_obj_type(obj: dict[str, typing.Any]) -> str:
+    return obj['kind'] if 'kind' in obj else obj.get('details', {}).get('kind', type(obj))
+
+
+def get_k8s_obj_res(obj: dict[str, typing.Any]) -> str:
+    return f"{get_k8s_obj_type(obj)}/{get_k8s_obj_name(obj)}"
+
+
 @contextlib.asynccontextmanager
 async def cancel_on_disconnect(request: fastapi.Request,
                                logger: logging.Logger = logging.getLogger(__name__),

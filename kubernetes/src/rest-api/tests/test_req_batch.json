@@ -1,7 +1,7 @@
 [
   {
     "spec": {
-      "name": "worker-simple-1",
+      "name": "worker-1",
       "service": {
         "enabled": true
       },
@@ -20,7 +20,7 @@
   },
   {
     "spec": {
-      "name": "worker-simple-2",
+      "name": "worker-2",
       "service": {
         "enabled": true
       },

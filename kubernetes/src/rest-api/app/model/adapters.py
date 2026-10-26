@@ -22,9 +22,9 @@ from app.model.responses import PTXEdgeWorkerResponse
 class PTXServiceChainInfraRequest(BaseModel):
     contract: typing.Annotated[HttpUrl, Field(description="Dataspace contract URL", min_length=1)]
     data: typing.Annotated[list[PEW], Field(description="Worker configurations")]
-    params: typing.Annotated[dict[str, typing.Any], Field(description="Infra key-value parameters")] = None
+    params: typing.Annotated[dict[str, typing.Any] | str, Field(description="Infra key-value parameters")] = None
     previousNodeParams: typing.Annotated[
-        str | dict[str, typing.Any], Field(description="Previous node parameters")] = None
+        dict[str, typing.Any] | str, Field(description="Previous node parameters")] = None
 
 
 class PTXServiceChainInfraResponse(BaseModel):

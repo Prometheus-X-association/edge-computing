@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-23T22:11:22'
+  x-creation-date: '2026-10-26T11:43:11'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -93,70 +93,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    put:
-      tags:
-      - Edge-Worker
-      summary: Recreate Worker With Name
-      description: Re-create PTX-Edge worker with given name
-      operationId: recreate_worker_with_name_workers__name__put
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-          description: Worker name
-          example: worker
-          title: Name
-      - name: label
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: array
-            items:
-              type: string
-              pattern: ^(.+)=(.+){1,63}$
-          - type: 'null'
-          examples:
-          - tier=worker
-          title: Label
-      - name: tolerance
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          description: Grace period
-          default: 10
-          title: Tolerance
-        description: Grace period
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PEW-Input'
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PTXEdgeWorkerResponse'
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Unprocessable Content
-        '502':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PTXEdgeAPIError'
-          description: Bad Gateway
     delete:
       tags:
       - Edge-Worker
@@ -217,6 +153,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Edge-Worker
+      summary: Recreate Worker With Name
+      description: Re-create PTX-Edge worker with given name
+      operationId: recreate_worker_with_name_workers__name__put
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          description: Worker name
+          example: worker
+          title: Name
+      - name: label
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              pattern: ^(.+)=(.+){1,63}$
+          - type: 'null'
+          description: Additional k8s-compatible labels
+          examples:
+          - tier=worker
+          title: Label
+        description: Additional k8s-compatible labels
+      - name: tolerance
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Grace period
+          default: 10
+          title: Tolerance
+        description: Grace period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PEW-Input'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Unprocessable Content
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
   /workers/{name}/status:
     get:
       tags:
@@ -381,9 +383,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       requestBody:
         required: true
         content:
@@ -439,9 +443,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       responses:
         '200':
           description: Successful Response
@@ -485,9 +491,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       - name: tolerance
         in: query
         required: false
@@ -566,9 +574,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       requestBody:
         required: true
         content:
@@ -615,20 +625,6 @@ paths:
         by Service Chain Adapter
       operationId: create_workers_via_infra_service_adapters_infra_post
       parameters:
-      - name: parallel
-        in: query
-        required: false
-        schema:
-          type: boolean
-          default: true
-          title: Parallel
-      - name: wait
-        in: query
-        required: false
-        schema:
-          type: boolean
-          default: false
-          title: Wait
       - name: label
         in: query
         required: false
@@ -639,9 +635,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       requestBody:
         required: true
         content:
@@ -699,9 +697,11 @@ paths:
               type: string
               pattern: ^(.+)=(.+){1,63}$
           - type: 'null'
+          description: Additional k8s-compatible labels
           examples:
           - tier=worker
           title: Label
+        description: Additional k8s-compatible labels
       - name: x-ptx-service-chain-id
         in: header
         required: false
@@ -1988,6 +1988,7 @@ components:
       - exposed
       - succeeded
       - failed
+      - deleted
       title: PTXEdgeWorkerState
     PTXServiceChainInfraRequest:
       properties:
@@ -2005,15 +2006,17 @@ components:
           title: Data
           description: Worker configurations
         params:
-          additionalProperties: true
-          type: object
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: string
           title: Params
           description: Infra key-value parameters
         previousNodeParams:
           anyOf:
-          - type: string
           - additionalProperties: true
             type: object
+          - type: string
           title: Previousnodeparams
           description: Previous node parameters
       type: object
