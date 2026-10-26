@@ -169,7 +169,7 @@ async def watch_for_pew_resource_state(name: str,
 
 async def watch_for_pew_resource_deletion(name: str,
                                           timeout: int = 30,
-                                          retries: int = 3,
+                                          retry_interval: int = 3,
                                           raise_for_timeout: bool = True) -> bool:
     async with client.ApiClient() as api_client:
         api = client.CustomObjectsApi(api_client=api_client)
@@ -194,7 +194,7 @@ async def watch_for_pew_resource_deletion(name: str,
                 logger.debug(f"Watching for resource events: {name}...")
                 async for event in watcher.stream(api.list_namespaced_custom_object,
                                                   field_selector=f"metadata.name={name}",
-                                                  timeout_seconds=timeout // retries,
+                                                  timeout_seconds=retry_interval,
                                                   **params):
                     logger.debug(f"Received event from worker[{name}]: {event['type']}")
                     if K8sEventType(event['type']) is K8sEventType.DELETED:

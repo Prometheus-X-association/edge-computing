@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-26T13:08:21'
+  x-creation-date: '2026-10-26T18:46:48'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -743,7 +743,8 @@ paths:
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/PTXServiceChainAsyncResponse'
         '422':
           content:
             application/json:
@@ -1989,6 +1990,16 @@ components:
       - succeeded
       - failed
       title: PTXEdgeWorkerState
+    PTXServiceChainAsyncResponse:
+      properties:
+        message:
+          type: string
+          title: Message
+          description: Response message
+      type: object
+      required:
+      - message
+      title: PTXServiceChainAsyncResponse
     PTXServiceChainInfraRequest:
       properties:
         contract:

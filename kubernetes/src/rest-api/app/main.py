@@ -28,7 +28,7 @@ from kubernetes_asyncio import client
 
 from app import __version__
 from app.model.adapters import PTXServiceChainInfraRequest, PTXServiceChainInfraResponse, PTXServiceChainInfraHeaders, \
-    PTXServiceChainResumeCallback
+    PTXServiceChainResumeCallback, PTXServiceChainAsyncResponse
 from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_failed_k8s_request,
                               raise_for_network_error, raise_for_timeout_error)
 from app.model.ptxedgeworker import PEW, PEWStatus
@@ -208,7 +208,7 @@ async def _watch_for_worker_status(request: fastapi.Request,
                                                          state=PTXEdgeWorkerState(state),
                                                          timeout=timeout,
                                                          raise_for_timeout=True)
-        logger.debug(f"Obtained status: {state}: {_result}")
+        logger.debug(f"Obtained status: {state}={_result}")
         if state is PTXEdgeWorkerState.FAILED:
             resp_state = PTXEdgeWorkerResponseState.ERROR
         elif state in (PTXEdgeWorkerState.READY, PTXEdgeWorkerState.EXPOSED):
@@ -432,7 +432,7 @@ async def recreate_worker_with_name(request: fastapi.Request,
                 logger.info("Waiting for dependent resources to remove finalizers...")
                 _result = await watch_for_pew_resource_deletion(name=name,
                                                                 timeout=tolerance,
-                                                                retries=3,
+                                                                retry_interval=3,
                                                                 raise_for_timeout=False)
                 logger.debug(f"Deletion confirmed: {_result}")
         except* Exception as exg:
@@ -714,7 +714,7 @@ async def create_workers_via_infra_service(request: fastapi.Request,
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
           },
-          response_model=None,
+          response_model=PTXServiceChainAsyncResponse,
           status_code=fastapi.status.HTTP_202_ACCEPTED)
 async def schedule_workers_via_infra_service(request: fastapi.Request,
                                              body: typing.Annotated[PTXServiceChainInfraRequest, fastapi.Body()],
@@ -742,18 +742,22 @@ async def schedule_workers_via_infra_service(request: fastapi.Request,
                 "data": worker_status,
                 "params": body.params
             })
-            logger.debug(f"Assembled callback body:\n{pprint.pformat(callback_body, sort_dicts=False)}")
-            async with aiohttp.ClientSession() as session:
-                logger.info("Notifying callback...")
-                async with session.post(callback_url, json=callback_body.model_dump_json(exclude_none=True)) as resp:
-                    result = aiohttp.http.HTTPStatus(resp.status)
-                    logger.info(f"Received response: HTTP/{result} - {result.name} for callback: {callback_url}")
-                    logger.debug(f"Callback response body:\n{await resp.json()}")
+            logger.debug(f"Assembled callback body:\n{callback_body.model_dump_json(indent=2)}")
+            try:
+                async with aiohttp.ClientSession() as session:
+                    logger.info("Notifying callback...")
+                    async with session.post(callback_url,
+                                            json=callback_body.model_dump_json(exclude_none=True),
+                                            raise_for_status=True) as resp:
+                        result = aiohttp.http.HTTPStatus(resp.status)
+                        logger.info(f"Received response: HTTP/{result} - {result.name} for callback: {callback_url}")
+                        logger.debug(f"Callback response body:\n{await resp.json()}")
+            except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
+                logger.error(f"Error received during callback invocation on {callback_url}")
+                raise_for_network_error(ex)
         except fastapi.HTTPException as ex:
             logger.error(f"Error received in background task: {ex}")
             # Notify service chain about failed task if possible...
-            # TODO verify exception handling in callback
-
     logger.debug("=" * 100)
     logger.info(f"Received Infrastructure Service async invocation request")
     logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")
@@ -762,6 +766,7 @@ async def schedule_workers_via_infra_service(request: fastapi.Request,
     logger.info(f"Schedule background task with execution mode: wait=True, parallel=True, {timeout=}, {label=}")
     background.add_task(create_workers_batch_in_background, timeout=timeout, label=label)
     logger.debug("=" * 100)
+    return {"message": "Workers are scheduled for creation!"}
 
 
 ########################################################################################################################

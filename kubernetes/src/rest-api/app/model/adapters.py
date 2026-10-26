@@ -57,3 +57,7 @@ class PTXServiceChainResumeCallback(BaseModel):
     targetId: typing.Annotated[str, Field(description="Current resource being processed")]
     data: typing.Annotated[list[PTXEdgeWorkerResponse], Field(description="Worker states")]
     params: typing.Annotated[dict[str, typing.Any], Field(description="Infra key-value parameters")] = None
+
+
+class PTXServiceChainAsyncResponse(BaseModel):
+    message: typing.Annotated[str, Field(description="Response message")]
