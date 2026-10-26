@@ -40,7 +40,8 @@ from app.utils.helper import (cancel_on_disconnect, ClientDisconnectedError, ass
                               validate_pews_list, response_collector_wrapper, response_updater_wrapper,
                               get_k8s_obj_res)
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_pew_api, K8sAPIMethod, K8sLabelCollectionType, WatcherTimeout,
-                           watch_for_pew_resource_state, PTXEdgeWorkerState, assemble_worker_endpoints)
+                           watch_for_pew_resource_state, PTXEdgeWorkerState, assemble_worker_endpoints,
+                           watch_for_pew_resource_deletion)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -224,10 +225,10 @@ async def _watch_for_worker_status(request: fastapi.Request,
         return response
     except* (WatcherTimeout, client.ApiException,
              aiohttp.ClientError, urllib3.exceptions.MaxRetryError,
-             ClientDisconnectedError) as exgroup:
-        if len(exgroup.exceptions) > 1:
-            logger.warning(f"Got more than one exception: {exgroup.exceptions}")
-        for ex in exgroup.exceptions:
+             ClientDisconnectedError) as exg:
+        if len(exg.exceptions) > 1:
+            logger.warning(f"Got more than one exception: {exg.exceptions}")
+        for ex in exg.exceptions:
             match ex:
                 case WatcherTimeout():
                     raise_for_timeout_error(name=name, state=state, timeout=timeout)
@@ -426,12 +427,23 @@ async def recreate_worker_with_name(request: fastapi.Request,
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Deleted resource: {get_k8s_obj_res(obj)}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        try:
+            async with cancel_on_disconnect(request=request, logger=logger, raise_for_disconnect=False):
+                logger.info("Waiting for dependent resources to remove finalizers...")
+                _result = await watch_for_pew_resource_deletion(name=name,
+                                                                timeout=tolerance,
+                                                                retries=3,
+                                                                raise_for_timeout=False)
+                logger.debug(f"Deletion confirmed: {_result}")
+        except* Exception as exg:
+            for ex in exg.exceptions:
+                raise ex
     except client.ApiException as ex:
         error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body)) if ex.body else {}
-        if int(error.get('code', 0)) != fastapi.status.HTTP_404_NOT_FOUND:
-            raise_for_failed_k8s_request(ex)
+        if int(error.get('code', 0)) == fastapi.status.HTTP_404_NOT_FOUND:
+            logger.info(f"Worker[{name}] is not found! Skip deletion step.")
         else:
-            logger.debug(f"Worker[{name}] is not found! Skip deletion step.")
+            raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
     response = await _create_pew_worker(request=request, pew=pew, name=name, labels=label)

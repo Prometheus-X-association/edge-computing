@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
 import enum
 import os
 import pprint
@@ -24,7 +25,7 @@ from kubernetes_asyncio import client, config, watch
 from app.model.errors import raise_for_k8s_error
 from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
-from app.utils.helper import str2bool, assemble_worker_endpoint_url
+from app.utils.helper import str2bool, assemble_worker_endpoint_url, get_k8s_obj_res
 from app.utils.logger import logger, sanitize_model
 
 K8sLabelCollectionType = typing.Annotated[
@@ -73,7 +74,7 @@ async def invoke_k8s_pew_api(method: K8sAPIMethod,
         if method is K8sAPIMethod.CREATE:
             params['field_manager'] = CONFIG.field_manager
         params.update(call_args)
-        logger.debug(f"Assembled request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
+        logger.debug(f"Assembled k8s API request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
         caller = "namespaced_custom_object_status" if status else "namespaced_custom_object"
         api_caller = getattr(api, f"{method.value}_{caller}_with_http_info")
         obj, status, _ = await api_caller(**params)
@@ -159,8 +160,49 @@ async def watch_for_pew_resource_state(name: str,
                         return False
                     case _:
                         logger.error(f"Unknown event type: {event['type']}!")
-                        return False
+                        return None
         logger.warning(f"Watching worker[{name}] timed out...")
         if raise_for_timeout:
             raise WatcherTimeout
         return None
+
+
+async def watch_for_pew_resource_deletion(name: str,
+                                          timeout: int = 30,
+                                          retries: int = 3,
+                                          raise_for_timeout: bool = True) -> bool:
+    async with client.ApiClient() as api_client:
+        api = client.CustomObjectsApi(api_client=api_client)
+        params = dict(group=PEW.group,
+                      version=PEW.version,
+                      namespace=CONFIG.WORKER_NS,
+                      plural=PEW.plural)
+        _start, remaining = asyncio.get_event_loop().time(), timeout
+        while 0 < remaining:
+            try:
+                # Check for already deleted resource or deleted after watch
+                logger.debug(f"Checking deletion of worker resource: {name}...")
+                obj = await api.get_namespaced_custom_object_status(name=name, **params)
+                logger.debug(f"{get_k8s_obj_res(obj)} is still waiting for finalization!")
+            except client.ApiException as ex:
+                if ex.status == fastapi.status.HTTP_404_NOT_FOUND:
+                    logger.info(f"Worker resource: {name} has been deleted!")
+                    return True
+                else:
+                    raise ex
+            async with watch.Watch() as watcher:
+                logger.debug(f"Watching for resource events: {name}...")
+                async for event in watcher.stream(api.list_namespaced_custom_object,
+                                                  field_selector=f"metadata.name={name}",
+                                                  timeout_seconds=timeout // retries,
+                                                  **params):
+                    logger.debug(f"Received event from worker[{name}]: {event['type']}")
+                    if K8sEventType(event['type']) is K8sEventType.DELETED:
+                        logger.info(f"Resource: [{get_k8s_obj_res(event['raw_object'])}] has been deleted!")
+                        return True
+            # No deleted event received or deleted before starting watch stream
+            logger.debug(f"No deletion event is received from {name}! Retrying deletion validation...")
+            remaining = timeout - (asyncio.get_event_loop().time() - _start)
+        if raise_for_timeout:
+            raise WatcherTimeout()
+        return False
