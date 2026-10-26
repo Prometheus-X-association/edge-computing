@@ -34,11 +34,10 @@ from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_fa
 from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseState, PTXEdgeWorkerResponse, VersionsResponse,
                                  PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerCollectionResponseStatus,
-                                 PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint)
+                                 PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint, PTXWorkerBatchId)
 from app.utils.config import CONFIG
 from app.utils.helper import (cancel_on_disconnect, ClientDisconnectedError, assemble_worker_resource_url,
-                              validate_pews_list, response_collector_wrapper, response_updater_wrapper,
-                              get_k8s_obj_res)
+                              get_k8s_obj_res, validate_pews_list, response_updater_wrapper, response_collector_wrapper)
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_pew_api, K8sAPIMethod, K8sLabelCollectionType, WatcherTimeout,
                            watch_for_pew_resource_state, PTXEdgeWorkerState, assemble_worker_endpoints,
                            watch_for_pew_resource_deletion)
@@ -72,6 +71,8 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                          external_docs=dict(
                                              description="Prometheus-X",
                                              url="https://github.com/Prometheus-X-association/edge-computing")),
+                                    dict(name="Worker-Batch",
+                                         description="Batch-based Worker API"),
                                     dict(name="Adapter",
                                          description="Service chain adapter API"),
                                     dict(name="Cluster",
@@ -165,9 +166,6 @@ async def get_worker_status(name: PTXEdgeWorkerNameType):
         raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
-
-
-# TODO add batch status getter by id
 
 
 @app.get("/workers/{name}/endpoints",
@@ -453,133 +451,6 @@ async def recreate_worker_with_name(request: fastapi.Request,
 
 
 ########################################################################################################################
-
-async def _create_workers_batch(request: fastapi.Request,
-                                pews: list[PEW],
-                                parallel: bool = False,
-                                wait: bool = False,
-                                timeout: int = 30,
-                                label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
-    """Create batch of named PTX-Edge workers in parallel"""
-    responses: list[dict[str, typing.Any]] = []
-    try:
-        if parallel:
-            logger.info(f"Initiate worker batch creation in <parallel> mode")
-            async with anyio.create_task_group() as task_group:
-                for pew in pews:
-                    # noinspection async-call
-                    task_group.start_soon(
-                        functools.partial(response_collector_wrapper, responses, _create_pew_worker),
-                        request, pew, pew.spec.name, label,
-                        name=pew.spec.name)
-            logger.debug(f"Received create responses:\n{pprint.pformat(responses, sort_dicts=False)}")
-            if wait and timeout:
-                async with anyio.create_task_group() as task_group:
-                    for response in filter(bool, responses):
-                        # noinspection async-call
-                        task_group.start_soon(
-                            functools.partial(response_updater_wrapper, response, _watch_for_worker_status),
-                            request, response['resource']['name'], PTXEdgeWorkerState.READY, timeout,
-                            name=response['resource']['name'])
-        else:
-            logger.info(f"Initiate worker batch creation in <serial> mode")
-            for pew in pews:
-                response = await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label)
-                if response:
-                    if wait and timeout:
-                        status = await _watch_for_worker_status(request=request,
-                                                                name=response['resource']['name'],
-                                                                state=PTXEdgeWorkerState.READY,
-                                                                timeout=timeout)
-                        response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
-                    responses.append(response)
-        return responses
-    except* fastapi.HTTPException as exgroup:
-        logger.error(f"Errors received during batch creation: {[e.__class__.__name__ for e in exgroup.exceptions]}!")
-        logger.debug(f"Deployment status:\n{pprint.pformat(responses, sort_dicts=False)}")
-        logger.info("Reverting worker batch request...")
-        details = []
-        for response in filter(bool, responses):
-            if response['state'] is not PTXEdgeWorkerResponseState.ERROR:
-                try:
-                    logger.debug(f"Deleting resource: {response['resource']['name']}")
-                    obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.DELETE,
-                                                            name=response['resource']['name'])
-                    # TODO if wait=true, wait for rollback deletion + set DELETED state
-                    raise_for_k8s_error(obj=obj, status=_status)
-                    logger.info(f"Deleted resource: {obj['details']['kind']}/{obj['details']['name']}")
-                    details.append({
-                        "state": PTXEdgeWorkerResponseState.TERMINATING,
-                        "error_code": fastapi.status.HTTP_200_OK,
-                        "resource": response['resource']
-                    })
-                except (client.ApiException, aiohttp.ClientError, urllib3.exceptions.MaxRetryError):
-                    logger.error(f"Failed to delete resource: {response['resource']['name']}")
-                    details.append({
-                        "state": PTXEdgeWorkerResponseState.ERROR,
-                        "error_code": fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        "resource": response['resource']
-                    })
-            else:
-                details.append(response.copy())
-        if len(exgroup.exceptions) > 1:
-            logger.warning("Multiple exceptions occurred while creating worker batch!")
-        logger.debug("Adding failed worker status to responses...")
-        for ex in exgroup.exceptions:
-            details.append(getattr(ex, 'detail', {}))
-        logger.debug(f"Assembled response body:\n{pprint.pformat(details, sort_dicts=False)}")
-        status_code = max((ex.status_code for ex in exgroup.exceptions if hasattr(ex, 'status_code')),
-                          default=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR)
-        logger.debug(f"Calculated response status code: {status_code}")
-        logger.debug("=" * 100)
-        raise fastapi.HTTPException(status_code=status_code, detail=details)
-
-
-@app.post("/workers/batch",
-          tags=["Edge-Worker"],
-          # TODO add new tag to batch endpoints
-          responses={
-              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
-              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
-          },
-          response_model=list[PTXEdgeWorkerResponse],
-          response_model_exclude_none=True,
-          status_code=fastapi.status.HTTP_201_CREATED)
-async def create_worker_batch(request: fastapi.Request,
-                              pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
-                              parallel: typing.Annotated[bool, fastapi.Query] = False,
-                              wait: typing.Annotated[bool, fastapi.Query] = False,
-                              timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
-                              label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
-    """Create batch of named PTX-Edge workers"""
-    logger.debug("=" * 100)
-    # TODO: add rollback as parameter
-    logger.info(f"Received {PEW.__name__} batch create request")
-    logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
-    batch_id = "batch-" + hashlib.sha256('\n'.join(p.model_dump_json(indent=None,
-                                                                     ensure_ascii=True,
-                                                                     exclude_none=True,
-                                                                     exclude_unset=True)
-                                                   for p in pews).encode()).hexdigest()[:16]
-    logger.debug(f"Generated batch id: {batch_id}")
-    if label is None:
-        label = [f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}"]
-    else:
-        label.append(f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}")
-        # TODO add batch id label to response model
-    responses = await _create_workers_batch(request=request,
-                                            pews=pews,
-                                            parallel=parallel,
-                                            wait=wait,
-                                            timeout=timeout,
-                                            label=label)
-    logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
-    logger.debug("=" * 100)
-    return responses
-
-
-########################################################################################################################
 @app.get("/workers",
          tags=["Cluster"],
          responses={
@@ -591,9 +462,9 @@ async def create_worker_batch(request: fastapi.Request,
          status_code=fastapi.status.HTTP_200_OK)
 async def list_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = False,
                            label: K8sLabelCollectionType = None):
-    """Obtain deployed PTX-Edge worker states and resources"""
+    """Obtain deployed PTX-Edge worker states and resources filtered by optional labels"""
     logger.debug("=" * 100)
-    logger.info(f"Received {PEW.__name__} list request")
+    logger.info(f"Received {PEW.__name__} list request with labels: {label}")
     try:
         obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.LIST,
                                                 label_selector=label)
@@ -639,9 +510,9 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
                              tolerance: typing.Annotated[int, fastapi.Query(description="Grace period", ge=1)] = 10,
                              wait: typing.Annotated[
                                  bool, fastapi.Query(description="Should wait for complete deletion")] = False):
-    """Delete all deployed PTX-Edge workers filtered by optional labels"""
+    """Delete deployed PTX-Edge workers filtered by optional labels"""
     logger.debug("=" * 100)
-    logger.info(f"Received {PEW.__name__} delete all request")
+    logger.info(f"Received {PEW.__name__} delete request with labels: {label}")
     try:
         obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.DELETE_ALL,
                                                 label_selector=label,
@@ -668,6 +539,181 @@ async def delete_all_workers(resource: typing.Annotated[bool, fastapi.Query()] =
         raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
+
+
+########################################################################################################################
+
+async def _create_workers_batch(request: fastapi.Request,
+                                pews: list[PEW],
+                                parallel: bool = False,
+                                wait: bool = False,
+                                rollback: bool = True,
+                                batch_id: str | None = None,
+                                timeout: int = 30,
+                                label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
+    """Create batch of named PTX-Edge workers in parallel"""
+    responses: list[dict[str, typing.Any]] = []
+    try:
+        if parallel:
+            logger.info(f"Initiate worker batch creation in <parallel> mode")
+            async with anyio.create_task_group() as task_group:
+                for pew in pews:
+                    # noinspection async-call
+                    task_group.start_soon(
+                        functools.partial(response_collector_wrapper, responses, _create_pew_worker),
+                        request, pew, pew.spec.name, label,
+                        name=pew.spec.name)
+            for response in filter(bool, responses):
+                response['batch'] = batch_id
+            logger.debug(f"Received create responses:\n{pprint.pformat(responses, sort_dicts=False)}")
+            if wait and timeout:
+                async with anyio.create_task_group() as task_group:
+                    for response in filter(bool, responses):
+                        # noinspection async-call
+                        task_group.start_soon(
+                            functools.partial(response_updater_wrapper, response, _watch_for_worker_status),
+                            request, response['resource']['name'], PTXEdgeWorkerState.READY, timeout,
+                            name=response['resource']['name'])
+        else:
+            logger.info(f"Initiate worker batch creation in <serial> mode")
+            for pew in pews:
+                response = await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label)
+                if response:
+                    if wait and timeout:
+                        status = await _watch_for_worker_status(request=request,
+                                                                name=response['resource']['name'],
+                                                                state=PTXEdgeWorkerState.READY,
+                                                                timeout=timeout)
+                        response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
+                    response['batch'] = batch_id
+                    responses.append(response)
+        return responses
+    except* fastapi.HTTPException as exgroup:
+        logger.error(f"Errors received during batch creation: {[e.__class__.__name__ for e in exgroup.exceptions]}!")
+        logger.debug(f"Deployment status:\n{pprint.pformat(responses, sort_dicts=False)}")
+        details = []
+        if rollback:
+            logger.info("Reverting worker batch request...")
+            for response in filter(bool, responses):
+                if response['state'] is not PTXEdgeWorkerResponseState.ERROR:
+                    try:
+                        logger.debug(f"Deleting resource: {response['resource']['name']}")
+                        obj, _status = await invoke_k8s_pew_api(
+                            method=K8sAPIMethod.DELETE,
+                            name=response['resource']['name'],
+                            body=client.V1DeleteOptions(propagation_policy="Foreground" if wait else "Background",
+                                                        grace_period_seconds=timeout).to_dict()
+                        )
+                        raise_for_k8s_error(obj=obj, status=_status)
+                        logger.info(f"Deleted resource: {get_k8s_obj_res(obj)}")
+                        _state = PTXEdgeWorkerResponseState.DELETED if wait else PTXEdgeWorkerResponseState.TERMINATING
+                        details.append({
+                            "state": _state,
+                            "error_code": fastapi.status.HTTP_200_OK,
+                            "resource": response['resource']
+                        })
+                    except (client.ApiException, aiohttp.ClientError, urllib3.exceptions.MaxRetryError):
+                        logger.error(f"Failed to delete resource: {response['resource']['name']}")
+                        details.append({
+                            "state": PTXEdgeWorkerResponseState.ERROR,
+                            "error_code": fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            "resource": response['resource']
+                        })
+                else:
+                    details.append(response.copy())
+        if len(exgroup.exceptions) > 1:
+            logger.warning("Multiple exceptions occurred while creating worker batch!")
+        logger.debug("Adding failed worker status to responses...")
+        for ex in exgroup.exceptions:
+            details.append(getattr(ex, 'detail', {}))
+        logger.debug(f"Assembled response body:\n{pprint.pformat(details, sort_dicts=False)}")
+        status_code = max((ex.status_code for ex in exgroup.exceptions if hasattr(ex, 'status_code')),
+                          default=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.debug(f"Calculated response status code: {status_code}")
+        logger.debug("=" * 100)
+        raise fastapi.HTTPException(status_code=status_code, detail=details)
+
+
+@app.post("/workers/batch",
+          tags=["Worker-Batch"],
+          responses={
+              fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
+              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+          },
+          response_model=list[PTXEdgeWorkerResponse],
+          response_model_exclude_none=True,
+          status_code=fastapi.status.HTTP_201_CREATED)
+async def create_workers_in_batch(request: fastapi.Request,
+                                  pews: typing.Annotated[list[PEW], pydantic.AfterValidator(validate_pews_list)],
+                                  parallel: typing.Annotated[bool, fastapi.Query] = False,
+                                  wait: typing.Annotated[bool, fastapi.Query] = False,
+                                  rollback: typing.Annotated[bool, fastapi.Query] = True,
+                                  timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
+                                  label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
+    """Create batch of named PTX-Edge workers"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} batch create request")
+    logger.debug(f"Parsed resource names: {[p.spec.name for p in pews]}")
+    batch_id = hashlib.sha256('\n'.join(p.model_dump_json(indent=None,
+                                                          ensure_ascii=True,
+                                                          exclude_none=True,
+                                                          exclude_unset=True)
+                                        for p in pews).encode('ascii')).hexdigest()[:16]
+    logger.debug(f"Generated batch id: {batch_id}")
+    if label is None:
+        label = [f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}"]
+    else:
+        label.append(f"ptxedgeworkers.dataspace.ptx.org/batch={batch_id}")
+    responses = await _create_workers_batch(request=request,
+                                            pews=pews,
+                                            parallel=parallel,
+                                            wait=wait,
+                                            rollback=rollback,
+                                            batch_id=batch_id,
+                                            timeout=timeout,
+                                            label=label)
+    logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
+    logger.debug("=" * 100)
+    return responses
+
+
+@app.get("/workers/batch/{id}",
+         tags=["Worker-Batch"],
+         responses={
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+         },
+         response_model=PTXEdgeWorkerCollectionResponse,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         status_code=fastapi.status.HTTP_200_OK)
+async def list_workers_by_batch_id(id: PTXWorkerBatchId,
+                                   resource: typing.Annotated[bool, fastapi.Query()] = False):
+    """Obtain states and resources of a PTX-Edge worker batch"""
+    return await list_all_workers(resource=resource,
+                                  label=[f"ptxedgeworkers.dataspace.ptx.org/batch={id}"])
+
+
+@app.delete("/workers/batch/{id}",
+            tags=["Worker-Batch"],
+            responses={
+                fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+            },
+            response_model=PTXEdgeWorkerCollectionResponse,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True,
+            status_code=fastapi.status.HTTP_200_OK)
+async def delete_workers_by_batch_id(id: PTXWorkerBatchId,
+                                     resource: typing.Annotated[bool, fastapi.Query()] = False,
+                                     tolerance: typing.Annotated[
+                                         int, fastapi.Query(description="Grace period", ge=1)] = 10,
+                                     wait: typing.Annotated[
+                                         bool, fastapi.Query(description="Should wait for complete deletion")] = False):
+    """Delete PTX-Edge workers deployed in a batch"""
+    return await delete_all_workers(resource=resource,
+                                    tolerance=tolerance,
+                                    wait=wait,
+                                    label=[f"ptxedgeworkers.dataspace.ptx.org/batch={id}"])
 
 
 ########################################################################################################################
@@ -709,7 +755,6 @@ async def create_workers_via_infra_service(request: fastapi.Request,
 @app.post("/adapters/infra/tasks",
           tags=["Adapter"],
           responses={
-              # TODO: add success response here too?
               fastapi.status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -758,6 +803,7 @@ async def schedule_workers_via_infra_service(request: fastapi.Request,
         except fastapi.HTTPException as ex:
             logger.error(f"Error received in background task: {ex}")
             # Notify service chain about failed task if possible...
+
     logger.debug("=" * 100)
     logger.info(f"Received Infrastructure Service async invocation request")
     logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")

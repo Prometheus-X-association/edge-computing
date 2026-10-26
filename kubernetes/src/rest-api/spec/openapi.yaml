@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-26T18:46:48'
+  x-creation-date: '2026-10-27T15:55:14'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -423,7 +423,8 @@ paths:
       tags:
       - Cluster
       summary: List All Workers
-      description: Obtain deployed PTX-Edge worker states and resources
+      description: Obtain deployed PTX-Edge worker states and resources filtered by
+        optional labels
       operationId: list_all_workers_workers_get
       parameters:
       - name: resource
@@ -471,7 +472,7 @@ paths:
       tags:
       - Cluster
       summary: Delete All Workers
-      description: Delete all deployed PTX-Edge workers filtered by optional labels
+      description: Delete deployed PTX-Edge workers filtered by optional labels
       operationId: delete_all_workers_workers_delete
       parameters:
       - name: resource
@@ -537,10 +538,10 @@ paths:
   /workers/batch:
     post:
       tags:
-      - Edge-Worker
-      summary: Create Worker Batch
+      - Worker-Batch
+      summary: Create Workers In Batch
       description: Create batch of named PTX-Edge workers
-      operationId: create_worker_batch_workers_batch_post
+      operationId: create_workers_in_batch_workers_batch_post
       parameters:
       - name: parallel
         in: query
@@ -556,6 +557,13 @@ paths:
           type: boolean
           default: false
           title: Wait
+      - name: rollback
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Rollback
       - name: timeout
         in: query
         required: false
@@ -597,7 +605,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PTXEdgeWorkerResponse'
-                title: Response Create Worker Batch Workers Batch Post
+                title: Response Create Workers In Batch Workers Batch Post
         '422':
           content:
             application/json:
@@ -616,6 +624,110 @@ paths:
               schema:
                 $ref: '#/components/schemas/PTXEdgeAPIError'
           description: Bad Gateway
+  /workers/batch/{id}:
+    get:
+      tags:
+      - Worker-Batch
+      summary: List Workers By Batch Id
+      description: Obtain states and resources of a PTX-Edge worker batch
+      operationId: list_workers_by_batch_id_workers_batch__id__get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 63
+          description: K8s label compatible batch ID
+          title: Id
+      - name: resource
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Resource
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Worker-Batch
+      summary: Delete Workers By Batch Id
+      description: Delete PTX-Edge workers deployed in a batch
+      operationId: delete_workers_by_batch_id_workers_batch__id__delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 63
+          description: K8s label compatible batch ID
+          title: Id
+      - name: resource
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Resource
+      - name: tolerance
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Grace period
+          default: 10
+          title: Tolerance
+        description: Grace period
+      - name: wait
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Should wait for complete deletion
+          default: false
+          title: Wait
+        description: Should wait for complete deletion
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerCollectionResponse'
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /adapters/infra:
     post:
       tags:
@@ -1912,6 +2024,12 @@ components:
         api:
           $ref: '#/components/schemas/PTXEdgeWorkerResponseApi'
           description: Worker's exposed URLs
+        batch:
+          type: string
+          maxLength: 63
+          minLength: 1
+          title: Batch
+          description: K8s label compatible batch ID
       type: object
       required:
       - state
@@ -2106,6 +2224,8 @@ tags:
   external_docs:
     description: Prometheus-X
     url: https://github.com/Prometheus-X-association/edge-computing
+- name: Worker-Batch
+  description: Batch-based Worker API
 - name: Adapter
   description: Service chain adapter API
 - name: Cluster
