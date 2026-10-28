@@ -42,7 +42,7 @@ class SchedulerStrategy(enum.Enum):
             _module, _algorithm = self.value.rsplit('.', maxsplit=1)
             return getattr(importlib.import_module(_module), _algorithm)
         except AttributeError:
-            raise NotImplementedError(f"Unknown scheduler algorithm!")
+            raise NotImplementedError("Unknown scheduler algorithm!")
 
 
 def schedule_pod(pod: client.V1Pod, params: dict[str, typing.Any]) -> str:
@@ -116,7 +116,7 @@ def serve_forever(params: dict[str, typing.Any]):
             for event in watcher.stream(client.CoreV1Api().list_namespaced_pod,
                                         namespace=CONFIG['namespace'],
                                         field_selector=f"spec.schedulerName={CONFIG['scheduler']},"
-                                                       f"status.phase=Pending"):
+                                                       "status.phase=Pending"):
                 _type, _pod = event['type'], event['object']
                 _name = _pod.metadata.name
                 log.debug(f"Received event: {_pod.kind}[{_name}] {_type} --> "

@@ -67,7 +67,7 @@ def build() -> bool:
         log.error("No worker configuration is collected. Abort builder...")
         return False
     else:
-        log.info(f"Worker is configured successfully!")
+        log.info("Worker is configured successfully!")
     log.info("Worker environment has been built successfully.")
     return True
 
@@ -76,9 +76,9 @@ def main():
     # Parsing arguments
     parser = argparse.ArgumentParser(prog=pathlib.Path(__file__).name, description="PTX-edge builder")
     parser.add_argument("-d", "--dummy", action="store_true", required=False,
-                        help=f"Wait for a specified time and exit immediately.")
+                        help="Wait for a specified time and exit immediately.")
     parser.add_argument("-c", "--config", metavar="CFG", nargs='?', type=pathlib.Path, required=False,
-                        help=f"Configuration file to be appended to the default config.")
+                        help="Configuration file to be appended to the default config.")
     parser.add_argument("-v", "--verbose", action='count', default=0, required=False,
                         help="Increase verbosity.")
     parser.add_argument("-t", "--test", type=int, default=None, help="Test webhook.")

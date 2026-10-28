@@ -127,7 +127,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
         log.error("Private data exchange failed!")
         return None
     else:
-        log.info(f"Private data exchange was successful!")
+        log.info("Private data exchange was successful!")
     ##########################################################################################
     data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")

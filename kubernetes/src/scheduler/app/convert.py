@@ -87,8 +87,8 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, typing.Any]:
                 and reqs.node_selector_terms):
             # Default scheduler OR the different terms, here it is ANDed!
             if len(reqs.node_selector_terms) > 1:
-                log.warning(f"Multiple node affinity requests detected! "
-                            f"Considering AND relations between them instead of OR relations (kubernetes default)!")
+                log.warning("Multiple node affinity requests detected! "
+                            "Considering AND relations between them instead of OR relations (kubernetes default)!")
             for term in reqs.node_selector_terms:
                 if term.match_expressions:
                     for ex in term.match_expressions:

@@ -64,8 +64,8 @@ class WebHookServer(http.server.HTTPServer):
                     self.logger.warning(f"{self.__class__.__name__} aborted!")
                     break
                 if self.__received:
-                    self.logger.info(f"Webhook received.")
-                    self.logger.debug(f"Received request headers:\n"
+                    self.logger.info("Webhook received.")
+                    self.logger.debug("Received request headers:\n"
                                       f"{pprint.pformat(dict(self.webhook_headers.items()))
                                       if self.webhook_headers else None}")
                     break

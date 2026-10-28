@@ -61,7 +61,7 @@ async def create_ptxedgeworker(body: kopf.Body,
     ####
     if 'handlers' not in memo:
         memo.handlers = {}
-        logger.info(f"Registering object handlers...")
+        logger.info("Registering object handlers...")
         if memo.model.spec.worker.config and memo.model.spec.worker.config.file:
             memo.handlers[ResourceType.CONFIG] = functools.partial(
                 load_and_create(ResourceType.CONFIG),
@@ -115,7 +115,7 @@ async def pew_index(name: str,
     if WorkerHandlingState.INDEXED in memo.get('state', []):
         return None
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.INDEXED
-    logger.info(f"[INDEX] Registering state notifier...")
+    logger.info("[INDEX] Registering state notifier...")
     return {name: WorkerNotifier()}
 
 
@@ -133,7 +133,7 @@ async def pew_manager(name: str,
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.MANAGED
     logger.debug(f"[DAEMON] {memo.get("state")}")
     if (notifier := next(iter(pew_index[name]), None)) is None:
-        raise kopf.TemporaryError(f"[DAEMON] State notifier is missing from index!", delay=3)
+        raise kopf.TemporaryError("[DAEMON] State notifier is missing from index!", delay=3)
     while not stopped:
         tasks = set(notifier.generate_tasks())
         try:
@@ -176,7 +176,7 @@ async def pew_manager(name: str,
         except asyncio.CancelledError:
             for t in tasks:
                 t.cancel()
-            logger.info(f"[DAEMON] State notifier cancelled!")
+            logger.info("[DAEMON] State notifier cancelled!")
     memo.state &= ~WorkerHandlingState.MANAGED
 
 

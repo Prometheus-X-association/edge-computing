@@ -112,7 +112,7 @@ def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
         log.error("Worker data exchange failed!")
         return None
     else:
-        log.info(f"Worker data exchange was successful!")
+        log.info("Worker data exchange was successful!")
     ##########################################################################################
     data_type, data_content = str(data['type']), data['content']
     log.info(f"Process received data as type: {data_type}")
@@ -146,7 +146,7 @@ def get_worker_resources(data_path: str | pathlib.Path | dict[str, typing.Any]) 
     log.info("Obtaining worker configuration...")
     conn_timeout = int(CONFIG.get('connection.timeout', default=30))
     conn_retry = int(CONFIG.get('connection.retry', default=3))
-    log.debug(f"Check worker setup in configuration...")
+    log.debug("Check worker setup in configuration...")
     if (worker_method := CONFIG.get('worker.method')) is None:
         worker_method = get_resource_scheme_from_uri(CONFIG.get('worker.src'))
     if worker_method is None:

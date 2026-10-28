@@ -99,7 +99,7 @@ def create_image_pull_secret(name: str, user: str, passwd: str, server: str = "h
     :return:
     """
     log.info("Creating image pull secret...")
-    log.debug(f"Loading K8s configuration...")
+    log.debug("Loading K8s configuration...")
     if projected:
         _load_incluster_projected_config(token=PROJECTED_TOKEN_FILE, cert=PROJECTED_CERT_FILE)
     else:
@@ -139,7 +139,7 @@ def create_service(name: str, port: int, target_port: int, namespace: str | None
     :return:
     """
     log.info("Creating service...")
-    log.debug(f"Loading K8s configuration...")
+    log.debug("Loading K8s configuration...")
     if projected:
         _load_incluster_projected_config(token=PROJECTED_TOKEN_FILE, cert=PROJECTED_CERT_FILE)
     else:
@@ -178,7 +178,7 @@ def create_endpointslice(service_name: str, address: str, target_port: int, name
     :return:
     """
     log.info("Creating endpointslice...")
-    log.debug(f"Loading K8s configuration...")
+    log.debug("Loading K8s configuration...")
     if projected:
         _load_incluster_projected_config(token=PROJECTED_TOKEN_FILE, cert=PROJECTED_CERT_FILE)
     else:
@@ -242,12 +242,12 @@ class K8sLeaderElectorManager(object):
     def init_client(cls, projected: bool, token: str = TOKEN_FILE, cert: str = CERT_FILE):
         """Load K8s in-cluster config from default or a projected path."""
         if projected:
-            log.info(f"Loading projected K8s client configuration...")
+            log.info("Loading projected K8s client configuration...")
             InClusterConfigLoader(token_filename=token,
                                   cert_filename=cert,
                                   try_refresh_token=True).load_and_set()
         else:
-            log.info(f"Loading in-cluster K8s client configuration...")
+            log.info("Loading in-cluster K8s client configuration...")
             config.load_incluster_config()
 
     @property
@@ -274,11 +274,11 @@ class K8sLeaderElectorManager(object):
             except Exception as e:
                 log.exception(e)
         else:
-            log.warning(f"No executable task is defined!")
+            log.warning("No executable task is defined!")
         self._executed.set()
 
     def _on_stopped_handler(self):
-        log.debug(f"Lease time ended!")
+        log.debug("Lease time ended!")
         self.__leader = False
 
     def _execute_elector(self):
@@ -291,7 +291,7 @@ class K8sLeaderElectorManager(object):
             if 'lock' not in e.name:
                 log.exception(e)
         self.__leader = False
-        log.info(f"Leader elector finished!")
+        log.info("Leader elector finished!")
 
     def start(self, task: typing.Callable | None = None, *args, **kwargs) -> K8sLeaderElectorManager:
         """Start executor in separate thread."""
@@ -300,7 +300,7 @@ class K8sLeaderElectorManager(object):
                 self.with_task(task, *args, **kwargs)
             self._runner.start()
         else:
-            log.error(f"Leader elector already started!")
+            log.error("Leader elector already started!")
         return self
 
     def wait(self) -> typing.Any:
@@ -312,7 +312,7 @@ class K8sLeaderElectorManager(object):
     def release(self, lock) -> bool:
         """Release lease lock."""
         if self.__leader:
-            log.warning(f"Elector is still the leader while lock is being released!")
+            log.warning("Elector is still the leader while lock is being released!")
         found, lock_record = lock.get(lock.name, lock.namespace)
         if not found:
             log.error(f"Lock[{lock.name}] not found!")
@@ -326,7 +326,7 @@ class K8sLeaderElectorManager(object):
 
     def stop(self, blocking: bool = True):
         """Stop executor by force-raising an exception."""
-        log.debug(f"Stopping leader elector...")
+        log.debug("Stopping leader elector...")
         _lock = self.elector.election_config.lock
         self.elector.election_config = None  # Cause exception when runner thread tries to access config
         if blocking:

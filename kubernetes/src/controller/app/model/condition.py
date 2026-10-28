@@ -72,7 +72,7 @@ def patch_succeeded(body: kopf.RawBody, /, *, value: bool = True) -> None:
                         type=PEWStatusConditionType.SUCCEEDED,
                         status=PEWStatusConditionStatus.TRUE,
                         lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
-                        reason=f"WorkersCompletedWithSuccess",
+                        reason="WorkersCompletedWithSuccess",
                         message="Worker is stopped running."
                     ))
 
@@ -84,7 +84,7 @@ def patch_failed(body: kopf.RawBody, /, *, value: bool = True) -> None:
                         type=PEWStatusConditionType.FAILED,
                         status=PEWStatusConditionStatus.TRUE,
                         lastTransitionTime=datetime.now(timezone.utc).replace(microsecond=0),
-                        reason=f"WorkersCompletedWithFailure",
+                        reason="WorkersCompletedWithFailure",
                         message="Worker is stopped running."
                     ))
 

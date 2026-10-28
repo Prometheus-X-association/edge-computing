@@ -79,7 +79,7 @@ async def create_worker_configuration(pew: PEW,
                                       logger: kopf.Logger,
                                       **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering worker configuration manifest...")
+    logger.info("Rendering worker configuration manifest...")
     body = await render_template(ResourceType.CONFIG,
                                  pew=pew,
                                  name=name,
@@ -122,7 +122,7 @@ async def create_worker_deployment(pew: PEW,
                                    logger: kopf.Logger,
                                    **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering worker deployment manifest...")
+    logger.info("Rendering worker deployment manifest...")
     body = await render_template(ResourceType.DEPLOYMENT,
                                  pew=pew,
                                  name=name,
@@ -165,7 +165,7 @@ async def create_worker_job(pew: PEW,
                             logger: kopf.Logger,
                             **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering worker job manifest...")
+    logger.info("Rendering worker job manifest...")
     body = await render_template(ResourceType.JOB,
                                  pew=pew,
                                  name=name,
@@ -246,7 +246,7 @@ async def create_builder_service(pew: PEW,
                                  logger: kopf.Logger,
                                  **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering builder webhook manifest...")
+    logger.info("Rendering builder webhook manifest...")
     await _create_service(pew,
                           ResourceType.BUILDER,
                           forced_name=False,
@@ -269,7 +269,7 @@ async def create_worker_service(pew: PEW,
                                 logger: kopf.Logger,
                                 **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering worker service manifest...")
+    logger.info("Rendering worker service manifest...")
     await _create_service(pew,
                           ResourceType.SERVICE,
                           forced_name=True,
@@ -293,7 +293,7 @@ async def create_middleware(pew: PEW,
                             logger: kopf.Logger,
                             **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering middleware manifest...")
+    logger.info("Rendering middleware manifest...")
     body = await render_template(ResourceType.MIDDLEWARE,
                                  pew=pew,
                                  name=name,
@@ -339,7 +339,7 @@ async def create_ingress(pew: PEW,
                          logger: kopf.Logger,
                          **_: typing.Any) -> None:
     logger.debug("-" * 100)
-    logger.info(f"Rendering ingress manifest...")
+    logger.info("Rendering ingress manifest...")
     body = await render_template(ResourceType.INGRESS,
                                  pew=pew,
                                  name=name,

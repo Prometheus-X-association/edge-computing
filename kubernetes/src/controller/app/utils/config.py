@@ -66,12 +66,12 @@ async def load_operator_config(settings: kopf.OperatorSettings,
                                memo: kopf.Memo,
                                logger: kopf.Logger,
                                **_) -> None:
-    logger.info(f"Loading operator configuration...")
+    logger.info("Loading operator configuration...")
     # PTX-edge/controller related configurations
     # Read config items from envvars dynamically using global default values
     logger.debug(f"Loading configuration from envvars[{ENV_PREFIX}*]...")
     memo.CONFIG = load_config_from_env()
-    logger.debug(f"Loaded configuration:\n" + str(memo.CONFIG.to_toml()))
+    logger.debug("Loaded configuration:\n" + str(memo.CONFIG.to_toml()))
     # Kopf-internal configurations
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix=PEW.group)
     settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(prefix=PEW.group,

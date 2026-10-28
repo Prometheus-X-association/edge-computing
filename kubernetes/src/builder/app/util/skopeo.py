@@ -151,7 +151,7 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
     try:
         return json.loads(ret.stdout)
     except json.decoder.JSONDecodeError:
-        log.error(f"Failed to decode received image description!")
+        log.error("Failed to decode received image description!")
 
 
 def delete_docker_image(image: str, registry: str, on_behalf: str | None = None, secret: str | None = None,

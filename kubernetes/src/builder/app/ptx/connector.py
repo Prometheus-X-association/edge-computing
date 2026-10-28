@@ -46,7 +46,7 @@ def check_connector_availability(retry: int = 5, timeout: int | None = None) -> 
             if resp.status_code != requests.codes.ok:
                 log.warning(f"Received response: HTTP {resp.status_code}")
                 resp.raise_for_status()
-            log.info(f"Connector up and running!")
+            log.info("Connector up and running!")
     return True
 
 
@@ -200,7 +200,7 @@ def initiate_data_exchange(exchange: str, token: str, timeout: int | None = None
             log.error(f"Failed to initiate data exchange with status: {resp_json['content']['dataExchange']['status']}")
             mgr.server.abort()
         else:
-            log.info(f"Data exchange initiated successfully!")
+            log.info("Data exchange initiated successfully!")
             log.info(f"Exchange status: {resp_json['content']['dataExchange']['status']}")
             log.info("Processing connector response...")
             webhook_data = mgr.wait()
@@ -217,7 +217,7 @@ def perform_configured_exchange(exchange: str, timeout: int | None = None) -> di
     :param timeout:
     :return:
     """
-    log.debug(f"Trying to authenticate to the connector...")
+    log.debug("Trying to authenticate to the connector...")
     try:
         tokens = login_to_connector(timeout=timeout)
         bearer = tokens['token']

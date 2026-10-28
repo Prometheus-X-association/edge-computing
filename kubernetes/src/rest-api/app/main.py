@@ -558,7 +558,7 @@ async def _create_workers_batch(request: fastapi.Request,
     responses: list[dict[str, typing.Any]] = []
     try:
         if parallel:
-            logger.info(f"Initiate worker batch creation in <parallel> mode")
+            logger.info("Initiate worker batch creation in <parallel> mode")
             async with anyio.create_task_group() as task_group:
                 for pew in pews:
                     # noinspection async-call
@@ -578,7 +578,7 @@ async def _create_workers_batch(request: fastapi.Request,
                             request, response['resource']['name'], PTXEdgeWorkerState.READY, timeout,
                             name=response['resource']['name'])
         else:
-            logger.info(f"Initiate worker batch creation in <serial> mode")
+            logger.info("Initiate worker batch creation in <serial> mode")
             for pew in pews:
                 response = await _create_pew_worker(request=request, pew=pew, name=pew.spec.name, labels=label)
                 if response:
@@ -736,7 +736,7 @@ async def create_workers_via_infra_service(request: fastapi.Request,
                                            label: K8sLabelCollectionType = None):
     """Infrastructure service endpoint for creating worker batch synchronously by Service Chain Adapter"""
     logger.debug("=" * 100)
-    logger.info(f"Received Infrastructure Service sync invocation request")
+    logger.info("Received Infrastructure Service sync invocation request")
     logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")
     label = body.params.get("label", label) if isinstance(body.params, dict) else None
     logger.info(f"Worker execution mode: wait=False, parallel=False, {label=}")
@@ -808,7 +808,7 @@ async def schedule_workers_via_infra_service(request: fastapi.Request,
             # Notify service chain about failed task if possible...
 
     logger.debug("=" * 100)
-    logger.info(f"Received Infrastructure Service async invocation request")
+    logger.info("Received Infrastructure Service async invocation request")
     logger.debug(f"Parsed resource names: {[p.spec.name for p in body.data]}")
     timeout = body.params.get("timeout", timeout) if isinstance(body.params, dict) else timeout
     label = body.params.get("label", label) if isinstance(body.params, dict) else None

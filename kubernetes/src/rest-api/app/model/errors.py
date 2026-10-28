@@ -104,7 +104,7 @@ def raise_for_timeout_error(name: str, state: str, timeout: int) -> None:
         detail={
             "state": PTXEdgeWorkerResponseState.TIMEOUT,
             "error_code": fastapi.status.HTTP_408_REQUEST_TIMEOUT,
-            "reason": f"RequestTimeout",
+            "reason": "RequestTimeout",
             "message": f"Waiting for {state=!s} in worker[{name}] reached timeout: {timeout}s!",
             "resource": {
                 "name": name,

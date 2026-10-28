@@ -84,7 +84,7 @@ def _load_config(token: str = PROJECTED_TOKEN_FILE, cert: str = PROJECTED_CERT_F
     :param cert: 
     :return: 
     """
-    log.debug(f"Loading K8s configuration...")
+    log.debug("Loading K8s configuration...")
     try:
         return InClusterConfigLoader(token_filename=token, cert_filename=cert).load_and_set()
     except ConfigException as e:
@@ -99,7 +99,7 @@ def _collect_privacy_zone_labels(node: str | None = None, ip: str | None = None)
     :param ip:
     :return:
     """
-    log.info(f">>> Collect Privacy Zone labels...")
+    log.info(">>> Collect Privacy Zone labels...")
     if node is not None:
         v1_node_list = client.CoreV1Api().list_node(field_selector=f'metadata.name={node}',
                                                     label_selector=f'{LABEL_PTX_CONNECTOR_ENABLED}=true')
@@ -211,7 +211,7 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
     else:
         if len(zones) > 1:
             log.warning(f"Multiple privacy zone labels detected for pod[{pod}]! "
-                        f"Selecting the first zone ID as default...")
+                        "Selecting the first zone ID as default...")
         def_zone_id = sorted(map(lambda _l: _l.split('/')[-1].lower(), zones))[0]
     log.info(f"Selected default privacy zone: {def_zone_id}")
     labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = str(def_zone_id)

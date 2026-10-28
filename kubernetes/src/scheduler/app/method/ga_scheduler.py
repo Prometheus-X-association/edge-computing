@@ -122,10 +122,10 @@ def ga_schedule(topology: nx.Graph,
     def crossover(_candidate1: str, _candidate2: str) -> str:
         return _candidate1 if rnd.random() < THRESHOLD_CROSS else _candidate2
 
-    log.debug(f"Populate initial generation...")
+    log.debug("Populate initial generation...")
     population = [n for n in nodes if satisfies_hard_constraints(pod, topology.nodes[n])]
     if not population:
-        log.error(f"No feasible node found in topology!")
+        log.error("No feasible node found in topology!")
         return None
     elif len(population) > population_size:
         population = rnd.choices(population, k=population_size)
@@ -141,7 +141,7 @@ def ga_schedule(topology: nx.Graph,
         if best_candidate is not None and (best_score := evaluate(best_candidate)) > fittest[0]:
             log.debug(f"New best candidate found in generation {i}/{generations}: {best_candidate}")
             fittest = best_score, best_candidate
-    log.debug(f"Generation iterations finished.")
+    log.debug("Generation iterations finished.")
 
     return fittest[1]
 
