@@ -145,7 +145,7 @@ def collect_data_from_ptx(exchange: str, dst: str, retry: int = 1,
             raise NotImplementedError
             # TODO - manage authentication params defined in 'data'
         case other:
-            raise Exception(f"Unsupported data type: {other}")
+            raise RuntimeError(f"Unsupported data type: {other}")
     data['content']['data'] = {"path": str(dst_path) if dst_path is not None else None}
     return data
 

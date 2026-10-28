@@ -131,7 +131,7 @@ def collect_worker_from_ptx(exchange: str, dst: str, retry: int | None = None,
             app = CONFIG.get('worker.app', default='worker')
             result_id = configure_worker_pull_credential(name=name, cred=cred, app=app, timeout=timeout)
         case other:
-            raise Exception(f"Unsupported data type: {other}")
+            raise RuntimeError(f"Unsupported data type: {other}")
     return result_id
 
 

@@ -136,11 +136,13 @@ def inspect_docker_image(image: str, registry: str = 'docker.io', on_behalf: str
     ret = None
     try:
         ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, check=True)
-    except (subprocess.CalledProcessError, subprocess.SubprocessError) as e:
-        __log_stderr(e.stderr)
-        log.error(e)
     except subprocess.TimeoutExpired as e:
         log.error(f"Command timeout[{e.timeout}] expired!")
+    except subprocess.CalledProcessError as e:
+        __log_stderr(e.stderr)
+        log.error(e)
+    except subprocess.SubprocessError as e:
+        log.error(e)
     if ret is None:
         log.error(f"Failed to inspect image[{image}] in registry[{registry}]!")
         return None
@@ -175,11 +177,13 @@ def delete_docker_image(image: str, registry: str, on_behalf: str | None = None,
     ret = None
     try:
         ret = subprocess.run(cmd, stderr=subprocess.PIPE, timeout=timeout, check=True)
-    except (subprocess.CalledProcessError, subprocess.SubprocessError) as e:
-        __log_stderr(e.stderr)
-        log.error(e)
     except subprocess.TimeoutExpired as e:
         log.error(f"Command timeout[{e.timeout}] expired!")
+    except subprocess.CalledProcessError as e:
+        __log_stderr(e.stderr)
+        log.error(e)
+    except subprocess.SubprocessError as e:
+        log.error(e)
     if ret is None:
         log.error(f"Failed to delete image[{image}] from registry[{registry}]!")
         return False
@@ -222,11 +226,13 @@ def copy_image_to_registry(image: str, registry: str, src_repo: str = '', with_r
     ret = None
     try:
         ret = subprocess.run(cmd, stderr=subprocess.PIPE, timeout=timeout, check=True)
-    except (subprocess.CalledProcessError, subprocess.SubprocessError) as e:
-        __log_stderr(e.stderr)
-        log.error(e)
     except subprocess.TimeoutExpired as e:
         log.error(f"Command timeout[{e.timeout}] expired!")
+    except subprocess.CalledProcessError as e:
+        __log_stderr(e.stderr)
+        log.error(e)
+    except subprocess.SubprocessError as e:
+        log.error(e)
     if ret is None:
         log.error(f"Failed to copy {image} into {registry}!")
         return False

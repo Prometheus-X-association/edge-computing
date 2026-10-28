@@ -30,7 +30,7 @@ def _filter_nodes(topo: nx.Graph, pod: nx.Graph) -> typing.Generator[str, None, 
     :return:
     """
     log.debug(f"Calculated pod[{pod.name}] info:")
-    pod_zones = set(z for _c in pod for z in pod.nodes[_c]['zone'])
+    pod_zones = {z for _c in pod for z in pod.nodes[_c]['zone']}
     log.debug(f"\t- zones: {pod_zones}")
     pod_res = list(map(sum, (map(lambda c: pod.nodes[c]['demand'][_r], pod.nodes) for _r in RESOURCES)))
     log.debug(f"\t- resources: {dict(zip(RESOURCES, pod_res))}")

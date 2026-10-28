@@ -141,7 +141,10 @@ class WebHooKManager(object):
     def wait(self, timeout: int | None = None) -> dict | None:
         if not self.__future:
             raise RuntimeError(f"{self.__class__.__name__} has not yet started!")
-        timeout = timeout if timeout is not None else self.__timeout * 2 if self.__timeout else None
+        if timeout is not None:
+            timeout = timeout
+        else:
+            timeout = self.__timeout * 2 if self.__timeout else None
         try:
             return self.__future.result(timeout=timeout)
         except TimeoutError:

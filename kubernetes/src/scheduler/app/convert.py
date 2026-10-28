@@ -62,8 +62,8 @@ def __create_pod_data(pod: client.V1Pod) -> dict[str, typing.Any]:
             'ssd': pod.metadata.annotations.get(LABEL_DISK_PREFIX) == 'ssd' if pod.metadata.annotations else False,
             'gpu': str2bool(pod.metadata.annotations.get(LABEL_GPU_SUPPORT) if pod.metadata.annotations else False)
         },
-        'zone': list(s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items()
-                     if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)) if pod.spec.node_selector else [],
+        'zone': [s.removeprefix(LABEL_PZ_PREFIX) for s, v in pod.spec.node_selector.items()
+                 if s.startswith(LABEL_PZ_PREFIX) and str2bool(v)] if pod.spec.node_selector else [],
         'collocated': str2bool(pod.spec.node_selector.get(LABEL_PDC_ENABLED)) if pod.spec.node_selector else False,
         'metadata': {
             'api_version': "v1",

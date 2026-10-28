@@ -150,5 +150,5 @@ spec:
                   path: namespace
   containers:
     - name: worker
-      image: k8s.gcr.io/pause
+      image: k8s.gcr.io/pause:latest
   restartPolicy: Never

@@ -82,7 +82,10 @@ def param_parser(method: str | None = None, params: str | None = None) -> dict:
             if len(kv := p.split('=', maxsplit=1)) == 2:
                 k, v = kv
                 try:
-                    v = int(v) if v.isnumeric() else float(v) if '.' in v else v
+                    if v.isnumeric():
+                        v = int(v)
+                    else:
+                        v = float(v) if '.' in v else v
                 except ValueError:
                     pass
                 kv_dict[k] = v

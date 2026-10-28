@@ -19,6 +19,9 @@ log = logging.getLogger(__name__)
 def setup_logging(verbosity: int):
     logging.basicConfig(level=logging.DEBUG if verbosity > 0 else logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    logging.getLogger('kubernetes.client.rest').setLevel(
-        logging.DEBUG if verbosity > 1 else logging.INFO if verbosity == 1 else logging.WARNING)
+    if verbosity > 1:
+        _level = logging.DEBUG
+    else:
+        _level = logging.INFO if verbosity == 1 else logging.WARNING
+    logging.getLogger('kubernetes.client.rest').setLevel(_level)
     log.debug(f"Set log level: {logging.getLevelName(logging.getLogger().level)}")

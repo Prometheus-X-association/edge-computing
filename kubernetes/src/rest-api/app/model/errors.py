@@ -63,7 +63,10 @@ def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
 
 
 def raise_for_failed_k8s_request(ex: client.ApiException) -> None:
-    error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body)) if ex.body else {}
+    if ex.body:
+        error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body))
+    else:
+        error = {}
     logger.error('\n'.join((f"Error received with status: {ex.status} and reason: {ex.reason}",
                             "Received HTTP body:",
                             json.dumps(error, indent=2))))

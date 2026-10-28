@@ -128,6 +128,7 @@ def update_connector_endpoint(endpoint: str, token: str, timeout: int | None = N
     if resp.status_code != requests.codes.OK:
         log.error(f"Failed set configuration: {resp.status_code}")
         resp.raise_for_status()
+        return False
     log.info("Login to PDC was successful!")
     log.debug(f"Response body:\n{pprint.pformat(resp.json())}")
     return True

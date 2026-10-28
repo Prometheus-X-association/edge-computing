@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-27T15:55:14'
+  x-creation-date: '2026-10-28T16:09:16'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -636,9 +636,11 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          minLength: 1
-          maxLength: 63
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 63
+          - type: 'null'
           description: K8s label compatible batch ID
           title: Id
       - name: resource
@@ -678,9 +680,11 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          minLength: 1
-          maxLength: 63
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 63
+          - type: 'null'
           description: K8s label compatible batch ID
           title: Id
       - name: resource
@@ -2022,12 +2026,16 @@ components:
           $ref: '#/components/schemas/PTXEdgeWorkerResponseResource'
           description: Worker resource
         api:
-          $ref: '#/components/schemas/PTXEdgeWorkerResponseApi'
+          anyOf:
+          - $ref: '#/components/schemas/PTXEdgeWorkerResponseApi'
+          - type: 'null'
           description: Worker's exposed URLs
         batch:
-          type: string
-          maxLength: 63
-          minLength: 1
+          anyOf:
+          - type: string
+            maxLength: 63
+            minLength: 1
+          - type: 'null'
           title: Batch
           description: K8s label compatible batch ID
       type: object

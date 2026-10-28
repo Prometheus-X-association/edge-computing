@@ -112,7 +112,7 @@ def ga_schedule(topology: nx.Graph,
 
     def selection(_population: list[str]) -> tuple[list[str], list[float]]:
         _scored = it.islice(sorted(((evaluate(n), n) for n in _population), reverse=True), tournament_size)
-        _weights = list(1 / (_j // group_size + 1) for _j in range(tournament_size))
+        _weights = [1 / (_j // group_size + 1) for _j in range(tournament_size)]
         # population = list(map(op.itemgetter(1), it.islice(it.cycle(_scored), len(_population))))
         return list(map(op.itemgetter(1), _scored)), _weights
 
@@ -173,7 +173,7 @@ def do_ga_pod_schedule(topo: nx.Graph, pod: nx.Graph, **params) -> str | None:
 def test_ga_offline(topo_file: str, pod_file: str):
     topo_data = read_topo_from_file(topo_file)
     pod = read_pod_from_file(pod_file)
-    pod_data = pod.nodes[list(pod.nodes)[0]]
+    pod_data = pod.nodes[next(iter(pod.nodes), None)]
     best_node = ga_schedule(topo_data, pod_data)
 
     node_name = topo_data.nodes[best_node]["metadata"]["name"]

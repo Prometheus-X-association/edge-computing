@@ -39,7 +39,7 @@ def load_data(data_path: pathlib.Path | str) -> tuple[np.ndarray, np.ndarray]:
 def create_gbc_model() -> GradientBoostingClassifier:
     print("\n@@@ Creating GradientBoostingClassifier model...")
     model = GradientBoostingClassifier(n_estimators=TRAIN_ESTIMATORS, learning_rate=TRAIN_RATE, max_depth=TRAIN_DEPTH,
-                                       verbose=2)
+                                       random_state=42, verbose=2)
     return model
 
 

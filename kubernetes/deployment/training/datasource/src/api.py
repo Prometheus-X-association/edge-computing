@@ -35,9 +35,9 @@ if not (GW_DOMAIN := os.getenv("GW_DOMAIN", "")):
     sys.exit(-1)
 
 # noinspection PyTypeChecker,PydanticTypeChecker
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=list({"localhost", "*.localhost",
-                                                              "host.k3d.internal",
-                                                              GW_DOMAIN, f"*.{GW_DOMAIN}"}))
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "*.localhost",
+                                                         "host.k3d.internal",
+                                                         GW_DOMAIN, f"*.{GW_DOMAIN}"])
 
 
 # For checking API availability
@@ -48,7 +48,7 @@ async def version():
 
 @app.api_route("/healthz", methods=["GET", "HEAD"], status_code=status.HTTP_200_OK)
 async def healthz():
-    pass
+    return "OK"
 
 
 RESOURCE = os.getenv("RESOURCE", "resource")

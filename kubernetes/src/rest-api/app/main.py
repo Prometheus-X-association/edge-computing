@@ -292,7 +292,7 @@ async def _create_pew_worker(request: fastapi.Request,
         logger.debug("Setting up auto-generated name for resource!")
         manifest['metadata']['generateName'] = "worker-"
     if labels:
-        manifest['metadata']['labels'].update(dict((l.split('=', maxsplit=1) for l in labels if '=' in l)))
+        manifest['metadata']['labels'].update(dict(l.split('=', maxsplit=1) for l in labels if '=' in l))
     if pew.status:
         logger.debug("Remove optional status from resource...")
         pew.status = PEWStatus()
@@ -437,7 +437,10 @@ async def recreate_worker_with_name(request: fastapi.Request,
             for ex in exg.exceptions:
                 raise ex
     except client.ApiException as ex:
-        error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body)) if ex.body else {}
+        if ex.body:
+            error = json.loads(ex.body.decode() if isinstance(ex.body, bytes) else str(ex.body))
+        else:
+            error = {}
         if int(error.get('code', 0)) == fastapi.status.HTTP_404_NOT_FOUND:
             logger.info(f"Worker[{name}] is not found! Skip deletion step.")
         else:
