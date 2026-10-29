@@ -1,5 +1,6 @@
 {
   "spec": {
+    "name": "${DP0}",
     "service": {
       "enabled": true,
       "interfaces": [

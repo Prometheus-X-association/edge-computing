@@ -1,5 +1,6 @@
 {
   "spec": {
+    "name": "${ORCH}",
     "service": {
       "enabled": true,
       "interfaces": [

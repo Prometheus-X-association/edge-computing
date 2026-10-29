@@ -1,5 +1,6 @@
 {
   "spec": {
+    "name": "${AGG}",
     "service": {
       "enabled": true,
       "interfaces": [

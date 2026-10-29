@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: ${DP1}
     env: ${ENV}
 spec:
+  name: ${DP1}
   service:
     enabled: true
     interfaces:

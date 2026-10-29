@@ -32,18 +32,40 @@ echo -e "Validation successful!\n"
 
 ########################################################################################################################
 
-log "Initiate Data Processing Function 0..."
-#${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
-#${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
-DP0_REQ_BODY=$(envsubst <"request/${DP0}.json")
-echo "Prepared body:" && echo "${DP0_REQ_BODY}" | jq -r .
-echo -e "\nReceived response:"
-curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
-                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                            -H "Content-Type: application/json" \
-                            -H 'Accept: application/json' \
-                            --data-binary @<(echo "${DP0_REQ_BODY}" | jq -c .) | jq
+if [ "${BATCHED}" = "true" ]; then
+    warning "Setup is configured to use worker batch deployment!"
+    log "Initiate Worker batch..."
+    REQ_BODY="$(jq -s '.'   request/data-processor-0.json \
+                            request/data-processor-1.json \
+                            request/aggregator.json \
+                            request/orchestrator.json | envsubst)"
+    echo "Prepared body:" && echo "${REQ_BODY}" | jq -r .
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body \
+        -X POST "https://${CLUSTER_HOST}/${PREFIX}/workers/batch?parallel=${PARALLEL}&timeout=${BUILD_TIMEOUT}" \
+        --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -H 'Accept: application/json' \
+        --data-binary @<(echo "${REQ_BODY}" | jq -c .) | jq
+fi
 
+########################################################################################################################
+
+if [ "${BATCHED}" != "true" ]; then
+    log "Initiate Data Processing Function 0..."
+    #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
+    #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
+    DP0_REQ_BODY=$(envsubst <"request/${DP0}.json")
+    echo "Prepared body:" && echo "${DP0_REQ_BODY}" | jq -r .
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H "Content-Type: application/json" \
+                                -H 'Accept: application/json' \
+                                --data-binary @<(echo "${DP0_REQ_BODY}" | jq -c .) | jq
+fi
+
+log "Wait for Data Processing Function 0..."
 repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deployment/${DP0}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
@@ -65,18 +87,21 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP0}"
 
 ########################################################################################################################
 
-log "Initiate Data Processing Function 1..."
-#${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
-#${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
-DP1_REQ_BODY=$(envsubst <"request/${DP1}.json")
-echo "Prepared body:" && echo "${DP1_REQ_BODY}" | jq -r .
-echo -e "\nReceived response:"
-curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
-                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                            -H "Content-Type: application/json" \
-                            -H 'Accept: application/json' \
-                            --data-binary @<(echo "${DP1_REQ_BODY}" | jq -c .) | jq
+if [ "${BATCHED}" != "true" ]; then
+    log "Initiate Data Processing Function 1..."
+    #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
+    #${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
+    DP1_REQ_BODY=$(envsubst <"request/${DP1}.json")
+    echo "Prepared body:" && echo "${DP1_REQ_BODY}" | jq -r .
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H "Content-Type: application/json" \
+                                -H 'Accept: application/json' \
+                                --data-binary @<(echo "${DP1_REQ_BODY}" | jq -c .) | jq
+fi
 
+log "Wait for Data Processing Function 1..."
 repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
@@ -98,18 +123,21 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${DP1}"
 
 ########################################################################################################################
 
-log "Initiate Aggregator..."
-#${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
-#${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
-AGG_REQ_BODY=$(envsubst <"request/${AGG}.json")
-echo "Prepared body:" && echo "${AGG_REQ_BODY}" | jq -r .
-echo -e "\nReceived response:"
-curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
-                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                            -H "Content-Type: application/json" \
-                            -H 'Accept: application/json' \
-                            --data-binary @<(echo "${AGG_REQ_BODY}" | jq -c .) | jq
+if [ "${BATCHED}" != "true" ]; then
+    log "Initiate Aggregator..."
+    #${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
+    #${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
+    AGG_REQ_BODY=$(envsubst <"request/${AGG}.json")
+    echo "Prepared body:" && echo "${AGG_REQ_BODY}" | jq -r .
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H "Content-Type: application/json" \
+                                -H 'Accept: application/json' \
+                                --data-binary @<(echo "${AGG_REQ_BODY}" | jq -c .) | jq
+fi
 
+log "Wait for Aggregator..."
 repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
@@ -144,18 +172,21 @@ log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
 
 ########################################################################################################################
 
-log "Initiate Orchestrator..."
-#${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
-#${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
-ORCH_REQ_BODY=$(envsubst <"request/${ORCH}.json")
-echo "Prepared body:" && echo "${ORCH_REQ_BODY}" | jq -r .
-echo -e "\nReceived response:"
-curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
-                            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                            -H "Content-Type: application/json" \
-                            -H 'Accept: application/json' \
-                            --data-binary @<(echo "${ORCH_REQ_BODY}" | jq -c .) | jq
+if [ "${BATCHED}" != "true" ]; then
+    log "Initiate Orchestrator..."
+    #${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
+    #${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
+    ORCH_REQ_BODY=$(envsubst <"request/${ORCH}.json")
+    echo "Prepared body:" && echo "${ORCH_REQ_BODY}" | jq -r .
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H "Content-Type: application/json" \
+                                -H 'Accept: application/json' \
+                                --data-binary @<(echo "${ORCH_REQ_BODY}" | jq -c .) | jq
+fi
 
+log "Wait for Orchestrator..."
 repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \

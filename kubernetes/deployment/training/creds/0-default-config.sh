@@ -37,3 +37,7 @@ API_BASIC_PASSWORD="admin"
 DS_API_USER="admin"
 DS_API_PASSWORD="admin"
 DS_API_INSECURE="true"
+
+### Worker deployment configs
+BATCHED="true"
+PARALLEL="true"
