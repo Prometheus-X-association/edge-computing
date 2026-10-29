@@ -72,17 +72,11 @@ class PTXEdgeWorkerResponseApi(BaseModel):
     model_config = ConfigDict(url_preserve_empty_path=True)
 
 
-PTXWorkerBatchId = typing.Annotated[str | None, Field(description="K8s label compatible batch ID",
-                                                      min_length=1,
-                                                      max_length=63)]
-
-
 class PTXEdgeWorkerResponse(BaseModel):
     """Created PTXEdgeWorker status"""
     state: typing.Annotated[PTXEdgeWorkerResponseState, Field(description="Worker deployment state")]
     resource: typing.Annotated[PTXEdgeWorkerResponseResource, Field(description="Worker resource")]
     api: typing.Annotated[PTXEdgeWorkerResponseApi | None, Field(description="Worker's exposed URLs")] = None
-    batch: PTXWorkerBatchId = None
 
 
 ########################################################################################################################
@@ -97,3 +91,13 @@ class PTXEdgeWorkerCollectionResponseStatus(BaseModel):
 class PTXEdgeWorkerCollectionResponse(BaseModel):
     workers: typing.Annotated[list[PTXEdgeWorkerCollectionResponseStatus], Field(description="List of worker states")]
     resources: typing.Annotated[list[PEW] | None, Field(description="List of worker resource objects")] = None
+
+
+########################################################################################################################
+
+PTXWorkerBatchId = typing.Annotated[str, Field(description="K8s-compatible batch ID", min_length=1, max_length=63)]
+
+
+class PTXEdgeWorkerBatchResponse(BaseModel):
+    batch_id: PTXWorkerBatchId
+    workers: typing.Annotated[list[PTXEdgeWorkerResponse], Field(description="List of worker states")]

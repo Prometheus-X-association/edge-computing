@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-10-28T16:28:14'
+  x-creation-date: '2026-10-29T22:04:32'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -602,10 +602,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PTXEdgeWorkerResponse'
-                title: Response Create Workers In Batch Workers Batch Post
+                $ref: '#/components/schemas/PTXEdgeWorkerBatchResponse'
         '422':
           content:
             application/json:
@@ -636,12 +633,10 @@ paths:
         in: path
         required: true
         schema:
-          anyOf:
-          - type: string
-            minLength: 1
-            maxLength: 63
-          - type: 'null'
-          description: K8s label compatible batch ID
+          type: string
+          minLength: 1
+          maxLength: 63
+          description: K8s-compatible batch ID
           title: Id
       - name: resource
         in: query
@@ -680,12 +675,10 @@ paths:
         in: path
         required: true
         schema:
-          anyOf:
-          - type: string
-            minLength: 1
-            maxLength: 63
-          - type: 'null'
-          description: K8s label compatible batch ID
+          type: string
+          minLength: 1
+          maxLength: 63
+          description: K8s-compatible batch ID
           title: Id
       - name: resource
         in: query
@@ -1948,6 +1941,25 @@ components:
       required:
       - state
       title: PTXEdgeAPIErrorDetail
+    PTXEdgeWorkerBatchResponse:
+      properties:
+        batch_id:
+          type: string
+          maxLength: 63
+          minLength: 1
+          title: Batch Id
+          description: K8s-compatible batch ID
+        workers:
+          items:
+            $ref: '#/components/schemas/PTXEdgeWorkerResponse'
+          type: array
+          title: Workers
+          description: List of worker states
+      type: object
+      required:
+      - batch_id
+      - workers
+      title: PTXEdgeWorkerBatchResponse
     PTXEdgeWorkerCollectionResponse:
       properties:
         workers:
@@ -2030,14 +2042,6 @@ components:
           - $ref: '#/components/schemas/PTXEdgeWorkerResponseApi'
           - type: 'null'
           description: Worker's exposed URLs
-        batch:
-          anyOf:
-          - type: string
-            maxLength: 63
-            minLength: 1
-          - type: 'null'
-          title: Batch
-          description: K8s label compatible batch ID
       type: object
       required:
       - state

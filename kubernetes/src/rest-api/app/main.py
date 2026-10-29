@@ -17,6 +17,7 @@ import hashlib
 import json
 import pprint
 import typing
+from typing import Any
 
 import aiohttp
 import anyio
@@ -34,7 +35,8 @@ from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_fa
 from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseState, PTXEdgeWorkerResponse, VersionsResponse,
                                  PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerCollectionResponseStatus,
-                                 PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint, PTXWorkerBatchId)
+                                 PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint, PTXWorkerBatchId,
+                                 PTXEdgeWorkerBatchResponse)
 from app.utils.config import CONFIG
 from app.utils.helper import (cancel_on_disconnect, ClientDisconnectedError, assemble_worker_resource_url,
                               get_k8s_obj_res, validate_pews_list, response_updater_wrapper, response_collector_wrapper)
@@ -551,7 +553,6 @@ async def _create_workers_batch(request: fastapi.Request,
                                 parallel: bool = False,
                                 wait: bool = False,
                                 rollback: bool = True,
-                                batch_id: str | None = None,
                                 timeout: int = 30,
                                 label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
     """Create batch of named PTX-Edge workers in parallel"""
@@ -566,8 +567,6 @@ async def _create_workers_batch(request: fastapi.Request,
                         functools.partial(response_collector_wrapper, responses, _create_pew_worker),
                         request, pew, pew.spec.name, label,
                         name=pew.spec.name)
-            for response in filter(bool, responses):
-                response['batch'] = batch_id
             logger.debug(f"Received create responses:\n{pprint.pformat(responses, sort_dicts=False)}")
             if wait and timeout:
                 async with anyio.create_task_group() as task_group:
@@ -588,7 +587,6 @@ async def _create_workers_batch(request: fastapi.Request,
                                                                 state=PTXEdgeWorkerState.READY,
                                                                 timeout=timeout)
                         response['state'] = status['state'] if status else PTXEdgeWorkerState.FAILED
-                    response['batch'] = batch_id
                     responses.append(response)
         return responses
     except* fastapi.HTTPException as exgroup:
@@ -644,7 +642,7 @@ async def _create_workers_batch(request: fastapi.Request,
               fastapi.status.HTTP_409_CONFLICT: {"model": PTXEdgeAPIError},
               fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
           },
-          response_model=list[PTXEdgeWorkerResponse],
+          response_model=PTXEdgeWorkerBatchResponse,
           response_model_exclude_none=True,
           status_code=fastapi.status.HTTP_201_CREATED)
 async def create_workers_in_batch(request: fastapi.Request,
@@ -653,7 +651,7 @@ async def create_workers_in_batch(request: fastapi.Request,
                                   wait: typing.Annotated[bool, fastapi.Query] = False,
                                   rollback: typing.Annotated[bool, fastapi.Query] = True,
                                   timeout: typing.Annotated[int, fastapi.Query(gt=0)] = 30,
-                                  label: K8sLabelCollectionType = None) -> list[dict[str, typing.Any]]:
+                                  label: K8sLabelCollectionType = None) -> dict[str, str | list[dict[str, Any]]]:
     """Create batch of named PTX-Edge workers"""
     logger.debug("=" * 100)
     logger.info(f"Received {PEW.__name__} batch create request")
@@ -673,12 +671,11 @@ async def create_workers_in_batch(request: fastapi.Request,
                                             parallel=parallel,
                                             wait=wait,
                                             rollback=rollback,
-                                            batch_id=batch_id,
                                             timeout=timeout,
                                             label=label)
     logger.debug(f"Assembled response body:\n{pprint.pformat(responses, sort_dicts=False)}")
     logger.debug("=" * 100)
-    return responses
+    return {"batch_id": batch_id, "workers": responses}
 
 
 @app.get("/workers/batch/{id}",
