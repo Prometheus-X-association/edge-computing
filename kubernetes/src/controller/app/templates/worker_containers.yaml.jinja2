@@ -171,12 +171,13 @@ containers:
     {% if spec.worker.demands %}
     resources:
       requests:
-        {% if spec.worker.demands.cpu %}
-        cpu: {{ ( 1000 * spec.worker.demands.cpu ) | int ~ "m" }}
-        {% endif %}
-        {% if spec.worker.demands.memory %}
-        memory: {{ spec.worker.demands.memory | int ~ "M" }}
-        {% endif %}
+        cpu: {{ ( 1000 * spec.worker.demands.cpu | int ) ~ "m" if spec.worker.demands.cpu else 1 }}
+        memory: {{ ( spec.worker.demands.memory | default(500, true) ) ~ "M" }}
+        ephemeral-storage: {{ spec.data.src.size | default(100, true) ~ "M" }}
+      limits:
+        cpu: {{ ( 2 * 1000 * spec.worker.demands.cpu | int ) ~ "m" if spec.worker.demands.cpu else 2 }}
+        memory: {{ ( 2 * spec.worker.demands.memory | default(1000, true) ) ~ "M" }}
+        ephemeral-storage: {{ 2 * spec.data.src.size | default(300, true) ~ "M" }}
     {% endif %}
     # Data destination configuration
     volumeMounts:
