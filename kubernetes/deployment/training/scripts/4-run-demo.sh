@@ -34,6 +34,7 @@ echo -e "Validation successful!\n"
 
 if [ "${BATCHED}" = "true" ]; then
     warning "Setup is configured to use worker batch deployment!"
+    log ">>> Batch processing mode: parallel=${PARALLEL:-false}"
     log "Initiate Worker batch..."
     REQ_BODY="$(jq -s '.'   request/data-processor-0.json \
                             request/data-processor-1.json \

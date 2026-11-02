@@ -96,5 +96,4 @@ cleanup ::
 
 SHELL := bash
 .SILENT:	# Set silent mode (-s) by default
-#.PHONY:		# Set all target phony
 .DEFAULT_GOAL := setup
