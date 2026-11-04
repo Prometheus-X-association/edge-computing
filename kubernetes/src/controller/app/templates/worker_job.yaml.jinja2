@@ -5,9 +5,9 @@ metadata:
   namespace: {{ namespace }}
   labels:
     app.kubernetes.io/name: {{ name }}
-    app.kubernetes.io/component: worker
     app.kubernetes.io/part-of: {{ name }}
     app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+    edge.dataspace.ptx.org/tier: worker
     {# autofilled #}
 spec:
   completions: 1
@@ -18,9 +18,9 @@ spec:
       labels:
         ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
         app.kubernetes.io/name: {{ name }}
-        app.kubernetes.io/component: worker
         app.kubernetes.io/part-of: {{ name }}
         app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+        edge.dataspace.ptx.org/tier: worker
     spec:
       restartPolicy: Never
       {% filter indent(width=6, first=true) %}

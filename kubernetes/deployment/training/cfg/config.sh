@@ -39,9 +39,10 @@ for cfg in "${SCRIPT_DIR}"/creds/*.sh; do
 done
 
 # Global settings of deployment configuration
-# Default to false, can be override from creds/0-cluster-creds.sh !
+# Default to false, can be override from creds/0-default-config.sh !
 USE_SANDBOX="${USE_SANDBOX:-false}"
 LOCAL_SETUP="${LOCAL_SETUP:-false}"
+USE_NGROK="${LOCAL_SETUP:-false}"
 
 ########################################################################################################################
 

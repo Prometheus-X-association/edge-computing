@@ -16,9 +16,9 @@ metadata:
   namespace: {{ namespace }}
   labels:
     app.kubernetes.io/name: {{ name }}
-    app.kubernetes.io/component: worker
     app.kubernetes.io/part-of: {{ name }}
     app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+    edge.dataspace.ptx.org/tier: worker
     {# autofilled #}
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: {{ "websecure" if public and public.secured else "web" }}
