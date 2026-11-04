@@ -4,7 +4,7 @@ serviceAccountName: {{ cfg.builder.account }}
 {% endif %}
 initContainers:
   - name: builder
-    image: {{ cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path }}{{ cfg.builder.image }}
+    image: {{ cfg.builder.image }}
     imagePullPolicy: IfNotPresent
     command: [ "python3", "-m", "app", "-v" ]
     volumeMounts:
@@ -157,7 +157,7 @@ initContainers:
     {% endif %}
 containers:
   - name: worker
-    image: {{ ((cfg.registry.path ~ "/" if cfg.registry and cfg.registry.path) ~ worker_image)
+    image: {{ ((cfg.localregistry.path ~ "/" if cfg.localregistry and cfg.localregistry.path) ~ worker_image)
               if spec.worker.dst and spec.worker.dst.cached
               else spec.worker.src.image | default(undefined, true) }}
     {#imagePullPolicy: {{ "IfNotPresent" if spec.worker.dst and spec.worker.dst.cached else "Always" }}#}
@@ -216,7 +216,7 @@ containers:
     {% endif %}
 {% if spec.dataspace and spec.dataspace.privacy and spec.dataspace.privacy.required %}
 {% if spec.dataspace.privacy.scheduler | upper != "DEFAULT" %}
-schedulerName: {{ cfg.scheduler.name if cfg.scheduler and cfg.scheduler.name else "ptx-edge-scheduler" }}
+schedulerName: {{ cfg.scheduler.refname if cfg.scheduler and cfg.scheduler.refname else "ptx-edge-scheduler" }}
 {% endif %}
 {% if spec.dataspace.privacy.zones is iterable %}
 affinity:

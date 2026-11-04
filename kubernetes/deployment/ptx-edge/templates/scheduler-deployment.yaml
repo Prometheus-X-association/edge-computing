@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.scheduler.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "scheduler" "edge") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.scheduler.name }}
+      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "edge.commonLabels" (list . "scheduler" "edge") | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.scheduler.name }}
+      {{- include "edge.controlPlaneSelector" . | nindent 6 }}
+      containers:
+        - name: {{ .Values.scheduler.name }}
+          image: {{ include "edge.imageRef" (list . "scheduler") | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - -m
+            - app
+            - -v
+          env:
+            - name: METHOD
+              value: {{ .Values.scheduler.method }}
+            - name: SCHEDULER
+              value: {{ .Values.scheduler.refName }}
+          {{- with .Values.scheduler.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      restartPolicy: Always

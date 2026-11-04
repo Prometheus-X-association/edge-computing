@@ -159,7 +159,7 @@ IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG
 if [ "${USE_SANDBOX}" = "true" ]; then
     USED_PDC_CONFIG="sandbox-config.json"
 else
-    USED_PDC_CONFIG="visions-config.json"
+    USED_PDC_CONFIG="dataspace-config.json"
 fi
 
 ########################################################################################################################
@@ -171,7 +171,7 @@ PREFIX="${PTX}/api/v1"
 
 # Scheduler
 SCHEDULER="scheduler"
-SCHEDULER_METHOD="generic"
+SCHEDULER_METHOD="genetic"
 SCHEDULER_REF="${PTX}-${SCHEDULER}"
 
 # Controller

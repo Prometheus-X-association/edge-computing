@@ -27,7 +27,7 @@ spec:
   type: NodePort
   ports:
     - name: contract-port
-      port: 3001
+      port: 8888
       targetPort: contract-port
       nodePort: 30031
 ---
@@ -60,7 +60,7 @@ spec:
   type: NodePort
   ports:
     - name: catalog-port
-      port: 3002
+      port: 8888
       targetPort: catalog-port
       nodePort: 30032
 ---
@@ -93,7 +93,7 @@ spec:
   type: NodePort
   ports:
     - name: consent-port
-      port: 3003
+      port: 8888
       targetPort: consent-port
       nodePort: 30033
 

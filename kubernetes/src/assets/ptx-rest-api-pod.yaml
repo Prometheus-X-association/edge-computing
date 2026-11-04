@@ -99,8 +99,8 @@ metadata:
   name: api-basic-auth
   namespace: ptx-edge
 stringData:
-  username: admin
-  password: admin
+  username: "admin"
+  password: "admin"
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

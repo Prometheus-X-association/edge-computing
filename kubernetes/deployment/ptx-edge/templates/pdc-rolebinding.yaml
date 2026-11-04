@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.connector.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "connector" "dataspace") | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.connector.name }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Values.connector.name }}-init

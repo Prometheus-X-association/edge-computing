@@ -114,16 +114,16 @@ spec:
       env:
         #- name: CFG_CONTROLLER_MANAGER
         #  value: "ptx-edge-controller"
-        - name: CFG_REGISTRY_PATH
+        - name: CFG_LOCALREGISTRY_PATH
           value: "registry.k3d.local:5000"
-        - name: CFG_SCHEDULER_NAME
+        - name: CFG_SCHEDULER_REFNAME
           value: "ptx-edge-scheduler"
         - name: CFG_BUILDER_ACCOUNT
           value: "builder"
         - name: CFG_BUILDER_PREFIX
           value: "builder-"
         - name: CFG_BUILDER_IMAGE
-          value: "ptx-edge/builder:1.0"
+          value: "registry.k3d.local:5000/ptx-edge/builder:1.0"
         - name: CFG_BUILDER_PORT
           value: "9999"
         #- name: CFG_PDC_HOST

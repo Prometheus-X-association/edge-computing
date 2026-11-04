@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.restapi.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "restapi" "edge") | nindent 4 }}
+rules:
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers ]
+    verbs: [ get, list, create, watch, delete, deletecollection ]
+  - apiGroups: [ dataspace.ptx.org ]
+    resources: [ ptxedgeworkers/status ]
+    verbs: [ get ]

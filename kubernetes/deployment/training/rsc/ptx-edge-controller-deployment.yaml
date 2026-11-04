@@ -134,16 +134,16 @@ spec:
                      "--namespace=${PTX}", "--liveness=http://0.0.0.0:8080/healthz",
                      "app/controller.py" ]
           env:
-            - name: CFG_REGISTRY_PATH
+            - name: CFG_LOCALREGISTRY_PATH
               value: "${REGISTRY}:${REGISTRY_PORT}"
-            - name: CFG_SCHEDULER_NAME
-              value: "${PTX}-${SCHEDULER}"
+            - name: CFG_SCHEDULER_REFNAME
+              value: "${SCHEDULER_REF}"
             - name: CFG_BUILDER_ACCOUNT
               value: "${BUILDER}"
             - name: CFG_BUILDER_PREFIX
               value: "${BUILDER}-"
             - name: CFG_BUILDER_IMAGE
-              value: "${BUILD_IMG}"
+              value: "${REGISTRY}:${REGISTRY_PORT}/${BUILD_IMG}"
             - name: CFG_BUILDER_PORT
               value: "${BUILD_PORT}"
             #- name: CFG_PDC_HOST

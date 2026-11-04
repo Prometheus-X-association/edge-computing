@@ -34,7 +34,7 @@ spec:
   type: NodePort
   ports:
     - name: catalog-port
-      port: 3002
+      port: 8888
       targetPort: catalog-port
       nodePort: 30032
 ---

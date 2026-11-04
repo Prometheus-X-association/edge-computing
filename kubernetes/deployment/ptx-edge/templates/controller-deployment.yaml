@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.controller.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "controller" "edge") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.controller.name }}
+      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "edge.commonLabels" (list . "controller" "edge") | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.controller.name }}
+      {{- include "edge.controlPlaneSelector" . | nindent 6 }}
+      containers:
+        - name: {{ .Values.controller.name }}
+          image: {{ include "edge.imageRef" (list . "controller") | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - kopf
+            - run
+            - --standalone
+            - --verbose
+            - --namespace={{ .Release.Namespace }}
+            - --liveness="http://0.0.0.0:{{ .Values.controller.port }}{{ .Values.controller.healthEndpoint }}"
+            - app/controller.py
+          env:
+            - name: CFG_LOCALREGISTRY_PATH
+              value: "{{ .Values.localRegistry.url }}:{{ .Values.localRegistry.port}}"
+            - name: CFG_SCHEDULER_REFNAME
+              value: "{{ .Values.scheduler.refName }}"
+            - name: CFG_BUILDER_ACCOUNT
+              value: "{{ .Values.builder.name }}"
+            - name: CFG_BUILDER_PREFIX
+              value: "{{ .Values.builder.name }}-"
+            - name: CFG_BUILDER_IMAGE
+              value: "{{ include "edge.imageRef" (list . "builder") }}"
+            - name: CFG_BUILDER_PORT
+              value: "{{ .Values.builder.callbackPort }}"
+            #- name: CFG_PDC_HOST
+            #  value: "pdc.ptx-edge.svc.cluster.local"
+            - name: CFG_PDC_PORT
+              value: "{{ .Values.connector.port }}"
+            - name: CFG_PDC_SECRET
+              value: "{{ .Values.connector.secretName }}"
+          ports:
+            - name: api-port
+              containerPort: {{ .Values.controller.port }}
+              protocol: TCP
+          {{- with .Values.controller.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.controller.healthEndpoint }}
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.controller.port }}
+              path: {{ include "edge.joinPath" (list .Values.controller.healthEndpoint) }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          {{- end }}
+      restartPolicy: Always
