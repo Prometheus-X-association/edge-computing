@@ -19,8 +19,10 @@ NAMESPACE := ptx-edge
 install ::
 	helm upgrade --install --namespace=${NAMESPACE} ${NAME} ./
 
-dry-run ::
+lint ::
 	helm lint ./
+
+dry-run :: lint
 	helm install --namespace=${NAMESPACE} --debug --dry-run=client ${NAME} ./ \
 		--set gateway.proto="https" --set gateway.host="example.gw.com" --set gateway.port=1234 \
 		--set registry.url="registry.k3d.local" --set registry.port=5000 \

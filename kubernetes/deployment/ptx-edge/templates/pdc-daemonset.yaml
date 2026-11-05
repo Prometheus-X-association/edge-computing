@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.connector.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "connector" "dataspace") | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.connector.name }}
+      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "edge.commonLabels" (list . "connector" "dataspace") | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.connector.name }}
+      {{- include "pdc.controlPlaneSelector" . | nindent 6 }}
+      initContainers:
+        - name: {{ .Values.builder.name }}
+          image: "{{ include "edge.imageRef" (list . "builder") }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - -m
+            - app.tools.pdc-init
+            - -v
+            - --type=clusterip
+            {{- if .Values.connector.init.forceRecreateExposure }}
+            - --force
+            {{- end }}
+          volumeMounts:
+            - name: kube-api-client-cfg
+              mountPath: /var/run/secrets/projected
+              readOnly: true
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+        - name: mongodb
+          image: "{{ include "edge.imageRef" (list . "mongodb") }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongo-port
+              containerPort: 27017
+          envFrom:
+            - secretRef:
+                name: {{ .Values.mongodb.credential.secretName }}
+          env:
+            - name: GLIBC_TUNABLES
+              value: "glibc.pthread.rseq=1"
+          {{- with .Values.mongodb.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          # Native sidecar container
+          restartPolicy: Always
+      containers:
+        - name: {{ .Values.connector.name }}
+          image: "{{ include "edge.imageRef" (list . "connector") }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: pdc-port
+              containerPort: {{ .Values.connector.port }}
+              protocol: TCP
+          {{- with .Values.connector.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: env-template
+              mountPath: "/usr/src/app/.env.tmp"
+              subPath: .env.tmp
+              readOnly: true
+            - name: config-template
+              mountPath: "/usr/src/app/dist/src/config.json.tmp"
+              subPath: config.json.tmp
+              readOnly: true
+          envFrom:
+            - secretRef:
+                name: {{ .Values.connector.credential.secretName }}
+          env:
+            - name: PDC_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['connector.dataspace.ptx.org/id']
+            - name: PDC_DEF_PZ
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
+      volumes:
+        - name: env-template
+          configMap:
+            name: {{ .Values.connector.name }}
+            items:
+              - key: .env
+                path: .env.tmp
+        - name: config-template
+          configMap:
+            name: {{ .Values.connector.name }}
+            items:
+              - key: {{ .Values.connector.config.usedTemplateFile }}
+                path: config.json.tmp
+        - name: kube-api-client-cfg
+          projected:
+            defaultMode: 420
+            sources:
+              - serviceAccountToken:
+                  expirationSeconds: 3607
+                  path: token
+              - configMap:
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                  name: kube-root-ca.crt
+              - downwardAPI:
+                  items:
+                    - fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+                      path: namespace

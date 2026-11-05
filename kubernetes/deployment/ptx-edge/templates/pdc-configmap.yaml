@@ -25,7 +25,7 @@ data:
     #
     EXCHANGE_TRIGGER_API_KEY=${EXCHANGE_TRIGGER_API_KEY}
     EXCHANGE_TIMEOUT=120
-  sandbox-config.json: |
+  sandbox-cfg.json: |
     {
       "endpoint": "http://${PDC_ID}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connector.port }}/",
       "serviceKey": "${SERVICE_KEY}",
@@ -34,7 +34,7 @@ data:
       "catalogUri": "http://{{ .Values.sandbox.catalog }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
       "consentUri": "http://{{ .Values.sandbox.consent }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/"
     }
-  dataspace-config.json: |
+  dataspace-cfg.json: |
     {
       "endpoint": "{{ include "pdc.pdcEntrypoint" . }}",
       "serviceKey": "${SERVICE_KEY}",

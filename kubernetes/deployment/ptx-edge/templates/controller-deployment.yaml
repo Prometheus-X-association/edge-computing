@@ -49,7 +49,7 @@ spec:
             - name: CFG_PDC_PORT
               value: "{{ .Values.connector.port }}"
             - name: CFG_PDC_SECRET
-              value: "{{ .Values.connector.secretName }}"
+              value: "{{ .Values.connector.credential.secretName }}"
           ports:
             - name: api-port
               containerPort: {{ .Values.controller.port }}
@@ -62,7 +62,7 @@ spec:
           livenessProbe:
             httpGet:
               port: {{ .Values.controller.port }}
-              path: {{ include "edge.joinPath" (list .Values.controller.healthEndpoint) }}
+              path: {{ printf "/%s" (include "edge.joinPath" (list .Values.controller.healthEndpoint)) }}
             initialDelaySeconds: 30
             periodSeconds: 30
           {{- end }}

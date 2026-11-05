@@ -52,7 +52,7 @@ spec:
           livenessProbe:
             httpGet:
               port: {{ .Values.restapi.port }}
-              path: {{ include "edge.joinPath" (list .Values.restapi.prefix .Values.restapi.healthEndpoint) }}
+              path: {{ printf "/%s" (include "edge.joinPath" (list .Values.restapi.prefix .Values.restapi.healthEndpoint)) }}
             initialDelaySeconds: 30
             periodSeconds: 30
           {{- end }}
