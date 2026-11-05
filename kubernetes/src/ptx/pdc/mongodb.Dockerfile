@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y gnupg curl && \
 	rm -rfv /var/lib/apt/lists/*
 VOLUME /data/db
 RUN mkdir -p /data/db && chown -R mongodb:mongodb /data
-ENV GLIBC_TUNABLES="glibc.pthread.rseq=0"
+ENV GLIBC_TUNABLES="glibc.pthread.rseq=1"
 ENV HOME=/data/db
 USER mongodb
 COPY --chown=mongodb:mongodb ./scripts/entrypoint.mongodb.sh ./entrypoint.sh

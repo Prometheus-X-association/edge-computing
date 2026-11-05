@@ -29,7 +29,7 @@ data:
     #
     EXCHANGE_TRIGGER_API_KEY=${PDC_CFG_EXCHANGE_TRIGGER_API_KEY}
     EXCHANGE_TIMEOUT=120
-  sandbox-config.json: |
+  sandbox-cfg.json: |
     {
       "endpoint": "http://${PDC_ID}.${PTX}.svc.cluster.local:${PDC_PORT}/",
       "serviceKey": "${PDC_CFG_SERVICE_KEY}",
@@ -40,7 +40,7 @@ data:
       "registrationUri": "",
       "expressLimitSize": "100mb"
     }
-  dataspace-config.json: |
+  dataspace-cfg.json: |
     {
       "endpoint": "${PDC_CFG_ENDPOINT}",
       "serviceKey": "${PDC_CFG_SERVICE_KEY}",
@@ -52,6 +52,22 @@ data:
       "serviceChainAdapter": false,
       "serviceChainAdapterTimeout": 3000
     }
+immutable: true
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: pdc-mongo-env
+  namespace: ${PTX}
+  labels:
+    app.kubernetes.io/name: ${PDC}
+    env: ${ENV}
+    tier: ptx
+data:
+  PDC_DB_NAME: ${PDC_DB_NAME_BASE64_ENCODED}
+  PDC_DB_USER: ${PDC_DB_USER_BASE64_ENCODED}
+  PDC_DB_PASSWORD: ${PDC_DB_PASSWORD_BASE64_ENCODED}
 immutable: true
 ---
 apiVersion: v1
