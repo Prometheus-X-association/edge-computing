@@ -32,6 +32,8 @@ spec:
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
+            - name: APP_NAME
+              value: "pdc"
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -74,9 +76,12 @@ spec:
               mountPath: "/usr/src/app/dist/src/config.json.tmp"
               subPath: config.json.tmp
               readOnly: true
+          envFrom:
+            - secretRef:
+                name: ${PDC_SECRET_NAME}
+            - secretRef:
+                name: pdc-mongo-env
           env:
-            - name: APP_NAME
-              value: "pdc"
             - name: PDC_ID
               valueFrom:
                 fieldRef:
@@ -85,9 +90,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
-          envFrom:
-            - secretRef:
-                name: ${PDC_SECRET_NAME}
       volumes:
         - name: env-template
           configMap:

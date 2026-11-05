@@ -13,7 +13,7 @@
     {{- end -}}
   {{- end -}}
 {{- else -}}
-  {{- $privacyZones = list "test-zone" -}}
+  {{- $privacyZones = list "test-zone-1" "test-zone-2" -}}
 {{- end -}}
 {{- $privacyZones = uniq $privacyZones -}}
 
@@ -35,10 +35,10 @@ spec:
   type: ClusterIP
   ports:
     - name: pdc-port
-      port: {{ $.Values.connector.port | int}}
+      port: {{ $.Values.connector.port | int }}
       targetPort: pdc-port
 ---
-{{- $mwrName := printf "%s-stripprefix" $srvName }}
+{{- $mwrName := printf "%s-stripprefix" $srvName -}}
 {{- $zonePrefix := printf "/%s/%s/%s" $.Release.Namespace $zone $.Values.connector.shortName }}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -51,9 +51,9 @@ spec:
     prefixes:
       - {{ $zonePrefix }}
 ---
-{{- $ingName := $srvName }}
-{{- $entryPoint := ternary "websecure" "web" (eq $.Values.gateway.proto "https") }}
-{{- $tls := ternary "true" "false" (eq $.Values.gateway.proto "https") }}
+{{- $ingName := printf "%s-%s" $.Values.connector.shortName $zone -}}
+{{- $entryPoint := ternary "websecure" "web" (eq $.Values.gateway.proto "https") -}}
+{{- $tls := ternary "true" "false" (eq $.Values.gateway.proto "https") -}}
 {{- $mwrRef := printf "%s-%s@kubernetescrd" $.Release.Namespace $mwrName }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -77,5 +77,5 @@ spec:
                 name: {{ $srvName }}
                 port:
                   name: pdc-port
-{{- end -}}
-{{- end -}}
+{{ end -}}
+{{- end }}

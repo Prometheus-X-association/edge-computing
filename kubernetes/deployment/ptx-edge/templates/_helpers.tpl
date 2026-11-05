@@ -113,16 +113,8 @@ Assemble the mongoDB URI for the connector.
 Parameter: root context
 */}}
 {{- define "pdc.mongoURI" -}}
-{{- /* Lekérdezzük a már létező Secret-et a clusterből */ -}}
-{{- $existingSecret := lookup "v1" "Secret" .Release.Namespace .Values.mongodb.credential.secretName -}}
-{{- $mongoDBPasswd := "dry-run-password" -}}
-{{- if and $existingSecret $existingSecret.data (index $existingSecret.data "PDC_DB_PASSWORD") -}}
-  {{- $mongoDBPasswd = index $existingSecret.data "PDC_DB_PASSWORD" | b64dec -}}
-{{- end -}}
-{{- $mongoDBName := default "dataspace-connector" .Values.mongodb.credential.dbName -}}
-{{- $mongoDBUser := default .Values.connector.shortName .Values.mongodb.credential.dbUser -}}
 {{- $mongoURI := "mongodb://%s:%s@127.0.0.1:27017/%s?authSource=%s&appName=%s" -}}
-{{- printf $mongoURI $mongoDBUser $mongoDBPasswd $mongoDBName $mongoDBName .Values.connector.name -}}
+{{- printf $mongoURI "${MONGO_DB_USER}" "${MONGO_DB_PASSWORD}" "${MONGO_DB_NAME}" "${MONGO_DB_NAME}" .Values.connector.name -}}
 {{- end -}}
 
 {{/*

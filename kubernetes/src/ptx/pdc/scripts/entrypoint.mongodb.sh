@@ -19,9 +19,9 @@ set -eu
 # - MONGO_PORT
 # - MONGO_INITDB_ROOT_USERNAME
 # - MONGO_INITDB_ROOT_PASSWORD
-# - PDC_DB_NAME
-# - PDC_DB_USER
-# - PDC_DB_PASSWORD
+# - MONGO_DB_NAME
+# - MONGO_DB_USER
+# - MONGO_DB_PASSWORD
 
 # Define user creation commands
 CREATE_ADMIN_USER="""
@@ -36,11 +36,11 @@ db.createUser({
 
 DEF_DB_NAME="dataspace-connector"
 CREATE_PDC_USER="""
-db.getSiblingDB('${PDC_DB_NAME:-DEF_DB_NAME}').createUser({
-    user: '${PDC_DB_USER:-pdc}',
-    pwd: '${PDC_DB_PASSWORD:-pdc}',
+db.getSiblingDB('${MONGO_DB_NAME:-DEF_DB_NAME}').createUser({
+    user: '${MONGO_DB_USER:-pdc}',
+    pwd: '${MONGO_DB_PASSWORD:-pdc}',
     roles: [
-        {role: 'readWrite', db: '${PDC_DB_NAME:-DEF_DB_NAME}'}
+        {role: 'readWrite', db: '${MONGO_DB_NAME:-DEF_DB_NAME}'}
     ]});
 """
 
@@ -52,7 +52,7 @@ mongosh --port="${_RAND_PORT}" admin --eval "${CREATE_PDC_USER}"
 mongod --shutdown --syslog
 
 # Use authentication if password is set, not authentication as fallback
-AUTH=$(if [ -n "${PDC_DB_PASSWORD:-}" ]; then echo '--auth'; else echo '--noauth'; fi)
+AUTH=$(if [ -n "${MONGO_DB_PASSWORD:-}" ]; then echo '--auth'; else echo '--noauth'; fi)
 
 # Initiate mongodb server process
 set -x

@@ -86,6 +86,8 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.connector.credential.secretName }}
+            - secretRef:
+                name: {{ .Values.mongodb.credential.secretName }}
           env:
             - name: PDC_ID
               valueFrom:
