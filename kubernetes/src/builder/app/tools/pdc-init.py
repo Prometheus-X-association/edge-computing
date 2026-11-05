@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import pathlib
+import pprint
 import sys
 import typing
 
@@ -50,7 +51,8 @@ CONFIG = {"port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
           "node": os.getenv("NODE_NAME"),
           "namespace": os.getenv("NAMESPACE", default=DEF_NS),
           "def_zone": os.getenv("DEF_ZONE", default=DEF_ZONE_ID),
-          "app": os.getenv("APP_NAME", default=DEF_APP)}
+          "app": os.getenv("APP_NAME", default=DEF_APP),
+          "secure": os.getenv("GW_SECURE", default="true")}
 
 REQUIRED_FIELDS = ("type", "namespace")
 
@@ -127,6 +129,20 @@ def _delete_service(name: str, namespace: str) -> client.V1Service:
     return client.CoreV1Api().delete_namespaced_service(name=name, namespace=namespace)
 
 
+def _delete_middleware(name: str, namespace: str) -> object:
+    log.debug(f">>> Delete middleware[{name}]...")
+    return client.CustomObjectsApi().delete_namespaced_custom_object(group="traefik.io",
+                                                                     version="v1alpha1",
+                                                                     namespace=namespace,
+                                                                     plural="middlewares",
+                                                                     name=name)
+
+
+def _delete_ingress(name: str, namespace: str) -> client.V1Status:
+    log.debug(f">>> Delete ingress[{name}]...")
+    return client.NetworkingV1Api().delete_namespaced_ingress(name=name, namespace=namespace)
+
+
 def _delete_endpointslice(name: str, namespace: str, ) -> client.V1Status:
     log.debug(f">>> Delete endpointslice[{name}]...")
     return client.DiscoveryV1Api().delete_namespaced_endpoint_slice(name=name, namespace=namespace)
@@ -142,20 +158,32 @@ def _create_headless_service(name: str, port: int, namespace: str, app: str | No
     :return:
     """
     log.info(f">>> Creating headless service with name: {name}")
-    srv_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
-                                                             labels={"app": app} if app else None),
-                                spec=client.V1ServiceSpec(type="ClusterIP",
-                                                          cluster_ip="None",
-
-                                                          ports=[client.V1ServicePort(name=DEF_PORT_NAME,
-                                                                                      protocol="TCP",
-                                                                                      port=port,
-                                                                                      target_port=port)]))
-    return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body)
+    srv_body = client.V1Service(
+        metadata=client.V1ObjectMeta(
+            name=name,
+            labels={
+                "app.kubernetes.io/name": app,
+                "app.kubernetes.io/managed-by": CONFIG['pod']
+            }
+        ),
+        spec=client.V1ServiceSpec(
+            type="ClusterIP",
+            cluster_ip="None",
+            ports=[
+                client.V1ServicePort(
+                    name=DEF_PORT_NAME,
+                    protocol="TCP",
+                    port=port,
+                    target_port=port
+                )
+            ]
+        )
+    )
+    return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body, field_manager=app)
 
 
 def _create_cluster_service(name: str, port: int, namespace: str, selector: dict[str, str],
-                            app: str | None = None) -> client.V1Service:
+                            app: str | None = None, uid: str | None = None) -> client.V1Service:
     """
 
     :param name:
@@ -165,14 +193,135 @@ def _create_cluster_service(name: str, port: int, namespace: str, selector: dict
     :return:
     """
     log.info(f">>> Creating cluster service with name: {name}")
-    srv_body = client.V1Service(metadata=client.V1ObjectMeta(name=name,
-                                                             labels={"app": app} if app else None),
-                                spec=client.V1ServiceSpec(type="ClusterIP",
-                                                          selector=selector,
-                                                          ports=[client.V1ServicePort(name=DEF_PORT_NAME,
-                                                                                      protocol="TCP",
-                                                                                      port=port)]))
-    return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body)
+    srv_body = client.V1Service(
+        metadata=client.V1ObjectMeta(
+            name=name,
+            labels={
+                "app.kubernetes.io/name": app,
+                "app.kubernetes.io/managed-by": CONFIG['pod']
+            },
+            owner_references=[
+                client.V1OwnerReference(
+                    api_version="v1",
+                    kind="Pod",
+                    name=CONFIG['pod'],
+                    uid=uid,
+                    block_owner_deletion=False,
+                    controller=False
+                )
+            ]
+        ),
+        spec=client.V1ServiceSpec(
+            type="ClusterIP",
+            selector=selector,
+            ports=[
+                client.V1ServicePort(
+                    name=DEF_PORT_NAME,
+                    protocol="TCP",
+                    port=port
+                )
+            ]
+        )
+    )
+    return client.CoreV1Api().create_namespaced_service(namespace=namespace, body=srv_body, field_manager=app)
+
+
+def _create_cluster_middleware(name: str, namespace: str, app: str, strip_prefix: str,
+                               uid: str | None = None) -> object:
+    """
+
+    :param name:
+    :param port:
+    :param namespace:
+    :param app:
+    :return:
+    """
+    log.info(f">>> Creating cluster middleware with name: {name}")
+    middleware_body = {
+        "apiVersion": "traefik.io/v1alpha1",
+        "kind": "Middleware",
+        "metadata": {
+            "name": name,
+            "namespace": namespace,
+            "labels": {
+                "app.kubernetes.io/name": app,
+                "app.kubernetes.io/managed-by": CONFIG['pod']
+            },
+            "owner_references": [
+                {
+                    "api_version": "v1",
+                    "kind": "Pod",
+                    "name": CONFIG['pod'],
+                    "uid": uid,
+                    "controller": False,
+                    "blockOwnerDeletion": False
+                }
+            ],
+        },
+        "spec": {
+            "stripPrefix": {
+                "prefixes": [
+                    strip_prefix
+                ]
+            }
+        }
+    }
+    return client.CustomObjectsApi().create_namespaced_custom_object(group="traefik.io",
+                                                                     version="v1alpha1",
+                                                                     namespace=namespace,
+                                                                     plural="middlewares",
+                                                                     body=middleware_body,
+                                                                     field_manager=app)
+
+
+def _create_cluster_ingress(name: str, namespace: str, app: str, middleware: str, prefix: str, secure: bool = True,
+                            uid: str | None = None) -> client.V1Service:
+    """
+
+    :param name:
+    :param port:
+    :param namespace:
+    :param app:
+    :return:
+    """
+    log.info(f">>> Creating cluster ingress with name: {name}")
+    ing_body = client.V1Ingress(
+        metadata=client.V1ObjectMeta(
+            name=name,
+            labels={
+                "app.kubernetes.io/name": app,
+                "app.kubernetes.io/managed-by": CONFIG['pod']
+            },
+            owner_references=[
+                client.V1OwnerReference(
+                    api_version="v1",
+                    kind="Pod",
+                    name=CONFIG['pod'],
+                    uid=uid,
+                    block_owner_deletion=False,
+                    controller=False
+                )
+            ],
+            annotations={
+                "traefik.ingress.kubernetes.io/router.entrypoints": "websecure" if secure else "web",
+                "traefik.ingress.kubernetes.io/router.tls": "true" if secure else "false",
+                "traefik.ingress.kubernetes.io/router.middlewares": f"{namespace}-{middleware}@kubernetescrd"
+            }),
+        spec=client.V1IngressSpec(
+            ingress_class_name="traefik",
+            rules=[
+                client.V1IngressRule(
+                    http=client.V1HTTPIngressRuleValue(
+                        paths=[
+                            client.V1HTTPIngressPath(
+                                path=prefix,
+                                path_type="Prefix",
+                                backend=client.V1IngressBackend(
+                                    service=client.V1IngressServiceBackend(
+                                        name=name,
+                                        port=client.V1ServiceBackendPort(name=DEF_PORT_NAME)
+                                    )))]))]))
+    return client.NetworkingV1Api().create_namespaced_ingress(namespace=namespace, body=ing_body, field_manager=app)
 
 
 def _create_nodeport_endpointslice(service_name: str, address: str, target_port: int, namespace: str,
@@ -190,7 +339,7 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
     labels = {LABEL_K8S_ENDPOINTSLICE_SRV_NAME: service_name,
               LABEL_K8S_ENDPOINTSLICE_MGR: "controller.ptx-edge.org"}
     if app:
-        labels["app"] = app
+        labels["app.kubernetes.io/name"] = app
     eps_body = client.V1EndpointSlice(metadata=client.V1ObjectMeta(name=service_name,
                                                                    labels=labels),
                                       address_type="IPv4",
@@ -199,7 +348,9 @@ def _create_nodeport_endpointslice(service_name: str, address: str, target_port:
                                                                   protocol="TCP",
                                                                   port=target_port)],
                                       endpoints=[client.V1Endpoint(addresses=[address])])
-    return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace, body=eps_body)
+    return client.DiscoveryV1Api().create_namespaced_endpoint_slice(namespace=namespace,
+                                                                    body=eps_body,
+                                                                    field_manager=app)
 
 
 def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Pod:
@@ -218,7 +369,10 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
     labels[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{def_zone_id}"
     pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
     log.debug(f"Created pod patch:\n{dump_k8s_obj(pod_patch.to_dict())}")
-    pod = client.CoreV1Api().patch_namespaced_pod(name=pod, namespace=namespace, body=pod_patch)
+    pod = client.CoreV1Api().patch_namespaced_pod(name=pod,
+                                                  namespace=namespace,
+                                                  body=pod_patch,
+                                                  field_manager=CONFIG['app'])
     log.debug(f"Patched pod:\n{dump_k8s_obj(pod.to_dict())}")
     return pod
 
@@ -280,8 +434,9 @@ def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int
         zones = _collect_privacy_zone_labels(node=node)
         if len(zones) == 0 and not force:
             log.warning("No privacy zone label detected! Skip patching...")
+            patched_pod = None
         else:
-            _patch_pod_labels(pod=pod, namespace=namespace, zones=zones)
+            patched_pod = _patch_pod_labels(pod=pod, namespace=namespace, zones=zones)
         if not force:
             return
         elif len(zones) < 1:
@@ -291,21 +446,57 @@ def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int
             log.warning(f"Multiple privacy zone label detected for one node[{node}]!")
             log.info("Forcing to create PDC service for each privacy zone...")
         for zone in zones:
-            srv_name = f"{DEF_APP}-{zone.split('/')[-1]}".lower() if zone else DEF_APP
-            selector = {'app': app, zone: "true"} if zone else {'app': app}
+            zone_id = zone.split('/')[-1].lower()
+            srv_name = f"{DEF_APP}-{zone_id}".lower() if zone else DEF_APP
+            selector = {'app.kubernetes.io/name': app}
+            if zone:
+                selector[zone] = "true"
+            uid = patched_pod.metadata.uid if patched_pod else None
             try:
                 srv = _create_cluster_service(name=srv_name, port=port, namespace=namespace, app=app,
-                                              selector=selector)
+                                              selector=selector, uid=uid)
+                log.debug(f"Created service:\n{dump_k8s_obj(srv.to_dict())}")
             except ApiException as e:
                 if e.reason == 'Conflict':
-                    log.warning(f"Service[{srv_name}] already exists. Recreate resources...")
+                    log.warning(f"Service[{srv_name}] already exists. Recreate resource...")
                     del_srv = _delete_service(name=srv_name, namespace=namespace)
                     log.info(f"Service[{srv_name}] deleted with status: {del_srv.status}")
                     srv = _create_cluster_service(name=srv_name, port=port, namespace=namespace, app=app,
-                                                  selector=selector)
+                                                  selector=selector, uid=uid)
+                    log.debug(f"Recreated service:\n{dump_k8s_obj(srv.to_dict())}")
                 else:
                     raise
-            log.debug(f"Created service:\n{dump_k8s_obj(srv.to_dict())}")
+            mwr_name = f"pdc-{zone_id}-stripprefix".lower()
+            strip_prefix = f"/{namespace}/{zone_id}/pdc"
+            try:
+                mwr = _create_cluster_middleware(name=mwr_name, namespace=namespace, app=app, uid=uid,
+                                                 strip_prefix=strip_prefix)
+                log.debug(f"Created middleware:\n{pprint.pformat(mwr, indent=4)}")
+            except ApiException as e:
+                if e.reason == 'Conflict':
+                    log.warning(f"Middleware[{mwr_name}] already exists. Recreate resource...")
+                    _delete_middleware(name=mwr_name, namespace=namespace)
+                    log.info(f"Middleware[{mwr_name}] deleted")
+                    mwr = _create_cluster_middleware(name=mwr_name, namespace=namespace, app=app, uid=uid,
+                                                     strip_prefix=strip_prefix)
+                    log.debug(f"Recreated middleware:\n{pprint.pformat(mwr, indent=4)}")
+                else:
+                    raise
+            secure = True if CONFIG['secure'].lower() == "true" else False
+            try:
+                ing = _create_cluster_ingress(name=srv_name, namespace=namespace, app=app, middleware=mwr_name,
+                                              prefix=strip_prefix, secure=secure, uid=uid)
+                log.debug(f"Created ingress:\n{dump_k8s_obj(ing.to_dict())}")
+            except ApiException as e:
+                if e.reason == 'Conflict':
+                    log.warning(f"Ingress[{mwr_name}] already exists. Recreate resource...")
+                    _delete_ingress(name=srv_name, namespace=namespace)
+                    log.info(f"Ingress[{srv_name}] deleted")
+                    ing = _create_cluster_ingress(name=srv_name, namespace=namespace, app=app, middleware=mwr_name,
+                                                  prefix=strip_prefix, secure=secure, uid=uid)
+                    log.debug(f"Recreated ingress:\n{dump_k8s_obj(ing.to_dict())}")
+                else:
+                    raise
     except OpenApiException as e:
         log.error(f"Received error:\n{e}")
         sys.exit(os.EX_IOERR)
