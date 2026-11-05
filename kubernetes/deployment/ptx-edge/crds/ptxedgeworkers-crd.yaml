@@ -1,0 +1,615 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ptxedgeworkers.dataspace.ptx.org # <plural>.<group> format
+spec:
+  group: dataspace.ptx.org
+  scope: Namespaced
+  names:
+    kind: PtxEdgeWorker
+    listKind: PtxEdgeWorkersList
+    plural: ptxedgeworkers
+    singular: ptxedgeworker
+    shortNames:
+      - pew
+      - pews
+    categories:
+      - all
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: "PTX Edge Worker description"
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              description: "Specification of PTX Edge Worker"
+              required:
+                - data
+                - worker
+              x-kubernetes-validations:
+                - rule: "self.data.src.method != 'PTX' || has(self.dataspace.exchange.data)"
+                  message: "Data source method: PTX requires a dataspace contract!"
+                  fieldPath: ".dataspace.exchange.data"
+                - rule: "self.worker.src.method != 'PTX' || has(self.dataspace.exchange.worker)"
+                  message: "Worker collection method: PTX requires a dataspace contract!"
+                  fieldPath: ".dataspace.exchange.worker"
+              properties:
+                name:
+                  type: string
+                  description: "Unique resource name"
+                  pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+                  example: "worker-123"
+                service:
+                  type: object
+                  description: "Initiate worker as a service, not a single-executed task"
+                  required:
+                    - enabled
+                  properties:
+                    enabled:
+                      type: boolean
+                      description: "Enable service creation"
+                      default: false
+                    interfaces:
+                      type: array
+                      description: "Exposed worker interfaces"
+                      minItems: 1
+                      x-kubernetes-list-type: map
+                      x-kubernetes-list-map-keys: [ port ]
+                      x-kubernetes-validations:
+                        - rule: 'size(self.filter(i, i.public)) <= 1'
+                          message: 'Only one interface/port can be public!'
+                      items:
+                        type: object
+                        required:
+                          - port
+                        x-kubernetes-validations:
+                          - rule: "self.public >= self.restricted"
+                            message: "Only public port can be restricted!"
+                            fieldPath: ".restricted"
+                        properties:
+                          port:
+                            type: integer
+                            description: "Service port"
+                            minimum: 1
+                            maximum: 65535
+                            example: 8080
+                          public:
+                            type: boolean
+                            description: "Enable out-of-cluster access"
+                            default: false
+                          secured:
+                            type: boolean
+                            description: "Use HTTPS protocol for service access"
+                            default: true
+                          stripped:
+                            type: boolean
+                            description: "Strip prefix for service exposure"
+                            default: true
+                          restricted:
+                            type: boolean
+                            description: "Apply the same authentication credentials as of the REST-API"
+                            default: false
+                data:
+                  type: object
+                  description: "Data collection parameters"
+                  required:
+                    - src
+                  properties:
+                    src:
+                      type: object
+                      description: "Data source location"
+                      required:
+                        - method
+                      x-kubernetes-validations:
+                        - rule: 'self.method in ["PTX", "SKIP"] || size(self.path) > 0'
+                          messageExpression: '"method: " + self.method + " requires a valid data resource path!"'
+                          fieldPath: ".path"
+                        - rule: '!has(self.path) || self.method != "SKIP" &&
+                                  self.path.lowerAscii().startsWith(self.method.lowerAscii()+":")'
+                          messageExpression: '"Heading scheme in path must start with method: " 
+                                              + self.method.lowerAscii() + "!"'
+                          fieldPath: ".path"
+                      properties:
+                        method:
+                          type: string
+                          description: "Data collection method"
+                          enum: [ FILE, DIR, HTTP, HTTPS, PTX, SKIP ]
+                          example: HTTPS
+                        path:
+                          type: string
+                          description: "Data resource location"
+                          minLength: 1
+                          #format: "[scheme]://([host][:port])/[path](/)"
+                          pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
+                          example: https://my.api.localhost:8080/data/example.csv
+                        size:
+                          type: integer
+                          description: "Requested data size in Megabyte (Mb)"
+                          minimum: 1
+                          #maximum: 10240
+                          default: 100
+                        auth:
+                          type: object
+                          description: "Authentication parameters for remote data collection"
+                          required:
+                            - scheme
+                            - user
+                            - secret
+                          properties:
+                            scheme:
+                              type: string
+                              description: "Used authentication method"
+                              enum: [ BASIC, DIGEST, BEARER ]
+                              example: BASIC
+                            user:
+                              type: string
+                              description: "User identification"
+                              minLength: 1
+                              example: admin
+                            secret:
+                              type: string
+                              description: "Secret token or password"
+                              minLength: 1
+                              format: password
+                              example: myPasswd!007
+                            insecure:
+                              type: boolean
+                              description: "Disable verification of data server's TLS certificate"
+                              default: false
+                    dst:
+                      type: object
+                      description: "Data destination location"
+                      properties:
+                        method:
+                          type: string
+                          description: "Data propagation scheme"
+                          enum: [ LOCAL ]
+                          default: LOCAL
+                        path:
+                          type: string
+                          description: "Data resource location"
+                          minLength: 1
+                          #format: "/[path]/"
+                          pattern: ^((/[a-zA-Z0-9-_\.]+)+)/?$
+                          default: /var/cache/data
+                worker:
+                  type: object
+                  description: "Worker environment parameters"
+                  required:
+                    - src
+                  properties:
+                    src:
+                      type: object
+                      description: "Worker image location"
+                      required:
+                        - method
+                      x-kubernetes-validations:
+                        - rule: '!(self.method in ["DOCKER", "SECRET"]) || has(self.image) && size(self.image) > 0'
+                          messageExpression: '"method: " + self.method + " requires a valid image!"'
+                          fieldPath: ".image"
+                      properties:
+                        method:
+                          type: string
+                          description: "Image pull approach"
+                          enum: [ DOCKER, PTX, INLINE, DATASOURCE, SECRET, SKIP ]
+                          example: DOCKER
+                        image:
+                          type: string
+                          description: "Image resource location"
+                          minLength: 1
+                          #format: "([scheme]://)([host][:port]/)[name][:version]"
+                          pattern: ^([a-zA-Z]+://)?([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*:([^:/]+)$
+                          example: busybox:latest
+                        auth:
+                          type: object
+                          description: "Credentials for remote image collection"
+                          required:
+                            - user
+                            - secret
+                          properties:
+                            server:
+                              type: string
+                              description: "Image server prefix"
+                              minLength: 1
+                              #format: "[scheme]://([host][:port])/[path](/)"
+                              pattern: ^([a-zA-Z]+)://([^:/]+(:[0-9]{1,5})?)?(/[^/]+)*/?$
+                              default: https://index.docker.io/v1/
+                            user:
+                              type: string
+                              description: "Image registry user"
+                              minLength: 1
+                              example: admin
+                            secret:
+                              type: string
+                              description: "Server password or token"
+                              minLength: 1
+                              format: password
+                              example: myPasswd!007
+                            insecure:
+                              type: boolean
+                              description: "Disable verification of image server's TLS certificate"
+                              default: false
+                    dst:
+                      type: object
+                      description: "Worker image destination configuration"
+                      x-kubernetes-validations:
+                        - rule: '!has(self.name) || size(self.name) > 0 && self.cached'
+                          messageExpression: '"Image with new name: " + self.name + " requires cacheing!"'
+                          fieldPath: ".cached"
+                      properties:
+                        cached:
+                          type: boolean
+                          description: "Worker cached in local registry"
+                          default: true
+                        name:
+                          type: string
+                          description: "Cached image name, otherwise autogenerated from source image"
+                          minLength: 1
+                          #format: "([group]/)[name][:version]"
+                          pattern: ^([^:/]+/)?([^:/]+):([^:/]+)$
+                          example: myworker:latest
+                    command:
+                      type: array
+                      description: "Override image start command"
+                      minItems: 1
+                      items:
+                        type: string
+                        description: "command & args"
+                        minLength: 1
+                      example: [ "/bin/sh", "-c", "sleep infinity" ]
+                    demands:
+                      type: object
+                      description: "Operating resource demands"
+                      properties:
+                        cpu:
+                          type: number
+                          description: "Number of requested vCPU cores"
+                          format: float
+                          minimum: 0.5
+                          example: 1.5
+                        memory:
+                          type: integer
+                          description: "Amount of requested memory in Megabyte (Mb)"
+                          minimum: 1
+                          example: 1024
+                    config:
+                      type: object
+                      description: "Worker image configuration parameters"
+                      properties:
+                        file:
+                          type: array
+                          description: "Configuration files"
+                          minItems: 1
+                          x-kubernetes-list-type: map
+                          x-kubernetes-list-map-keys: [ path ]
+                          items:
+                            type: object
+                            description: "Configuration file"
+                            required:
+                              - path
+                              - data
+                            properties:
+                              path:
+                                type: string
+                                description: "Mount path of configuration file"
+                                minLength: 1
+                                pattern: ^((/[a-zA-Z0-9-_\.]+)+)$
+                                example: /var/cache/worker/cfg.ini
+                              data:
+                                type: string
+                                description: "Configuration data"
+                                example: '{"var": 42}'
+                        env:
+                          type: array
+                          description: "Environment variables"
+                          minItems: 1
+                          x-kubernetes-list-type: map
+                          x-kubernetes-list-map-keys: [ key ]
+                          items:
+                            type: object
+                            description: "Key-value pairs"
+                            required:
+                              - key
+                            properties:
+                              key:
+                                type: string
+                                description: "Variable name"
+                                minLength: 1
+                                example: MY_CFG_ENVVAR
+                              value:
+                                type: string
+                                description: "Value string"
+                                example: "42"
+                dataspace:
+                  type: object
+                  description: "PTX dataspace-related configuration"
+                  properties:
+                    exchange:
+                      type: object
+                      description: "Attributes of data exchange via PTX dataspace"
+                      properties:
+                        data:
+                          type: object
+                          description: "Dataspace contract information for data exchange"
+                          required:
+                            - contract
+                            - provider
+                            - consumer
+                          properties:
+                            contract:
+                              type: string
+                              description: "Dataspace contract ID"
+                              minLength: 1
+                              pattern: ^[0-9a-fA-F]+$
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
+                        worker:
+                          type: object
+                          description: "Dataspace contract information for worker exchange"
+                          required:
+                            - contract
+                            - provider
+                            - consumer
+                          properties:
+                            contract:
+                              type: string
+                              description: "Dataspace contract ID"
+                              minLength: 1
+                              pattern: ^[0-9a-fA-F]+$
+                              example: "66db1a6dc29e3ba863a85e0f"
+                            provider:
+                              type: object
+                              description: "Data provider configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Data offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d187f4ee71f9f096bae8ca"
+                                resource:
+                                  type: string
+                                  description: "Data resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d1889cee71f9f096bae98b"
+                            consumer:
+                              type: object
+                              description: "Data consumer configuration"
+                              required:
+                                - offer
+                                - resource
+                              properties:
+                                offer:
+                                  type: string
+                                  description: "Service offering ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18b79ee71f9f096baecb1"
+                                resource:
+                                  type: string
+                                  description: "Software resource ID"
+                                  minLength: 1
+                                  pattern: ^[0-9a-fA-F]+$
+                                  example: "66d18bf6ee71f9f096baed58"
+                    privacy:
+                      type: object
+                      description: "Privacy zone restriction policies"
+                      properties:
+                        required:
+                          type: boolean
+                          description: "Demands PTX-edge specific scheduler"
+                          default: true
+                        scheduler:
+                          type: string
+                          description: "Used scheduling method"
+                          enum: [ DEFAULT, PRIVATE ]
+                          default: PRIVATE
+                        zones:
+                          type: array
+                          description: "List of privacy zones as node selection criteria"
+                          minItems: 1
+                          x-kubernetes-list-type: map
+                          x-kubernetes-list-map-keys: [ name ]
+                          x-kubernetes-validations:
+                            - rule: 'size(self.filter(i, has(i.preferred) && i.preferred)) <= 1'
+                              message: 'Only one zone can be preferred!'
+                            - rule: 'self.exists(i, has(i.preferred) && i.preferred == true) 
+                                      || self.all(i, has(i.preferred) && i.preferred == false)'
+                              message: 'Either one zone is preferred or all are set to be false explicitly!'
+                          items:
+                            type: object
+                            description: "Privacy zone"
+                            required:
+                              - name
+                            x-kubernetes-validations:
+                              - rule: "(!has(self.preferred) && self.adherent == false) 
+                                        || (has(self.preferred) && self.preferred >= self.adherent)"
+                                message: "Only preferred zone can be adherent!"
+                                fieldPath: ".adherent"
+                            properties:
+                              name:
+                                type: string
+                                description: "Unique zone name"
+                                minLength: 1
+                                pattern: ^[^:/]+$
+                                example: "zone-1"
+                              preferred:
+                                type: boolean
+                                description: "Prefer zone during scheduling and data transition"
+                                #default: false
+                              adherent:
+                                type: boolean
+                                description: "Demands the closest deployment scenario to the connector"
+                                default: false
+            status:
+              type: object
+              description: "Runtime information"
+              properties:
+                worker:
+                  type: object
+                  description: "Worker states"
+                  properties:
+                    ready:
+                      type: boolean
+                      description: "Worker is deployed successfully and running"
+                    exposed:
+                      type: boolean
+                      description: "Public interfaces are exposed"
+                    succeeded:
+                      type: boolean
+                      description: "Worker is completed successfully"
+                    failed:
+                      type: boolean
+                      description: "Worker is failed"
+                operator:
+                  type: object
+                  description: "State of operator subprocesses"
+                  properties:
+                    config:
+                      type: string
+                      description: "Configuration setup status"
+                      enum: [ Finished, Failed ]
+                    builder:
+                      type: string
+                      description: "Builder setup status"
+                      enum: [ Finished, Failed ]
+                    service:
+                      type: string
+                      description: "Interface setup status"
+                      enum: [ Finished, Failed ]
+                    middleware:
+                      type: string
+                      description: "Interface configuration setup status"
+                      enum: [ Finished, Failed ]
+                    ingress:
+                      type: string
+                      description: "Exposure setup status"
+                      enum: [ Finished, Failed ]
+                    deployment:
+                      type: string
+                      description: "Service worker setup status"
+                      enum: [ Finished, Failed ]
+                    job:
+                      type: string
+                      description: "Task worker setup status"
+                      enum: [ Finished, Failed ]
+                conditions:
+                  type: array
+                  description: "Registered conditions"
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                      - lastTransitionTime
+                      - reason
+                      - message
+                    properties:
+                      type:
+                        type: string
+                        description: "Condition type"
+                        enum: [ Processed, Ready, Exposed, Succeeded, Failed ]
+                      status:
+                        type: string
+                        description: "Condition state"
+                        enum: [ 'True', 'False', 'Unknown' ]
+                      lastTransitionTime:
+                        type: string
+                        description: "Last transition time"
+                        format: date-time
+                      reason:
+                        description: "Condition reason"
+                        type: string
+                      message:
+                        type: string
+                        description: "Condition message"
+      subresources:
+        status: { }
+      selectableFields:
+        - jsonPath: .spec.service.enabled
+        - jsonPath: .status.worker.ready
+        - jsonPath: .status.worker.exposed
+      additionalPrinterColumns:
+        - name: Datasource
+          type: string
+          description: "Datasource collection method"
+          jsonPath: .spec.data.src.method
+          priority: 0
+        - name: Path
+          type: string
+          description: "Datasource configuration"
+          jsonPath: .spec.data.src.path
+          priority: 1
+        - name: Worker
+          type: string
+          description: "Worker collection method"
+          jsonPath: .spec.worker.src.method
+          priority: 0
+        - name: Image
+          type: string
+          description: "Worker collection image"
+          jsonPath: .spec.worker.src.image
+          priority: 1
+        - name: Service
+          type: boolean
+          jsonPath: .spec.service.enabled
+          description: "Deployed as a service"
+          priority: 0
+        - name: Ready
+          type: string
+          description: "Worker state"
+          jsonPath: .status.worker.ready
+          priority: 0
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+          priority: 0
+---
