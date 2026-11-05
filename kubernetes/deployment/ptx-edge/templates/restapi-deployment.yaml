@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "edge.commonLabels" (list . "controller" "edge") | nindent 8 }}
+        {{- include "edge.commonLabels" (list . "restapi" "edge") | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.restapi.name }}
       {{- include "edge.controlPlaneSelector" . | nindent 6 }}
@@ -27,7 +27,7 @@ spec:
             - uvicorn
             - app.main:app
             - --host=0.0.0.0
-            - --port={{ .Values.restapi.port }}
+            - --port={{ .Values.restapi.port | int }}
             - --workers=2
             - --proxy-headers
             - --forwarded-allow-ips='*'
@@ -42,7 +42,7 @@ spec:
                   fieldPath: metadata.namespace
           ports:
             - name: api-port
-              containerPort: {{ .Values.restapi.port }}
+              containerPort: {{ .Values.restapi.port | int }}
               protocol: TCP
           {{- with .Values.restapi.resources }}
           resources:
@@ -51,7 +51,7 @@ spec:
           {{- if .Values.restapi.healthEndpoint }}
           livenessProbe:
             httpGet:
-              port: {{ .Values.restapi.port }}
+              port: {{ .Values.restapi.port | int }}
               path: {{ printf "/%s" (include "edge.joinPath" (list .Values.restapi.prefix .Values.restapi.healthEndpoint)) }}
             initialDelaySeconds: 30
             periodSeconds: 30

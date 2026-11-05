@@ -34,6 +34,8 @@ spec:
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
+            - name: APP_NAME
+              value: {{ .Values.connector.shortName }}
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -66,7 +68,7 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - name: pdc-port
-              containerPort: {{ .Values.connector.port }}
+              containerPort: {{ .Values.connector.port | int}}
               protocol: TCP
           {{- with .Values.connector.resources }}
           resources:

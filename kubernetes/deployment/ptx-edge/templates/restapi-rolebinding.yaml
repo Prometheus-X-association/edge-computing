@@ -11,4 +11,4 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.restapi.name }}-rbac
+  name: {{ .Values.restapi.name }}

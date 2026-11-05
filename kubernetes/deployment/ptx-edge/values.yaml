@@ -15,8 +15,8 @@ global:
 
 # gateway contains access setting of the underlying cluster's ingress
 gateway:
-  # proto is the used protocol based on whether TLS is enabled in the cluster gateway or not (default: http)
-  proto: http
+  # proto is the used protocol based on whether TLS is enabled in the cluster gateway or not (default: https)
+  proto: https
   # host is the hostname/IP address of the cluster gateway externally accessible by dataspace participants (required)
   host:
   # port is the exposed port of the cluster gateway (required)
@@ -42,6 +42,8 @@ localRegistry:
 connector:
   # name of the connector component
   name: connector
+  # shortName is used in resource names and URLs related to the connector (default: pdc)
+  shortName: pdc
   # domain explicitly defines the image NAMESPACE according to [HOST[:PORT]/]NAMESPACE/REPOSITORY[:TAG]
   domain: ptx
   # image defines the REPOSITORY or whole image ref where domain and version can be undefined

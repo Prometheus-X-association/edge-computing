@@ -96,7 +96,7 @@ Parameters:
 {{- $registryPort := $root.Values.registry.port | toString -}}
 
 
-{{- if $registryUrl -}}
+{{- if and $registryUrl (ne $registryUrl "<nil>") (ne $registryUrl "") -}}
   {{- if and $registryPort (ne $registryPort "<nil>") (ne $registryPort "") -}}
     {{- printf "%s:%s/%s:%s" $registryUrl $registryPort $image $version -}}
   {{- else -}}
@@ -120,7 +120,7 @@ Parameter: root context
   {{- $mongoDBPasswd = index $existingSecret.data "PDC_DB_PASSWORD" | b64dec -}}
 {{- end -}}
 {{- $mongoDBName := default "dataspace-connector" .Values.mongodb.credential.dbName -}}
-{{- $mongoDBUser := default "pdc" .Values.mongodb.credential.dbUser -}}
+{{- $mongoDBUser := default .Values.connector.shortName .Values.mongodb.credential.dbUser -}}
 {{- $mongoURI := "mongodb://%s:%s@127.0.0.1:27017/%s?authSource=%s&appName=%s" -}}
 {{- printf $mongoURI $mongoDBUser $mongoDBPasswd $mongoDBName $mongoDBName .Values.connector.name -}}
 {{- end -}}
@@ -131,10 +131,10 @@ Assemble the entrypoint URL template for the connector.
 Parameter: root context
 */}}
 {{- define "pdc.pdcEntrypoint" -}}
-{{- $proto := default "http" .Values.gateway.proto -}}
+{{- $proto := default "https" .Values.gateway.proto -}}
 {{- $gwHost := required "Gateway <host> is missing!" .Values.gateway.host -}}
 {{- $gwPort := required "Gateway <port> is missing!" .Values.gateway.port | toString -}}
-{{- printf "%s://%s:%s/%s/${PDC_DEF_PZ}/pdc" $proto $gwHost $gwPort .Release.Namespace  -}}
+{{- printf "%s://%s:%s/%s/${PDC_DEF_PZ}/%s" $proto $gwHost $gwPort .Release.Namespace .Values.connector.shortName -}}
 {{- end -}}
 
 {{/*

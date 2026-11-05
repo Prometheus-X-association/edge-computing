@@ -7,7 +7,7 @@ metadata:
 data:
   .env: |
     NODE_ENV={{ .Values.connector.config.nodeEnv }}
-    PORT={{ .Values.connector.port }}
+    PORT={{ .Values.connector.port | int }}
     #
     SESSION_SECRET={{ default (randAlphaNum 32) .Values.connector.credential.sessionSecret }}
     SESSION_COOKIE_EXPIRATION={{ default 24000 .Values.connector.credential.sessionSecretExpiration }}
@@ -27,7 +27,7 @@ data:
     EXCHANGE_TIMEOUT=120
   sandbox-cfg.json: |
     {
-      "endpoint": "http://${PDC_ID}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connector.port }}/",
+      "endpoint": "http://${PDC_ID}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connector.port | int }}/",
       "serviceKey": "${SERVICE_KEY}",
       "secretKey": "${SECRET_KEY}",
       "contractUri": "http://{{ .Values.sandbox.contract }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/",

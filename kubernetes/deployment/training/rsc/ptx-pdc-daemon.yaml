@@ -75,6 +75,8 @@ spec:
               subPath: config.json.tmp
               readOnly: true
           env:
+            - name: APP_NAME
+              value: "pdc"
             - name: PDC_ID
               valueFrom:
                 fieldRef:

@@ -17,7 +17,20 @@ NAMESPACE := ptx-edge
 ########################################################################################################################
 
 install ::
-	helm upgrade --install --namespace=${NAMESPACE} ${NAME} ./
+	helm install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
+		--set gateway.host=${GATEWAY_HOST} \
+		--set gateway.port=${GATEWAY_PORT} \
+		--set connector.credential.serviceKey=${SERVICE_KEY} \
+		--set connector.credential.secretKey=${SECRET_KEY} \
+
+local-install ::
+	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
+		--set gateway.host="training.k3d.localhost" \
+		--set gateway.port=4443 \
+		--set registry.url="registry.k3d.local" \
+		--set registry.port=5000 \
+		--set connector.credential.serviceKey="dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV" \
+		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x"
 
 lint ::
 	helm lint ./
@@ -31,7 +44,7 @@ dry-run :: lint
 		--set connector.credential.triggerKey="trigger1234"
 
 teardown ::
-	helm uninstall --namespace=${NAMESPACE} ${NAME}
+	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug
 
 status ::
 	helm status --namespace=${NAMESPACE} ${NAME}
