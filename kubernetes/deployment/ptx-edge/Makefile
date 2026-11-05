@@ -13,6 +13,7 @@
 # limitations under the License.
 NAME := ptx-edge
 NAMESPACE := ptx-edge
+TIMEOUT ?= 300s
 
 ########################################################################################################################
 
@@ -32,7 +33,8 @@ local-install ::
 		--set registry.url="registry.k3d.local" \
 		--set registry.port=5000 \
 		--set connector.credential.serviceKey="dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV" \
-		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x"
+		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x" \
+		--wait --timeout=${TIMEOUT}
 
 lint ::
 	helm lint ./
@@ -46,7 +48,7 @@ dry-run :: lint
 		--set connector.credential.triggerKey="testTriggerKey1234"
 
 teardown ::
-	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug
+	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug --cascade=foreground --wait --timeout=30s
 	#kubectl delete namespace ${NAMESPACE}
 
 status ::

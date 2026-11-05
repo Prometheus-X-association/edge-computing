@@ -18,6 +18,7 @@ import importlib
 import logging
 import os
 import pathlib
+import signal
 import typing
 
 import sys
@@ -31,6 +32,14 @@ from app.utils import nx_graph_to_str
 from kubernetes import client, watch
 
 log = logging.getLogger(__name__)
+
+
+def signal_handler(signum, frame):
+    print("\nCaught termination signal! Stop scheduler...")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 class SchedulerStrategy(enum.Enum):
