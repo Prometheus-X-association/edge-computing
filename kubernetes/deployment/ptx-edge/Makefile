@@ -20,6 +20,8 @@ install ::
 	helm install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
 		--set gateway.host=${GATEWAY_HOST} \
 		--set gateway.port=${GATEWAY_PORT} \
+		--set registry.url=${REGISTRY_URL} \
+		--set registry.port=${REGISTRY_PORT} \
 		--set connector.credential.serviceKey=${SERVICE_KEY} \
 		--set connector.credential.secretKey=${SECRET_KEY} \
 
@@ -37,19 +39,22 @@ lint ::
 
 dry-run :: lint
 	helm install --namespace=${NAMESPACE} --debug --dry-run=client ${NAME} ./ \
-		--set gateway.proto="https" --set gateway.host="example.gw.com" --set gateway.port=1234 \
+		--set gateway.proto="https" --set gateway.host="gw.example.com" --set gateway.port=1234 \
 		--set registry.url="registry.k3d.local" --set registry.port=5000 \
-		--set connector.credential.serviceKey="service1234" \
-		--set connector.credential.secretKey="secret1234" \
-		--set connector.credential.triggerKey="trigger1234"
+		--set connector.credential.serviceKey="testServiceKey1234" \
+		--set connector.credential.secretKey="testSecretKey1234" \
+		--set connector.credential.triggerKey="testTriggerKey1234"
 
 teardown ::
 	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug
+	#kubectl delete namespace ${NAMESPACE}
 
 status ::
-	helm status --namespace=${NAMESPACE} ${NAME}
+	helm status --namespace=${NAMESPACE} ${NAME} || true
 	@echo
 	helm list -A
+	@echo
+	kubectl -n ${NAMESPACE} get all,secrets,configmaps,middlewares,ingresses
 
 ########################################################################################################################
 

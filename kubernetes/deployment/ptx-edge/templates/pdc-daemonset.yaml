@@ -15,7 +15,7 @@ spec:
         {{- include "edge.commonLabels" (list . "connector" "dataspace") | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.connector.name }}
-      {{- include "pdc.controlPlaneSelector" . | nindent 6 }}
+      {{- include "pdc.dataPlaneSelector" . | nindent 6 }}
       initContainers:
         - name: {{ .Values.builder.name }}
           image: "{{ include "edge.imageRef" (list . "builder") }}"

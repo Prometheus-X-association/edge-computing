@@ -134,15 +134,10 @@ Add node selector to component which restricts deployment on nodes with control 
 
 Parameter: root context
 */}}
-{{- define "pdc.controlPlaneSelector" -}}
-{{- if or .Values.global.useControlPlane .Values.global.useConnectorNodeFilter -}}
-nodeSelector:
-{{- if eq .Values.global.useControlPlane true }}
-  node-role.kubernetes.io/control-plane: "true"
-{{- end -}}
+{{- define "pdc.dataPlaneSelector" -}}
 {{- if eq .Values.global.useConnectorNodeFilter true }}
+nodeSelector:
   connector.dataspace.ptx.org/enabled: "true"
-{{- end -}}
 {{- end -}}
 {{- end -}}
 

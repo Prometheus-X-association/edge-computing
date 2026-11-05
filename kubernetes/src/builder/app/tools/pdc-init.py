@@ -198,7 +198,9 @@ def _create_cluster_service(name: str, port: int, namespace: str, selector: dict
             name=name,
             labels={
                 "app.kubernetes.io/name": app,
-                "app.kubernetes.io/managed-by": CONFIG['pod']
+                "app.kubernetes.io/instance": name,
+                "app.kubernetes.io/managed-by": CONFIG['pod'],
+                "app.kubernetes.io/part-of": CONFIG['pod']
             },
             owner_references=[
                 client.V1OwnerReference(
@@ -245,11 +247,13 @@ def _create_cluster_middleware(name: str, namespace: str, app: str, strip_prefix
             "namespace": namespace,
             "labels": {
                 "app.kubernetes.io/name": app,
-                "app.kubernetes.io/managed-by": CONFIG['pod']
+                "app.kubernetes.io/instance": name,
+                "app.kubernetes.io/managed-by": CONFIG['pod'],
+                "app.kubernetes.io/part-of": CONFIG['pod']
             },
-            "owner_references": [
+            "ownerReferences": [
                 {
-                    "api_version": "v1",
+                    "apiVersion": "v1",
                     "kind": "Pod",
                     "name": CONFIG['pod'],
                     "uid": uid,
@@ -290,7 +294,9 @@ def _create_cluster_ingress(name: str, namespace: str, app: str, middleware: str
             name=name,
             labels={
                 "app.kubernetes.io/name": app,
-                "app.kubernetes.io/managed-by": CONFIG['pod']
+                "app.kubernetes.io/instance": name,
+                "app.kubernetes.io/managed-by": CONFIG['pod'],
+                "app.kubernetes.io/part-of": CONFIG['pod']
             },
             owner_references=[
                 client.V1OwnerReference(
