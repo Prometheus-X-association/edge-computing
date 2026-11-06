@@ -108,7 +108,7 @@ spec:
           configMap:
             name: {{ .Values.connector.name }}
             items:
-              - key: {{ .Values.connector.config.usedTemplateFile }}
+              - key: dataspace-config.json
                 path: config.json.tmp
         - name: kube-api-client-cfg
           projected:

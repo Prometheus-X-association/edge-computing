@@ -135,7 +135,7 @@ Add node selector to component which restricts deployment on nodes with control 
 Parameter: root context
 */}}
 {{- define "pdc.dataPlaneSelector" -}}
-{{- if eq .Values.global.useConnectorNodeFilter true }}
+{{- if eq .Values.connector.init.useConnectorNodeFilter true }}
 nodeSelector:
   connector.dataspace.ptx.org/enabled: "true"
 {{- end -}}

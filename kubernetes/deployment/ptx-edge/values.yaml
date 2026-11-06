@@ -9,9 +9,8 @@ global:
   # useControlPlane restricts ptx-edge component deployment on cluster nodes marked as control plane.
   # This feature expects using 'node-role.kubernetes.io/control-plane' label for designating the node role.
   useControlPlane: true
-  # useControlPlane restricts controller component deployment on cluster nodes explicitly permitted by a specific label.
-  # This feature expects using 'connector.dataspace.ptx.org/enabled' label with value 'true' for marking the permission.
-  useConnectorNodeFilter: true
+  # sandboxed enables testing the connector with in-cluster mocked dataspace services (default: false)
+  sandboxed: false
 
 # gateway contains access setting of the underlying cluster's ingress
 gateway:
@@ -29,7 +28,7 @@ registry:
   # port of the common registry (default: "")
   port:
 
-# cluster-local registry in which collected images are cached
+# localRegistry contains settings for the cluster-local registry in which collected images are cached
 localRegistry:
   # url of the local registry
   url: "registry.k3d.local"
@@ -80,6 +79,9 @@ connector:
     serviceChainAdapterTimeout: 3000
   # init contains settings for connector instance deployment and initialization
   init:
+    # useControlPlane restricts controller component deployment on cluster nodes explicitly permitted by a specific label.
+    # This feature expects using 'connector.dataspace.ptx.org/enabled' label with value 'true' for marking the permission.
+    useConnectorNodeFilter: true
     # forceRecreateExposure enables the (re)creation of service/middleware/ingress resources per privacy zone
     forceRecreateExposure: true
   # resources reflects the requested amount of compute resources
@@ -125,9 +127,9 @@ dataspace:
   # consentUri is the base URL of the Consent Manager service (optional)
   consentUri: "https://consent.visionstrust.com/v1"
 
-# sandbox contains a sandbox related settings mainly for testing and development purposes
+# sandbox contains sandbox related settings mainly for testing and development purposes
 sandbox:
-  # ns is the namespace of the sandbox
+  # ns is the namespace of the sandbox set up within the cluster
   ns: ptx-sandbox
   # contract is the name of the Contract Manager service in the sandbox
   contract: contract
@@ -135,6 +137,12 @@ sandbox:
   consent: consent
   # catalog is name of Dataspace Catalog service in the sandbox
   catalog: catalog
+  # credential contains the keys for the pdc instance to communicate with the mocked dataspace services
+  credential:
+    # serviceKey is the Client ID API credential for the mocked catalogue (required if <global.sandboxed> is true)
+    serviceKey:
+    # secretKey is the Client Secret API credential for the mocked catalogue (required if <global.sandboxed> is true)
+    secretKey:
 
 ########################################################################################################################
 

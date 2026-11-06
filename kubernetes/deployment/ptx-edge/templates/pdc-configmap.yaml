@@ -25,16 +25,18 @@ data:
     #
     EXCHANGE_TRIGGER_API_KEY=${EXCHANGE_TRIGGER_API_KEY}
     EXCHANGE_TIMEOUT=120
-  sandbox-cfg.json: |
+  {{- if .Values.global.sandboxed }}
+  dataspace-config.json: |
     {
       "endpoint": "http://${PDC_ID}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connector.port | int }}/",
-      "serviceKey": "${SERVICE_KEY}",
-      "secretKey": "${SECRET_KEY}",
+      "serviceKey": "{{ required "Sandbox <serviceKey is missing!>" .Values.sandbox.credential.serviceKey }}",
+      "secretKey": "{{ required "Sandbox <secretKey is missing!>" .Values.sandbox.credential.secretKey }}",
       "contractUri": "http://{{ .Values.sandbox.contract }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/",
       "catalogUri": "http://{{ .Values.sandbox.catalog }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
       "consentUri": "http://{{ .Values.sandbox.consent }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/"
     }
-  dataspace-cfg.json: |
+  {{- else }}
+  dataspace-config.json: |
     {
       "endpoint": "{{ include "pdc.pdcEntrypoint" . }}",
       "serviceKey": "${SERVICE_KEY}",
@@ -47,4 +49,5 @@ data:
       "serviceChainAdapter": "{{ default false .Values.connector.config.serviceChainAdapter }}",
       "serviceChainAdapterTimeout": "{{ default 3000 .Values.connector.config.serviceChainAdapterTimeout | int }}"
     }
-immutable: true
+    {{- end }}
+immutable: false
