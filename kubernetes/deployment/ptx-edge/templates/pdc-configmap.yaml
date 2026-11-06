@@ -8,32 +8,26 @@ data:
   .env: |
     NODE_ENV={{ .Values.connector.config.nodeEnv }}
     PORT={{ .Values.connector.port | int }}
-    #
-    SESSION_SECRET={{ default (randAlphaNum 32) .Values.connector.credential.sessionSecret }}
-    SESSION_COOKIE_EXPIRATION={{ default 24000 .Values.connector.credential.sessionSecretExpiration }}
-    #
+    SESSION_SECRET={{ .Values.connector.credential.sessionSecret | default (randAlphaNum 32) }}
+    SESSION_COOKIE_EXPIRATION={{ .Values.connector.credential.sessionSecretExpiration | default 24000 }}
     MONGO_URI="{{ include "pdc.mongoURI" . }}"
-    #
     CURATOR=https://visionspol.eu
     MAINTAINER=https://visionspol.eu
-    #
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
-    #
     JWT_BEARER_TOKEN_EXPIRATION=3h
     JWT_REFRESH_TOKEN_EXPIRATION=1d
-    #
     EXCHANGE_TRIGGER_API_KEY=${EXCHANGE_TRIGGER_API_KEY}
     EXCHANGE_TIMEOUT=120
-  {{- if .Values.global.sandboxed }}
+  {{- if .Values.sandbox.enabled }}
   dataspace-config.json: |
     {
       "endpoint": "http://${PDC_ID}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connector.port | int }}/",
       "serviceKey": "{{ required "Sandbox <serviceKey is missing!>" .Values.sandbox.credential.serviceKey }}",
       "secretKey": "{{ required "Sandbox <secretKey is missing!>" .Values.sandbox.credential.secretKey }}",
-      "contractUri": "http://{{ .Values.sandbox.contract }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/",
-      "catalogUri": "http://{{ .Values.sandbox.catalog }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
-      "consentUri": "http://{{ .Values.sandbox.consent }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/"
+      "contractUri": "http://{{ .Values.sandbox.contract.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/",
+      "catalogUri": "http://{{ .Values.sandbox.catalog.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
+      "consentUri": "http://{{ .Values.sandbox.consent.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/"
     }
   {{- else }}
   dataspace-config.json: |
@@ -45,9 +39,9 @@ data:
       "catalogUri": "{{ required "Dataspace <catalogUri> is missing!" .Values.dataspace.catalogUri }}",
       "consentUri": "{{ .Values.dataspace.consentUri }}",
       "credentials": [],
-      "expressLimitSize": "{{ default "100mb" .Values.connector.config.expressLimitSize }}",
-      "serviceChainAdapter": "{{ default false .Values.connector.config.serviceChainAdapter }}",
-      "serviceChainAdapterTimeout": "{{ default 3000 .Values.connector.config.serviceChainAdapterTimeout | int }}"
+      "expressLimitSize": "{{ .Values.connector.config.expressLimitSize | default "100mb" }}",
+      "serviceChainAdapter": "{{ (.Values.connector.config.serviceChainAdapter | toString | lower) | default "false" }}",
+      "serviceChainAdapterTimeout": "{{ (.Values.connector.config.serviceChainAdapterTimeout | int) | default 3000 }}"
     }
     {{- end }}
 immutable: false

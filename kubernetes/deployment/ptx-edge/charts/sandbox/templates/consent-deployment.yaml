@@ -1,0 +1,30 @@
+{{- if ne (.Values.minimalSetup | toString | lower) "true" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.consent.name | default "consent" }}
+  namespace: {{ .Values.ns }}
+  labels:
+    {{- include "sandbox.commonLabels" (list . "consent") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.consent.name | default "consent" }}
+      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "sandbox.commonLabels" (list . "consent") | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.consent.name | default "consent" }}
+          image: {{ .Values.consent.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: consent-port
+              containerPort: 8082
+      restartPolicy: Always
+{{- end -}}

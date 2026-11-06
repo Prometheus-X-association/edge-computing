@@ -13,6 +13,7 @@
 # limitations under the License.
 NAME := ptx-edge
 NAMESPACE := ptx-edge
+NAMESPACE_SANDBOX := ptx-sandbox
 TIMEOUT ?= 300s
 
 ########################################################################################################################
@@ -25,6 +26,7 @@ install ::
 		--set registry.port=${REGISTRY_PORT} \
 		--set connector.credential.serviceKey=${SERVICE_KEY} \
 		--set connector.credential.secretKey=${SECRET_KEY} \
+		--set sandbox.ns=${NAMESPACE_SANDBOX}
 
 local-install ::
 	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
@@ -34,12 +36,14 @@ local-install ::
 		--set registry.port=5000 \
 		--set connector.credential.serviceKey="dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV" \
 		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x" \
+		--set sandbox.ns=${NAMESPACE_SANDBOX} \
 		--wait --timeout=${TIMEOUT}
 
 lint ::
 	helm lint ./
 
 dry-run :: lint
+	helm dependency build
 	helm install --namespace=${NAMESPACE} --debug --dry-run=client ${NAME} ./ \
 		--set gateway.proto="https" --set gateway.host="gw.example.com" --set gateway.port=1234 \
 		--set registry.url="registry.k3d.local" --set registry.port=5000 \
@@ -52,11 +56,15 @@ teardown ::
 	#kubectl delete namespace ${NAMESPACE}
 
 status ::
+	helm dependency list
+	@echo
 	helm status --namespace=${NAMESPACE} ${NAME} || true
 	@echo
-	helm list -A
-	@echo
-	kubectl -n ${NAMESPACE} get all,secrets,configmaps,middlewares,ingresses
+	helm list -A || true
+	@echo -e "\n>>> Namespace: ${NAMESPACE_SANDBOX}\n"
+	kubectl -n ${NAMESPACE_SANDBOX} get all || true
+	@echo -e "\n>>> Namespace: ${NAMESPACE}\n"
+	kubectl -n ${NAMESPACE} get all,secrets,configmaps,middlewares,ingresses || true
 
 ########################################################################################################################
 

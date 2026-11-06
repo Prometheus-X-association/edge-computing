@@ -1,0 +1,6 @@
+dependencies:
+- name: sandbox
+  repository: file://charts/sandbox
+  version: 0.1.0
+digest: sha256:cc11fbc9069ed75f3ee59381380c1f16fa3eccde057691df48a0799c5fcc3b6e
+generated: "2026-11-06T21:41:20.520670865Z"

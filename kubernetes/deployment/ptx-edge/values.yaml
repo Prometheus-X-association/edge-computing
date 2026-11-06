@@ -9,8 +9,6 @@ global:
   # useControlPlane restricts ptx-edge component deployment on cluster nodes marked as control plane.
   # This feature expects using 'node-role.kubernetes.io/control-plane' label for designating the node role.
   useControlPlane: true
-  # sandboxed enables testing the connector with in-cluster mocked dataspace services (default: false)
-  sandboxed: false
 
 # gateway contains access setting of the underlying cluster's ingress
 gateway:
@@ -34,6 +32,15 @@ localRegistry:
   url: "registry.k3d.local"
   # port of the local registry
   port: 5000
+
+# dataspace contains the URIs of the dataspace components which the PDC connects to (default: VisionTrust's components)
+dataspace:
+  # contractUri is the base URL of the Contract Manager service (required)
+  contractUri: "https://contract.visionstrust.com/"
+  # catalogUri is the base URL of the Dataspace Catalog service (required)
+  catalogUri: "https://api.visionstrust.com/v1/"
+  # consentUri is the base URL of the Consent Manager service (optional)
+  consentUri: "https://consent.visionstrust.com/v1"
 
 ########################################################################################################################
 
@@ -118,34 +125,6 @@ mongodb:
 
 ########################################################################################################################
 
-# dataspace contains the URIs of the dataspace components which the PDC connects to (default: VisionTrust's components)
-dataspace:
-  # contractUri is the base URL of the Contract Manager service (required)
-  contractUri: "https://contract.visionstrust.com/"
-  # catalogUri is the base URL of the Dataspace Catalog service (required)
-  catalogUri: "https://api.visionstrust.com/v1/"
-  # consentUri is the base URL of the Consent Manager service (optional)
-  consentUri: "https://consent.visionstrust.com/v1"
-
-# sandbox contains sandbox related settings mainly for testing and development purposes
-sandbox:
-  # ns is the namespace of the sandbox set up within the cluster
-  ns: ptx-sandbox
-  # contract is the name of the Contract Manager service in the sandbox
-  contract: contract
-  # consent is the name of the Consent Manager service in the sandbox
-  consent: consent
-  # catalog is name of Dataspace Catalog service in the sandbox
-  catalog: catalog
-  # credential contains the keys for the pdc instance to communicate with the mocked dataspace services
-  credential:
-    # serviceKey is the Client ID API credential for the mocked catalogue (required if <global.sandboxed> is true)
-    serviceKey:
-    # secretKey is the Client Secret API credential for the mocked catalogue (required if <global.sandboxed> is true)
-    secretKey:
-
-########################################################################################################################
-
 # builder contains builder related settings
 builder:
   # name of the builder component
@@ -220,3 +199,18 @@ restapi:
     requests:
       cpu: 1000m
       memory: 300Mi
+
+########################################################################################################################
+
+# sandbox contains sandbox related settings mainly for testing and development purposes
+sandbox:
+  # enabled allows testing the connector with in-cluster mocked dataspace services (default: false)
+  enabled: true
+  # ns is the namespace of the sandbox set up within the cluster
+  ns: ptx-sandbox
+  # minimalSetup enables only the <catalog> service minimally necessary for PDC initialization
+  minimalSetup: true
+  # catalog contains settings for the Dataspace Catalog service
+  catalog:
+    # name of Dataspace Catalog service in the sandbox
+    name: catalog

@@ -33,15 +33,15 @@ Parameters:
 {{- else -}}
   {{- $tier = "edge" -}}
 {{- end -}}
-app.kubernetes.io/name: {{ index $root.Values $nameRef "name" }}
+app.kubernetes.io/name: {{ index $root.Values $nameRef "name" | trunc 63 | trimSuffix "-" }}
 {{- if $root.Chart.AppVersion }}
 app.kubernetes.io/version: {{ $root.Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ $root.Release.Service }}
 app.kubernetes.io/instance: {{ $root.Release.Name }}
 helm.sh/chart: {{ include "edge.chart" $root }}
-edge.dataspace.ptx.org/env: {{ default "development" $root.Values.global.env }}
-edge.dataspace.ptx.org/tier: {{ default "edge" $tier }}
+edge.dataspace.ptx.org/env: {{ $root.Values.global.env | default "development" }}
+edge.dataspace.ptx.org/tier: {{ $tier | default "edge" }}
 {{- end -}}
 
 {{/*
@@ -50,7 +50,7 @@ Add node selector to component which restricts deployment on nodes with control 
 Parameter: root context
 */}}
 {{- define "edge.controlPlaneSelector" -}}
-{{- if eq .Values.global.useControlPlane true -}}
+{{- if eq (.Values.global.useControlPlane | toString |lower) "true" -}}
 nodeSelector:
   node-role.kubernetes.io/control-plane: "true"
 {{- end -}}
@@ -123,7 +123,7 @@ Assemble the entrypoint URL template for the connector.
 Parameter: root context
 */}}
 {{- define "pdc.pdcEntrypoint" -}}
-{{- $proto := default "https" .Values.gateway.proto -}}
+{{- $proto := .Values.gateway.proto | default "https" -}}
 {{- $gwHost := required "Gateway <host> is missing!" .Values.gateway.host -}}
 {{- $gwPort := required "Gateway <port> is missing!" .Values.gateway.port | toString -}}
 {{- printf "%s://%s:%s/%s/${PDC_DEF_PZ}/%s" $proto $gwHost $gwPort .Release.Namespace .Values.connector.shortName -}}
@@ -135,7 +135,7 @@ Add node selector to component which restricts deployment on nodes with control 
 Parameter: root context
 */}}
 {{- define "pdc.dataPlaneSelector" -}}
-{{- if eq .Values.connector.init.useConnectorNodeFilter true }}
+{{- if eq (.Values.connector.init.useConnectorNodeFilter | toString | lower) "true" }}
 nodeSelector:
   connector.dataspace.ptx.org/enabled: "true"
 {{- end -}}

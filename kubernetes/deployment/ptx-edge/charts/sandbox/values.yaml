@@ -1,0 +1,32 @@
+# Default values for sandbox.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ns is the namespace of the sandbox set up within the cluster
+ns: ptx-sandbox
+# minimalSetup enables only the <catalog> service minimally necessary for PDC initialization
+minimalSetup: false
+# contract contains settings for the Consent Manager service
+contract:
+  # name of the Contract Manager service in the sandbox
+  name: contract
+  # full image path of the mocked service
+  image: registry.k3d.local:5000/ptx-sandbox/contract:1.11.0-slim
+# consent contains settings for the Consent Manager service
+consent:
+  # name of the Consent Manager service in the sandbox
+  name: consent
+  # full image path of the mocked service
+  image: registry.k3d.local:5000/ptx-sandbox/consent:1.11.0-slim
+# catalog contains settings for the Dataspace Catalog service
+catalog:
+  # name of Dataspace Catalog service in the sandbox
+  name: catalog
+  # full image path of the mocked service
+  image: registry.k3d.local:5000/ptx-sandbox/catalog:1.11.0-slim
+# credential contains the keys for the pdc instance to communicate with the mocked dataspace services
+credential:
+  # serviceKey is the Client ID API credential for the mocked catalogue (required if <global.sandboxed> is true)
+  serviceKey: "dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV"
+  # secretKey is the Client Secret API credential for the mocked catalogue (required if <global.sandboxed> is true)
+  secretKey: "Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x"

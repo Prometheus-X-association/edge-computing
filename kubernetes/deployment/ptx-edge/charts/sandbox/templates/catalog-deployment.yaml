@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.catalog.name | default "catalog" }}
+  namespace: {{ .Values.ns }}
+  labels:
+    {{- include "sandbox.commonLabels" (list . "catalog") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.catalog.name | default "catalog" }}
+      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "sandbox.commonLabels" (list . "catalog") | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.catalog.name | default "catalog" }}
+          image: {{ .Values.catalog.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: catalog-port
+              containerPort: 8082
+      restartPolicy: Always

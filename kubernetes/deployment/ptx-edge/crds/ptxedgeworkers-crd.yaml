@@ -3,6 +3,11 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: ptxedgeworkers.dataspace.ptx.org # <plural>.<group> format
+  labels:
+    app.kubernetes.io/name: ptx-edge
+    app.kubernetes.io/version: "1.0"
+    app.kubernetes.io/instance: ptx-edge
+    edge.dataspace.ptx.org/tier: edge
 spec:
   group: dataspace.ptx.org
   scope: Namespaced
