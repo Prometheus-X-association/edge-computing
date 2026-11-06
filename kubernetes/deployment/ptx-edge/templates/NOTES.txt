@@ -1,0 +1,8 @@
+Thank you for installing {{ include "edge.chart" . }}!
+
+Your deployed setup configuration is <{{ ternary "sandboxed" .Values.global.env .Values.sandbox.enabled }}>.
+
+To learn more about the release, try the following commands:
+
+  $ helm status --namespace={{ .Release.Namespace }} {{ .Release.Name }}
+  $ helm get all --namespace={{ .Release.Namespace }} {{ .Release.Name }}
