@@ -1,0 +1,16 @@
+{{- if or .Values.localRegistry.rootCAFileContent .Values.localRegistry.rootCAFilePath -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-root-ca.crt
+  labels:
+    {{- include "edge.commonLabels" (list . "localRegistry" "registry") | nindent 4 }}
+data:
+  ca.crt: |
+    {{- if .Values.localRegistry.rootCAFileContent -}}
+      {{- .Values.localRegistry.rootCAFileContent | nindent 4 }}
+    {{- else if .Values.localRegistry.rootCAFilePath -}}
+      {{- .Files.Get .Values.localRegistry.rootCAFilePath | nindent 4 }}
+    {{- end }}
+immutable: true
+{{- end -}}

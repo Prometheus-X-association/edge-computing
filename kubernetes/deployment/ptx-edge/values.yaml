@@ -21,17 +21,23 @@ gateway:
 
 # registry of the ptx-edge component's images
 registry:
-  # url of the common registry (default: "")
+  # url of the common image registry (default: "")
   url:
-  # port of the common registry (default: "")
+  # port of the common image registry (default: "")
   port:
 
 # localRegistry contains settings for the cluster-local registry in which collected images are cached
 localRegistry:
-  # url of the local registry
+  # name of the registry component
+  name: registry
+  # url of the local registry accessible from within the cluster
   url: "registry.k3d.local"
-  # port of the local registry
+  # port of the local registry accessible from within the cluster
   port: 5000
+  # rootCAFilePath defines the path of the ca.crt file for the communication with the local registry (optional)
+  rootCAFilePath: ""
+  # caFileContent contains the registry's ca.crt file given by the --set-file flag (optional)
+  rootCAFileContent: ""
 
 # dataspace contains the URIs of the dataspace components which the PDC connects to (default: VisionTrust's components)
 dataspace:

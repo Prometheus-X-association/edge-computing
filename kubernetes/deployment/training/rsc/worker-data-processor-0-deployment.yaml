@@ -152,6 +152,7 @@ spec:
             items:
               - key: ca.crt
                 path: registry_CA.crt
+            optional: true
         - name: kube-api-client-cfg
           projected:
             defaultMode: 420

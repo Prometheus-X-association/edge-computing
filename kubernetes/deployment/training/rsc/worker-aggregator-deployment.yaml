@@ -85,6 +85,7 @@ spec:
             items:
               - key: ca.crt
                 path: registry_CA.crt
+            optional: true
 ---
 apiVersion: v1
 kind: Service

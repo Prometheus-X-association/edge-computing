@@ -245,6 +245,7 @@ volumes:
       items:
         - key: ca.crt
           path: registry_CA.crt
+      optional: true
   {% if (spec.data.dst and spec.data.dst.method | upper == "LOCAL") or
         (spec.data.dst is none and spec.data.src.method | upper != "SKIP") %}
   - name: data-dir

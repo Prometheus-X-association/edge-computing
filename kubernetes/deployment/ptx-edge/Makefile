@@ -49,7 +49,8 @@ dry-run :: lint
 		--set registry.url="registry.k3d.local" --set registry.port=5000 \
 		--set connector.credential.serviceKey="testServiceKey1234" \
 		--set connector.credential.secretKey="testSecretKey1234" \
-		--set connector.credential.triggerKey="testTriggerKey1234"
+		--set connector.credential.triggerKey="testTriggerKey1234" \
+		--set localRegistry.rootCAFileContent="$$(echo "----BEGIN CERTIFICATE-----test----BEGIN CERTIFICATE-----")"
 
 teardown ::
 	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug --cascade=foreground --wait --timeout=30s
