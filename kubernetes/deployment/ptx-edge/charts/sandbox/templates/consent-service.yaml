@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.consent.name | default "consent" }}
+  namespace: {{ .Values.ns }}
+  labels:
+    {{- include "sandbox.commonLabels" (list . "consent") | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .Values.consent.name | default "consent" }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  type: NodePort
+  ports:
+    - name: consent-port
+      port: 8888
+      targetPort: consent-port
+      nodePort: 30033

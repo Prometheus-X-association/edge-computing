@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.contract.name | default "contract" }}
+  namespace: {{ .Values.ns }}
+  labels:
+    {{- include "sandbox.commonLabels" (list . "contract") | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .Values.contract.name | default "contract" }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  type: NodePort
+  ports:
+    - name: contract-port
+      port: 8888
+      targetPort: contract-port
+      nodePort: 30031
