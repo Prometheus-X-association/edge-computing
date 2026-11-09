@@ -132,6 +132,8 @@ spec:
         #  value: "3000"
         - name: CFG_PDC_SECRET
           value: "pdc-secrets-env"
+        - name: CFG_INGRESS_CREDENTIAL
+          value: "api-basic-auth"
       ports:
         - name: api-port
           containerPort: 8080
@@ -162,8 +164,8 @@ metadata:
   name: api-basic-auth
   namespace: ptx-edge
 stringData:
-  username: admin
-  password: admin
+  username: "admin"
+  password: "admin"
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

@@ -122,7 +122,7 @@ apiVersion: v1
 kind: Secret
 type: Opaque
 metadata:
-  name: api-basic-auth
+  name: ${API_CRED_NAME}
   namespace: ${PTX}
 data:
   users: ${API_CREDS_BASE64_ENCODED}
@@ -130,11 +130,11 @@ data:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: api-basic-auth
+  name: ${API_CRED_NAME}
   namespace: ${PTX}
 spec:
   basicAuth:
-    secret: api-basic-auth
+    secret: ${API_CRED_NAME}
     realm: ${PTX}
 ---
 apiVersion: traefik.io/v1alpha1
@@ -165,7 +165,7 @@ metadata:
     tier: edge
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-api-basic-auth@kubernetescrd,${PTX}-api-secure-headers@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: ${PTX}-${API_CRED_NAME}@kubernetescrd,${PTX}-api-secure-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

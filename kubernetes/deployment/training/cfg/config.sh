@@ -122,7 +122,8 @@ CATALOG_DNS="${CATALOG}.${SANDBOX}.svc.cluster.local"
 # Loaded from creds/fured-cloud-creds.sh !
 ### API_BASIC_USER=
 ### API_BASIC_PASSWORD=
-API_CREDS_BASE64_ENCODED=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}" | openssl base64 -A)
+API_CREDS=$(htpasswd -Bnb "${API_BASIC_USER}" "${API_BASIC_PASSWORD}")
+API_CREDS_BASE64_ENCODED=$(printf '%s' "${API_CREDS}" | openssl base64 -A)
 
 # PDC
 PDC=pdc
@@ -132,7 +133,7 @@ PDC_PORT=3000
 PDC_ID='${PDC_ID}'          # placeholder for keeping PDC's service/ingress name
 PDC_DEF_PZ='${PDC_DEF_PZ}'  # placeholder for keeping PDC's privacy zone ID
 # Loaded from creds/fured-cloud-creds.sh !
-PDC_SECRET_NAME="${PDC}-secrets-env"
+PDC_SECRET_NAME="${PDC}-secret-env"
 ### PDC_SERVICE_KEY=
 ### PDC_SECRET_KEY=
 PDC_CFG_SERVICE_KEY='${SERVICE_KEY}'  # placeholder for injecting key in runtime
@@ -179,6 +180,7 @@ fi
 REST_API="rest-api"
 API_PORT=8080
 PREFIX="${PTX}/api/v1"
+API_CRED_NAME="api-basic-auth"
 
 # Scheduler
 SCHEDULER="scheduler"

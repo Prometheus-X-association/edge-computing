@@ -3,7 +3,7 @@
 {% set middlewares = [] %}
 {% if public %}
   {% if public.restricted %}
-    {% set middlewares = middlewares + [namespace ~ "-api-basic-auth@kubernetescrd"] %}
+    {% set middlewares = middlewares + [namespace ~ "-" ~ cfg.ingress.credential ~"@kubernetescrd"] %}
   {% endif %}
   {% if public.stripped %}
     {% set middlewares = middlewares + [namespace ~ "-" ~ name ~ "-stripprefix@kubernetescrd"] %}

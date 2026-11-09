@@ -97,7 +97,7 @@ async def create_ptxedgeworker(body: kopf.Body,
     await kopf.execute(fns=memo.handlers)
     ####
     del memo.handlers
-    logger.info(f"{PEW.kind}[{name}] initiated successfully")
+    logger.info(f"{PEW.kind}[{name}] initiated successfully!")
     memo.state = WorkerHandlingState(memo.get("state", 0)) | WorkerHandlingState.CREATED
     patch.fns.append(patch_processed)
     logger.debug(f"[HANDLER] {memo.state}")

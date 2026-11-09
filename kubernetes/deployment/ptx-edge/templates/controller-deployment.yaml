@@ -50,6 +50,8 @@ spec:
               value: "{{ .Values.connector.port | int}}"
             - name: CFG_PDC_SECRET
               value: "{{ .Values.connector.credential.secretName }}"
+            - name: CFG_INGRESS_CREDENTIAL
+              value: "{{ .Values.restapi.credential.secretName }}"
           ports:
             - name: api-port
               containerPort: {{ .Values.controller.port | int }}
