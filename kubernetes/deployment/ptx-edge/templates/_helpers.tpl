@@ -85,25 +85,30 @@ Parameters:
 {{- $componentKey := index . 1 -}}
 
 {{- $component := index $root.Values $componentKey -}}
-{{- $image := required (printf "%s <image> is missing!" $componentKey) $component.image -}}
+{{- $image := required (printf "%s <image> is missing!" $componentKey) $component.image | toString -}}
 
-{{- if $component.domain -}}
-    {{- $image = printf "%s/%s" $component.domain $image -}}
+{{- $domain := toString $component.domain -}}
+{{- if and $domain (ne $domain "<nil>") (ne $domain "") -}}
+    {{- $image = printf "%s/%s" $domain $image -}}
 {{- end -}}
 
-{{- $version := default $root.Chart.AppVersion $component.version | toString -}}
-{{- $registryUrl := $root.Values.registry.url -}}
+{{- $version := toString $component.version -}}
+{{- if and $version (ne $version "<nil>") -}}
+  {{- $image = printf "%s:%s" $image $version -}}
+{{- else if and $root.Chart.AppVersion (ne $version "") -}}
+  {{- $image = printf "%s:%s" $image (toString $root.Chart.AppVersion) -}}
+{{- end -}}
+
+{{- $registryUrl := $root.Values.registry.url | toString -}}
 {{- $registryPort := $root.Values.registry.port | toString -}}
-
-
 {{- if and $registryUrl (ne $registryUrl "<nil>") (ne $registryUrl "") -}}
   {{- if and $registryPort (ne $registryPort "<nil>") (ne $registryPort "") -}}
-    {{- printf "%s:%s/%s:%s" $registryUrl $registryPort $image $version -}}
+    {{- printf "%s:%s/%s" $registryUrl $registryPort $image -}}
   {{- else -}}
-    {{- printf "%s/%s:%s" $registryUrl $image $version -}}
+    {{- printf "%s/%s" $registryUrl $image -}}
   {{- end -}}
 {{- else -}}
-  {{- printf "%s:%s" $image $version -}}
+  {{- printf "%s" $image -}}
 {{- end -}}
 {{- end -}}
 
@@ -125,8 +130,12 @@ Parameter: root context
 {{- define "pdc.pdcEntrypoint" -}}
 {{- $proto := .Values.gateway.proto | default "https" -}}
 {{- $gwHost := required "Gateway <host> is missing!" .Values.gateway.host -}}
-{{- $gwPort := required "Gateway <port> is missing!" .Values.gateway.port | toString -}}
-{{- printf "%s://%s:%s/%s/${PDC_DEF_PZ}/%s" $proto $gwHost $gwPort .Release.Namespace .Values.connector.shortName -}}
+{{- $gwPort := .Values.gateway.port | toString -}}
+{{- if and $gwPort (ne $gwPort "<nil>") (ne $gwPort "") -}}
+  {{- printf "%s://%s:%s/%s/${PDC_DEF_PZ}/%s" $proto $gwHost $gwPort .Release.Namespace .Values.connector.shortName -}}
+{{- else -}}
+  {{- printf "%s://%s/%s/${PDC_DEF_PZ}/%s" $proto $gwHost .Release.Namespace .Values.connector.shortName -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
