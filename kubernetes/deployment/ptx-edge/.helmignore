@@ -21,3 +21,7 @@
 .idea/
 *.tmproj
 .vscode/
+# ignored project files
+Makefile
+*.tgz
+.*
