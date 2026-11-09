@@ -1,0 +1,26 @@
+{{- $entryPoint := ternary "websecure" "web" (eq ($.Values.gateway.proto | toString | lower) "https") -}}
+{{- $tls := ternary "true" "false" (eq ($.Values.gateway.proto | toString | lower) "https") -}}
+{{- $mwrCredRefs := printf "%s-%s@kubernetescrd" .Release.Namespace .Values.restapi.credential.secretName -}}
+{{- $mwrHeaderRefs := printf "%s-%s@kubernetescrd" .Release.Namespace "api-secure-headers" -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.restapi.name }}
+  labels:
+    {{- include "edge.commonLabels" (list . "restapi" "edge") | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: {{ $entryPoint }}
+    traefik.ingress.kubernetes.io/router.tls: {{ $tls | quote }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s" (join "," (list $mwrCredRefs $mwrHeaderRefs)) }}
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: {{ .Values.restapi.prefix }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.restapi.name }}
+                port:
+                  name: api-port

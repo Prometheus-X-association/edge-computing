@@ -1,0 +1,29 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-secure-headers
+  labels:
+    {{- include "edge.commonLabels" (list . "restapi" "edge") | nindent 4 }}
+spec:
+  headers:
+    frameDeny: true
+    customFrameOptionsValue: SAMEORIGIN
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Values.restapi.credential.secretName }}
+  labels:
+    {{- include "edge.commonLabels" (list . "restapi" "edge") | nindent 4 }}
+spec:
+  basicAuth:
+    secret: {{ .Values.restapi.credential.secretName }}
+    realm: {{ .Release.Name }}

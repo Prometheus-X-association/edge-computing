@@ -14,30 +14,9 @@
 NAME := ptx-edge
 NAMESPACE := ptx-edge
 NAMESPACE_SANDBOX := ptx-sandbox
-TIMEOUT ?= 300s
+TIMEOUT ?= 60s
 
 ########################################################################################################################
-
-install ::
-	helm install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
-		--set gateway.host=${GATEWAY_HOST} \
-		--set gateway.port=${GATEWAY_PORT} \
-		--set registry.url=${REGISTRY_URL} \
-		--set registry.port=${REGISTRY_PORT} \
-		--set connector.credential.serviceKey=${SERVICE_KEY} \
-		--set connector.credential.secretKey=${SECRET_KEY} \
-		--set sandbox.ns=${NAMESPACE_SANDBOX}
-
-local-install ::
-	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
-		--set gateway.host="training.k3d.localhost" \
-		--set gateway.port=4443 \
-		--set registry.url="registry.k3d.local" \
-		--set registry.port=5000 \
-		--set connector.credential.serviceKey="dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV" \
-		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x" \
-		--set sandbox.ns=${NAMESPACE_SANDBOX} \
-		--wait --timeout=${TIMEOUT}
 
 lint ::
 	helm lint ./
@@ -50,11 +29,36 @@ dry-run :: lint
 		--set connector.credential.serviceKey="testServiceKey1234" \
 		--set connector.credential.secretKey="testSecretKey1234" \
 		--set connector.credential.triggerKey="testTriggerKey1234" \
-		--set localRegistry.rootCAFileContent="$$(echo "----BEGIN CERTIFICATE-----test----BEGIN CERTIFICATE-----")"
+		--set localRegistry.rootCAFileContent="$$(echo "----BEGIN CERTIFICATE-----test----BEGIN CERTIFICATE-----")" \
+		--set restapi.credentials.htpasswdUsers="admin:1234"
 
-teardown ::
-	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug --cascade=foreground --wait --timeout=30s
-	#kubectl delete namespace ${NAMESPACE}
+install ::
+	helm install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
+		--set gateway.host=${GATEWAY_HOST} \
+		--set gateway.port=${GATEWAY_PORT} \
+		--set registry.url=${REGISTRY_URL} \
+		--set registry.port=${REGISTRY_PORT} \
+		--set localRegistry.url=${REGISTRY_URL} \
+		--set localRegistry.port=${REGISTRY_PORT} \
+		--set-file localRegistry.rootCAFileContent="${REGISTRY_CA_FILE}" \
+		--set connector.credential.serviceKey=${SERVICE_KEY} \
+		--set connector.credential.secretKey=${SECRET_KEY} \
+		--set connector.credential.triggerKey=${TRIGGER_KEY} \
+		--set sandbox.ns=${NAMESPACE_SANDBOX}
+
+local-install ::
+	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
+		--set gateway.host="training.k3d.localhost" \
+		--set gateway.port=4443 \
+		--set registry.url="registry.k3d.local" \
+		--set registry.port=5000 \
+		--set localRegistry.url="registry.k3d.local" \
+		--set localRegistry.port=5000 \
+		--set connector.credential.serviceKey="dWJUUKH9rYF9wr_UAPb6PQXW9h17G7dzuGCbiDhcyjCGgHzLwBp6QHOQhDg0FFxS24GD8nvw37oe_LOjl7ztNATYiVOd_ZEVHQpV" \
+		--set connector.credential.secretKey="Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3jhKZOgY5JlBSvWkFBHH_6fFhYQZWXNoZxO78x" \
+		--set restapi.credentials.htpasswdUsers="admin:$2y$05$Ysx0LH7.V7cwA1EHiqEIwu3DAdkuK.zjrHz.1zvxWVWv3QZHUqeiq"
+		--set sandbox.ns=${NAMESPACE_SANDBOX} \
+		--wait --timeout=${TIMEOUT}
 
 status ::
 	helm dependency list
@@ -66,6 +70,10 @@ status ::
 	kubectl -n ${NAMESPACE_SANDBOX} get all || true
 	@echo -e "\n>>> Namespace: ${NAMESPACE}\n"
 	kubectl -n ${NAMESPACE} get all,secrets,configmaps,middlewares,ingresses || true
+
+teardown ::
+	helm uninstall --namespace=${NAMESPACE} ${NAME} --debug --cascade=foreground --wait --timeout=30s
+	#kubectl delete namespace ${NAMESPACE}
 
 ########################################################################################################################
 

@@ -7,16 +7,16 @@ global:
   # env marks the deployment state: e.g., production, development, test, demo, etc.
   env: production
   # useControlPlane restricts ptx-edge component deployment on cluster nodes marked as control plane.
-  # This feature expects using 'node-role.kubernetes.io/control-plane' label for designating the node role.
+  # This feature expects using 'node-role.kubernetes.io/control-plane' label for designating the control plane role.
   useControlPlane: true
 
 # gateway contains access setting of the underlying cluster's ingress
 gateway:
   # proto is the used protocol based on whether TLS is enabled in the cluster gateway or not (default: https)
   proto: https
-  # host is the hostname/IP address of the cluster gateway externally accessible by dataspace participants (required)
+  # host is the reference address of the cluster gateway externally accessible by dataspace participants (required)
   host:
-  # port is the exposed port of the cluster gateway (required)
+  # port is the exposed port of the cluster gateway (optional)
   port:
 
 # registry of the ptx-edge component's images
@@ -30,14 +30,14 @@ registry:
 localRegistry:
   # name of the registry component
   name: registry
-  # url of the local registry accessible from within the cluster
-  url: "registry.k3d.local"
-  # port of the local registry accessible from within the cluster
-  port: 5000
+  # url of the local registry accessible from within the cluster (required if builder's image cache is used)
+  url:
+  # port of the local registry accessible from within the cluster (required if builder's image cache is used)
+  port:
   # rootCAFilePath defines the path of the ca.crt file for the communication with the local registry (optional)
-  rootCAFilePath: ""
+  rootCAFilePath:
   # caFileContent contains the registry's ca.crt file given by the --set-file flag (optional)
-  rootCAFileContent: ""
+  rootCAFileContent:
 
 # dataspace contains the URIs of the dataspace components which the PDC connects to (default: VisionTrust's components)
 dataspace:
@@ -82,8 +82,6 @@ connector:
   config:
     # nodeEnv is PDC's running mode (development or production)
     nodeEnv: "development"
-    # usedTemplateFile defines the template file to be used from the PDC's configuration (default: dataspace-cfg.json)
-    usedTemplateFile: dataspace-cfg.json
     # expressLimitSize is the increased body size of requests that express can accept (default: 2mb)
     expressLimitSize: "100mb"
     # serviceChainAdapter enables the service chain adapter in the PDC (default: false)
@@ -196,6 +194,12 @@ restapi:
   version:
   # port on which the api listens
   port: 8080
+  # credential contains the keys for the REST-API instance
+  credential:
+    # secretName is the generated secret containing the basic credentials for the REST-API
+    secretName: api-basic-auth
+    # htpasswdUser encodes the REST-API's basic credentials using 'htpasswd -Bnb "${USER}" "${PASSWORD}"'
+    htpasswdUser:
   # prefix is used as the root URL for endpoints
   prefix: /ptx-edge/api/v1
   # healthEndpoint is the path part of the restapi's liveness URL
