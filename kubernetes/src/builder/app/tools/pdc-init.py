@@ -52,6 +52,7 @@ CONFIG = {"port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
           "namespace": os.getenv("NAMESPACE", default=DEF_NS),
           "def_zone": os.getenv("DEF_ZONE", default=DEF_ZONE_ID),
           "app": os.getenv("APP_NAME", default=DEF_APP),
+          "version": os.getenv("APP_VERSION", default=None),
           "secure": os.getenv("GW_SECURE", default="true")}
 
 REQUIRED_FIELDS = ("type", "namespace")
@@ -455,6 +456,8 @@ def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int
             zone_id = zone.split('/')[-1].lower()
             srv_name = f"{DEF_APP}-{zone_id}".lower() if zone else DEF_APP
             selector = {'app.kubernetes.io/name': app}
+            if CONFIG['version']:
+                selector['app.kubernetes.io/version'] = str(CONFIG['version'])
             if zone:
                 selector[zone] = "true"
             uid = patched_pod.metadata.uid if patched_pod else None

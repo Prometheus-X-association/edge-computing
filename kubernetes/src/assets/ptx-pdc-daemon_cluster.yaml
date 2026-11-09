@@ -98,15 +98,15 @@ metadata:
   name: pdc
   namespace: ptx-edge
   labels:
-    app: pdc
+    app.kubernetes.io/name: pdc
 spec:
   selector:
     matchLabels:
-      app: pdc
+      app.kubernetes.io/name: pdc
   template:
     metadata:
       labels:
-        app: pdc
+        app.kubernetes.io/name: pdc
     spec:
       nodeSelector:
         connector.dataspace.ptx.org/enabled: "true"
@@ -125,6 +125,8 @@ spec:
               mountPath: /var/run/secrets/projected
               readOnly: true
           env:
+            - name: APP_NAME
+              value: "pdc"
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
