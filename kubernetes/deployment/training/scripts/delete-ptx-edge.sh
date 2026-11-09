@@ -19,6 +19,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ########################################################################################################################
 
 LOG "Tearing down PTX-edge deployment..."
+kubectl delete crd/ptxedgeworkers.dataspace.ptx.org
 ${KCTL} delete namespace "${PTX}" || true
 ${KCTL} delete pv --all || true
 #${KCTL} delete crd -l env=demo || true

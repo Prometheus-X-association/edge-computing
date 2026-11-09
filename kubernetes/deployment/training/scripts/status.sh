@@ -18,9 +18,9 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
-${KCTL} -n ptx-sandbox get all --ignore-not-found
+${KCTL} -n "${SANDBOX}" get all --ignore-not-found
 echo
-${KCTL} get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress -o wide --ignore-not-found
+${KCTL} -n "${PTX}" get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress -o wide --ignore-not-found
 echo
 ${KCTL} events | tail -n20
 

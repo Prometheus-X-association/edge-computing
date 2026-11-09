@@ -34,6 +34,6 @@ app.kubernetes.io/version: {{ $root.Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ $root.Release.Service }}
 app.kubernetes.io/instance: {{ printf "%s-%s" $root.Release.Name $root.Chart.Name | trunc 63 | trimSuffix "-" }}
 helm.sh/chart: {{ include "sandbox.chart" $root }}
-edge.dataspace.ptx.org/env: testing
-edge.dataspace.ptx.org/tier: sandbox
+edge.dataspace.ptx.org/env: sandbox
+edge.dataspace.ptx.org/tier: testing
 {{- end -}}
