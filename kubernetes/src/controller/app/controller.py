@@ -183,7 +183,7 @@ async def pew_manager(name: str,
 ########################################################################################################################
 
 @kopf.on.event('apps', 'v1', 'deployments', field="status", value=kopf.PRESENT,
-               labels={"app.kubernetes.io/component": "worker"})
+               labels={"ptxedgeworkers.dataspace.ptx.org/type": "managed"})
 async def watch_deployments(event: kopf.RawEvent,
                             memo: kopf.Memo,
                             pew_index: kopf.Index[str, WorkerNotifier],
@@ -222,7 +222,7 @@ async def watch_deployments(event: kopf.RawEvent,
 
 
 @kopf.on.event('batch', 'v1', 'jobs', field="status", value=kopf.PRESENT,
-               labels={"app.kubernetes.io/component": "worker"})
+               labels={"ptxedgeworkers.dataspace.ptx.org/type": "managed"})
 async def watch_jobs(event: kopf.RawEvent,
                      pew_index: kopf.Index[str, WorkerNotifier],
                      logger: kopf.Logger,
@@ -263,7 +263,7 @@ async def watch_jobs(event: kopf.RawEvent,
 
 
 @kopf.on.event('networking.k8s.io', 'v1', 'ingresses', field="status", value=kopf.PRESENT,
-               labels={"app.kubernetes.io/component": "worker"})
+               labels={"ptxedgeworkers.dataspace.ptx.org/type": "managed"})
 async def watch_ingresses(event: kopf.RawEvent,
                           memo: kopf.Memo,
                           pew_index: kopf.Index[str, WorkerNotifier],

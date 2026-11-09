@@ -7,21 +7,26 @@ metadata:
     app.kubernetes.io/name: {{ name }}
     app.kubernetes.io/part-of: {{ name }}
     app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+    app.kubernetes.io/component: worker
     edge.dataspace.ptx.org/tier: worker
+    ptxedgeworkers.dataspace.ptx.org/type: managed
     {# autofilled #}
 spec:
   replicas: 1
   selector:
     matchLabels:
       ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
+      ptxedgeworkers.dataspace.ptx.org/type: managed
   template:
     metadata:
       labels:
         ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
+        ptxedgeworkers.dataspace.ptx.org/type: managed
         app.kubernetes.io/name: {{ name }}
-        app.kubernetes.io/component: worker
         app.kubernetes.io/part-of: {{ name }}
         app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+        app.kubernetes.io/component: worker
+        edge.dataspace.ptx.org/tier: worker
     spec:
       restartPolicy: Always
       {% filter indent(width=6, first=true) %}

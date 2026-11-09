@@ -7,7 +7,9 @@ metadata:
     app.kubernetes.io/name: {{ name }}
     app.kubernetes.io/part-of: {{ name }}
     app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+    app.kubernetes.io/component: worker
     edge.dataspace.ptx.org/tier: worker
+    ptxedgeworkers.dataspace.ptx.org/type: managed
     {# autofilled #}
 spec:
   completions: 1
@@ -17,9 +19,11 @@ spec:
     metadata:
       labels:
         ptxedgeworkers.dataspace.ptx.org/id: {{ name }}
+        ptxedgeworkers.dataspace.ptx.org/type: managed
         app.kubernetes.io/name: {{ name }}
         app.kubernetes.io/part-of: {{ name }}
         app.kubernetes.io/managed-by: {{ cfg.controller.manager }}
+        app.kubernetes.io/component: worker
         edge.dataspace.ptx.org/tier: worker
     spec:
       restartPolicy: Never
