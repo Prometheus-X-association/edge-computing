@@ -20,7 +20,9 @@ import yaml
 from asyncer import asyncify
 from kubernetes.aio import client
 
-from model.ptxedgeworker import PEW, PEWStatusOperatorConfig, PEWStatusOperator
+from model.ptxedgeworker import (PEW, PEWStatusOperatorConfig, PEWStatusOperator, PEWStatusOperatorBuilder,
+                                 PEWStatusOperatorService, PEWStatusOperatorMiddleware, PEWStatusOperatorIngress,
+                                 PEWStatusOperatorDeployment, PEWStatusOperatorJob)
 from utils.helper import sanitize_model, convert_k8s_api_error
 
 
@@ -46,6 +48,16 @@ TEMPLATE_FACTORY = {
     ResourceType.JOB: "worker_job.yaml.jinja2"
 }
 
+STATUS_FACTORY = {
+    ResourceType.CONFIG: PEWStatusOperatorConfig,
+    ResourceType.BUILDER: PEWStatusOperatorBuilder,
+    ResourceType.SERVICE: PEWStatusOperatorService,
+    ResourceType.MIDDLEWARE: PEWStatusOperatorMiddleware,
+    ResourceType.INGRESS: PEWStatusOperatorIngress,
+    ResourceType.DEPLOYMENT: PEWStatusOperatorDeployment,
+    ResourceType.JOB: PEWStatusOperatorJob
+}
+
 
 async def render_template(_type: ResourceType,
                           pew: PEW, name: str,
@@ -64,7 +76,7 @@ def patch_handler_status(memo: kopf.Memo,
     memo.setdefault("operator", PEWStatusOperator())
     setattr(memo.operator,
             handler.value,
-            PEWStatusOperatorConfig.FAILED if failed else PEWStatusOperatorConfig.FINISHED)
+            STATUS_FACTORY[handler].FAILED if failed else STATUS_FACTORY[handler].FINISHED)
     patch.status['operator'] = memo.operator.model_dump(mode="json")
 
 
@@ -115,7 +127,8 @@ async def create_worker_configuration(pew: PEW,
 
 
 async def create_worker_deployment(pew: PEW,
-                                   *, name: str,
+                                   *,
+                                   name: str,
                                    namespace: str,
                                    memo: kopf.Memo,
                                    patch: kopf.Patch,
