@@ -1,3 +1,4 @@
+{{- if ne (.Values.minimalSetup | toString | lower) "true" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,3 +16,4 @@ spec:
       port: 8888
       targetPort: consent-port
       nodePort: 30033
+{{- end -}}
