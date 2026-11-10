@@ -6,6 +6,7 @@
 ### Global settings to enable local PTX deployment and PTX core sandbox without NGROK reverse tunnel
 LOCAL_SETUP="true"
 USE_SANDBOX="true"
+USE_HELM="true"
 USE_NGROK="false"
 
 ### NGROK tunneling

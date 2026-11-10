@@ -22,10 +22,25 @@ LOG "Cluster configuration"
 
 echo "Use local cluster setup: ${LOCAL_SETUP}"
 echo "Use sandbox for PTX core: ${USE_SANDBOX}"
+echo "Install ptx-edge by Helm chart: ${USE_HELM}"
+echo
+${KCTL} config set-context --current --namespace "${PTX}"
 
 ########################################################################################################################
 
-if [ "${USE_SANDBOX}" = "true" ]; then
+if [ "${USE_HELM}" = "true" ]; then
+    LOG "Installing ptx-edge from Helm chart..."
+    #envsubst <"${SCRIPT_DIR}/rsc/helm-values.tmp.yaml" >"${SCRIPT_DIR}/rsc/helm-values.yaml"
+    helm install "${PTX}" "${ROOT_DIR}/deployment/ptx-edge/" \
+                    --namespace="${PTX}" --create-namespace \
+                    -f <(envsubst <"${SCRIPT_DIR}/rsc/helm-values.tmp.yaml") \
+                    --set-file localRegistry.rootCAFileContent="${ROOT_DIR}/src/registry/.certs/ca/ca.crt" \
+                    --debug --wait --timeout="${TIMEOUT}s"
+fi
+
+########################################################################################################################
+
+if [ "${USE_HELM}" != "true" ] && [ "${USE_SANDBOX}" = "true" ]; then
     LOG "Setting up PTX-core sandbox..."
     ${KCTL} create namespace "${SANDBOX}"
     ${KCTL} -n "${SANDBOX}" apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-sandbox-catalog-pod.yaml")
@@ -37,52 +52,53 @@ if [ "${USE_SANDBOX}" = "true" ]; then
 
     log ">>> PTX-core catalog is reachable on ${CATALOG_DNS}"
     ${KCTL} -n "${SANDBOX}" run --rm --restart=Never --image busybox:latest -ti "check" --command -- \
-                        sh -c "nslookup ${CATALOG_DNS}; wget -T3 -qO- http://${CATALOG_DNS}:3002/__admin/health; echo"
+                        sh -c "nslookup ${CATALOG_DNS}; wget -T3 -qO- http://${CATALOG_DNS}:8888/__admin/health; echo"
 fi
 
 ########################################################################################################################
 
-LOG "Setting up PTX-edge components..."
-${KCTL} create namespace "${PTX}"
-${KCTL} config set-context --current --namespace "${PTX}"
+if [ "${USE_HELM}" != "true" ]; then
+    LOG "Setting up PTX-edge components..."
+    ${KCTL} create namespace "${PTX}"
+    #${KCTL} config set-context --current --namespace "${PTX}"
+    #
+    log "Set up registry configuration..."
+    ${KCTL} create configmap registry-root-ca.crt --from-file="ca.crt=${ROOT_DIR}/src/registry/.certs/ca/ca.crt"
+fi
 
 ########################################################################################################################
 
-log "Set up registry configuration..."
-${KCTL} create configmap registry-root-ca.crt --from-file="ca.crt=${ROOT_DIR}/src/registry/.certs/ca/ca.crt"
-
-########################################################################################################################
-
-log "Set up PDC configuration..."
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-config.yaml")
-echo
-${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clusterrolebinding \
+if [ "${USE_HELM}" != "true" ]; then
+    log "Set up PDC configuration..."
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-config.yaml")
+    echo
+    ${KCTL} get configmaps,secrets,serviceaccount,role,rolebinding,clusterrole,clusterrolebinding \
                                                                                     -l "app.kubernetes.io/name=${PDC}"
+    log "Deploy per-zone PDCs"
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-daemon.yaml")
+    ${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
+    echo
+fi
 
-log "Deploy per-zone PDCs"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-pdc-daemon.yaml")
-${KCTL} get all,daemonset,ingress,middleware.traefik.io -l "app.kubernetes.io/name=${PDC}"
-echo
-
-log "Waiting for PDC instances:$(kubectl get pods -l app.kubernetes.io/name="${PDC}" \
+log "Waiting for PDC instances:$(kubectl get pods -l app.kubernetes.io/name=connector \
                                                 -o=jsonpath='{range .items[*]} | {.metadata.name}') to initialize..."
-for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
+for pod in $(kubectl get pods -l app.kubernetes.io/name=connector -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
-${KCTL} wait --timeout="${TIMEOUT}s" "ds/${PDC}" \
-    --for=jsonpath='.status.numberReady'="$(kubectl get "ds/${PDC}" -o=jsonpath='{.status.desiredNumberScheduled}')"
+#
+${KCTL} wait --timeout="${TIMEOUT}s" "ds/connector" \
+    --for=jsonpath='.status.numberReady'="$(kubectl get "ds/connector" -o=jsonpath='{.status.desiredNumberScheduled}')"
 
-
-log "Waiting for PDC instances: $(kubectl get pods -l app.kubernetes.io/name="${PDC}" -o name) to set up..."
-for pod in $(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -o jsonpath='{.items[*].metadata.name}'); do
+log "Waiting for PDC instances: $(kubectl get pods -l app.kubernetes.io/name=connector -o name) to set up..."
+for pod in $(kubectl get pods -l app.kubernetes.io/name=connector -o jsonpath='{.items[*].metadata.name}'); do
     ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
 
-log "Waiting for PDC ingress:$(kubectl get ingress -l app.kubernetes.io/name="${PDC}" \
+log "Waiting for PDC ingress:$(kubectl get ingress -l app.kubernetes.io/name=connector \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 sleep 10
 for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
-    zone_pdc=$(kubectl get pods -l "app.kubernetes.io/name=${PDC}" -l "${LAB_PZ}/${pz}" --no-headers --ignore-not-found)
+    zone_pdc=$(kubectl get pods -l app.kubernetes.io/name=connector -l "${LAB_PZ}/${pz}" --no-headers --ignore-not-found)
     if [ -z "${zone_pdc}" ]; then
         warning "Missing PDC instance for zone: ${pz}"
         continue
@@ -96,39 +112,48 @@ for pz in ${PZ_DATA_0} ${PZ_DATA_1}; do
     curl -LSsk --fail-with-body "${_PDC_URL}" | grep "href" | head -n1
     echo
 done
-########################################################################################################################
-
-log "Deploy scheduler"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-scheduler-deployment.yaml")
-${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
-echo
-${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
 
 ########################################################################################################################
 
-log "Deploy Controller"
-#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
-#kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml")
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml")
-${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
-echo
-${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
+if [ "${USE_HELM}" != "true" ]; then
+    log "Deploy scheduler"
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-scheduler-deployment.yaml")
+    ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${SCHEDULER}"
+    echo
+    ${KCTL} get all -l "app.kubernetes.io/name=${SCHEDULER}"
+fi
 
 ########################################################################################################################
 
-log "Deploy Builder"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-builder-serviceaccount.yaml")
-echo
-${KCTL} get serviceaccount,roles,rolebindings -l "app.kubernetes.io/name=${BUILDER}"
+if [ "${USE_HELM}" != "true" ]; then
+    log "Deploy Controller"
+    #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering-crd.yaml"
+    #kubectl apply -n ptx-edge -f "${ROOT_DIR}/src/controller/crd/peering.yaml"
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml")
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-controller-deployment.yaml")
+    ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${CONTROLLER}"
+    echo
+    ${KCTL} get all,crd -l "app.kubernetes.io/name=${CONTROLLER}"
+fi
 
 ########################################################################################################################
 
-log "Deploy REST-API"
-${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-restapi-deployment.yaml" )
-${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"
-echo
-${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
+if [ "${USE_HELM}" != "true" ]; then
+    log "Deploy Builder"
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-builder-serviceaccount.yaml")
+    echo
+    ${KCTL} get serviceaccount,roles,rolebindings -l "app.kubernetes.io/name=${BUILDER}"
+fi
+
+########################################################################################################################
+
+if [ "${USE_HELM}" != "true" ]; then
+    log "Deploy REST-API"
+    ${KCTL} apply -f=<(envsubst <"${SCRIPT_DIR}/rsc/ptx-edge-restapi-deployment.yaml" )
+    ${KCTL} wait --for="condition=Available" --timeout="${TIMEOUT}s" "deployment/${REST_API}"
+    echo
+    ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
+fi
 
 log "Waiting for API ingress:$(kubectl get ingress -l app.kubernetes.io/name="${REST_API}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."

@@ -19,11 +19,17 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ########################################################################################################################
 
 LOG "Tearing down PTX-edge deployment..."
-kubectl delete crd/ptxedgeworkers.dataspace.ptx.org
-${KCTL} delete namespace "${PTX}" || true
-${KCTL} delete pv --all || true
-#${KCTL} delete crd -l env=demo || true
-${KCTL} delete namespace "${SANDBOX}" || true
+if [ "${USE_HELM}" = "true" ]; then
+    helm uninstall --namespace "${PTX}" "${PTX}" \
+                    --debug --ignore-not-found \
+                    --cascade=foreground --wait --timeout="${TIMEOUT}s"
+else
+    ${KCTL} delete crd/ptxedgeworkers.dataspace.ptx.org || true
+    ${KCTL} delete namespace "${PTX}" || true
+    ${KCTL} delete pv --all || true
+    #${KCTL} delete crd -l env=demo || true
+    ${KCTL} delete namespace "${SANDBOX}" || true
+fi
 
 ########################################################################################################################
 
