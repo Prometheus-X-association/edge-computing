@@ -42,7 +42,8 @@ done
 # Default to false, can be override from creds/0-default-config.sh !
 USE_SANDBOX="${USE_SANDBOX:-false}"
 LOCAL_SETUP="${LOCAL_SETUP:-false}"
-USE_NGROK="${LOCAL_SETUP:-false}"
+USE_HELM="${USE_HELM:-true}"
+USE_NGROK="${USE_NGROK:-false}"
 
 ########################################################################################################################
 

@@ -11,7 +11,7 @@ building block (ptx-edge) is represented with standalone components distributed 
 - _k3d-training-server-0_: main control plane node running ptx-edge management components.
 - _k3d-node-*_: worker nodes belonging to different privacy zones (data-0/1, and federated).
 
-The currently supported training setup si the following:
+The currently supported training setup is the following:
 
 ![trainig_setup_architecture.png](figures/trainig_setup_architecture.png)
 
