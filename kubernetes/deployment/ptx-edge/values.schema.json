@@ -1,0 +1,587 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Values Schema for ptx-edge",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "env": {
+          "type": "string",
+          "default": "production"
+        },
+        "useControlPlane": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "required": [
+        "proto",
+        "host"
+      ],
+      "properties": {
+        "proto": {
+          "type": "string",
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "https"
+        },
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "localRegistry": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "rootCAFilePath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rootCAFileContent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "dataspace": {
+      "type": "object",
+      "required": [
+        "catalogUri",
+        "contractUri"
+      ],
+      "properties": {
+        "catalogUri": {
+          "type": "string",
+          "default": "https://api.visionstrust.com/v1/"
+        },
+        "contractUri": {
+          "type": "string",
+          "default": "https://contract.visionstrust.com/"
+        },
+        "consentUri": {
+          "type": "string",
+          "default": "https://consent.visionstrust.com/v1"
+        }
+      }
+    },
+    "connector": {
+      "type": "object",
+      "required": [
+        "name",
+        "shortName",
+        "image",
+        "port",
+        "credential",
+        "config"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "connector",
+          "minLength": 1
+        },
+        "shortName": {
+          "type": "string",
+          "default": "pdc",
+          "minLength": 1
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 3000
+        },
+        "credential": {
+          "type": "object",
+          "required": [
+            "secretName",
+            "serviceKey",
+            "secretKey"
+          ],
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "minLength": 1,
+              "default": "pdc-secret-env"
+            },
+            "serviceKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "secretKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "triggerKey": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "sessionSecret": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "sessionSecretExpiration": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 24000
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "required": [
+            "nodeEnv"
+          ],
+          "properties": {
+            "nodeEnv": {
+              "type": "string",
+              "enum": [
+                "development",
+                "production"
+              ],
+              "default": "development"
+            },
+            "expressLimitSize": {
+              "type": "string",
+              "default": "100mb"
+            },
+            "serviceChainAdapter": {
+              "type": "boolean",
+              "default": false
+            },
+            "serviceChainAdapterTimeout": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3000
+            }
+          }
+        },
+        "init": {
+          "type": "object",
+          "properties": {
+            "useConnectorNodeFilter": {
+              "type": "boolean",
+              "default": true
+            },
+            "forceRecreateExposure": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "default": "500m"
+                },
+                "memory": {
+                  "type": "string",
+                  "default": "250Mi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mongodb": {
+      "type": "object",
+      "required": [
+        "name",
+        "image",
+        "credential"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "mongodb"
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "credential": {
+          "type": "object",
+          "required": [
+            "secretName",
+            "dbName",
+            "dbUser",
+            "dbPassword"
+          ],
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "default": "pdc-mongo-env"
+            },
+            "dbName": {
+              "type": "string",
+              "default": "dataspace-connector"
+            },
+            "dbUser": {
+              "type": "string",
+              "default": "pdc"
+            },
+            "dbPassword": {
+              "type": "string"
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "default": "100m"
+                },
+                "memory": {
+                  "type": "string",
+                  "default": "150Mi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "builder": {
+      "type": "object",
+      "required": [
+        "name",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "builder"
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "callbackPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 9999
+        }
+      }
+    },
+    "controller": {
+      "type": "object",
+      "required": [
+        "name",
+        "image",
+        "port"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "controller"
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8080
+        },
+        "healthEndpoint": {
+          "type": "string",
+          "default": "/healthz"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "default": "1000m"
+                },
+                "memory": {
+                  "type": "string",
+                  "default": "200Mi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scheduler": {
+      "type": "object",
+      "required": [
+        "name",
+        "image",
+        "refName"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "scheduler"
+        },
+        "refName": {
+          "type": "string",
+          "minLength": 1,
+          "default": "ptx-edge-scheduler"
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "random",
+            "genetic"
+          ],
+          "default": "genetic"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "default": "1000m"
+                },
+                "memory": {
+                  "type": "string",
+                  "default": "200Mi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "restapi": {
+      "type": "object",
+      "required": [
+        "name",
+        "image",
+        "port",
+        "prefix"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "rest-api"
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8080
+        },
+        "credential": {
+          "type": "object",
+          "required": [
+            "secretName",
+            "htpasswdUser"
+          ],
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "default": "api-basic-auth"
+            },
+            "htpasswdUser": {
+              "type": "string"
+            }
+          }
+        },
+        "prefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "healthEndpoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "default": "1000m"
+                },
+                "memory": {
+                  "type": "string",
+                  "default": "300Mi"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

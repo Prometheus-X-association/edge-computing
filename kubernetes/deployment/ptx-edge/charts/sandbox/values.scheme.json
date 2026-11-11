@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Values Schema for sandbox",
+  "type": "object",
+  "required": [
+    "ns",
+    "catalog",
+    "contract",
+    "minimalSetup"
+  ],
+  "properties": {
+    "ns": {
+      "type": "string",
+      "minLength": 1,
+      "default": "ptx-sandbox"
+    },
+    "minimalSetup": {
+      "type": "boolean",
+      "default": false
+    },
+    "contract": {
+      "type": "object",
+      "required": [
+        "name",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "contract"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "required": [
+        "name",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "consent"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "required": [
+        "name",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "default": "catalog"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "credential": {
+      "type": "object",
+      "required": [
+        "secretKey",
+        "serviceKey"
+      ],
+      "properties": {
+        "serviceKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "secretKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

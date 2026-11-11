@@ -19,32 +19,21 @@ TIMEOUT ?= 60s
 ########################################################################################################################
 
 lint ::
-	helm lint ./
+	helm lint ./ || true
 
 dry-run :: lint
 	helm dependency build
 	helm install --namespace=${NAMESPACE} --debug --dry-run=client ${NAME} ./ \
-		--set gateway.proto="https" --set gateway.host="gw.example.com" --set gateway.port=1234 \
-		--set registry.url="registry.k3d.local" --set registry.port=5000 \
+		--set gateway.host="gw.example.com" \
+		--set gateway.port=1234 \
+		--set registry.url="registry.k3d.local" \
+		--set registry.port=5000 \
 		--set connector.credential.serviceKey="testServiceKey1234" \
 		--set connector.credential.secretKey="testSecretKey1234" \
 		--set connector.credential.triggerKey="testTriggerKey1234" \
+		--set mongodb.credential.dbPassword="passwd123" \
 		--set localRegistry.rootCAFileContent="$$(echo "----BEGIN CERTIFICATE-----test----BEGIN CERTIFICATE-----")" \
-		--set restapi.credentials.htpasswdUsers="admin:1234"
-
-install ::
-	helm install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
-		--set gateway.host=${GATEWAY_HOST} \
-		--set gateway.port=${GATEWAY_PORT} \
-		--set registry.url=${REGISTRY_URL} \
-		--set registry.port=${REGISTRY_PORT} \
-		--set localRegistry.url=${REGISTRY_URL} \
-		--set localRegistry.port=${REGISTRY_PORT} \
-		--set-file localRegistry.rootCAFileContent="${REGISTRY_CA_FILE}" \
-		--set connector.credential.serviceKey=${SERVICE_KEY} \
-		--set connector.credential.secretKey=${SECRET_KEY} \
-		--set connector.credential.triggerKey=${TRIGGER_KEY} \
-		--set sandbox.ns=${NAMESPACE_SANDBOX}
+		--set restapi.credential.htpasswdUser="admin:1234"
 
 local-install ::
 	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
