@@ -37,13 +37,14 @@ LABEL_K8S_ENDPOINTSLICE_MGR = 'endpointslice.kubernetes.io/managed-by'
 LABEL_PTX_CONNECTOR = 'connector.dataspace.ptx.org'
 LABEL_PTX_CONNECTOR_ENABLED = f'{LABEL_PTX_CONNECTOR}/enabled'
 LABEL_PTX_PRIVACY_ZONE = 'privacy-zone.dataspace.ptx.org'
+LABEL_DEF_PTX_PRIVACY_ZONE = 'default.privacy-zone.dataspace.ptx.org/id'
 
 DEF_PDC_PORT = 3000
 DEF_PDC_NODEPORT = 30003
 DEF_NS = "ptx-edge"
 DEF_APP = "pdc"
 DEF_PORT_NAME = "pdc-port"
-DEF_ZONE_ID = "zone-0"
+DEF_ZONE_ID = "default"
 
 CONFIG = {"port": int(os.getenv("PDC_PORT", default=DEF_PDC_PORT)),
           "pod": os.getenv("HOSTNAME"),
@@ -372,7 +373,7 @@ def _patch_pod_labels(pod: str, namespace: str, zones: list[str]) -> client.V1Po
                         "Selecting the first zone ID as default...")
         def_zone_id = list(map(lambda _l: _l.split('/')[-1].lower(), zones))[0]
     log.info(f"Selected default privacy zone: {def_zone_id}")
-    labels[f"{LABEL_PTX_PRIVACY_ZONE}/default"] = str(def_zone_id)
+    labels[LABEL_DEF_PTX_PRIVACY_ZONE] = str(def_zone_id)
     labels[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{def_zone_id}"
     pod_patch = client.V1Pod(metadata=client.V1ObjectMeta(labels=labels))
     log.debug(f"Created pod patch:\n{dump_k8s_obj(pod_patch.to_dict())}")
@@ -459,7 +460,7 @@ def create_clusterip_pdc_services(node: str, pod: str, namespace: str, port: int
             if CONFIG['version']:
                 selector['app.kubernetes.io/version'] = str(CONFIG['version'])
             if zone:
-                selector[zone] = "true"
+                selector[f"{LABEL_PTX_CONNECTOR}/id"] = f"pdc-{zone_id}"
             uid = patched_pod.metadata.uid if patched_pod else None
             try:
                 srv = _create_cluster_service(name=srv_name, port=port, namespace=namespace, app=app,

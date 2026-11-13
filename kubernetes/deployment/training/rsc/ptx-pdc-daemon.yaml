@@ -89,7 +89,7 @@ spec:
             - name: PDC_DEF_PZ
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
+                  fieldPath: metadata.labels['default.privacy-zone.dataspace.ptx.org/id']
       volumes:
         - name: env-template
           configMap:
@@ -134,7 +134,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: connector
-    privacy-zone.dataspace.ptx.org/default: ${PZ_DATA_0}
+    connector.dataspace.ptx.org/id: ${PDC}-${PZ_DATA_0}
   type: ClusterIP
   ports:
     - name: pdc-port
@@ -153,7 +153,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: connector
-    privacy-zone.dataspace.ptx.org/default: ${PZ_DATA_1}
+    connector.dataspace.ptx.org/id: ${PDC}-${PZ_DATA_1}
   type: ClusterIP
   ports:
     - name: pdc-port

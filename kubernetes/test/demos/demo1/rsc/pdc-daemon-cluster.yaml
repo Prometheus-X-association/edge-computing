@@ -135,7 +135,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
-    privacy-zone.dataspace.ptx.org/default: ${PZ_A}
+    default.privacy-zone.dataspace.ptx.org/id: ${PZ_A}
   type: ClusterIP
   ports:
     - name: pdc-port
@@ -152,7 +152,7 @@ metadata:
 spec:
   selector:
     app.kubernetes.io/name: ${PDC}
-    privacy-zone.dataspace.ptx.org/default: ${PZ_B}
+    default.privacy-zone.dataspace.ptx.org/id: ${PZ_B}
   type: ClusterIP
   ports:
     - name: pdc-port

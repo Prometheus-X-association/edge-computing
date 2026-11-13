@@ -31,7 +31,7 @@ spec:
   selector:
     app.kubernetes.io/name: {{ $.Values.connector.name }}
     app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
-    privacy-zone.dataspace.ptx.org/default: {{ $zone }}
+    connector.dataspace.ptx.org/id: {{ printf "pdc-%s" $zone }}
   type: ClusterIP
   ports:
     - name: pdc-port

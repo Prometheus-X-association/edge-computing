@@ -98,7 +98,7 @@ spec:
             - name: PDC_DEF_PZ
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.labels['privacy-zone.dataspace.ptx.org/default']
+                  fieldPath: metadata.labels['default.privacy-zone.dataspace.ptx.org/id']
       volumes:
         - name: env-template
           configMap:
