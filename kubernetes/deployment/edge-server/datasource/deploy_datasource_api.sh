@@ -147,6 +147,8 @@ else
     echo -e "\n${DS_API_NAME} is initiated successfully!"
 fi
 
+log "Datasource API is exposed on http://${GW_DOMAIN}:${GW_PORT}/"
+
 ########################################################################################################################
 
 echo -e "\nDone."
