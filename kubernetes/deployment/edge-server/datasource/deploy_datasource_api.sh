@@ -21,6 +21,8 @@ DS_API_IMG="edge-server/datasource-xapi:latest"
 DS_API_NAME="xapi-data-source"
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
+DS_NETWORK="datasource-internal"
+
 ########################################################################################################################
 
 function display_help() {
@@ -148,6 +150,18 @@ else
 fi
 
 log "Datasource API is exposed on http://${GW_DOMAIN}:${GW_PORT}/"
+
+########################################################################################################################
+
+log "Check existing shared network..."
+if ! docker network inspect "${DS_NETWORK}" >/dev/null; then
+    docker network create --driver bridge --internal "${DS_NETWORK}"
+fi
+
+docker network connect "${DS_NETWORK}" "${DS_API_NAME}"
+
+log "Attached internal container"
+docker network inspect "${DS_NETWORK}" --format='{{range .Containers}}{{.Name}} ({{"\n"}}{{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################
 
