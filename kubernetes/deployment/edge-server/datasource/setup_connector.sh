@@ -153,6 +153,7 @@ services:
     depends_on:
       - mongodb
     networks:
+      - default
       - dataspace-connector
 
   mongodb:
@@ -172,8 +173,9 @@ services:
       - dataspace-connector
 
 networks:
+  default: {}
   dataspace-connector:
-    external: false
+    internal: true
 EOF
     ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
@@ -308,7 +310,7 @@ fi
 
 docker network connect "${DS_NETWORK}" "${DS_PDC_NAME}" >/dev/null
 
-log "Attached internal container"
+log "Attached internal containers:"
 docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################

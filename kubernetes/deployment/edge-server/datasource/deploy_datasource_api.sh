@@ -92,7 +92,7 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_API_DIR}" ] || [ -z "$( ls -
     log "Create datasource configuration..."
     cat <<-EOF >"${DS_API_DIR}/.env"
 # Base URL of the PDC.
-PDC_BASE_URL=http://host.docker.internal:3000
+PDC_BASE_URL=http://dataspace-connector:3000
 
 # Optional: bearer token for the PDC. Leave empty to send no Authorization header.
 PDC_TOKEN=$(cat "$DS_PDC_LOGIN_FILE")
@@ -161,7 +161,7 @@ fi
 
 docker network connect "${DS_NETWORK}" "${DS_API_NAME}" >/dev/null
 
-log "Attached internal container"
+log "Attached internal containers:"
 docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################
