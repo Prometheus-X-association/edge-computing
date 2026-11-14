@@ -55,9 +55,9 @@ teardown :: stop-ngrok-tunnel
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 
 log ::
-	@docker logs dataspace-connector
-	@docker logs endpoint-api -t
-	@docker logs datasource-api -t
+	@docker logs dataspace-connector || true
+	@docker logs endpoint-api -t || true
+	@docker logs datasource-api -t || true
 
 ########################################################################################################################
 
@@ -65,6 +65,5 @@ setup :: | teardown deploy-api-https start-pdc deploy-endpoint-api ngrok-tunnel-
 
 ########################################################################################################################
 
-#.SILENT:	# Set silent mode (-s) by default
-.PHONY:		# Set all target phony
+.SILENT:	# Set silent mode (-s) by default
 .DEFAULT_GOAL := setup

@@ -17,7 +17,7 @@ set -euo pipefail
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 DS_REPO=git@github.com:nada-a1/xapi-data-source.git
-DS_API_IMG="xapi-data-source-data-source:latest"
+DS_API_IMG="edge-server/datasource-xapi:latest"
 DS_API_NAME="xapi-data-source"
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
@@ -65,7 +65,6 @@ if [ -z "${DS_API_DIR:-}" ]; then
 fi
 mkdir -p "${DS_API_DIR}"
 echo "Used dir for datasource: ${DS_API_DIR}"
-
 echo "Used version for datasource: ${DS_API_VER:=main}"
 
 log "Remove remnant containers..."
@@ -90,32 +89,31 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_API_DIR}" ] || [ -z "$( ls -
 
     log "Create datasource configuration..."
     cat <<-EOF >"${DS_API_DIR}/.env"
-    # Base URL of the PDC.
-    PDC_BASE_URL=http://host.docker.internal:3000
+# Base URL of the PDC.
+PDC_BASE_URL=http://host.docker.internal:3000
 
-    # Optional: bearer token for the PDC. Leave empty to send no Authorization header.
-    PDC_TOKEN=$(cat "$DS_PDC_LOGIN_FILE")
+# Optional: bearer token for the PDC. Leave empty to send no Authorization header.
+PDC_TOKEN=$(cat "$DS_PDC_LOGIN_FILE")
 
-    # Contract and service chain
-    SC_CONTRACT_ID=${SC_CONTRACT_ID:?}
-    SC_CHAIN_BASIC_ID=${SC_CHAIN_BASIC_ID:?}
+# Contract and service chain
+SC_CONTRACT_ID=${SC_CONTRACT_ID:?}
+SC_CHAIN_BASIC_ID=${SC_CHAIN_BASIC_ID:?}
 
-    # Catalog base URL, without a trailing slash
-    CATALOG_URI=${PTX_CATALOG_URI:?}
+# Catalog base URL, without a trailing slash
+CATALOG_URI=${PTX_CATALOG_URI:?}
 
-    # Provider (this data source): service offering and data resource
-    PROVIDER_OFFER_ID=${PROVIDER_OFFER_ID:?}
-    PROVIDER_RESOURCE_ID=${PROVIDER_RESOURCE_ID:?}
+# Provider (this data source): service offering and data resource
+PROVIDER_OFFER_ID=${PROVIDER_OFFER_ID:?}
+PROVIDER_RESOURCE_ID=${PROVIDER_RESOURCE_ID:?}
 
-    # Consumer (the analysis service): service offering and software resource
-    CONSUMER_OFFER_ID=${CONSUMER_OFFER_ID:?}
-    CONSUMER_RESOURCE_ID=${CONSUMER_RESOURCE_ID:?}
+# Consumer (the analysis service): service offering and software resource
+CONSUMER_OFFER_ID=${CONSUMER_OFFER_ID:?}
+CONSUMER_RESOURCE_ID=${CONSUMER_RESOURCE_ID:?}
 
-    # DATA_FILE is set in docker-compose.yml for Docker. For a local run it defaults to
-    # data/test_data_input_statements.json.
+# DATA_FILE is set in docker-compose.yml for Docker. For a local run it defaults to
+# data/test_data_input_statements.json.
 EOF
     ls -alht "${DS_API_DIR}/.env"
-
 fi
 
 # Build image

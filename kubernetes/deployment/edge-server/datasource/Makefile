@@ -12,16 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy-datasource-api ::
+start-datasource-api ::
 	./deploy_datasource_api.sh
+
+recreate-datasource-api ::
+	./deploy_datasource_api.sh -f
 
 stop-datasource-api ::
 	docker rm --force xapi-data-source
 
 ########################################################################################################################
 
-ngrok-tunnel-pdc ::
+start-ngrok-tunnel-pdc ::
 	./create_ngrok_tunnel.sh 3000
+
+start-ngrok-tunnel-datasource ::
+	./create_ngrok_tunnel.sh 8000
 
 stop-ngrok-tunnel ::
 	docker ps -aq -f name="ngrok-tun-*" | xargs -r docker rm --force || true
@@ -46,12 +52,18 @@ teardown :: stop-ngrok-tunnel
 	docker ps -aq -f label="role.dataspace.ptx.org=datasource" | xargs -r docker rm --force || true
 
 log ::
-	@docker logs dataspace-connector
-	@docker logs xapi-data-source -t
+	@docker logs dataspace-connector || true
+	@docker logs xapi-data-source -t || true
 
 ########################################################################################################################
 
-setup :: | teardown deploy-datasource-api start-pdc ngrok-tunnel-pdc status
+setup :: | teardown start-datasource-api start-pdc start-ngrok-tunnel-pdc status
+
+########################################################################################################################
+
+purge ::
+	rm -rfv api
+	rm -rfv pdc
 
 ########################################################################################################################
 

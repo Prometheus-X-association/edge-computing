@@ -45,6 +45,9 @@ docker run -d --net=host \
         -e NGROK_AUTHTOKEN="${DS_NGROK_AUTHTOKEN}" \
         --name "${CONTAINER_NAME}" \
         --label "role.dataspace.ptx.org=datasource" \
+        --health-cmd "ngrok diagnose >/dev/null" \
+        --health-start-period 5s \
+        --health-interval 1m \
         ngrok/ngrok:alpine \
         http "${TARGET_PORT}" --url="${DS_NGROK_DOMAIN}" --log=stdout
 #docker run --rm --net=host --name ngrok-tunnel -e NGROK_AUTHTOKEN=${DS_NGROK_AUTHTOKEN} -it ngrok/ngrok:alpine \

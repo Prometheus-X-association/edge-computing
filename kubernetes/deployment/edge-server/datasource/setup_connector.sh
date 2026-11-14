@@ -64,6 +64,8 @@ fi
 mkdir -p "${DS_PDC_DIR}"
 echo "Used dir for PDC: ${DS_PDC_DIR}"
 
+echo "Used version for PDC: ${DS_PDC_VER:=main}"
+
 log "Remove remnant containers..."
 pushd "${DS_PDC_DIR}"
     docker compose down -v || true
@@ -81,39 +83,39 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_PDC_DIR}" ] || [ -z "$( ls -
 
     log "Adjust docker setup..."
     cat <<-'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
-    # Use the official Node.js image as base image
-    FROM node:22
-    ARG ENV
-    ENV ENV $ENV
-    LABEL role.dataspace.ptx.org="datasource"
+# Use the official Node.js image as base image
+FROM node:22
+ARG ENV
+ENV ENV $ENV
+LABEL role.dataspace.ptx.org="datasource"
 
-    # Install pnpm globally
-    RUN npm install -g pnpm@10.34.1
+# Install pnpm globally
+RUN npm install -g pnpm@10.34.1
 
-    # Create app directory
-    RUN mkdir -p /usr/src/app
-    WORKDIR /usr/src/app
+# Create app directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-    COPY package.json .
+COPY package.json .
 
-    ## Bundle app source
-    COPY . .
+## Bundle app source
+COPY . .
 
-    RUN chmod +x ./docker/scripts/start.sh
+RUN chmod +x ./docker/scripts/start.sh
 
-    RUN rm -f node_modules
-    RUN rm -f /src/logs
+RUN rm -f node_modules
+RUN rm -f /src/logs
 
-    RUN mkdir -p /src/logs
-    RUN mkdir -p /src/keys
+RUN mkdir -p /src/logs
+RUN mkdir -p /src/keys
 
-    # Install app dependencies
-    RUN pnpm install --frozen-lockfile --ignore-scripts
+# Install app dependencies
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
-    # Expose the port on which the app will run
-    EXPOSE 3000
+# Expose the port on which the app will run
+EXPOSE 3000
 
-    CMD ["./docker/scripts/start.sh", "$ENV"]
+CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
     ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
 
@@ -127,51 +129,51 @@ EOF
     fi
 
     cat <<-'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
-    services:
-      dataspace-connector:
-        container_name: dataspace-connector
-        image: dataspace-connector:latest
-        pull_policy: build
-        build:
-          context: .
-          dockerfile: docker/app/Dockerfile
-          args:
-            ENV: ${NODE_ENV}
-        labels:
-          role.dataspace.ptx.org: datasource
-        restart: unless-stopped
-        stop_signal: SIGKILL
-        tty: true
-        volumes:
-          - "./src/config.json/:/usr/src/app/src/config.json"
-        ports:
-          - "${EXPOSED_PORT}:${PORT}"
-        environment:
-          MONGO_URI: ${MONGO_URI}
-        depends_on:
-          - mongodb
-        networks:
-          - dataspace-connector
-
-      mongodb:
-        container_name: mongodb
-        image: mongo:latest
-        labels:
-          role.dataspace.ptx.org: datasource
-        environment:
-          MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-          MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-          MONGO_INITDB_DATABASE: dataspace-connector
-        restart: unless-stopped
-        volumes:
-          - "./data:/data/db"
-          - "./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro"
-        networks:
-          - dataspace-connector
-
+services:
+  dataspace-connector:
+    container_name: dataspace-connector
+    image: ptx/dataspace-connector:latest
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        ENV: ${NODE_ENV}
+    labels:
+      role.dataspace.ptx.org: datasource
+    restart: unless-stopped
+    stop_signal: SIGKILL
+    tty: true
+    volumes:
+      - "./src/config.json/:/usr/src/app/src/config.json"
+    ports:
+      - "${EXPOSED_PORT}:${PORT}"
+    environment:
+      MONGO_URI: ${MONGO_URI}
+    depends_on:
+      - mongodb
     networks:
-      dataspace-connector:
-        external: false
+      - dataspace-connector
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    labels:
+      role.dataspace.ptx.org: datasource
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: dataspace-connector
+    restart: unless-stopped
+    volumes:
+      - "./data:/data/db"
+      - "./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro"
+    networks:
+      - dataspace-connector
+
+networks:
+  dataspace-connector:
+    external: false
 EOF
     ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
@@ -183,17 +185,17 @@ EOF
 
     log "Create config files..."
     cat <<-EOF >"${DS_PDC_DIR}/src/config.json"
-    {
-        "endpoint": "${DS_PDC_ENDPOINT}",
-        "serviceKey": "${DS_PDC_SERVICE_KEY}",
-        "secretKey": "${DS_PDC_SECRET_KEY}",
-        "catalogUri": "${PTX_CATALOG_URI}",
-        "contractUri": "${PTX_CONTRACT_URI}",
-        "consentUri": "${PTX_CONSENT_URI}",
-        "expressLimitSize": "100mb",
-        "serviceChainAdapter": false,
-        "serviceChainAdapterTimeout": 3000
-    }
+{
+    "endpoint": "${DS_PDC_ENDPOINT}",
+    "serviceKey": "${DS_PDC_SERVICE_KEY}",
+    "secretKey": "${DS_PDC_SECRET_KEY}",
+    "catalogUri": "${PTX_CATALOG_URI}",
+    "contractUri": "${PTX_CONTRACT_URI}",
+    "consentUri": "${PTX_CONSENT_URI}",
+    "expressLimitSize": "100mb",
+    "serviceChainAdapter": false,
+    "serviceChainAdapterTimeout": 3000
+}
 EOF
     ls -alht "${DS_PDC_DIR}/src/config.json"
 
@@ -205,33 +207,33 @@ EOF
     ### DS_MONGO_*=
 
     cat <<-EOF >"${DS_PDC_DIR}/.env"
-    NODE_ENV=${PDC_ENV}
-    PORT=${PDC_PORT}
-    EXPOSED_PORT=${EXPOSED_PORT}
+NODE_ENV=${PDC_ENV}
+PORT=${PDC_PORT}
+EXPOSED_PORT=${EXPOSED_PORT}
 
-    SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
-    SESSION_COOKIE_EXPIRATION=24000
+SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
+SESSION_COOKIE_EXPIRATION=24000
 
-    MONGO_URI=mongodb://${DS_MONGO_DB_USER}:${DS_MONGO_DB_PASSWORD}@mongodb:27017/${DS_MONGO_DB_NAME}?authSource=${DS_MONGO_DB_NAME}
-    MONGO_INITDB_ROOT_USERNAME=${DS_MONGO_INITDB_ROOT_USERNAME}
-    MONGO_INITDB_ROOT_PASSWORD=${DS_MONGO_INITDB_ROOT_PASSWORD}
+MONGO_URI=mongodb://${DS_MONGO_DB_USER}:${DS_MONGO_DB_PASSWORD}@mongodb:27017/${DS_MONGO_DB_NAME}?authSource=${DS_MONGO_DB_NAME}
+MONGO_INITDB_ROOT_USERNAME=${DS_MONGO_INITDB_ROOT_USERNAME}
+MONGO_INITDB_ROOT_PASSWORD=${DS_MONGO_INITDB_ROOT_PASSWORD}
 
-    CURATOR=https://visionspol.eu
-    MAINTAINER=https://visionspol.eu
+CURATOR=https://visionspol.eu
+MAINTAINER=https://visionspol.eu
 
-    # Logs
-    WINSTON_LOGS_MAX_FILES=14d
-    WINSTON_LOGS_MAX_SIZE=20m
+# Logs
+WINSTON_LOGS_MAX_FILES=14d
+WINSTON_LOGS_MAX_SIZE=20m
 
-    #jwt
-    JWT_BEARER_TOKEN_EXPIRATION=3h
-    JWT_REFRESH_TOKEN_EXPIRATION=1d
+#jwt
+JWT_BEARER_TOKEN_EXPIRATION=3h
+JWT_REFRESH_TOKEN_EXPIRATION=1d
 
-    # Exchange Trigger
-    EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY}
+# Exchange Trigger
+EXCHANGE_TRIGGER_API_KEY=${DS_PDC_EXCHANGE_TRIGGER_API_KEY}
 
-    # Exchange Timeout in seconds
-    EXCHANGE_TIMEOUT=120
+# Exchange Timeout in seconds
+EXCHANGE_TIMEOUT=120
 EOF
     ls -alht "${DS_PDC_DIR}/.env"
 
@@ -239,12 +241,12 @@ EOF
     ### DS_PDC_*=
 
     cat <<-EOF >"${DS_PDC_DIR}/mongo-init.js"
-    db = db.getSiblingDB('${DS_MONGO_DB_NAME}');
-    db.createUser({
-        user: '${DS_MONGO_DB_USER}',
-        pwd: '${DS_MONGO_DB_PASSWORD}',
-        roles: [{ role: 'readWrite', db: '${DS_MONGO_DB_NAME}' }]
-    });
+db = db.getSiblingDB('${DS_MONGO_DB_NAME}');
+db.createUser({
+    user: '${DS_MONGO_DB_USER}',
+    pwd: '${DS_MONGO_DB_PASSWORD}',
+    roles: [{ role: 'readWrite', db: '${DS_MONGO_DB_NAME}' }]
+});
 EOF
     ls -alht "${DS_PDC_DIR}/mongo-init.js"
 
