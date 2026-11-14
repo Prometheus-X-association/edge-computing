@@ -123,7 +123,6 @@ EOF
         if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
             warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
         fi
-    EXPOSED_PORT="3000"
     fi
 
     cat <<-'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
@@ -145,7 +144,7 @@ services:
     volumes:
       - "./src/config.json/:/usr/src/app/src/config.json"
     ports:
-      - "${EXPOSED_PORT}:${PORT}"
+      - "${PORT}:${PORT}"
     environment:
       MONGO_URI: ${MONGO_URI}
     depends_on:
@@ -207,7 +206,6 @@ EOF
     cat <<-EOF >"${DS_PDC_DIR}/.env"
 NODE_ENV=${PDC_ENV}
 PORT=${PDC_PORT}
-EXPOSED_PORT=${EXPOSED_PORT}
 
 SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
 SESSION_COOKIE_EXPIRATION=24000
