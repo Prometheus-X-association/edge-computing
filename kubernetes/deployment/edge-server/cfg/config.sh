@@ -47,7 +47,7 @@ USE_NGROK="${USE_NGROK:-false}"
 
 # Fundamental cluster configuration
 TIMEOUT=120
-CLUSTER="edge-server"
+CLUSTER="edge"
 ENV="demo"
 
 # Registry

@@ -38,7 +38,7 @@ helm install "${PTX}" "${ROOT_DIR}/deployment/ptx-edge/" \
 ########################################################################################################################
 
 _PDC_INSTANCES=$(kubectl get pods -l app.kubernetes.io/name=connector -o=jsonpath='{range .items[*]} | {.metadata.name}')
-log "Waiting for PDC instances: ${_PDC_INSTANCES} to initialize..."
+log "Waiting for PDC instance: ${_PDC_INSTANCES} to initialize..."
 for pod in $(kubectl get pods -l app.kubernetes.io/name=connector -o jsonpath='{.items[*].metadata.name}'); do
     kubectl wait --for="condition=Initialized" --timeout="${TIMEOUT}s" "pod/${pod}"
 done
@@ -46,7 +46,7 @@ done
 ${KCTL} wait --timeout="${TIMEOUT}s" "ds/connector" \
     --for=jsonpath='.status.numberReady'="$(kubectl get "ds/connector" -o=jsonpath='{.status.desiredNumberScheduled}')"
 
-log "Waiting for PDC instances: $(kubectl get pods -l app.kubernetes.io/name=connector -o name) to set up..."
+log "Waiting for PDC instance: $(kubectl get pods -l app.kubernetes.io/name=connector -o name) to set up..."
 for pod in $(kubectl get pods -l app.kubernetes.io/name=connector -o jsonpath='{.items[*].metadata.name}'); do
     ( kubectl logs -f "pod/${pod}" -c connector --prefix & ) | timeout "${TIMEOUT}" grep -m1 "Server running on"
 done
@@ -63,12 +63,14 @@ for pz in ${DEF_ZONE}; do
     fi
     ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${PDC}-${pz}"
     _PDC_URL="https://${CLUSTER_HOST}/${PTX}/${pz}/${PDC}"
-    log ">>> PDC is exposed on ${_PDC_URL}"
+    log ">>> PDC is available on ${_PDC_URL}"
     wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" \
             --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_PDC_URL}"
     echo
     curl -LSsk --fail-with-body "${_PDC_URL}" | grep "href" | head -n1
     echo
+    log ">>> PDC is also exposed on https://${PRIMARY_HOST}/${PTX}/${pz}/${PDC}\n
+    >>> PDC is also exposed on https://${GW_HOST}/${PTX}/${pz}/${PDC}"
 done
 
 ########################################################################################################################

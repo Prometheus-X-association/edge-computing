@@ -27,7 +27,7 @@ PDC_SECRET_KEY='Qh4XvuhSJbOp8nMV1JtibAUqjp3w_efBeFUfCmqQW_Nl8x4t3Sk6fWiK5L05CB3j
 PDC_EXCHANGE_TRIGGER_API_KEY="eab121f2b8df177ea0d5c53d764be1007dfdbd1043dd7103329563be19e01e26"
 
 ### Local VM gateway setup
-GW_DOMAIN="edge-server.k3d.localhost"
+GW_DOMAIN="edge.k3d.localhost"
 GW_PORT=4443
 
 ### PTX-edge API default credentials

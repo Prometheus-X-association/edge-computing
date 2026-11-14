@@ -14,6 +14,7 @@
 
 KUBE_OPS_VIEW_IMG := "hjacobs/kube-ops-view"
 KUBE_OPS_VIEW_PORT := 8081
+GW_EXPOSED_8081 := "vm.fured.cloud.bme.hu:20215"
 
 depends ::
 	cd ./scripts && ./install_deps.sh -u
@@ -33,6 +34,7 @@ depends ::
 	( docker logs -f kube-ops-viewer & ) | timeout 30 grep -m1 "Listening on" >/dev/null
 	echo
 	echo "K8s Ops Viewer is available on http://localhost:${KUBE_OPS_VIEW_PORT}/"
+	echo "K8s Ops Viewer is also exposed on http://${GW_EXPOSED_8081}/"
 	echo
 
 3-edge ::
