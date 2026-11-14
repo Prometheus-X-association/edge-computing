@@ -288,9 +288,10 @@ if [ "$(jq '.code' <<<"${RESP}")" -ne 200 ]; then
     echo "${RESP}" | jq
     exit 1
 else
-    TOKEN=$(jq -r '.content.token' <<<"${RESP}")
-    echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
     echo "Login was successful!"
+    TOKEN=$(jq -r '.content.token' <<<"${RESP}")
+    mkdir -p "${SCRIPT_DIR}/datasource/creds"
+    echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
     echo "Received bearer token: ${TOKEN}"
 fi
 
