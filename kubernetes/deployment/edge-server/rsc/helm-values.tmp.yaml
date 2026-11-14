@@ -21,7 +21,7 @@ localRegistry:
 dataspace:
   contractUri: ${PTX_CONTRACT_URI}
   catalogUri: ${PTX_CATALOG_URI}
-  #consentUri: ${PTX_CONSENT_URI}
+  consentUri: ${PTX_CONSENT_URI}
 
 ########################################################################################################################
 

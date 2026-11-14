@@ -145,7 +145,8 @@ MONGO_DB_USER_BASE64_ENCODED=$(printf '%s' "${MONGO_DB_USER}" | base64 -w0)
 MONGO_DB_PASSWORD_BASE64_ENCODED=$(printf '%s' "${MONGO_DB_PASSWORD}" | base64 -w0)
 #
 PTX_CONTRACT_URI="https://dev.contract.visionstrust.com/"       # mandatory (testing)
-PTX_CATALOG_URI="https://testing.api.visionstrust.com/v1"      # mandatory (testing)
+PTX_CATALOG_URI="https://testing.api.visionstrust.com/v1"       # mandatory (testing)
+PTX_CONSENT_URI="https://consent.visionstrust.com/v1"           # optional (live)
 
 IMAGES=("${BUILD_IMG}" "${CONTROL_IMG}" "${PDC_IMG}" "${MONGODB_IMG}" "${API_IMG}" "${SCHED_IMG}" "${CATALOG_IMG}")
 

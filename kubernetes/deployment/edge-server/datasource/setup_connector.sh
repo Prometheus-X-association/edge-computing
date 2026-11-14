@@ -212,7 +212,7 @@ EOF
     SESSION_SECRET=$(openssl rand -base64 32 | tr -d /=+ | cut -c -16)
     SESSION_COOKIE_EXPIRATION=24000
 
-    MONGO_URI=mongodb://${DS_PDC_DB_USER}:${DS_PDC_DB_PASSWORD}@mongodb:27017/${DS_PDC_DB_NAME}?authSource=${DS_PDC_DB_NAME}
+    MONGO_URI=mongodb://${DS_MONGO_DB_USER}:${DS_MONGO_DB_PASSWORD}@mongodb:27017/${DS_MONGO_DB_NAME}?authSource=${DS_MONGO_DB_NAME}
     MONGO_INITDB_ROOT_USERNAME=${DS_MONGO_INITDB_ROOT_USERNAME}
     MONGO_INITDB_ROOT_PASSWORD=${DS_MONGO_INITDB_ROOT_PASSWORD}
 
@@ -239,11 +239,11 @@ EOF
     ### DS_PDC_*=
 
     cat <<-EOF >"${DS_PDC_DIR}/mongo-init.js"
-    db = db.getSiblingDB('${DS_PDC_DB_NAME}');
+    db = db.getSiblingDB('${DS_MONGO_DB_NAME}');
     db.createUser({
-        user: '${DS_PDC_DB_USER}',
-        pwd: '${DS_PDC_DB_PASSWORD}',
-        roles: [{ role: 'readWrite', db: '${DS_PDC_DB_NAME}' }]
+        user: '${DS_MONGO_DB_USER}',
+        pwd: '${DS_MONGO_DB_PASSWORD}',
+        roles: [{ role: 'readWrite', db: '${DS_MONGO_DB_NAME}' }]
     });
 EOF
     ls -alht "${DS_PDC_DIR}/mongo-init.js"
