@@ -1,0 +1,116 @@
+# nonk8s
+kind: Simple
+apiVersion: k3d.io/v1alpha5
+metadata:
+  name: ${CLUSTER}
+servers: 1
+agents: 5
+ports:
+  # Export loadbalancer/traefik ports
+  - port: ${LB_WEB_PORT}:80
+    nodeFilters:
+      - loadbalancer
+  - port: ${LB_WEBSECURE_PORT}:443
+    nodeFilters:
+      - loadbalancer
+volumes:
+  # Add registry CA cert
+  - volume: ${CA_DIR}/ca.crt:/usr/share/ca-certificates/ptx-edge/registry_CA.crt:ro
+    nodeFilters:
+      - all
+files:
+  - description: "Default TLS cert"
+    source: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChartConfig
+      metadata:
+        name: traefik
+        namespace: kube-system
+      spec:
+        valuesContent: |-
+          additionalArguments:
+            - "--global.checknewversion=false"
+            - "--global.sendanonymoususage=false"
+            - "--log.level=DEBUG"
+            - "--accesslog=false"
+            - "--providers.kubernetescrd=true"
+            - "--providers.kubernetesingress=true"
+            - "--api=false"
+            - "--entryPoints.web.http.redirections.entrypoint.to=websecure"
+            - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+            - "--entryPoints.web.http.redirections.entrypoint.permanent=true"
+            - "--entrypoints.websecure.http.tls=true"
+            - "--entrypoints.websecure.http.tls.options=kube-system-tls-opt@kubernetescrd"
+          extraObjects:
+          - apiVersion: traefik.io/v1alpha1
+            kind: TLSStore
+            metadata:
+              name: default
+              namespace: kube-system
+            spec:
+              defaultCertificate:
+                secretName: ${CLUSTER_TLS_SECRET}
+          - apiVersion: traefik.io/v1alpha1
+            kind: TLSOption
+            metadata:
+              name: tls-opt
+              namespace: kube-system
+            spec:
+              minVersion: VersionTLS12
+              cipherSuites:
+                - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+                - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+                - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+                - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+                - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+                - TLS_AES_256_GCM_SHA384
+                - TLS_AES_128_GCM_SHA256
+                - TLS_CHACHA20_POLY1305_SHA256
+                - TLS_FALLBACK_SCSV
+              curvePreferences:
+                - CurveP521
+                - CurveP384
+              sniStrict: false
+    destination: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    nodeFilters:
+      - all
+registries:
+  create:
+    name: ${REGISTRY}
+    image: ptx-edge/registry:1.0
+    hostPort: "${REGISTRY_PORT}"
+    volumes:
+      - ${SCRIPT_DIR}/.cache:/var/lib/registry   # Persist data locally
+  config: |
+    mirrors:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        endpoint:
+          - https://${REGISTRY}:${REGISTRY_PORT}
+    configs:
+      ${REGISTRY}:${REGISTRY_PORT}:
+        auth:
+          username: ${REGISTRY_USER}
+          password: ${REGISTRY_SECRET}
+        tls:
+          ca_file: /usr/share/ca-certificates/ptx-edge/registry_CA.crt
+options:
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+  k3d:
+    wait: true
+    timeout: ${TIMEOUT}s
+    disableLoadbalancer: false
+    disableRollback: false
+  k3s:
+    nodeLabels:
+      # Put each agent node into Privacy Zone 0
+      - label: privacy-zone.dataspace.ptx.org/${DEF_ZONE}=true
+        nodeFilters:
+          - agent:*
+      # Mark agent-0 as the zone leader
+      - label: connector.dataspace.ptx.org/enabled=true
+        nodeFilters:
+          - agent:0

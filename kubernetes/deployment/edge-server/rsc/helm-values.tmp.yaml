@@ -1,0 +1,127 @@
+global:
+  env: ${ENV}
+  useControlPlane: true
+
+gateway:
+  proto: https
+  host: ${GW_HOST}
+  port:
+
+registry:
+  url: ${REGISTRY}
+  port: ${REGISTRY_PORT}
+
+localRegistry:
+  name: registry
+  url: ${REGISTRY}
+  port: ${REGISTRY_PORT}
+  rootCAFilePath:
+  rootCAFileContent:  # set via '--set-file'
+
+dataspace:
+  contractUri: ${PTX_CONTRACT_URI}
+  catalogUri: ${PTX_CATALOG_URI}
+  #consentUri: ${PTX_CONSENT_URI}
+
+########################################################################################################################
+
+connector:
+  name: connector
+  shortName: ${PDC}
+  domain:
+  image: ${PDC_IMG}
+  version: ""
+  port: ${PDC_PORT}
+  credential:
+    secretName: ${PDC_SECRET_NAME}
+    serviceKey: ${PDC_SERVICE_KEY}
+    secretKey: ${PDC_SECRET_KEY}
+    triggerKey: ${PDC_EXCHANGE_TRIGGER_API_KEY}
+    sessionSecret: ${PDC_SESSION_SECRET}
+    sessionSecretExpiration: 24000
+  config:
+    nodeEnv: ${PDC_ENV}
+    expressLimitSize: "100mb"
+    serviceChainAdapter: false
+    serviceChainAdapterTimeout: 3000
+  init:
+    useConnectorNodeFilter: true
+    forceRecreateExposure: true
+  resources:
+    requests:
+      cpu: 500m
+      memory: 250Mi
+
+mongodb:
+  name: mongodb
+  domain:
+  image: ${MONGODB_IMG}
+  version: ""
+  credential:
+    secretName: pdc-mongo-env
+    dbName: ${MONGO_DB_NAME}
+    dbUser: ${MONGO_DB_USER}
+    dbPassword: ${MONGO_DB_PASSWORD}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 150Mi
+
+########################################################################################################################
+
+builder:
+  name: builder
+  domain:
+  image: ${BUILD_IMG}
+  version: ""
+  callbackPort: 9999
+
+controller:
+  name: controller
+  domain:
+  image: ${CONTROL_IMG}
+  version: ""
+  port: 8080
+  healthEndpoint: /healthz
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 200Mi
+
+scheduler:
+  name: scheduler
+  refName: ptx-edge-scheduler
+  domain:
+  image: ${SCHED_IMG}
+  version: ""
+  method: genetic
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 200Mi
+
+restapi:
+  name: rest-api
+  domain:
+  image: ${API_IMG}
+  version: ""
+  port: 8080
+  credential:
+    secretName: api-basic-auth
+    htpasswdUser: ${API_CREDS}
+  prefix: /${PREFIX}
+  healthEndpoint: /health
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 300Mi
+
+########################################################################################################################
+
+sandbox:
+  enabled: ${USE_SANDBOX}
+  ns: ${SANDBOX}
+  minimalSetup: true
+  catalog:
+    name: ${CATALOG}
+    image: ${REGISTRY}:${REGISTRY_PORT}/${CATALOG_IMG}
