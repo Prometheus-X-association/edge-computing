@@ -155,13 +155,14 @@ log "Datasource API is exposed on http://${GW_DOMAIN}:${GW_PORT}/"
 
 log "Check existing shared network..."
 if ! docker network inspect "${DS_NETWORK}" >/dev/null; then
+    echo ">>> Creating internal network: ${DS_NETWORK}..."
     docker network create --driver bridge --internal "${DS_NETWORK}"
 fi
 
-docker network connect "${DS_NETWORK}" "${DS_API_NAME}"
+docker network connect "${DS_NETWORK}" "${DS_API_NAME}" >/dev/null
 
 log "Attached internal container"
-docker network inspect "${DS_NETWORK}" --format='{{range .Containers}}{{.Name}} ({{"\n"}}{{.IPv4Address}}){{"\n"}}{{end}}'
+docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################
 

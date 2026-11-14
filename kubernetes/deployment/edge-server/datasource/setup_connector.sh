@@ -17,7 +17,10 @@ set -euo pipefail
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 DS_PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
+DS_PDC_NAME="dataspace-connector"
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
+
+DS_NETWORK="datasource-internal"
 
 ########################################################################################################################
 
@@ -256,6 +259,8 @@ if [ "${DRY_RUN}" = "true" ]; then
     exit 0
 fi
 
+########################################################################################################################
+
 log "Start PDC..."
 pushd "${DS_PDC_DIR}"
     docker compose down -v && docker compose up -d --no-build --force-recreate
@@ -292,5 +297,20 @@ else
     echo "${TOKEN}" >"${DS_PDC_LOGIN_FILE}"
     echo "Received bearer token: ${TOKEN}"
 fi
+
+########################################################################################################################
+
+log "Check existing shared network..."
+if ! docker network inspect "${DS_NETWORK}" >/dev/null; then
+    echo ">>> Creating internal network: ${DS_NETWORK}..."
+    docker network create --driver bridge --internal "${DS_NETWORK}"
+fi
+
+docker network connect "${DS_NETWORK}" "${DS_PDC_NAME}" >/dev/null
+
+log "Attached internal container"
+docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
+
+########################################################################################################################
 
 echo -e "\nDone."
