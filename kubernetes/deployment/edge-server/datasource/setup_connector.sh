@@ -123,9 +123,7 @@ EOF
         if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
             warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
         fi
-        EXPOSED_PORT="3000"
-    else
-        EXPOSED_PORT="127.0.0.1:3000"
+    EXPOSED_PORT="3000"
     fi
 
     cat <<-'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
