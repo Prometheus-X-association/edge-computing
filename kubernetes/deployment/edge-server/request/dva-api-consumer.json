@@ -1,0 +1,64 @@
+{
+  "spec": {
+    "name": "${_WKR}",
+    "service": {
+      "enabled": true,
+      "interfaces": [
+        {
+          "port": 9090,
+          "public": false
+        }
+      ]
+    },
+    "data": {
+      "src": {
+        "method": "SKIP"
+      }
+    },
+    "worker": {
+      "src": {
+        "method": "SKIP",
+        "image": "${REGISTRY}:${REGISTRY_PORT}/${_WKR}:latest"
+      },
+      "config": {
+        "env": [
+          {
+            "key": "DVA_PROCESSING_URL",
+            "value": "http://dva-processing-consumer:5000"
+          },
+          {
+            "key": "DVA_VC_MANAGER_URL",
+            "value": "http://dva-vc-manager-consumer:8000"
+          },
+          {
+            "key": "DVA_ISSUER_ID",
+            "value": "dva-api-consumer"
+          },
+          {
+            "key": "DVA_POSTGRES_URL",
+            "value": "postgresql://postgres-consumer:5432/dva"
+          },
+          {
+            "key": "DVA_VLA_MANAGER_URL",
+            "value": "http://vlamanager-backend:8000"
+          }
+        ]
+      },
+      "demands": {
+        "cpu": 0.5,
+        "memory": 200
+      }
+    },
+    "dataspace": {
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${DEF_ZONE}",
+            "preferred": true
+          }
+        ]
+      }
+    }
+  }
+}

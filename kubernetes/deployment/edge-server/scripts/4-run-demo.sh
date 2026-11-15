@@ -16,7 +16,7 @@ set -eou pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
-LOG "Run joint Edge Computing -- AI Training (BB-01/02) demo..."
+LOG "Run joint Edge Computing -- DVA demo..."
 
 ########################################################################################################################
 
@@ -55,6 +55,7 @@ function deploy_dva_worker(){
     log "Waiting for worker: $(kubectl get pods -l app.kubernetes.io/name="${_WKR}" \
                                                         -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
     ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${_WKR}"
+    sleep 1
     (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
     echo -e "\nWatching for <ready> state...."
@@ -67,18 +68,25 @@ function deploy_dva_worker(){
 
 ########################################################################################################################
 
+LOG "Deploying DVA components..."
+
 deploy_dva_worker "postgres-provider" "PostgreSQL init process complete"
 deploy_dva_worker "postgres-consumer" "PostgreSQL init process complete"
 deploy_dva_worker "postgres-vlamanager" "PostgreSQL init process complete"
-
+#
 deploy_dva_worker "dva-processing-provider" "Application startup complete"
 deploy_dva_worker "dva-processing-consumer" "Application startup complete"
 deploy_dva_worker "dva-processing-vlamanager" "Application startup complete"
-
+#
 deploy_dva_worker "dva-vc-manager-provider" "Application startup complete"
 deploy_dva_worker "dva-vc-manager-consumer" "Application startup complete"
 deploy_dva_worker "vlamanager-backend" "Application startup complete"
-deploy_dva_worker "vlamanager-frontend" "Configuration complete"
+deploy_dva_worker "vlamanager-frontend" "start worker processes"
+#
+deploy_dva_worker "dva-api-provider" "Application started"
+deploy_dva_worker "dva-api-consumer" "Application started"
+deploy_dva_worker "dva-dashboard-provider" "start worker processes"
+deploy_dva_worker "dva-dashboard-consumer" "start worker processes"
 
 
 
