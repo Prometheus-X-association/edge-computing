@@ -6,7 +6,9 @@
       "interfaces": [
         {
           "port": 80,
-          "public": false
+          "public": true,
+          "restricted": false,
+          "stripped": false
         }
       ]
     },
@@ -22,6 +24,10 @@
       },
       "config": {
         "env": [
+          {
+            "key": "DVA_DASHBOARD_BASE_URL",
+            "value": "/worker/${_WKR}/"
+          },
           {
             "key": "DVA_API_URL",
             "value": "http://dva-api-provider:9090"

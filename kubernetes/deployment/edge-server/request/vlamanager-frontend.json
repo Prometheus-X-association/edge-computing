@@ -6,7 +6,9 @@
       "interfaces": [
         {
           "port": 80,
-          "public": false
+          "public": true,
+          "restricted": false,
+          "stripped": false
         }
       ]
     },
@@ -22,6 +24,10 @@
       },
       "config": {
         "env": [
+          {
+            "key": "VLA_MANAGER_BASE_URL",
+            "value": "/worker/${_WKR}/"
+          },
           {
             "key": "VLA_MANAGER_BACKEND_URL",
             "value": "http://vlamanager-backend:8000"

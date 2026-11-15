@@ -19,7 +19,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 DVA_BB_REPO="git@github.com:Prometheus-X-association/data-veracity.git"
 DVA_BB_DIR="dva"
 DVA_BB_VER="remotes/origin/edge-node-demo"
-FORCE_RECREATE="true"
+FORCE_RECREATE="false"
 
 ########################################################################################################################
 
@@ -39,9 +39,6 @@ mkdir -p "${SCRIPT_DIR}/creds/cert/ca" "${SCRIPT_DIR}/creds/cert/registry"
 cp -vR "${ROOT_DIR}/src/registry/.certs/ca/ca.crt" "${SCRIPT_DIR}/creds/cert/ca/ca.crt"
 cp -vR "${ROOT_DIR}/src/registry/.certs/ca.key" "${SCRIPT_DIR}/creds/cert/ca.key"
 cp -vR "${ROOT_DIR}/src/registry/.certs/auth/server.cert" "${SCRIPT_DIR}/creds/cert/registry/server.cert"
-
-log "Update PtxEdgeWorker CRD..."
-cp -vR "${ROOT_DIR}/src/controller/crd/ptx-edge-worker.yaml" "${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml"
 
 ########################################################################################################################
 

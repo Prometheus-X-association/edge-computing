@@ -66,6 +66,23 @@ function deploy_dva_worker(){
     ${KCTL} get all,ingress -l "app.kubernetes.io/name=${_WKR}"
 }
 
+function wait_for_exposed() {
+    _WKR="${1}"
+
+    log "Waiting for ingress: $(kubectl get ingress -l app.kubernetes.io/name="${_WKR}" \
+                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+    sleep 5
+    ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${_WKR}"
+    _URL="https://${CLUSTER_HOST}/worker/${_WKR}"
+    log ">>> ${_WKR} is available on ${_URL}"
+    wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
+                                --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+                                --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_URL}"
+    # curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
+    echo -e "\n>>> ${_WKR} is also exposed on https://${PRIMARY_HOST}/worker/${_WKR}"
+    echo -e "\n>>> ${_WKR} is also exposed on https://${GW_HOST}/worker/${_WKR}"
+}
+
 ########################################################################################################################
 
 LOG "Deploying DVA components..."
@@ -81,30 +98,12 @@ deploy_dva_worker "dva-processing-vlamanager" "Application startup complete"
 deploy_dva_worker "dva-vc-manager-provider" "Application startup complete"
 deploy_dva_worker "dva-vc-manager-consumer" "Application startup complete"
 deploy_dva_worker "vlamanager-backend" "Application startup complete"
-deploy_dva_worker "vlamanager-frontend" "start worker processes"
+deploy_dva_worker "vlamanager-frontend" "start worker processes" && wait_for_exposed "vlamanager-frontend"
 #
 deploy_dva_worker "dva-api-provider" "Application started"
 deploy_dva_worker "dva-api-consumer" "Application started"
-deploy_dva_worker "dva-dashboard-provider" "start worker processes"
+deploy_dva_worker "dva-dashboard-provider" "start worker processes" && wait_for_exposed "dva-dashboard-provider"
 deploy_dva_worker "dva-dashboard-consumer" "start worker processes"
-
-
-
-########################################################################################################################
-
-
-#log "Waiting for ingress:$(kubectl get ingress -l app.kubernetes.io/name="${AGG}" \
-#                                                    -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
-#sleep 5
-#${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${AGG}"
-#_AGG_URL="https://${CLUSTER_HOST}/worker/${AGG}/"
-#log ">>> Aggregator is available on ${_AGG_URL}"
-#wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
-#                            --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-#                            --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_AGG_URL}"
-## curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
-#log ">>> Aggregator is also exposed on https://${PRIMARY_HOST}/worker/${AGG}\n
-#>>> Aggregator is also exposed on https://${GW_HOST}/worker/${AGG}/"
 
 ########################################################################################################################
 
