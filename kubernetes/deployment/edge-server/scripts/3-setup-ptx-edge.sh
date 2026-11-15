@@ -70,7 +70,7 @@ for pz in ${DEF_ZONE}; do
     curl -LSsk --fail-with-body "${_PDC_URL}" | grep "href" | head -n1
     echo
     log ">>> PDC is also exposed on https://${PRIMARY_HOST}/${PTX}/${pz}/${PDC}\n
-    >>> PDC is also exposed on https://${GW_HOST}/${PTX}/${pz}/${PDC}"
+>>> PDC is also exposed on https://${GW_HOST}/${PTX}/${pz}/${PDC}"
 done
 
 ########################################################################################################################

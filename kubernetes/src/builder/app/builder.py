@@ -87,7 +87,7 @@ def main():
     args = parser.parse_args()
     # Set up logging
     set_logging_level(verbosity=args.verbose)
-    log.info(" builder START ".center(120, '='))
+    log.info(" builder START ".center(60, '='))
     log.debug("Configuration arguments: %s", args)
     # Load configuration
     load_configuration(cfg_file=args.config, from_env=True)
@@ -104,7 +104,7 @@ def main():
         if args.verbose:
             log.exception(e)
         sys.exit(os.EX_SOFTWARE)
-    log.info(" builder END ".center(120, '='))
+    log.info(" builder END ".center(60, '='))
     # Return value based on success
     sys.exit(os.EX_OK if success else os.EX_SOFTWARE)
 

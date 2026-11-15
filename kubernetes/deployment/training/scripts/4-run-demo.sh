@@ -36,10 +36,10 @@ if [ "${BATCHED}" = "true" ]; then
     warning "Setup is configured to use worker batch deployment!"
     log ">>> Batch processing mode: parallel=${PARALLEL:-false}"
     log "Initiate Worker batch..."
-    REQ_BODY="$(jq -s '.'   request/data-processor-0.json \
-                            request/data-processor-1.json \
-                            request/aggregator.json \
-                            request/orchestrator.json | envsubst)"
+    REQ_BODY="$(jq -s '.'   "${SCRIPT_DIR}/request/data-processor-0.json" \
+                            "${SCRIPT_DIR}/request/data-processor-1.json" \
+                            "${SCRIPT_DIR}/request/aggregator.json" \
+                            "${SCRIPT_DIR}/request/orchestrator.json" | envsubst)"
     echo "Prepared body:" && echo "${REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body \
@@ -56,7 +56,7 @@ if [ "${BATCHED}" != "true" ]; then
     log "Initiate Data Processing Function 0..."
     #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
     #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
-    DP0_REQ_BODY=$(envsubst <"request/${DP0}.json")
+    DP0_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${DP0}.json")
     echo "Prepared body:" && echo "${DP0_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}" \
@@ -92,7 +92,7 @@ if [ "${BATCHED}" != "true" ]; then
     log "Initiate Data Processing Function 1..."
     #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP1}-deployment.yaml" )
     #${KCTL} apply -f=<(envsubst <"worker/${DP1}.yaml" )
-    DP1_REQ_BODY=$(envsubst <"request/${DP1}.json")
+    DP1_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${DP1}.json")
     echo "Prepared body:" && echo "${DP1_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}" \
@@ -128,7 +128,7 @@ if [ "${BATCHED}" != "true" ]; then
     log "Initiate Aggregator..."
     #${KCTL} apply -f=<(envsubst <"rsc/worker-${AGG}-deployment.yaml")
     #${KCTL} apply -f=<(envsubst <"worker/${AGG}.yaml")
-    AGG_REQ_BODY=$(envsubst <"request/${AGG}.json")
+    AGG_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${AGG}.json")
     echo "Prepared body:" && echo "${AGG_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${AGG}" \
@@ -177,7 +177,7 @@ if [ "${BATCHED}" != "true" ]; then
     log "Initiate Orchestrator..."
     #${KCTL} apply -f=<(envsubst <"rsc/worker-${ORCH}-deployment.yaml")
     #${KCTL} apply -f=<(envsubst <"worker/${ORCH}.yaml")
-    ORCH_REQ_BODY=$(envsubst <"request/${ORCH}.json")
+    ORCH_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${ORCH}.json")
     echo "Prepared body:" && echo "${ORCH_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${ORCH}" \
