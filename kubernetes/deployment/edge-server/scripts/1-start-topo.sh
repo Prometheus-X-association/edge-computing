@@ -22,6 +22,8 @@ LOG "Creating cluster infrastructure..."
 k3d cluster create --config="${SCRIPT_DIR}/rsc/k3d-cluster-setup.yaml"  # k3d resolves envvars by default
 ${KCTL} cluster-info
 
+########################################################################################################################
+
 log "Generate certificate for domain: ${GW_DOMAIN}"
 rm -rf "${SCRIPT_DIR}/creds/cert/cluster/" && mkdir -pv "${SCRIPT_DIR}/creds/cert/cluster/"
 pushd "${SCRIPT_DIR}/creds/cert/cluster/"
@@ -52,6 +54,14 @@ done; echo
 #repeat_wait 3 openssl s_client -brief -ignore_unexpected_eof "${_TRAEFIK_HTTPS}" </dev/null 2>&1
 openssl s_client -showcerts -brief -CAfile="${CA_DIR}/ca.crt" -servername "${GW_DOMAIN}" "${_TRAEFIK_HTTPS}" </dev/null
 
+log "Created cluster nodes"
+${KCTL} get nodes -o wide
+
+log "Configured DNS entries"
+${KCTL} -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
+
+########################################################################################################################
+
 LOG "Load components into registry: ${K3D_REG}"
 for img in "${IMAGES[@]}"; do
     skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${img}" "docker://${K3D_REG}/${img}"
@@ -62,11 +72,7 @@ log "Stored images in cluster"
 curl -Ss --fail-with-body --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" \
                                                         -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
 
-log "Created cluster nodes"
-${KCTL} get nodes -o wide
-
-log "Configured DNS entries"
-${KCTL} -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
+########################################################################################################################
 
 if [ "${USE_NGROK}" = "true" ] && [ -v NGROK_AUTHTOKEN ] && [ -v NGROK_DOMAIN ]; then
     log "Setup NGROK reversed HTTP proxy tunnel..."

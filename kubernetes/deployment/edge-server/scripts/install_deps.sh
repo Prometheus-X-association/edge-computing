@@ -116,7 +116,7 @@ function install_skopeo() {
     sudo apt-get update && sudo apt-get install -y libgpgme-dev libassuan-dev libbtrfs-dev pkg-config go-md2man golang
     TMP_DIR=$(mktemp -d) && pushd "${TMP_DIR}"
         git clone https://github.com/containers/skopeo && cd skopeo
-        git switch --detach ${SKOPEO_VER}
+        git switch -C "build-${SKOPEO_VER}" --no-track ${SKOPEO_VER}
         make all
         sudo make install clean
     popd

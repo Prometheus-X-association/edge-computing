@@ -81,7 +81,7 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_PDC_DIR}" ] || [ -z "$( ls -
     log "Pull PDC source with version: ${DS_PDC_VER}..."
     git clone "${DS_PDC_REPO}" "${DS_PDC_DIR}"
     pushd "${DS_PDC_DIR}"
-        git switch --detach "${DS_PDC_VER}"
+        git switch -C "build-${DS_PDC_VER}" --no-track "${DS_PDC_VER}"
     popd
 
     log "Adjust docker setup..."
@@ -253,9 +253,10 @@ EOF
 
     log "Build PDC..."
     pushd "${DS_PDC_DIR}"
-        docker compose build
+        docker compose -p "pdc" build
     popd
 fi
+docker image ls --filter "label=com.docker.compose.project=pdc"
 
 if [ "${DRY_RUN}" = "true" ]; then
     exit 0

@@ -76,7 +76,7 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_PDC_DIR}" ] || [ -z "$( ls -
     log "Pull PDC source with version: ${DS_PDC_VER}..."
     git clone "${PDC_REPO}" "${DS_PDC_DIR}"
     pushd "${DS_PDC_DIR}"
-        git switch --detach "v${DS_PDC_VER}"
+        git switch -C "build-${DS_PDC_VER}" --no-track "v${DS_PDC_VER}"
     popd
 
     log "Adjust docker setup..."

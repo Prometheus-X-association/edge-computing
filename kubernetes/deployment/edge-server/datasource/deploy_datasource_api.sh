@@ -16,7 +16,7 @@ set -euo pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
-DS_REPO=git@github.com:nada-a1/xapi-data-source.git
+DS_REPO="git@github.com:nada-a1/xapi-data-source.git"
 DS_API_IMG="edge-server/datasource-xapi:latest"
 DS_API_NAME="xapi-data-source"
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
@@ -81,7 +81,7 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_API_DIR}" ] || [ -z "$( ls -
     log "Pull datasource with version: ${DS_API_VER}..."
     git clone "${DS_REPO}" "${DS_API_DIR}"
     pushd "${DS_API_DIR}"
-        git switch --detach "${DS_API_VER}"
+        git switch -C "build-${DS_API_VER}" --no-track "${DS_API_VER}"
     popd
 
     if [ ! -f "${DS_PDC_LOGIN_FILE}" ]; then
@@ -120,10 +120,10 @@ fi
 
 # Build image
 log "Build datasource image..."
-    pushd "${DS_API_DIR}"
-        docker compose build
-    popd
-docker image ls "${DS_API_IMG}"
+pushd "${DS_API_DIR}"
+    docker compose -p "datasource" build
+popd
+docker image ls --filter "label=com.docker.compose.project=datasource"
 
 if [ "${DRY_RUN}" = "true" ]; then
     exit 0

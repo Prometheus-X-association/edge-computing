@@ -16,6 +16,11 @@ set -eou pipefail
 
 source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
+DVA_BB_REPO="git@github.com:Prometheus-X-association/data-veracity.git"
+DVA_BB_DIR="dva"
+DVA_BB_VER="remotes/origin/edge-node-demo"
+FORCE_RECREATE="true"
+
 ########################################################################################################################
 
 LOG "Building docker images..."
@@ -35,13 +40,41 @@ cp -vR "${ROOT_DIR}/src/registry/.certs/ca/ca.crt" "${SCRIPT_DIR}/creds/cert/ca/
 cp -vR "${ROOT_DIR}/src/registry/.certs/ca.key" "${SCRIPT_DIR}/creds/cert/ca.key"
 cp -vR "${ROOT_DIR}/src/registry/.certs/auth/server.cert" "${SCRIPT_DIR}/creds/cert/registry/server.cert"
 
+log "Update PtxEdgeWorker CRD..."
+cp -vR "${ROOT_DIR}/src/controller/crd/ptx-edge-worker.yaml" "${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml"
+
+########################################################################################################################
+
 #log "Collect federated learning images"
 #for img in "${FED_COMPONENTS[@]}"; do
 #    docker pull "${img}"
 #done
 
-log "Update PtxEdgeWorker CRD..."
-cp -vR "${ROOT_DIR}/src/controller/crd/ptx-edge-worker.yaml" "${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml"
+log "Build DVA components..."
+
+if [ -z "${DVA_BB_DIR:-}" ]; then
+    DVA_BB_DIR=$(readlink -f "$(dirname "$0")/dva")
+fi
+mkdir -p "${DVA_BB_DIR}"
+echo "Used dir for DVA: ${DVA_BB_DIR}"
+echo "Used version for DVA: ${DVA_BB_VER:=main}"
+
+if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DVA_BB_DIR}" ] || [ -z "$( ls -A "${DVA_BB_DIR}" )" ]; then
+    log "Cleanup DVA config..."
+    rm -rf "${DVA_BB_DIR}"
+
+    log "Pull DVA source with version: ${DVA_BB_VER}..."
+    git clone "${DVA_BB_REPO}" "${DVA_BB_DIR}"
+    pushd "${DVA_BB_DIR}"
+        git switch -C "build-${DVA_BB_VER}" --no-track "${DVA_BB_VER}"
+    popd
+fi
+
+log "Build DVA images..."
+pushd "${DVA_BB_DIR}/test-env"
+    docker compose -p "dva" build
+popd
+docker image ls --filter "label=com.docker.compose.project=dva"
 
 ########################################################################################################################
 
