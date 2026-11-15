@@ -1,0 +1,42 @@
+{
+  "spec": {
+    "name": "${_WKR}",
+    "service": {
+      "enabled": true
+    },
+    "data": {
+      "src": {
+        "method": "SKIP"
+      }
+    },
+    "worker": {
+      "src": {
+        "method": "SKIP",
+        "image": "${REGISTRY}:${REGISTRY_PORT}/${_WKR}:latest"
+      },
+      "config": {
+        "env": [
+          {
+            "key": "DVA_LOG_LEVEL",
+            "value": "debug"
+          }
+        ]
+      },
+      "demands": {
+        "cpu": 0.5,
+        "memory": 300
+      }
+    },
+    "dataspace": {
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${DEF_ZONE}",
+            "preferred": true
+          }
+        ]
+      }
+    }
+  }
+}

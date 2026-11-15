@@ -68,10 +68,12 @@ function deploy_dva_worker(){
 ########################################################################################################################
 
 deploy_dva_worker "postgres-provider" "PostgreSQL init process complete"
-
 deploy_dva_worker "postgres-consumer" "PostgreSQL init process complete"
-
 deploy_dva_worker "postgres-vlamanager" "PostgreSQL init process complete"
+
+deploy_dva_worker "dva-processing-consumer" "Application startup complete"
+deploy_dva_worker "dva-processing-provider" "Application startup complete"
+deploy_dva_worker "dva-processing-vlamanager" "Application startup complete"
 
 ########################################################################################################################
 
