@@ -166,3 +166,9 @@ BUILD_TIMEOUT=600
 ########################################################################################################################
 
 # Demo configuration
+
+VLA_MANAGER_AI_PROVIDER="openai"
+VLA_MANAGER_AI_URL=""
+VLA_MANAGER_AI_API_KEY=""
+VLA_MANAGER_AI_MODEL=""
+VLA_MANAGER_AI_TIMEOUT_SECONDS="30"
