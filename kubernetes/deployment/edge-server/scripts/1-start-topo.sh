@@ -63,11 +63,19 @@ ${KCTL} -n kube-system get configmaps coredns -o jsonpath='{.data.NodeHosts}'
 ########################################################################################################################
 
 LOG "Load components into registry: ${K3D_REG}"
-for img in "${IMAGES[@]}"; do
-    skopeo copy --dest-cert-dir="${CA_DIR}" --dest-creds="${REG_CREDS}" "docker-daemon:${img}" "docker://${K3D_REG}/${img}"
-done
-echo
+_SKP_COPY="skopeo copy --dest-cert-dir=${CA_DIR} --dest-creds=${REG_CREDS}"
 
+log "Uploading PTX-edge images..."
+for img in "${IMAGES[@]}"; do
+    ${_SKP_COPY} "docker-daemon:${img}" "docker://${K3D_REG}/${img}"
+done
+
+log "Uploading DVA images..."
+for img in $(docker image ls --filter "label=com.docker.compose.project=dva" --format "{{.Repository}}:{{.Tag}}"); do
+    ${_SKP_COPY} "docker-daemon:${img}" "docker://${K3D_REG}/${img##dva-}"
+done
+
+echo
 log "Stored images in cluster"
 curl -Ss --fail-with-body --cacert "${CA_DIR}/ca.crt" -u "${REG_CREDS}" \
                                                         -X GET "https://${K3D_REG}/v2/_catalog" | python3 -m json.tool
