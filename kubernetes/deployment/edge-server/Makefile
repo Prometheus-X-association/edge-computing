@@ -100,6 +100,12 @@ purge ::
 
 ########################################################################################################################
 
+test-orchestrator ::
+	# Usage $make test-orchestrator anonVLAID=9026e06f-dd4e-4711 aggVLAID=9026e06f-dd4e-4711
+	./test/test-local-orchestrator.sh ${anonVLAID} ${aggVLAID}
+
+########################################################################################################################
+
 SHELL := bash
 .SILENT:	# Set silent mode (-s) by default
 .DEFAULT_GOAL := setup

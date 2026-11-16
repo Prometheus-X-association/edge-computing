@@ -58,7 +58,7 @@ function deploy_dva_worker(){
     if [ -n "${_INIT_COMPLETED}" ]; then
         sleep 1
         (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
-                                                            | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
+                                                            | timeout "${BUILD_TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
     fi
     echo -e "\nWatching for <ready> state...."
     curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}/watcher?state=ready&timeout=10" \
@@ -96,7 +96,7 @@ function deploy_dva_task(){
     if [ -n "${_INIT_COMPLETED}" ]; then
         sleep 1
         (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
-                                                            | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
+                                                            | timeout "${BUILD_TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
     else
         sleep 10
     fi
