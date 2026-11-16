@@ -24,7 +24,7 @@
         "env": [
           {
             "key": "VLA_MANAGER_DB_URL",
-            "value": "postgresql://postgres:postgres@postgres-vlamanager.${PTX}.svc.cluster.local:5432/dva"
+            "value": "postgresql://${DVA_POSTGRES_CRED}@postgres-vlamanager.${PTX}.svc.cluster.local:5432/dva"
           },
           {
             "key": "VLA_MANAGER_API_PROCESSING_URL",

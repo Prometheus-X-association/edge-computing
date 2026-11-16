@@ -94,6 +94,10 @@ cleanup ::
 					 	-f "reference=${KUBE_OPS_VIEW_IMG}" -f "reference=ngrok/ngrok" | xargs -r docker rmi --force
 	docker image prune -f
 
+purge ::
+	rm -rf ./dva
+	rm -rf ./creds/cert/*
+
 ########################################################################################################################
 
 SHELL := bash
