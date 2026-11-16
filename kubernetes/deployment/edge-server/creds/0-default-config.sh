@@ -33,3 +33,6 @@ GW_PORT=4443
 ### PTX-edge API default credentials
 API_BASIC_USER="admin"
 API_BASIC_PASSWORD="admin"
+
+### Demo default credentials
+DVA_POSTGRES_CRED="postgres:postgres"
