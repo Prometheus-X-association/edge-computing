@@ -2,7 +2,13 @@
   "spec": {
     "name": "${_WKR}",
     "service": {
-      "enabled": true
+      "enabled": true,
+      "interfaces": [
+        {
+          "port": 5000,
+          "public": false
+        }
+      ]
     },
     "data": {
       "src": {

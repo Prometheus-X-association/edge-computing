@@ -1,0 +1,41 @@
+{
+  "spec": {
+    "name": "${_WKR}",
+    "service": {
+      "enabled": false
+    },
+    "data": {
+      "src": {
+        "method": "SKIP"
+      }
+    },
+    "worker": {
+      "src": {
+        "method": "SKIP",
+        "image": "${REGISTRY}:${REGISTRY_PORT}/${_WKR}:latest"
+      },
+      "demands": {
+        "cpu": 0.5,
+        "memory": 200
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/app/classpath:/app/karate.jar",
+        "com.intuit.karate.Main",
+        "./features/"
+      ]
+    },
+    "dataspace": {
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${DEF_ZONE}",
+            "preferred": true
+          }
+        ]
+      }
+    }
+  }
+}

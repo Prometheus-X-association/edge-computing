@@ -31,12 +31,12 @@ curl -fSsL --location-trusted --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:
 echo -e "Validation successful!\n"
 
 function deploy_dva_worker(){
-    _WKR="${1}"
-    _INIT_COMPLETED="${2}"
+    _WKR="${1:?}"
+    _INIT_COMPLETED="${2:-}"
 
     log "Initiate ${_WKR}..."
     _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
-    echo "Prepared body:" && echo "${_WRK_REQ_BODY}" | jq -r .
+    echo "Prepared body:" && echo "${_WRK_REQ_BODY}"
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
                                 --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
@@ -55,15 +55,58 @@ function deploy_dva_worker(){
     log "Waiting for worker: $(kubectl get pods -l app.kubernetes.io/name="${_WKR}" \
                                                         -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
     ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${_WKR}"
-    sleep 1
-    (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
-                                                        | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
+    if [ -n "${_INIT_COMPLETED}" ]; then
+        sleep 1
+        (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
+                                                            | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
+    fi
     echo -e "\nWatching for <ready> state...."
     curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}/watcher?state=ready&timeout=10" \
                                 --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                                 -H 'Accept: application/json' | jq
     echo
     ${KCTL} get all,ingress -l "app.kubernetes.io/name=${_WKR}"
+}
+
+function deploy_dva_task(){
+    _WKR="${1:?}"
+    _INIT_COMPLETED="${2:-}"
+
+    log "Initiate ${_WKR}..."
+    _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
+    echo "Prepared body:" && echo "${_WRK_REQ_BODY}"
+    echo -e "\nReceived response:"
+    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H "Content-Type: application/json" \
+                                -H 'Accept: application/json' \
+                                --data-binary @<(echo "${_WRK_REQ_BODY}" | jq -c .) | jq
+
+    log "Wait for ${_WKR}..."
+    repeat_wait 5 ${KCTL} wait --for="condition=Processed" "ptxedgeworker/${_WKR}"
+    repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
+                                                                            -l "app.kubernetes.io/name=${_WKR}"
+    sleep 1
+    ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${_WKR}" -c builder
+
+    log "Waiting for worker: $(kubectl get pods -l app.kubernetes.io/name="${_WKR}" \
+                                                        -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
+    sleep 1
+    ${KCTL} wait --for="condition=Ready" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${_WKR}"
+    if [ -n "${_INIT_COMPLETED}" ]; then
+        sleep 1
+        (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
+                                                            | timeout "${TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
+    else
+        sleep 10
+    fi
+    repeat_wait 5 ${KCTL} wait --for="condition=Complete" --timeout="5s" "job/${_WKR}"
+    echo -e "\nWatching for <succeeded> state...."
+    curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}/watcher?state=succeeded&timeout=10" \
+                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                -H 'Accept: application/json' | jq
+    echo
+    ${KCTL} get all,jobs,ingress -l "app.kubernetes.io/name=${_WKR}"
 }
 
 function wait_for_exposed() {
@@ -104,6 +147,12 @@ deploy_dva_worker "dva-api-provider" "Application started"
 deploy_dva_worker "dva-api-consumer" "Application started"
 deploy_dva_worker "dva-dashboard-provider" "start worker processes" && wait_for_exposed "dva-dashboard-provider"
 deploy_dva_worker "dva-dashboard-consumer" "start worker processes"
+#
+deploy_dva_worker "xapi-anonymizer" "Application startup complete"
+deploy_dva_worker "xapi-aggregation" "Application startup complete"
+#
+deploy_dva_worker "edge-node-server-demo" "Application startup complete"
+deploy_dva_task "karate" "HTML report"
 
 ########################################################################################################################
 

@@ -1,0 +1,58 @@
+{
+  "spec": {
+    "name": "${_WKR}",
+    "service": {
+      "enabled": true,
+      "interfaces": [
+        {
+          "port": 8090,
+          "public": true,
+          "restricted": false,
+          "stripped": true
+        }
+      ]
+    },
+    "data": {
+      "src": {
+        "method": "SKIP"
+      }
+    },
+    "worker": {
+      "src": {
+        "method": "SKIP",
+        "image": "${REGISTRY}:${REGISTRY_PORT}/${_WKR}:latest"
+      },
+      "config": {
+        "env": [
+          {
+            "key": "DVA_URL",
+            "value": "http://dva-api-provider.${PTX}.svc.cluster.local:9090"
+          },
+          {
+            "key": "ANONYMIZER_URL",
+            "value": "http://xapi-anonymizer.${PTX}.svc.cluster.local:8001/api/anonymize"
+          },
+          {
+            "key": "AGGREGATOR_URL",
+            "value": "http://xapi-aggregation.${PTX}.svc.cluster.local:8002/api/aggregate"
+          }
+        ]
+      },
+      "demands": {
+        "cpu": 0.5,
+        "memory": 200
+      }
+    },
+    "dataspace": {
+      "privacy": {
+        "required": true,
+        "zones": [
+          {
+            "name": "${DEF_ZONE}",
+            "preferred": true
+          }
+        ]
+      }
+    }
+  }
+}

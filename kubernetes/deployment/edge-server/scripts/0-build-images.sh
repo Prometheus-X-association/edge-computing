@@ -69,7 +69,7 @@ fi
 
 log "Build DVA images..."
 pushd "${DVA_BB_DIR}/test-env"
-    docker compose -p "dva" build
+    docker compose -p "dva" --profile karate --profile demo build
 popd
 docker image ls --filter "label=com.docker.compose.project=dva"
 

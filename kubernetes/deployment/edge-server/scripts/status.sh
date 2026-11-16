@@ -21,7 +21,7 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 ${KCTL} -n "${SANDBOX}" get all --ignore-not-found
 echo
 #${KCTL} -n "${PTX}" get all,secrets,configmaps,pv,pvc,middlewares.traefik.io,ingress -o wide --ignore-not-found
-${KCTL} -n "${PTX}" get secrets,configmaps,deployments,pods,services,middlewares,ingresses -o wide --ignore-not-found
+${KCTL} -n "${PTX}" get secrets,configmaps,deployments,pods,jobs,services,middlewares,ingresses -o wide --ignore-not-found
 echo
 ${KCTL} events | tail -n20
 
