@@ -25,16 +25,16 @@
       "config": {
         "env": [
           {
-            "key": "DVA_DASHBOARD_BASE_URL",
+            "key": "BASE_PATH",
             "value": "/worker/${_WKR}/"
           },
           {
             "key": "DVA_API_URL",
-            "value": "http://dva-api-provider:9090"
+            "value": "http://dva-api-provider.${PTX}.svc.cluster.local:9090"
           },
           {
             "key": "DVA_VLA_MANAGER_URL",
-            "value": "http://vlamanager-backend:8000"
+            "value": "http://vlamanager-backend.${PTX}.svc.cluster.local:8000"
           }
         ]
       },

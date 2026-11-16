@@ -24,11 +24,11 @@
         "env": [
           {
             "key": "VLA_MANAGER_DB_URL",
-            "value": "postgresql://postgres:postgres@postgres-vlamanager:5432/dva"
+            "value": "postgresql://postgres:postgres@postgres-vlamanager.${PTX}.svc.cluster.local:5432/dva"
           },
           {
             "key": "VLA_MANAGER_API_PROCESSING_URL",
-            "value": "http://dva-processing-vlamanager:5000"
+            "value": "http://dva-processing-vlamanager.${PTX}.svc.cluster.local:5000"
           },
           {
             "key": "VLA_MANAGER_AI_PROVIDER",

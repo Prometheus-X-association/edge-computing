@@ -25,12 +25,12 @@
       "config": {
         "env": [
           {
-            "key": "VLA_MANAGER_BASE_URL",
+            "key": "BASE_PATH",
             "value": "/worker/${_WKR}/"
           },
           {
             "key": "VLA_MANAGER_BACKEND_URL",
-            "value": "http://vlamanager-backend:8000"
+            "value": "http://vlamanager-backend.${PTX}.svc.cluster.local:8000"
           }
         ]
       },

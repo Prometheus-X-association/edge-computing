@@ -28,7 +28,7 @@
           },
           {
             "key": "DVA_POSTGRES_URL",
-            "value": "postgresql://postgres-consumer:5432/dva"
+            "value": "postgresql://postgres-consumer.${PTX}.svc.cluster.local:5432/dva"
           }
         ]
       },

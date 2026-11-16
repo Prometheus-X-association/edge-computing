@@ -24,11 +24,11 @@
         "env": [
           {
             "key": "DVA_PROCESSING_URL",
-            "value": "http://dva-processing-consumer:5000"
+            "value": "http://dva-processing-consumer.${PTX}.svc.cluster.local:5000"
           },
           {
             "key": "DVA_VC_MANAGER_URL",
-            "value": "http://dva-vc-manager-consumer:8000"
+            "value": "http://dva-vc-manager-consumer.${PTX}.svc.cluster.local:8000"
           },
           {
             "key": "DVA_ISSUER_ID",
@@ -36,11 +36,11 @@
           },
           {
             "key": "DVA_POSTGRES_URL",
-            "value": "postgresql://postgres-consumer:5432/dva"
+            "value": "postgresql://postgres-consumer.${PTX}.svc.cluster.local:5432/dva"
           },
           {
             "key": "DVA_VLA_MANAGER_URL",
-            "value": "http://vlamanager-backend:8000"
+            "value": "http://vlamanager-backend.${PTX}.svc.cluster.local:8000"
           }
         ]
       },

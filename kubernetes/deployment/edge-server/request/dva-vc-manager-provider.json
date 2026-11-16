@@ -24,7 +24,7 @@
         "env": [
           {
             "key": "DVA_VC_MANAGER_DB_URL",
-            "value": "postgresql://postgres:postgres@postgres-provider:5432/dva"
+            "value": "postgresql://postgres:postgres@postgres-provider.${PTX}.svc.cluster.local:5432/dva"
           }
         ]
       },
