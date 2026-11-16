@@ -258,6 +258,18 @@ EOF
 fi
 docker image ls --filter "label=com.docker.compose.project=pdc"
 
+log "Update PDC dpdc dependency..."
+
+sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${DS_PDC_DIR}/package.json"
+ls -alht "${DS_PDC_DIR}/package.json"
+grep --color=always "dpcp-library" "${DS_PDC_DIR}/package.json"
+echo
+
+sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${DS_PDC_DIR}/docker/app/Dockerfile"
+ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
+grep --color=always "frozen-lockfile" "${DS_PDC_DIR}/docker/app/Dockerfile"
+echo
+
 if [ "${DRY_RUN}" = "true" ]; then
     exit 0
 fi
