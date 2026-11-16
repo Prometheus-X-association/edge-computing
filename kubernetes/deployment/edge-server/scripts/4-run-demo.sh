@@ -36,7 +36,7 @@ function deploy_dva_worker(){
 
     log "Initiate ${_WKR}..."
     _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
-    echo "Prepared body:" && echo "${_WRK_REQ_BODY}"
+    echo "Prepared body:" && echo "${_WRK_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
                                 --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
@@ -74,7 +74,7 @@ function deploy_dva_task(){
 
     log "Initiate ${_WKR}..."
     _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
-    echo "Prepared body:" && echo "${_WRK_REQ_BODY}"
+    echo "Prepared body:" && echo "${_WRK_REQ_BODY}" | jq -r .
     echo -e "\nReceived response:"
     curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
                                 --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \

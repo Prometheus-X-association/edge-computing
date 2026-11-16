@@ -15,7 +15,7 @@
         "image": "${REGISTRY}:${REGISTRY_PORT}/${_WKR}:latest"
       },
       "demands": {
-        "cpu": 0.5,
+        "cpu": 1.0,
         "memory": 200
       },
       "command": [
