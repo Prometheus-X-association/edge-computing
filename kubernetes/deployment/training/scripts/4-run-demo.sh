@@ -72,12 +72,12 @@ repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="5s" "deploym
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP0}"
 sleep 1
-${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP0}" -c builder
+${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${DP0}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP0}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP0}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP0}" &) \
+(kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${DP0}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo "Watching for <ready> state...."
 curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP0}/watcher?state=ready&timeout=10" \
@@ -108,12 +108,12 @@ repeat_wait 5 ${KCTL} wait --for="condition=Progressing" --timeout="${BUILD_TIME
 repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                                     -l "app.kubernetes.io/name=${DP1}"
 sleep 1
-${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${DP1}" -c builder
+${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${DP1}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${DP1}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${DP1}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${DP1}" &) \
+(kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${DP1}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo "Watching for <ready> state...."
 curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${DP1}/watcher?state=ready&timeout=10" \
@@ -148,12 +148,12 @@ curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${A
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H 'Accept: application/json' | jq
 sleep 1
-${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${AGG}" -c builder
+${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${AGG}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${AGG}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${AGG}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${AGG}" &) \
+(kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${AGG}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${AGG}"
@@ -197,12 +197,12 @@ curl -SsL --fail-with-body -X GET "https://${CLUSTER_HOST}/${PREFIX}/workers/${O
                             --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                             -H 'Accept: application/json' | jq
 sleep 1
-${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${ORCH}" -c builder
+${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${ORCH}" -c builder
 
 log "Waiting for worker:$(kubectl get pods -l app.kubernetes.io/name="${ORCH}" \
                                                     -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
 ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${ORCH}"
-(kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${ORCH}" &) \
+(kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${ORCH}" &) \
                                                         | timeout "${TIMEOUT}" grep -m1 "Application startup complete."
 echo
 ${KCTL} get all,ingress -l "app.kubernetes.io/name=${ORCH}"

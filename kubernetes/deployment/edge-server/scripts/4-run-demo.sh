@@ -50,14 +50,13 @@ function deploy_dva_worker(){
     repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                             -l "app.kubernetes.io/name=${_WKR}"
     sleep 1
-    ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${_WKR}" -c builder
+    ${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${_WKR}" -c builder
 
     log "Waiting for worker: $(kubectl get pods -l app.kubernetes.io/name="${_WKR}" \
                                                         -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
     ${KCTL} wait --for="condition=Available" --timeout="${BUILD_TIMEOUT}s" "deployment/${_WKR}"
     if [ -n "${_INIT_COMPLETED}" ]; then
-        sleep 1
-        (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
+        (kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${_WKR}" &) \
                                                             | timeout "${BUILD_TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
     fi
     echo -e "\nWatching for <ready> state...."
@@ -87,7 +86,7 @@ function deploy_dva_task(){
     repeat_wait 5 ${KCTL} wait --for="condition=PodReadyToStartContainers" --timeout="${BUILD_TIMEOUT}s" pods \
                                                                             -l "app.kubernetes.io/name=${_WKR}"
     sleep 1
-    ${KCTL} logs -f --prefix -l "app.kubernetes.io/name=${_WKR}" -c builder
+    ${KCTL} logs -f --prefix --tail=-1 -l "app.kubernetes.io/name=${_WKR}" -c builder
 
     log "Waiting for worker: $(kubectl get pods -l app.kubernetes.io/name="${_WKR}" \
                                                         -o=jsonpath='{range .items[*]} | {.metadata.name}') to set up..."
@@ -95,7 +94,7 @@ function deploy_dva_task(){
     ${KCTL} wait --for="condition=Ready" --timeout="${BUILD_TIMEOUT}s" pods -l "app.kubernetes.io/name=${_WKR}"
     if [ -n "${_INIT_COMPLETED}" ]; then
         sleep 1
-        (kubectl logs -f --prefix -c worker -l "app.kubernetes.io/name=${_WKR}" &) \
+        (kubectl logs -f --prefix -c worker --tail=-1 --pod-running-timeout=20s -l "app.kubernetes.io/name=${_WKR}" &) \
                                                             | timeout "${BUILD_TIMEOUT}" grep -m1 "${_INIT_COMPLETED}"
     else
         sleep 10
