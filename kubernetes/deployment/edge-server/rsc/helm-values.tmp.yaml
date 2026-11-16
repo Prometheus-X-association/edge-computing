@@ -43,7 +43,7 @@ connector:
     nodeEnv: ${PDC_ENV}
     expressLimitSize: "100mb"
     serviceChainAdapter: true
-    serviceChainAdapterTimeout: 5000
+    serviceChainAdapterTimeout: 10000
   init:
     useConnectorNodeFilter: true
     forceRecreateExposure: true
