@@ -12,7 +12,7 @@ data:
     SESSION_COOKIE_EXPIRATION={{ .Values.connector.credential.sessionSecretExpiration | default 24000 }}
     MONGO_URI="{{ include "pdc.mongoURI" . }}"
     CURATOR=https://visionspol.eu
-    MAINTAINER=https://visionspol.eu
+    MAINTAINER=https://tmit.bme.hu
     WINSTON_LOGS_MAX_FILES=14d
     WINSTON_LOGS_MAX_SIZE=20m
     JWT_BEARER_TOKEN_EXPIRATION=3h
@@ -27,7 +27,11 @@ data:
       "secretKey": "{{ required "Sandbox <secretKey is missing!>" .Values.sandbox.credential.secretKey }}",
       "contractUri": "http://{{ .Values.sandbox.contract.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/",
       "catalogUri": "http://{{ .Values.sandbox.catalog.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
-      "consentUri": "http://{{ .Values.sandbox.consent.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/"
+      "consentUri": "http://{{ .Values.sandbox.consent.name }}.{{ .Values.sandbox.ns }}.svc.cluster.local:8888/v1/",
+      "credentials": [],
+      "expressLimitSize": "{{ .Values.connector.config.expressLimitSize | default "100mb" }}",
+      "serviceChainAdapter": "{{ (.Values.connector.config.serviceChainAdapter | toString | lower) | default "false" }}",
+      "serviceChainAdapterTimeout": "{{ (.Values.connector.config.serviceChainAdapterTimeout | int) | default 3000 }}"
     }
   {{- else }}
   dataspace-config.json: |
