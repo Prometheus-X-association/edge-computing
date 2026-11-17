@@ -4,11 +4,12 @@ ARG ENV
 ENV ENV=$ENV
 # Install pnpm globally & Create app directory
 WORKDIR /usr/src/app
-RUN npm install -g pnpm@10.34.1 && apk add --no-cache gettext-envsubst
+RUN npm install -g pnpm@10.34.1 && apk add --no-cache gettext-envsubst git
 # Bundle app source
 COPY ./ ./
+RUN sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' package.json
 # Install app dependencies
-RUN mkdir -p ./src/keys ./docs ./src/public/uploads && pnpm install --frozen-lockfile --ignore-scripts
+RUN mkdir -p ./src/keys ./docs ./src/public/uploads && pnpm install --no-frozen-lockfile
 # Build resources
 RUN npm run build
 # Copy init script
