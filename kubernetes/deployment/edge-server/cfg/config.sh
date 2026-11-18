@@ -165,12 +165,17 @@ BUILD_TIMEOUT=600
 
 ########################################################################################################################
 
+# Datasource configuration
+DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
+DS_INTERNAL_NETWORK="datasource-internal"
+
 # Demo configuration
 VLA_MANAGER_AI_PROVIDER="openai"
 VLA_MANAGER_AI_URL=""
 VLA_MANAGER_AI_API_KEY=""
 VLA_MANAGER_AI_MODEL=""
 VLA_MANAGER_AI_TIMEOUT_SECONDS="30"
+
 
 #BASE_PATH_VLA_MANAGER="/worker/vlamanager-frontend"
 #BASE_PATH_DASHBOARD_PROVIDER="/worker/dva-dashboard-provider"

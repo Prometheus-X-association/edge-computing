@@ -18,9 +18,10 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 DS_PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 DS_PDC_NAME="dataspace-connector"
-DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
-DS_NETWORK="datasource-internal"
+# Loaded from cfg/config.sh !
+#### DS_PDC_LOGIN_FILE=
+#### DS_INTERNAL_NETWORK=
 
 ########################################################################################################################
 
@@ -316,15 +317,15 @@ fi
 ########################################################################################################################
 
 log "Check existing shared network..."
-if ! docker network inspect "${DS_NETWORK}" >/dev/null; then
-    echo ">>> Creating internal network: ${DS_NETWORK}..."
-    docker network create --driver bridge --internal "${DS_NETWORK}"
+if ! docker network inspect "${DS_INTERNAL_NETWORK}" >/dev/null; then
+    echo ">>> Creating internal network: ${DS_INTERNAL_NETWORK}..."
+    docker network create --driver bridge --internal "${DS_INTERNAL_NETWORK}"
 fi
 
-docker network connect "${DS_NETWORK}" "${DS_PDC_NAME}" >/dev/null
+docker network connect "${DS_INTERNAL_NETWORK}" "${DS_PDC_NAME}" >/dev/null
 
 log "Attached internal containers:"
-docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
+docker network inspect "${DS_INTERNAL_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################
 

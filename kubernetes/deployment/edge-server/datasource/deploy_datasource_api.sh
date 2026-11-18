@@ -19,9 +19,10 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 DS_REPO="git@github.com:nada-a1/xapi-data-source.git"
 DS_API_IMG="edge-server/datasource-xapi:latest"
 DS_API_NAME="xapi-data-source"
-DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 
-DS_NETWORK="datasource-internal"
+# Loaded from cfg/config.sh !
+#### DS_PDC_LOGIN_FILE=
+#### DS_INTERNAL_NETWORK=
 
 ########################################################################################################################
 
@@ -56,7 +57,7 @@ done
 
 ########################################################################################################################
 
-# Loaded from creds/fured-datasource-creds.sh !
+# Loaded from creds/1-edge-server-datasource-creds.sh !
 ### DS_API_DIR=
 ### DS_API_VER=
 
@@ -67,6 +68,7 @@ if [ -z "${DS_API_DIR:-}" ]; then
 fi
 mkdir -p "${DS_API_DIR}"
 echo "Used dir for datasource: ${DS_API_DIR}"
+echo "Used repo for datasource: ${DS_REPO}"
 echo "Used version for datasource: ${DS_API_VER:=main}"
 
 log "Remove remnant containers..."
@@ -154,15 +156,15 @@ log "Datasource API is exposed on http://${GW_DOMAIN}:${GW_PORT}/"
 ########################################################################################################################
 
 log "Check existing shared network..."
-if ! docker network inspect "${DS_NETWORK}" >/dev/null; then
-    echo ">>> Creating internal network: ${DS_NETWORK}..."
-    docker network create --driver bridge --internal "${DS_NETWORK}"
+if ! docker network inspect "${DS_INTERNAL_NETWORK}" >/dev/null; then
+    echo ">>> Creating internal network: ${DS_INTERNAL_NETWORK}..."
+    docker network create --driver bridge --internal "${DS_INTERNAL_NETWORK}"
 fi
 
-docker network connect "${DS_NETWORK}" "${DS_API_NAME}" >/dev/null
+docker network connect "${DS_INTERNAL_NETWORK}" "${DS_API_NAME}" >/dev/null
 
 log "Attached internal containers:"
-docker network inspect "${DS_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
+docker network inspect "${DS_INTERNAL_NETWORK}" --format='{{range .Containers}} - {{.Name}} ({{.IPv4Address}}){{"\n"}}{{end}}'
 
 ########################################################################################################################
 

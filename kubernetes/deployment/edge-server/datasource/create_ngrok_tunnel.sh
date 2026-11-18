@@ -39,11 +39,11 @@ log "Remove still running containers..."
 docker ps -aq -f name="${NAME_PREFIX}-*" | xargs -r docker rm --force || true
 
 log "Start tunnel to port: ${TARGET_PORT}..."
-CONTAINER_NAME="${NAME_PREFIX}-$(echo "${TARGET_PORT}" | grep -P -o ':?\K\d+$')"
+_CONTAINER_NAME="${NAME_PREFIX}-$(echo "${TARGET_PORT}" | grep -P -o ':?\K\d+$')"
 # Run ngrok tunnel
 docker run -d --net=host \
         -e NGROK_AUTHTOKEN="${DS_NGROK_AUTHTOKEN}" \
-        --name "${CONTAINER_NAME}" \
+        --name "${_CONTAINER_NAME}" \
         --label "role.dataspace.ptx.org=datasource" \
         --health-cmd "ngrok diagnose >/dev/null" \
         --health-start-period 5s \
@@ -56,13 +56,13 @@ docker run -d --net=host \
 log "Waiting for completed startup..."
 # Wait for server startup
 #sleep 3
-(docker logs -t -f "${CONTAINER_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
+(docker logs -t -f "${_CONTAINER_NAME}" 2>&1 &) | timeout "${TIMEOUT}" grep -B5 -m1 "started tunnel" || true
 
-if [ "$(docker container inspect -f '{{.State.Status}}' "${CONTAINER_NAME}")" = "running" ]; then
+if [ "$(docker container inspect -f '{{.State.Status}}' "${_CONTAINER_NAME}")" = "running" ]; then
     log "Port: ${TARGET_PORT} is exposed on https://${DS_NGROK_DOMAIN}/"
 else
     error "NGROK container creation failed!"
-    docker logs "${CONTAINER_NAME}"
+    docker logs "${_CONTAINER_NAME}"
     exit 1
 fi
 

@@ -10,6 +10,8 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
+export SETUP_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 # limitations under the License.
 NAME := ptx-edge
 NAMESPACE := ptx-edge
@@ -18,10 +20,15 @@ TIMEOUT ?= 60s
 
 ########################################################################################################################
 
+update ::
+	cp -vR "${SETUP_ROOT}/../../src/controller/crd/ptx-edge-worker.yaml" "${SETUP_ROOT}/crds/ptxedgeworkers-crd.yaml"
+
+########################################################################################################################
+
 lint ::
 	helm lint ./ || true
 
-dry-run :: lint
+dry-run :: | update lint
 	helm dependency build
 	helm install --namespace=${NAMESPACE} --debug --dry-run=client ${NAME} ./ \
 		--set gateway.host="gw.example.com" \
@@ -35,7 +42,7 @@ dry-run :: lint
 		--set localRegistry.rootCAFileContent="$$(echo "----BEGIN CERTIFICATE-----test----BEGIN CERTIFICATE-----")" \
 		--set restapi.credential.htpasswdUser="admin:1234"
 
-local-install ::
+local-install :: update
 	helm upgrade --install --namespace=${NAMESPACE} --create-namespace ${NAME} --debug ./ \
 		--set gateway.host="training.k3d.localhost" \
 		--set gateway.port=4443 \
