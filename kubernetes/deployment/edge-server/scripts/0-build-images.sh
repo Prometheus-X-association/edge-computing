@@ -73,6 +73,9 @@ pushd "${DVA_BB_DIR}/test-env"
 popd
 docker image ls --filter "label=com.docker.compose.project=dva"
 
+log "Update PtxEdgeWorker CRD..."
+make -C "${ROOT_DIR}/deployment/ptx-edge" update
+
 ########################################################################################################################
 
 echo -e "\nDone."

@@ -57,7 +57,7 @@ log ::
 
 ########################################################################################################################
 
-setup :: | teardown start-datasource-api start-pdc start-ngrok-tunnel-pdc status
+setup :: | teardown recreate-datasource-api start-pdc start-ngrok-tunnel-pdc status
 
 ########################################################################################################################
 

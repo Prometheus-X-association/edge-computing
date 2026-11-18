@@ -41,6 +41,7 @@ cp -vR "${ROOT_DIR}/src/registry/.certs/auth/server.cert" "${SCRIPT_DIR}/creds/c
 #done
 
 log "Update PtxEdgeWorker CRD..."
+make -C "${ROOT_DIR}/deployment/ptx-edge" update
 cp -vR "${ROOT_DIR}/src/controller/crd/ptx-edge-worker.yaml" "${SCRIPT_DIR}/rsc/ptx-edge-worker-crd.yaml"
 
 ########################################################################################################################

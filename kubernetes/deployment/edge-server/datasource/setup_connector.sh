@@ -68,6 +68,7 @@ fi
 mkdir -p "${DS_PDC_DIR}"
 echo "Used dir for PDC: ${DS_PDC_DIR}"
 
+echo "Used repo for PDC: ${DS_PDC_REPO}"
 echo "Used version for PDC: ${DS_PDC_VER:=main}"
 
 log "Remove remnant containers..."

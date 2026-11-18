@@ -18,36 +18,36 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 ########################################################################################################################
 
-LOG "Run local DVA attestation test with local orchestrator"
+LOG "Run orchestrator-managed DVA attestation test with dummy datasets"
 
-anonVLAID=${1:?'Missing exported envvar: anonVLAID!'} || display_help
-aggVLAID=${2:?'Missing exported envvar: aggVLAID!'} || display_help
+anonVLAID=${1:?'Missing exported envvar: anonVLAID as param[1]!'}
+aggVLAID=${2:?'Missing exported envvar: aggVLAID! as param[2]!'}
+
+DUMMY_DATA="${SCRIPT_DIR}/test/dummy_records_fail.json"
 
 ########################################################################################################################
-
-log "Download private data from http://${DS_GW_DOMAIN}:${DS_GW_PORT}..."
-wget -Sv -O ./test/.private_data.json "http://${DS_GW_DOMAIN}:${DS_GW_PORT}/data/private_data.json"
 
 log "Create request originated from PDC..."
 
 echo -e "\nUsed anonymizedVlaID: ${anonVLAID}"
 echo -e "\nUsed aggregatedVlaID: ${aggVLAID}"
+echo -e "\nUsed dummy data: ${DUMMY_DATA}"
 
-jq -n --arg anon "$anonVLAID" \
-      --arg agg "$aggVLAID" \
-      --arg contract "${PTX_CONTRACT_URI}contract/${SC_CONTRACT_ID}" \
-      --slurpfile data ./test/.private_data.json \
-      '{
-          params: {
-              anonymizedVlaID: $anon,
-              aggregatedVlaID: $agg
-          },
-          contract: $contract,
-          data: $data[0]
-      }' > test/.request.json
+EXCHANGE_BODY=$(jq -n --arg anon "$anonVLAID" \
+                        --arg agg "$aggVLAID" \
+                        --arg contract "${PTX_CONTRACT_URI}contract/${SC_CONTRACT_ID}" \
+                        --slurpfile data "${DUMMY_DATA}" \
+                        '{
+                          params: {
+                              anonymizedVlaID: $anon,
+                              aggregatedVlaID: $agg
+                          },
+                          contract: $contract,
+                          data: $data[0]
+                        }')
 
 echo -e "\nPrepared request body:"
-jq <test/.request.json
+echo "${EXCHANGE_BODY}" | jq
 
 log "Invoking orchestrator..."
 
@@ -60,7 +60,7 @@ RESP=$(time curl -Ss -k --fail-with-body -X POST \
                                             -H "Accept: application/json" \
                                             -H "x-ptx-dataExchangeId: 3f9b6c1e-7a42-4d58-9c0e-2b1a8d5e6f47" \
                                             -H "x-ptx-contractId: ${SC_CONTRACT_ID}" \
-                                            --data-binary @test/.request.json)
+                                            -d "${EXCHANGE_BODY}")
 
 echo -e "\nReceived response:"
 echo "${RESP}" | jq
