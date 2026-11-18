@@ -200,6 +200,10 @@ BUILD_TIMEOUT=600
 
 ########################################################################################################################
 
+### Worker deployment configs
+BATCHED="true"
+PARALLEL="true"
+
 # Demo configuration
 FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
                 ghcr.io/alelevente/aggregator:latest \
