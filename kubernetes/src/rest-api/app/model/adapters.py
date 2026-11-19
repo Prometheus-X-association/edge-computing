@@ -17,6 +17,11 @@ from pydantic import BaseModel, HttpUrl, Field
 
 from app.model.ptxedgeworker import PEW
 from app.model.responses import PTXEdgeWorkerResponse
+from app.utils.k8s import K8sLabelCollectionType
+
+
+class PTXServiceChainInfraRequestParams(BaseModel):
+    label: K8sLabelCollectionType = None
 
 
 class PTXServiceChainInfraRequest(BaseModel):

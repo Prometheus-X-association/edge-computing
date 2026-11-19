@@ -117,32 +117,22 @@ fi
 if [ "${BATCHED}" != "true" ]; then
     deploy_worker "${DP0}"
 fi
-
 wait_for_worker "${DP0}" "Application startup complete"
-
-########################################################################################################################
 
 if [ "${BATCHED}" != "true" ]; then
     deploy_worker "${DP1}"
 fi
-
 wait_for_worker "${DP1}" "Application startup complete"
-
-########################################################################################################################
 
 if [ "${BATCHED}" != "true" ]; then
     deploy_worker "${AGG}"
 fi
-
 wait_for_worker "${AGG}" "Application startup complete"
 wait_for_exposed "${AGG}"
-
-########################################################################################################################
 
 if [ "${BATCHED}" != "true" ]; then
     deploy_worker "${ORCH}" "Application startup complete"
 fi
-
 wait_for_worker "${ORCH}"
 wait_for_exposed "${ORCH}" "/docs"
 

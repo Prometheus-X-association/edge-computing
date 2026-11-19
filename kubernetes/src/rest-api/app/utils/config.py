@@ -21,6 +21,7 @@ class PTXEdgeApiConfig(BaseSettings):
     NAMESPACE: str = Field(default="ptx-edge")
     WORKER_NS: str = Field(default="ptx-edge", alias="NAMESPACE")
     HOSTNAME: str = Field(default="rest-api")
+    PDC_CALLBACK_HOST: str | None = Field(default=None)
     #
     model_config = SettingsConfigDict(env_prefix='API_',
                                       case_sensitive=False)
