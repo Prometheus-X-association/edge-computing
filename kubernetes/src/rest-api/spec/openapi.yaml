@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-19T15:47:05'
+  x-creation-date: '2026-11-19T16:18:55'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -2103,18 +2103,34 @@ components:
           description: Interface state
           default: false
         url:
+          $ref: '#/components/schemas/PTXEdgeWorkerEndpointUrl'
+          description: Endpoint URLs
+      type: object
+      required:
+      - interface
+      title: PTXEdgeWorkerEndpoint
+    PTXEdgeWorkerEndpointUrl:
+      properties:
+        internal:
+          type: string
+          maxLength: 2083
+          minLength: 1
+          format: uri
+          title: Internal
+          description: Exposed interface's URL
+        external:
           anyOf:
           - type: string
             maxLength: 2083
             minLength: 1
             format: uri
           - type: 'null'
-          title: Url
+          title: External
           description: Exposed interface's URL
       type: object
       required:
-      - interface
-      title: PTXEdgeWorkerEndpoint
+      - internal
+      title: PTXEdgeWorkerEndpointUrl
     PTXEdgeWorkerResponse:
       properties:
         state:

@@ -126,7 +126,11 @@ def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
     return f"{proto}://{base}{root_path}/workers/{name}"
 
 
-def assemble_worker_endpoint_url(request: fastapi.Request, name: str, secured: bool | None) -> str:
+def assemble_internal_worker_endpoint_url(name: str, port: int, secured: bool = False) -> str:
+    return f"{'https' if secured else 'http'}://{name}.{CONFIG.WORKER_NS}.svc.cluster.local:{port}"
+
+
+def assemble_exposed_worker_endpoint_url(request: fastapi.Request, name: str, secured: bool | None) -> str:
     proto = request.headers.get('x-forwarded-proto', "https" if secured else "http")
     if not (base := request.headers.get('x-forwarded-host', "")):
         base = request.headers['host']

@@ -25,7 +25,8 @@ from kubernetes_asyncio import client, config, watch
 from app.model.errors import raise_for_k8s_error
 from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
-from app.utils.helper import str2bool, assemble_worker_endpoint_url, get_k8s_obj_res
+from app.utils.helper import str2bool, assemble_exposed_worker_endpoint_url, get_k8s_obj_res, \
+    assemble_internal_worker_endpoint_url
 from app.utils.logger import logger, sanitize_model
 
 K8sLabelCollectionType = typing.Annotated[
@@ -90,21 +91,28 @@ async def assemble_worker_endpoints(request: fastapi.Request,
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
     if (pew := PEW(**obj)) and pew.spec.service:
         if not pew.spec.service.enabled:
-            logger.debug(f"Service not enabled for worker[{name}]!")
+            logger.debug(f"Service not enabled for worker[{pew.spec.name}]!")
         elif not pew.spec.service.interfaces or len(pew.spec.service.interfaces) < 1:
-            logger.debug(f"No interface is defined for worker[{name}]!")
+            logger.debug(f"No interface is defined for worker[{pew.spec.name}]!")
         else:
             exposed = bool(pew.status and pew.status.worker and pew.status.worker.exposed)
-            if not exposed:
-                logger.debug(f"Worker[{name}] is not exposed yet!")
-            endpoints = [
-                {
+            if any(i.public for i in pew.spec.service.interfaces) and not exposed:
+                logger.warning(f"Worker[{pew.spec.name}] with public interface is not exposed yet!")
+            endpoints = []
+            for interface in pew.spec.service.interfaces:
+                endpoint = {
+                    "worker": pew.spec.name,
                     "interface": interface,
                     "exposed": exposed,
-                    "url": assemble_worker_endpoint_url(request=request, name=name, secured=interface.secured)
+                    "url": {
+                        "internal": assemble_internal_worker_endpoint_url(name=name, port=interface.port)
+                    }
                 }
-                for interface in pew.spec.service.interfaces if interface.public
-            ]
+                if exposed:
+                    endpoint["url"]["external"] = assemble_exposed_worker_endpoint_url(request=request,
+                                                                                       name=name,
+                                                                                       secured=interface.secured)
+                endpoints.append(endpoint)
             return endpoints
     return []
 

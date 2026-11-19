@@ -57,12 +57,17 @@ class PTXEdgeWorkerResponseResource(BaseModel):
     group: typing.Annotated[str | None, Field(description="Resource group", example="dataspace.ptx.org")] = None
 
 
+class PTXEdgeWorkerEndpointUrl(BaseModel):
+    internal: typing.Annotated[HttpUrl, Field(description="Exposed interface's URL")]
+    external: typing.Annotated[HttpUrl | None, Field(description="Exposed interface's URL")] = None
+    #
+    model_config = ConfigDict(url_preserve_empty_path=True)
+
+
 class PTXEdgeWorkerEndpoint(BaseModel):
     interface: typing.Annotated[PEWSpecServiceInterface, Field(description="Endpoint interface")]
     exposed: typing.Annotated[bool, Field(description="Interface state")] = False
-    url: typing.Annotated[HttpUrl | None, Field(description="Exposed interface's URL")] = None
-    #
-    model_config = ConfigDict(url_preserve_empty_path=True)
+    url: typing.Annotated[PTXEdgeWorkerEndpointUrl, Field(description="Endpoint URLs")] = None
 
 
 class PTXEdgeWorkerResponseApi(BaseModel):
