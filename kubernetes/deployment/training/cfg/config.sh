@@ -205,9 +205,6 @@ BATCHED="true"
 PARALLEL="true"
 
 # Demo configuration
-FED_COMPONENTS=(ghcr.io/alelevente/data_processor:latest \
-                ghcr.io/alelevente/aggregator:latest \
-                ghcr.io/alelevente/orchestrator:latest)
 #
 DP0="data-processor-0"
 if [ "${LOCAL_SETUP}" = "true" ]; then
@@ -220,7 +217,7 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
         DP0_DATA_METHOD="PTX"
         DP0_DATA_SRC="ptx://exchange"
 fi
-DP0_IMG="ghcr.io/alelevente/data_processor:1.0"
+DP0_IMG="ghcr.io/alelevente/data_processor:latest"
 DP0_MLFLOW_INT="http://localhost:5000"
 DP0_MLFLOW_ORG="http://${DP0}.${PTX}.svc.cluster.local:5000"
 #
@@ -235,15 +232,21 @@ if [ "${LOCAL_SETUP}" = "true" ]; then
         DP1_DATA_METHOD="PTX"
         DP1_DATA_SRC="ptx://exchange"
 fi
-DP1_IMG="ghcr.io/alelevente/data_processor:1.0"
+DP1_IMG="ghcr.io/alelevente/data_processor:latest"
 DP1_MLFLOW_INT="http://localhost:5000"
 DP1_MLFLOW_ORG="http://${DP1}.${PTX}.svc.cluster.local:5000"
 #
-AGG="aggregator"
-AGG_IMG="ghcr.io/alelevente/aggregator:1.0"
-AGG_MLFLOW_INT="http://localhost:5000/worker/aggregator"
+AGG1="aggregator-1"
+AGG1_IMG="ghcr.io/alelevente/aggregator:latest"
+#
+AGG2="aggregator-2"
+AGG2_IMG="ghcr.io/alelevente/aggregator:latest"
+#
+AGG="aggregator-top"
+AGG_IMG="ghcr.io/alelevente/top-level-aggregator:latest"
+AGG_MLFLOW_INT="http://localhost:5000/worker/${AGG}"
 AGG_MLFLOW_ORG="http://${AGG}.${PTX}.svc.cluster.local:5000"
-AGG_MLFLOW_EXT="https://${GW_HOST}/worker/aggregator"
+AGG_MLFLOW_EXT="https://${GW_HOST}/worker/${AGG}"
 #
 ORCH="orchestrator"
-ORCH_IMG="ghcr.io/alelevente/orchestrator:1.0"
+ORCH_IMG="ghcr.io/alelevente/orchestrator:latest"

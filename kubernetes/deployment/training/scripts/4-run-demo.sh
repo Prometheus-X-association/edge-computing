@@ -35,17 +35,36 @@ echo -e "Validation successful!\n"
 function deploy_worker(){
     _WKR="${1:?}"
 
-    log "Initiate ${_WKR}..."
-    #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
-    #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
-    _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
-    echo "Prepared body:" && echo "${_WRK_REQ_BODY}" | jq -r .
-    echo -e "\nReceived response:"
-    curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
-                                --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-                                -H "Content-Type: application/json" \
-                                -H 'Accept: application/json' \
-                                --data-binary @<(echo "${_WRK_REQ_BODY}" | jq -c .) | jq
+    if [ "${BATCHED}" != "true" ]; then
+        log "Initiate ${_WKR}..."
+        #${KCTL} apply -f=<(envsubst <"rsc/worker-${DP0}-deployment.yaml" )
+        #${KCTL} apply -f=<(envsubst <"worker/${DP0}.yaml" )
+        _WRK_REQ_BODY=$(envsubst <"${SCRIPT_DIR}/request/${_WKR}.json")
+        echo "Prepared body:" && echo "${_WRK_REQ_BODY}" | jq -r .
+        echo -e "\nReceived response:"
+        curl -SsL --fail-with-body -X PUT "https://${CLUSTER_HOST}/${PREFIX}/workers/${_WKR}" \
+                                    --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+                                    -H "Content-Type: application/json" \
+                                    -H 'Accept: application/json' \
+                                    --data-binary @<(echo "${_WRK_REQ_BODY}" | jq -c .) | jq
+    fi
+}
+
+function deploy_worker_batch() {
+    if [ "${BATCHED}" = "true" ]; then
+        warning "Setup is configured to use worker batch deployment!"
+        log ">>> Batch processing mode: parallel=${PARALLEL:-false}"
+        log "Initiate Worker batch..."
+        REQ_BODY="$(find "${SCRIPT_DIR}/request/" -type f -name "*.json" -print0 | xargs -0 jq -s '.' | envsubst)"
+        echo "Prepared body:" && echo "${REQ_BODY}" | jq -r .
+        echo -e "\nReceived response:"
+        curl -SsL --fail-with-body \
+            -X POST "https://${CLUSTER_HOST}/${PREFIX}/workers/batch?parallel=${PARALLEL}&timeout=${BUILD_TIMEOUT}" \
+            --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+            -H "Content-Type: application/json" \
+            -H 'Accept: application/json' \
+            --data-binary @<(echo "${REQ_BODY}" | jq -c .) | jq
+    fi
 }
 
 function wait_for_worker() {
@@ -87,54 +106,49 @@ function wait_for_exposed() {
                                 -H 'Accept: application/json' | jq
     _URL="https://${CLUSTER_HOST}/worker/${_WKR}${_PATH}"
     log ">>> ${_WKR} is available on ${_URL}"
-    wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
-                                --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
-                                --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_URL}"
-    # curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
+    # Check if public port
+    if jq -e '.spec.service.interfaces | any(.public)' "${SCRIPT_DIR}/request/${_WKR}.json" >/dev/null; then
+        if jq -e '.spec.service.interfaces[] | select(.public) | .restricted' "${SCRIPT_DIR}/request/${_WKR}.json" >/dev/null; then
+            wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
+                                    --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
+                                    --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_URL}"
+            # curl -v -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
+            # -L --location-trusted "http://${LB_DOMAIN}:${LB_WEB_PORT}/worker/${AGG}/"
+        else
+            wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
+                                    --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_URL}"
+        fi
+    else
+        warning "Skip interface checking"
+    fi
     echo -e "\n>>> ${_WKR} is also exposed on https://${PRIMARY_HOST}/worker/${_WKR}"
     echo -e "\n>>> ${_WKR} is also exposed on https://${GW_HOST}/worker/${_WKR}"
 }
 
 ########################################################################################################################
 
-if [ "${BATCHED}" = "true" ]; then
-    warning "Setup is configured to use worker batch deployment!"
-    log ">>> Batch processing mode: parallel=${PARALLEL:-false}"
-    log "Initiate Worker batch..."
-    REQ_BODY="$(find "${SCRIPT_DIR}/request/" -type f -name "*.json" -print0 | xargs -0 jq -s '.' | envsubst)"
-    echo "Prepared body:" && echo "${REQ_BODY}" | jq -r .
-    echo -e "\nReceived response:"
-    curl -SsL --fail-with-body \
-        -X POST "https://${CLUSTER_HOST}/${PREFIX}/workers/batch?parallel=${PARALLEL}&timeout=${BUILD_TIMEOUT}" \
-        --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
-        -H "Content-Type: application/json" \
-        -H 'Accept: application/json' \
-        --data-binary @<(echo "${REQ_BODY}" | jq -c .) | jq
-fi
+deploy_worker_batch
 
-########################################################################################################################
-
-if [ "${BATCHED}" != "true" ]; then
-    deploy_worker "${DP0}"
-fi
+deploy_worker "${DP0}"
 wait_for_worker "${DP0}" "Application startup complete"
 
-if [ "${BATCHED}" != "true" ]; then
-    deploy_worker "${DP1}"
-fi
+deploy_worker "${DP1}"
 wait_for_worker "${DP1}" "Application startup complete"
 
-if [ "${BATCHED}" != "true" ]; then
-    deploy_worker "${AGG}"
-fi
-wait_for_worker "${AGG}" "Application startup complete"
-wait_for_exposed "${AGG}"
+deploy_worker "${AGG1}"
+wait_for_worker "${AGG1}" "Application startup complete"
 
-if [ "${BATCHED}" != "true" ]; then
-    deploy_worker "${ORCH}" "Application startup complete"
-fi
+deploy_worker "${AGG2}"
+wait_for_worker "${AGG2}" "Application startup complete"
+
+deploy_worker "${AGG}"
+wait_for_worker "${AGG}" "Application startup complete"
+#wait_for_exposed "${AGG}"
+
+deploy_worker "${ORCH}" "Application startup complete"
 wait_for_worker "${ORCH}"
 wait_for_exposed "${ORCH}" "/docs"
 
 ########################################################################################################################
+
 echo -e "\nDone."
