@@ -27,7 +27,8 @@ from kubernetes_asyncio import client
 
 from app import __version__
 from app.handlers import (watch_for_worker_status, create_pew_worker, list_all_incluster_workers,
-                          delete_all_incluster_workers, create_workers_batch, list_all_incluster_worker_endpoints)
+                          delete_all_incluster_workers, create_workers_batch, list_all_incluster_worker_endpoints,
+                          assemble_worker_endpoints, collect_worker_node_zones)
 from app.model.adapters import (PTXServiceChainInfraRequest, PTXServiceChainInfraResponse, PTXServiceChainInfraHeaders,
                                 PTXServiceChainResumeCallback, PTXServiceChainAsyncResponse)
 from app.model.errors import (PTXEdgeAPIError, raise_for_k8s_error, raise_for_failed_k8s_request,
@@ -36,12 +37,11 @@ from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import (PTXEdgeWorkerResponseState, PTXEdgeWorkerResponse, VersionsResponse,
                                  PTXEdgeWorkerCollectionResponse, PTXEdgeWorkerCollectionResponseStatus,
                                  PTXEdgeWorkerNameType, PTXEdgeWorkerEndpoint, PTXWorkerBatchId,
-                                 PTXEdgeWorkerBatchResponse)
+                                 PTXEdgeWorkerBatchResponse, PTXEdgeWorkerNodeResponse)
 from app.utils.config import CONFIG
 from app.utils.helper import (cancel_on_disconnect, get_k8s_obj_res, validate_pews_list)
 from app.utils.k8s import (setup_k8s_client, invoke_k8s_pew_api, K8sAPIMethod, K8sLabelCollectionType,
-                           PTXEdgeWorkerState, assemble_worker_endpoints,
-                           watch_for_pew_resource_deletion)
+                           PTXEdgeWorkerState, watch_for_pew_resource_deletion)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -198,6 +198,28 @@ async def get_worker_endpoints(request: fastapi.Request, name: PTXEdgeWorkerName
         raise_for_failed_k8s_request(ex)
     except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
         raise_for_network_error(ex)
+
+
+@app.get("/workers/{name}/node",
+         tags=["Edge-Worker"],
+         responses={
+             fastapi.status.HTTP_404_NOT_FOUND: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": PTXEdgeAPIError},
+             fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
+         },
+         response_model=PTXEdgeWorkerNodeResponse,
+         response_model_exclude_unset=True,
+         response_model_exclude_none=True,
+         summary="Obtain the privacy zones on which the worker with the given name is deployed",
+         status_code=fastapi.status.HTTP_200_OK)
+async def get_worker_node_zones(name: PTXEdgeWorkerNameType):
+    """Obtain deployed PTX-Edge worker with given name"""
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} node zones request")
+    response = await collect_worker_node_zones(name=name)
+    logger.debug(f"Assembled response body:\n{sanitize_model(response, indent=2)}")
+    logger.debug("=" * 100)
+    return response
 
 
 @app.get("/workers/{name}/watcher",
@@ -357,6 +379,7 @@ async def put_worker_by_name(request: fastapi.Request,
 
 
 ########################################################################################################################
+
 @app.get("/cluster/workers",
          tags=["Cluster"],
          responses={
@@ -378,7 +401,7 @@ async def get_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = Fa
     return response
 
 
-@app.get("/cluster/endpoints",
+@app.get("/cluster/workers/endpoints",
          tags=["Cluster"],
          responses={
              fastapi.status.HTTP_502_BAD_GATEWAY: {"model": PTXEdgeAPIError}
@@ -386,7 +409,7 @@ async def get_all_workers(resource: typing.Annotated[bool, fastapi.Query()] = Fa
          response_model=list[PTXEdgeWorkerEndpoint],
          response_model_exclude_unset=True,
          response_model_exclude_none=True,
-         summary="List all endpoints in the cluster",
+         summary="List all worker endpoints in the cluster",
          status_code=fastapi.status.HTTP_200_OK)
 async def get_all_worker_endpoints(request: fastapi.Request,
                                    label: K8sLabelCollectionType = None):

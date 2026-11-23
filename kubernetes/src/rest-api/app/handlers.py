@@ -27,9 +27,10 @@ from app.model.ptxedgeworker import PEW, PEWStatus
 from app.model.responses import PTXEdgeWorkerResponseState, PTXEdgeWorkerNameType
 from app.utils.config import CONFIG
 from app.utils.helper import (cancel_on_disconnect, ClientDisconnectedError, assemble_worker_resource_url,
-                              get_k8s_obj_res, response_updater_wrapper, response_collector_wrapper)
+                              get_k8s_obj_res, response_updater_wrapper, response_collector_wrapper,
+                              assemble_internal_worker_endpoint_url, assemble_exposed_worker_endpoint_url, str2bool)
 from app.utils.k8s import (invoke_k8s_pew_api, K8sAPIMethod, K8sLabelCollectionType, WatcherTimeout,
-                           watch_for_pew_resource_state, PTXEdgeWorkerState, assemble_worker_endpoints)
+                           watch_for_pew_resource_state, PTXEdgeWorkerState, invoke_k8s_pod_api, invoke_k8s_node_api)
 from app.utils.logger import logger, sanitize_model
 
 
@@ -81,7 +82,40 @@ async def watch_for_worker_status(request: fastapi.Request,
                     logger.exception(ex)
 
 
-########################################################################################################################
+async def assemble_worker_endpoints(request: fastapi.Request,
+                                    name: str,
+                                    obj: dict[str, typing.Any] | None = None) -> list[dict[str, typing.Any]]:
+    if not obj:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.GET, name=name, status=True)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+    if (pew := PEW(**obj)) and pew.spec.service:
+        if not pew.spec.service.enabled:
+            logger.debug(f"Service not enabled for worker[{pew.spec.name}]!")
+        elif not pew.spec.service.interfaces or len(pew.spec.service.interfaces) < 1:
+            logger.debug(f"No interface is defined for worker[{pew.spec.name}]!")
+        else:
+            exposed = bool(pew.status and pew.status.worker and pew.status.worker.exposed)
+            if any(i.public for i in pew.spec.service.interfaces) and not exposed:
+                logger.warning(f"Worker[{pew.spec.name}] with public interface is not exposed yet!")
+            endpoints = []
+            for interface in pew.spec.service.interfaces:
+                endpoint = {
+                    "worker": pew.spec.name,
+                    "interface": interface,
+                    "exposed": exposed,
+                    "url": {
+                        "internal": assemble_internal_worker_endpoint_url(name=name, port=interface.port)
+                    }
+                }
+                if exposed:
+                    endpoint["url"]["external"] = assemble_exposed_worker_endpoint_url(request=request,
+                                                                                       name=name,
+                                                                                       secured=interface.secured)
+                endpoints.append(endpoint)
+            return endpoints
+    return []
+
 
 async def create_pew_worker(request: fastapi.Request,
                             pew: PEW,
@@ -143,84 +177,55 @@ async def create_pew_worker(request: fastapi.Request,
         raise_for_network_error(ex)
 
 
-async def list_all_incluster_workers(resource: bool,
-                                     label: K8sLabelCollectionType = None) -> dict[str, typing.Any] | None:
-    """Obtain deployed PTX-Edge worker states and resources filtered by optional labels"""
+async def collect_worker_node_zones(name: PTXEdgeWorkerNameType) -> dict[str, typing.Any] | None:
+    logger.debug("=" * 100)
+    logger.info(f"Received {PEW.__name__} node zones request")
     try:
-        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.LIST,
-                                                label_selector=label)
+        obj, _status = await invoke_k8s_pod_api(method=K8sAPIMethod.LIST,
+                                                label_selector=f"ptxedgeworkers.dataspace.ptx.org/id={name}")
         raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        response = {"workers": []}
-        for w in obj.get("items", []):
-            worker = {
-                "name": w['metadata']['name'],
-                'state': PTXEdgeWorkerResponseState.CREATED
-            }
-            if w_stat := w.get('status', {}).get('worker', {}):
-                if w_stat.get('ready') or w_stat.get('exposed'):
-                    worker["state"] = PTXEdgeWorkerResponseState.RUNNING
-                elif w_stat.get('succeeded'):
-                    worker["state"] = PTXEdgeWorkerResponseState.FINISHED
-                elif w_stat.get('failed'):
-                    worker["state"] = PTXEdgeWorkerResponseState.ERROR
-            response["workers"].append(worker)
-        if resource:
-            response.update({"resources": obj.get("items", [])})
-        return response
-    except client.ApiException as ex:
-        raise_for_failed_k8s_request(ex)
-    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
-        raise_for_network_error(ex)
-
-
-async def list_all_incluster_worker_endpoints(request: fastapi.Request,
-                                              label: K8sLabelCollectionType = None
-                                              ) -> list[dict[str, typing.Any]] | None:
-    """Obtain deployed PTX-Edge worker states and resources filtered by optional labels"""
-    try:
-        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.LIST,
-                                                label_selector=label)
+        if len(obj.items) < 1:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_404_NOT_FOUND,
+                detail={
+                    "state": PTXEdgeWorkerResponseState.ERROR,
+                    "error_code": fastapi.status.HTTP_404_NOT_FOUND,
+                    "reason": "NotFound",
+                    "message": f'ptxedgeworkers.dataspace.ptx.org "{name}" is not found',
+                    "resource": get_k8s_obj_res(obj)
+                })
+        elif len(obj.items) > 1:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "state": PTXEdgeWorkerResponseState.ERROR,
+                    "error_code": fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "reason": "MultiplePodFound",
+                    "message": f"Multiple pods are found with name: {name}",
+                    "resource": get_k8s_obj_res(obj)
+                })
+        if not (node := obj.items[0].spec.node_name):
+            logger.error(f"Designated node for worker: {name} is not found!")
+            raise fastapi.HTTPException(status_code=fastapi.status.HTTP_404_NOT_FOUND,
+                                        detail={
+                                            "state": PTXEdgeWorkerResponseState.ERROR,
+                                            "error_code": fastapi.status.HTTP_404_NOT_FOUND,
+                                            "reason": "NodeNotFound",
+                                            "message": f"Scheduled node for worker: {name} is not found!",
+                                            "resource": name
+                                        })
+        logger.info(f"Obtained node name: {node}")
+        obj, _status = await invoke_k8s_node_api(method=K8sAPIMethod.READ, node=node)
         raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-        response = []
-        for w in obj.get("items", []):
-            response.extend(await assemble_worker_endpoints(request=request, name=w['metadata']['name']))
-        logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
-        logger.debug("=" * 100)
-        return response
-    except client.ApiException as ex:
-        raise_for_failed_k8s_request(ex)
-    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
-        raise_for_network_error(ex)
-
-
-async def delete_all_incluster_workers(resource: bool = False,
-                                       label: K8sLabelCollectionType = None,
-                                       tolerance: int = 10,
-                                       wait: bool = False) -> dict[str, typing.Any] | None:
-    """Delete deployed PTX-Edge workers filtered by optional labels"""
-    try:
-        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.DELETE_ALL,
-                                                label_selector=label,
-                                                propagation_policy="Foreground" if wait else "Background",
-                                                grace_period_seconds=tolerance)
-        raise_for_k8s_error(obj=obj, status=_status)
-        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
-        logger.debug(f"Obtained response:\n{pprint.pformat(obj, sort_dicts=False)}")
         response = {
-            "workers": [
-                {
-                    "name": w['metadata']['name'],
-                    "state": PTXEdgeWorkerResponseState.DELETED if wait else PTXEdgeWorkerResponseState.TERMINATING
-                }
-                for w in obj.get("items", [])
-            ]
-        }
-        if resource:
-            response.update({"resources": obj.get("items", [])})
+            "name": node,
+            "zones": [str(label).split('/', maxsplit=1)[1]
+                      for label, value in obj.metadata.labels.items()
+                      if label.startswith("privacy-zone.dataspace.ptx.org/") and str2bool(value)]}
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)
@@ -313,3 +318,88 @@ async def create_workers_batch(request: fastapi.Request,
         logger.debug(f"Calculated response status code: {status_code}")
         logger.debug("=" * 100)
         raise fastapi.HTTPException(status_code=status_code, detail=details)
+
+
+async def list_all_incluster_workers(resource: bool,
+                                     label: K8sLabelCollectionType = None) -> dict[str, typing.Any] | None:
+    """Obtain deployed PTX-Edge worker states and resources filtered by optional labels"""
+    try:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.LIST,
+                                                label_selector=label)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        response = {"workers": []}
+        for w in obj.get("items", []):
+            worker = {
+                "name": w['metadata']['name'],
+                'state': PTXEdgeWorkerResponseState.CREATED
+            }
+            if w_stat := w.get('status', {}).get('worker', {}):
+                if w_stat.get('ready') or w_stat.get('exposed'):
+                    worker["state"] = PTXEdgeWorkerResponseState.RUNNING
+                elif w_stat.get('succeeded'):
+                    worker["state"] = PTXEdgeWorkerResponseState.FINISHED
+                elif w_stat.get('failed'):
+                    worker["state"] = PTXEdgeWorkerResponseState.ERROR
+            response["workers"].append(worker)
+        if resource:
+            response.update({"resources": obj.get("items", [])})
+        return response
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
+        raise_for_network_error(ex)
+
+
+async def list_all_incluster_worker_endpoints(request: fastapi.Request,
+                                              label: K8sLabelCollectionType = None
+                                              ) -> list[dict[str, typing.Any]] | None:
+    """Obtain deployed PTX-Edge worker states and resources filtered by optional labels"""
+    try:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.LIST,
+                                                label_selector=label)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        response = []
+        for w in obj.get("items", []):
+            response.extend(await assemble_worker_endpoints(request=request, name=w['metadata']['name']))
+        logger.debug(f"Assembled response body:\n{pprint.pformat(response, sort_dicts=False)}")
+        logger.debug("=" * 100)
+        return response
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
+        raise_for_network_error(ex)
+
+
+async def delete_all_incluster_workers(resource: bool = False,
+                                       label: K8sLabelCollectionType = None,
+                                       tolerance: int = 10,
+                                       wait: bool = False) -> dict[str, typing.Any] | None:
+    """Delete deployed PTX-Edge workers filtered by optional labels"""
+    try:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.DELETE_ALL,
+                                                label_selector=label,
+                                                propagation_policy="Foreground" if wait else "Background",
+                                                grace_period_seconds=tolerance)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)} with size: {len(obj.get("items", []))}")
+        logger.debug(f"Obtained response:\n{pprint.pformat(obj, sort_dicts=False)}")
+        response = {
+            "workers": [
+                {
+                    "name": w['metadata']['name'],
+                    "state": PTXEdgeWorkerResponseState.DELETED if wait else PTXEdgeWorkerResponseState.TERMINATING
+                }
+                for w in obj.get("items", [])
+            ]
+        }
+        if resource:
+            response.update({"resources": obj.get("items", [])})
+        return response
+    except client.ApiException as ex:
+        raise_for_failed_k8s_request(ex)
+    except (aiohttp.ClientError, urllib3.exceptions.MaxRetryError) as ex:
+        raise_for_network_error(ex)

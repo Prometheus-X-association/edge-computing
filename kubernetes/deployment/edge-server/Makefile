@@ -48,15 +48,10 @@ setup :: | 0-build 1-init 2-viewer 3-edge 4-demo
 ########################################################################################################################
 
 start-datasource-api ::
-	${MAKE} -C datasource deploy-api-https
+	${MAKE} -C datasource start-datasource-api
 
 stop-datasource-api ::
 	${MAKE} -C datasource teardown
-
-local-setup :: export LOCAL_SETUP=true
-local-setup :: export USE_SANDBOX=true
-local-setup :: export USE_NGROK=false
-local-setup :: | 0-build 1-init 2-viewer 3-edge start-datasource-api 4-demo
 
 ########################################################################################################################
 

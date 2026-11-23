@@ -37,6 +37,11 @@ PTXEdgeWorkerNameType = typing.Annotated[str, Field(
 ]
 
 
+class PTXEdgeWorkerNodeResponse(BaseModel):
+    name: typing.Annotated[str, Field(description="Worker node ID")]
+    zones: typing.Annotated[list[str], Field(description="List of privacy zone IDs")]
+
+
 class PTXEdgeWorkerResponseState(enum.StrEnum):
     CREATED = enum.auto()
     ERROR = enum.auto()

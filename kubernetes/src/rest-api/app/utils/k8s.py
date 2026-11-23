@@ -22,12 +22,10 @@ import fastapi
 from fastapi import Query
 from kubernetes_asyncio import client, config, watch
 
-from app.model.errors import raise_for_k8s_error
 from app.model.ptxedgeworker import PEW
 from app.utils.config import CONFIG
-from app.utils.helper import str2bool, assemble_exposed_worker_endpoint_url, get_k8s_obj_res, \
-    assemble_internal_worker_endpoint_url
-from app.utils.logger import logger, sanitize_model
+from app.utils.helper import (str2bool, get_k8s_obj_res)
+from app.utils.logger import logger
 
 K8sLabelCollectionType = typing.Annotated[
     list[typing.Annotated[str, Query(pattern=r"^(.+)=(.+){1,63}$")]] | None,
@@ -48,6 +46,7 @@ async def setup_k8s_client() -> None:
 class K8sAPIMethod(enum.StrEnum):
     CREATE = "create"
     GET = "get"
+    READ = "read"
     LIST = "list"
     DELETE = "delete"
     DELETE_ALL = "delete_collection"
@@ -82,39 +81,44 @@ async def invoke_k8s_pew_api(method: K8sAPIMethod,
         return obj, status
 
 
-async def assemble_worker_endpoints(request: fastapi.Request,
-                                    name: str,
-                                    obj: dict[str, typing.Any] | None = None) -> list[dict[str, typing.Any]]:
-    if not obj:
-        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.GET, name=name, status=True)
-        raise_for_k8s_error(obj=obj, status=_status)
-        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
-    if (pew := PEW(**obj)) and pew.spec.service:
-        if not pew.spec.service.enabled:
-            logger.debug(f"Service not enabled for worker[{pew.spec.name}]!")
-        elif not pew.spec.service.interfaces or len(pew.spec.service.interfaces) < 1:
-            logger.debug(f"No interface is defined for worker[{pew.spec.name}]!")
-        else:
-            exposed = bool(pew.status and pew.status.worker and pew.status.worker.exposed)
-            if any(i.public for i in pew.spec.service.interfaces) and not exposed:
-                logger.warning(f"Worker[{pew.spec.name}] with public interface is not exposed yet!")
-            endpoints = []
-            for interface in pew.spec.service.interfaces:
-                endpoint = {
-                    "worker": pew.spec.name,
-                    "interface": interface,
-                    "exposed": exposed,
-                    "url": {
-                        "internal": assemble_internal_worker_endpoint_url(name=name, port=interface.port)
-                    }
-                }
-                if exposed:
-                    endpoint["url"]["external"] = assemble_exposed_worker_endpoint_url(request=request,
-                                                                                       name=name,
-                                                                                       secured=interface.secured)
-                endpoints.append(endpoint)
-            return endpoints
-    return []
+async def invoke_k8s_node_api(method: K8sAPIMethod,
+                              node: str | None = None,
+                              field_selector: str | None = None,
+                              label_selector: str | None = None) -> tuple[client.V1Node | client.V1NodeList, int]:
+    async with client.ApiClient() as api_client:
+        api = client.CoreV1Api(api_client=api_client)
+        logger.info(f"Invoke k8s {api.__class__.__name__}...")
+        params = {}
+        if node:
+            params["name"] = node
+        if field_selector:
+            params["field_selector"] = field_selector
+        if label_selector:
+            params["label_selector"] = label_selector
+        logger.debug(f"Assembled k8s API request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
+        api_caller = getattr(api, f"{method.value}_node_with_http_info")
+        obj, status, _ = await api_caller(**params)
+        return obj, status
+
+
+async def invoke_k8s_pod_api(method: K8sAPIMethod,
+                             pod: str | None = None,
+                             field_selector: str | None = None,
+                             label_selector: str | None = None) -> tuple[client.V1Pod | client.V1PodList, int]:
+    async with client.ApiClient() as api_client:
+        api = client.CoreV1Api(api_client=api_client)
+        logger.info(f"Invoke k8s {api.__class__.__name__}...")
+        params = {}
+        if pod:
+            params["name"] = pod
+        if field_selector:
+            params["field_selector"] = field_selector
+        if label_selector:
+            params["label_selector"] = label_selector
+        logger.debug(f"Assembled k8s API request parameters:\n{pprint.pformat(params, sort_dicts=False)}")
+        api_caller = getattr(api, f"{method.value}_namespaced_pod_with_http_info")
+        obj, status, _ = await api_caller(namespace=CONFIG.WORKER_NS, **params)
+        return obj, status
 
 
 ########################################################################################################################

@@ -44,10 +44,16 @@ class PTXEdgeAPIError(BaseModel):
 
 ########################################################################################################################
 
-def raise_for_k8s_error(obj: dict[str, typing.Any], status: int) -> None:
+def raise_for_k8s_error(obj: dict[str, typing.Any] | object, status: int) -> None:
     result = http.HTTPStatus(status)
-    name = obj.get('metadata', {}).get('name') if 'metadata' in obj else obj.get('details', {}).get('name')
-    logger.debug(f"Received response: HTTP/{result} - {result.name} for {obj.get('kind')}/{name}")
+    if hasattr(obj, 'metadata'):
+        name = obj.metadata.name if hasattr(obj.metadata, 'name') else None
+    elif 'metadata' in obj:
+        name = obj['metadata'].get('name')
+    else:
+        name = obj.get('details', {}).get('name')
+    kind = obj.kind if hasattr(obj, 'kind') else obj.get('kind')
+    logger.debug(f"Received response: HTTP/{result} - {result.name} for {kind}/{name}")
     if not result.is_success:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_502_BAD_GATEWAY,
@@ -105,7 +111,7 @@ def raise_for_timeout_error(name: str, state: str, timeout: int) -> None:
             "state": PTXEdgeWorkerResponseState.TIMEOUT,
             "error_code": fastapi.status.HTTP_408_REQUEST_TIMEOUT,
             "reason": "RequestTimeout",
-            "message": f"Waiting for {state=!s} in worker[{name}] reached timeout: {timeout}s!",
+            "message": f"Waiting for {state=!s} of worker[{name}] reached timeout: {timeout}s!",
             "resource": {
                 "name": name,
                 "group": PEW.group,

@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-19T16:18:55'
+  x-creation-date: '2026-11-23T15:18:57'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -306,6 +306,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /workers/{name}/node:
+    get:
+      tags:
+      - Edge-Worker
+      summary: Obtain the privacy zones on which the worker with the given name is
+        deployed
+      description: Obtain deployed PTX-Edge worker with given name
+      operationId: get_worker_node_zones_workers__name__node_get
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          description: Worker name
+          example: worker
+          title: Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeWorkerNodeResponse'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Not Found
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Internal Server Error
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PTXEdgeAPIError'
+          description: Bad Gateway
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /workers/{name}/watcher:
     get:
       tags:
@@ -536,13 +585,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /cluster/endpoints:
+  /cluster/workers/endpoints:
     get:
       tags:
       - Cluster
-      summary: List all endpoints in the cluster
+      summary: List all worker endpoints in the cluster
       description: Obtain endpoints of PTX-Edge workers deployed in a given batch
-      operationId: get_all_worker_endpoints_cluster_endpoints_get
+      operationId: get_all_worker_endpoints_cluster_workers_endpoints_get
       parameters:
       - name: label
         in: query
@@ -568,7 +617,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PTXEdgeWorkerEndpoint'
-                title: Response Get All Worker Endpoints Cluster Endpoints Get
+                title: Response Get All Worker Endpoints Cluster Workers Endpoints
+                  Get
         '502':
           content:
             application/json:
@@ -2131,6 +2181,23 @@ components:
       required:
       - internal
       title: PTXEdgeWorkerEndpointUrl
+    PTXEdgeWorkerNodeResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Worker node ID
+        zones:
+          items:
+            type: string
+          type: array
+          title: Zones
+          description: List of privacy zone IDs
+      type: object
+      required:
+      - name
+      - zones
+      title: PTXEdgeWorkerNodeResponse
     PTXEdgeWorkerResponse:
       properties:
         state:

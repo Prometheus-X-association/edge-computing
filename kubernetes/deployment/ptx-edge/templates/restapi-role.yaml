@@ -11,3 +11,6 @@ rules:
   - apiGroups: [ dataspace.ptx.org ]
     resources: [ ptxedgeworkers/status ]
     verbs: [ get ]
+  - apiGroups: [ "" ]
+    resources: [ pods ]
+    verbs: [ list ]
