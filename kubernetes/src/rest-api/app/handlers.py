@@ -101,7 +101,7 @@ async def assemble_worker_endpoints(request: fastapi.Request,
             endpoints = []
             for interface in pew.spec.service.interfaces:
                 endpoint = {
-                    "worker": pew.spec.name,
+                    "service": pew.spec.name,
                     "interface": interface,
                     "exposed": exposed,
                     "url": {

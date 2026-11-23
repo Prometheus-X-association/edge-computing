@@ -70,6 +70,7 @@ class PTXEdgeWorkerEndpointUrl(BaseModel):
 
 
 class PTXEdgeWorkerEndpoint(BaseModel):
+    service: typing.Annotated[PTXEdgeWorkerNameType, Field(description="Endpoint service")]
     interface: typing.Annotated[PEWSpecServiceInterface, Field(description="Endpoint interface")]
     exposed: typing.Annotated[bool, Field(description="Interface state")] = False
     url: typing.Annotated[PTXEdgeWorkerEndpointUrl, Field(description="Endpoint URLs")] = None

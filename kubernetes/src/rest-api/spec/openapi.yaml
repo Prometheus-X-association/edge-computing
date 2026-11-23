@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-23T15:18:57'
+  x-creation-date: '2026-11-23T15:24:05'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -2144,6 +2144,12 @@ components:
       description: Worker state
     PTXEdgeWorkerEndpoint:
       properties:
+        service:
+          type: string
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          title: Service
+          description: Endpoint service
+          example: worker
         interface:
           $ref: '#/components/schemas/PEWSpecServiceInterface'
           description: Endpoint interface
@@ -2157,6 +2163,7 @@ components:
           description: Endpoint URLs
       type: object
       required:
+      - service
       - interface
       title: PTXEdgeWorkerEndpoint
     PTXEdgeWorkerEndpointUrl:
