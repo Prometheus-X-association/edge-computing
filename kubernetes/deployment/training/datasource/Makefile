@@ -63,6 +63,11 @@ log ::
 
 setup :: | teardown deploy-api-https start-pdc deploy-endpoint-api ngrok-tunnel-pdc status
 
+cleanup ::
+	rm -rf ./creds/cert/*
+	./setup_connector.sh -c
+	py3clean .
+
 ########################################################################################################################
 
 .SILENT:	# Set silent mode (-s) by default

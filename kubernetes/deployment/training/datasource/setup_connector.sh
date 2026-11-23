@@ -18,6 +18,9 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 
 PDC_REPO=https://github.com/Prometheus-X-association/dataspace-connector.git
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
+if [ -z "${DS_PDC_DIR:-}" ]; then
+    DS_PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
+fi
 
 ########################################################################################################################
 
@@ -27,18 +30,33 @@ Usage: ${0} [OPTIONS]
 
 Options:
     -x  Dry run. Only perform configuration without execution.
+    -c  Cleanup setup.
     -f  Force and rebuild PDC configuration.
     -h  Display help.
 EOF
 }
 
+function cleanup() {
+    log "Cleanup datasource PDC setup..."
+    if [ -d "${DS_PDC_DIR}" ]; then
+        pushd "${DS_PDC_DIR}"
+            docker compose down -v --rmi 'all' || true
+        popd
+        sudo rm -rfv "${DS_PDC_DIR}"
+    fi
+    rm -rfv "${DS_PDC_LOGIN_FILE}"
+}
+
 DRY_RUN="false"
 FORCE_RECREATE="false"
 
-while getopts ":xfh" flag; do
+while getopts ":xcfh" flag; do
 	case "${flag}" in
         x)
             DRY_RUN=true;;
+        c)
+            cleanup
+            exit;;
         f)
             FORCE_RECREATE=true;;
         h)
@@ -58,9 +76,6 @@ done
 
 LOG "Setup Dataspace Connector (PDC)"
 
-if [ -z "${DS_PDC_DIR:-}" ]; then
-    DS_PDC_DIR=$(readlink -f "$(dirname "$0")/pdc")
-fi
 mkdir -p "${DS_PDC_DIR}"
 echo "Used dir for PDC: ${DS_PDC_DIR}"
 

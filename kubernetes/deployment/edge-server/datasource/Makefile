@@ -61,9 +61,10 @@ setup :: | teardown recreate-datasource-api start-pdc start-ngrok-tunnel-pdc sta
 
 ########################################################################################################################
 
-purge ::
-	rm -rf ./api
-	sudo rm -rf ./pdc
+cleanup ::
+	rm -rf ./creds/cert/*
+	./deploy_datasource_api.sh -c
+	./setup_connector.sh -c
 
 ########################################################################################################################
 

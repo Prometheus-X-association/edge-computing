@@ -19,6 +19,9 @@ source "$(readlink -f "$(dirname "$0")/../cfg/config.sh")"
 DS_REPO="git@github.com:nada-a1/xapi-data-source.git"
 DS_API_IMG="edge-server/datasource-xapi:latest"
 DS_API_NAME="xapi-data-source"
+if [ -z "${DS_API_DIR:-}" ]; then
+    DS_API_DIR=$(readlink -f "$(dirname "$0")/api")
+fi
 
 # Loaded from cfg/config.sh !
 #### DS_PDC_LOGIN_FILE=
@@ -32,18 +35,32 @@ Usage: ${0} [OPTIONS]
 
 Options:
     -x  Dry run. Only perform configuration without execution.
+    -c  Cleanup setup.
     -f  Force and rebuild datasource configuration.
     -h  Display help.
 EOF
 }
 
+function cleanup() {
+    log "Cleanup datasource setup..."
+    if [ -d "${DS_API_DIR}" ]; then
+        pushd "${DS_API_DIR}"
+            docker compose down -v --rmi 'all' || true
+        popd
+        sudo rm -rfv "${DS_API_DIR}"
+    fi
+}
+
 DRY_RUN="false"
 FORCE_RECREATE="false"
 
-while getopts ":xfh" flag; do
+while getopts ":xcfh" flag; do
 	case "${flag}" in
         x)
             DRY_RUN=true;;
+        c)
+            cleanup
+            exit;;
         f)
             FORCE_RECREATE=true;;
         h)
@@ -63,9 +80,6 @@ done
 
 LOG "Setup Datasource API"
 
-if [ -z "${DS_API_DIR:-}" ]; then
-    DS_API_DIR=$(readlink -f "$(dirname "$0")/api")
-fi
 mkdir -p "${DS_API_DIR}"
 echo "Used dir for datasource: ${DS_API_DIR}"
 echo "Used repo for datasource: ${DS_REPO}"
