@@ -111,7 +111,7 @@ async def assemble_worker_endpoints(request: fastapi.Request,
                 if exposed:
                     endpoint["url"]["external"] = assemble_exposed_worker_endpoint_url(request=request,
                                                                                        name=name,
-                                                                                       secured=interface.secured)
+                                                                                       proto=interface.proto)
                 endpoints.append(endpoint)
             return endpoints
     return []

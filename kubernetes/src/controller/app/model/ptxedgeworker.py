@@ -23,6 +23,15 @@ class BaseModel(_BaseModel):
     )
 
 
+class PEWSpecServiceInterfaceProto(StrEnum):
+    """
+    Used protocol for service access
+    """
+
+    HTTP = "http"
+    HTTPS = "https"
+
+
 class PEWSpecServiceInterface(BaseModel):
     port: Annotated[int, Field(examples=[8080], ge=1, le=65535)]
     """
@@ -34,9 +43,9 @@ class PEWSpecServiceInterface(BaseModel):
     """
     Enable out-of-cluster access
     """
-    secured: bool | None = True
+    proto: PEWSpecServiceInterfaceProto | None = PEWSpecServiceInterfaceProto.HTTPS
     """
-    Use HTTPS protocol for service access
+    Used protocol for service access
     """
     stripped: bool | None = True
     """

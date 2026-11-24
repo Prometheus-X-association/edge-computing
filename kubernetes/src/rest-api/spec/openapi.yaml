@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-24T12:43:41'
+  x-creation-date: '2026-11-24T13:28:39'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1537,12 +1537,11 @@ components:
           - type: 'null'
           title: Public
           default: false
-        secured:
+        proto:
           anyOf:
-          - type: boolean
+          - $ref: '#/components/schemas/PEWSpecServiceInterfaceProto'
           - type: 'null'
-          title: Secured
-          default: true
+          default: https
         stripped:
           anyOf:
           - type: boolean
@@ -1559,6 +1558,13 @@ components:
       required:
       - port
       title: PEWSpecServiceInterface
+    PEWSpecServiceInterfaceProto:
+      type: string
+      enum:
+      - http
+      - https
+      title: PEWSpecServiceInterfaceProto
+      description: Used protocol for service access
     PEWSpecWorker-Input:
       properties:
         src:

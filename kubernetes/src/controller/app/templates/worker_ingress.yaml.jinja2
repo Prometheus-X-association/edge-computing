@@ -23,7 +23,7 @@ metadata:
     ptxedgeworkers.dataspace.ptx.org/type: managed
     {# autofilled #}
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: {{ "websecure" if public and public.secured else "web" }}
+    traefik.ingress.kubernetes.io/router.entrypoints: {{ "websecure" if public and public.proto == "https" else "web" }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ middlewares | join(",") }}
 spec:
   ingressClassName: traefik

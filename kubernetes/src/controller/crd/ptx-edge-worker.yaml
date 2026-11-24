@@ -89,10 +89,11 @@ spec:
                             type: boolean
                             description: "Enable out-of-cluster access"
                             default: false
-                          secured:
-                            type: boolean
-                            description: "Use HTTPS protocol for service access"
-                            default: true
+                          proto:
+                            type: string
+                            description: "Used protocol for service access"
+                            enum: [ http, https ]
+                            default: https
                           stripped:
                             type: boolean
                             description: "Strip prefix for service exposure"
