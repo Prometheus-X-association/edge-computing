@@ -22,6 +22,7 @@ kubernetes/deployment/*/manifests/*
 kubernetes/deployment/training/datasource/resource/*
 /kubernetes/deployment/training/datasource/creds/*
 kubernetes/deployment/training/datasource/pdc/*
+kubernetes/deployment/training/datasource/descriptor/*
 kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
 kubernetes/deployment/exchange/creds/

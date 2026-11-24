@@ -181,6 +181,16 @@ async def collect_worker_node_zones(name: PTXEdgeWorkerNameType) -> dict[str, ty
     logger.debug("=" * 100)
     logger.info(f"Received {PEW.__name__} node zones request")
     try:
+        obj, _status = await invoke_k8s_pew_api(method=K8sAPIMethod.GET,
+                                                name=name)
+        raise_for_k8s_error(obj=obj, status=_status)
+        logger.info(f"Obtained resource: {get_k8s_obj_res(obj)}")
+        logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        privacy = obj["spec"].get("dataspace", {}).get("privacy")
+        if privacy and privacy.get("required", False):
+            allowed_zones = [zone.get("name") for zone in privacy.get("zones", [])]
+        else:
+            allowed_zones = []
         obj, _status = await invoke_k8s_pod_api(method=K8sAPIMethod.LIST,
                                                 label_selector=f"ptxedgeworkers.dataspace.ptx.org/id={name}")
         raise_for_k8s_error(obj=obj, status=_status)
@@ -221,11 +231,17 @@ async def collect_worker_node_zones(name: PTXEdgeWorkerNameType) -> dict[str, ty
         raise_for_k8s_error(obj=obj, status=_status)
         logger.info(f"Obtained resource: {get_k8s_obj_res(obj)}")
         logger.debug(f"Obtained response:\n{sanitize_model(obj, indent=2)}")
+        node_zones = [str(label).split('/', maxsplit=1)[1]
+                      for label, value in obj.metadata.labels.items()
+                      if label.startswith("privacy-zone.dataspace.ptx.org/") and str2bool(value)]
+        print(f"{node_zones=}")
+        print(f"{allowed_zones=}")
+        eligible_zones = set(node_zones).intersection(allowed_zones)
+        logger.debug(f"Detected eligible zones: {eligible_zones}")
         response = {
             "name": node,
-            "zones": [str(label).split('/', maxsplit=1)[1]
-                      for label, value in obj.metadata.labels.items()
-                      if label.startswith("privacy-zone.dataspace.ptx.org/") and str2bool(value)]}
+            "eligible": bool(eligible_zones),
+            "zones": node_zones}
         return response
     except client.ApiException as ex:
         raise_for_failed_k8s_request(ex)

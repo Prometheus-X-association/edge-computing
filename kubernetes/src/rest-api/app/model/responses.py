@@ -39,6 +39,7 @@ PTXEdgeWorkerNameType = typing.Annotated[str, Field(
 
 class PTXEdgeWorkerNodeResponse(BaseModel):
     name: typing.Annotated[str, Field(description="Worker node ID")]
+    eligible: typing.Annotated[bool, Field(description="Whether the node is eligible if a")]
     zones: typing.Annotated[list[str], Field(description="List of privacy zone IDs")]
 
 

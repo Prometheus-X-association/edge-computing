@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-23T15:24:05'
+  x-creation-date: '2026-11-24T12:43:41'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -2194,6 +2194,10 @@ components:
           type: string
           title: Name
           description: Worker node ID
+        eligible:
+          type: boolean
+          title: Eligible
+          description: Whether the node is eligible if a
         zones:
           items:
             type: string
@@ -2203,6 +2207,7 @@ components:
       type: object
       required:
       - name
+      - eligible
       - zones
       title: PTXEdgeWorkerNodeResponse
     PTXEdgeWorkerResponse:
