@@ -108,7 +108,7 @@ function wait_for_exposed() {
     log ">>> ${_WKR} is available on ${_URL}"
     # Check if public port
     if jq -e '.spec.service.interfaces | any(.public)' "${SCRIPT_DIR}/request/${_WKR}.json" >/dev/null; then
-        if jq -e '.spec.service.interfaces[] | select(.public) | .restricted' "${SCRIPT_DIR}/request/${_WKR}.json" >/dev/null; then
+        if jq -e '.spec.service.interfaces[] | select(.public) | .secured' "${SCRIPT_DIR}/request/${_WKR}.json" >/dev/null; then
             wget -O /dev/null -Sq -nv --ca-certificate="${CA_DIR}/ca.crt" \
                                     --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" \
                                     --retry-on-http-error=500,502 --waitretry=2 --read-timeout=3 --tries=10 "${_URL}"

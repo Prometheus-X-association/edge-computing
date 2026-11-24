@@ -12,7 +12,7 @@ spec:
       - port: 8080    # Expose container port
         public: true  # Set out of cluster access to the service
         proto: http   # Do not use HTTPS entrypoint by default (only HTTP)
-        restricted: true  # Use basic authentication / Prerequisite: REST-API and its credential middleware
+        secured: true  # Use basic authentication / Prerequisite: REST-API and its credential middleware
         stripped: true    # Use /worker/<name> but prefix stripped, otherwise consider fixed prefix
         # wget -q -O- --user=admin --password=admin http://localhost:8888/worker/test/data/hosts
   data:

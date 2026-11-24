@@ -2,7 +2,7 @@
                 if spec.service and spec.service.interfaces is iterable %}
 {% set middlewares = [] %}
 {% if public %}
-  {% if public.restricted %}
+  {% if public.secured %}
     {% set middlewares = middlewares + [namespace ~ "-" ~ cfg.ingress.credential ~"@kubernetescrd"] %}
   {% endif %}
   {% if public.stripped %}

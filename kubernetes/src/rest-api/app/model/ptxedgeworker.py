@@ -2,10 +2,10 @@
 #   filename:  ptxedgeworker.json
 #   version:   0.83.0
 
+from typing import Any, ClassVar
+from pydantic import field_serializer
 from enum import StrEnum
 from typing import Annotated
-from typing import Any, ClassVar
-
 from pydantic import (
     AwareDatetime,
     BaseModel as _BaseModel,
@@ -14,7 +14,6 @@ from pydantic import (
     RootModel,
     SecretStr,
 )
-from pydantic import field_serializer
 
 
 class BaseModel(_BaseModel):
@@ -51,7 +50,7 @@ class PEWSpecServiceInterface(BaseModel):
     """
     Strip prefix for service exposure
     """
-    restricted: bool | None = False
+    secured: bool | None = True
     """
     Apply the same authentication credentials as of the REST-API
     """

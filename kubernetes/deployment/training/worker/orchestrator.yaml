@@ -13,7 +13,7 @@ spec:
     interfaces:
       - port: 8000
         public: true
-        restricted: true
+        secured: true
         stripped: true
   data:
     src:

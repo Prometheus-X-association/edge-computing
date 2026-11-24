@@ -7,7 +7,7 @@
         {
           "port": 8090,
           "public": true,
-          "restricted": false,
+          "secured": false,
           "stripped": true
         }
       ]

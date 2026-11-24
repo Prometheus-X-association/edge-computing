@@ -14,7 +14,7 @@ spec:
       - port: 80
         public: true
         proto: https
-        restricted: true
+        secured: true
         stripped: false
   data:
     src:

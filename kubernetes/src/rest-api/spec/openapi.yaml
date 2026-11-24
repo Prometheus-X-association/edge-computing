@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-  x-creation-date: '2026-11-24T13:28:39'
+  x-creation-date: '2026-11-24T14:44:36'
 servers:
 - url: /
   description: PTX Edge Computing
@@ -1548,12 +1548,12 @@ components:
           - type: 'null'
           title: Stripped
           default: true
-        restricted:
+        secured:
           anyOf:
           - type: boolean
           - type: 'null'
-          title: Restricted
-          default: false
+          title: Secured
+          default: true
       type: object
       required:
       - port

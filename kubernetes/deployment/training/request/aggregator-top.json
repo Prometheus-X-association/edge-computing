@@ -10,7 +10,7 @@
         {
           "port": 5000,
           "public": true,
-          "restricted": false,
+          "secured": false,
           "stripped": false
         }
       ]

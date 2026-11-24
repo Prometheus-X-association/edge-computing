@@ -84,7 +84,7 @@ raw_k8s_obj = r"""
     "kind": "PtxEdgeWorker",
     "metadata": {
         "annotations": {
-            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"restricted\":true,\"proto\":\"https\",\"stripped\":false}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}],\"file\":[{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"dataspace.ptx.org/v1alpha1\",\"kind\":\"PtxEdgeWorker\",\"metadata\":{\"annotations\":{},\"labels\":{\"env\":\"test\"},\"name\":\"example\",\"namespace\":\"ptx-edge\"},\"spec\":{\"data\":{\"dst\":{\"method\":\"LOCAL\",\"path\":\"/data\"},\"src\":{\"auth\":{\"insecure\":true,\"scheme\":\"BASIC\",\"secret\":\"admin\",\"user\":\"admin\"},\"method\":\"HTTPS\",\"path\":\"https://github.com:8080/czeni/sample-datasets/raw/refs/heads/main/mnist_train_data.npz\",\"size\":75}},\"dataspace\":{\"exchange\":{\"data\":{\"consumer\":{\"offer\":\"66d18b79ee71f9f096baecb1\",\"resource\":\"66d18bf6ee71f9f096baed58\"},\"contract\":\"66db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"66d187f4ee71f9f096bae8ca\",\"resource\":\"d66d1889cee71f9f096bae98b\"}},\"worker\":{\"consumer\":{\"offer\":\"77d18b79ee71f9f096baecb1\",\"resource\":\"77d18bf6ee71f9f096baed58\"},\"contract\":\"77db1a6dc29e3ba863a85e0f\",\"provider\":{\"offer\":\"77d187f4ee71f9f096bae8ca\",\"resource\":\"77d1889cee71f9f096bae98b\"}}},\"privacy\":{\"required\":true,\"scheduler\":\"DEFAULT\",\"zones\":[{\"name\":\"zone1\"},{\"name\":\"zone2\",\"preferred\":true}]}},\"service\":{\"enabled\":true,\"interfaces\":[{\"port\":8080},{\"port\":80,\"public\":true,\"secured\":true,\"proto\":\"https\",\"stripped\":false}]},\"worker\":{\"command\":[\"/bin/sh\",\"-c\",\"sleep infinity\"],\"config\":{\"env\":[{\"key\":\"WRK_TEST_VAR\",\"value\":\"test123\"},{\"key\":\"WRK_TEST_VAR2\",\"value\":\"42\"}],\"file\":[{\"data\":\"{\\n  \\\"test\\\": 42\\n}\\n\",\"path\":\"/var/cache/worker/config.json\"}]},\"demands\":{\"cpu\":1.5,\"memory\":500},\"dst\":{\"cached\":true,\"name\":\"myworker:latest\"},\"src\":{\"auth\":{\"insecure\":false,\"secret\":\"admin\",\"server\":\"https://index.docker.io/v1/\",\"user\":\"admin\"},\"image\":\"busybox:latest\",\"method\":\"SKIP\"}}}}\n"
         },
         "creationTimestamp": "2026-08-31T13:32:29Z",
         "generation": 1,
@@ -160,14 +160,14 @@ raw_k8s_obj = r"""
                 {
                     "port": 8080,
                     "public": false,
-                    "restricted": false,
+                    "secured": false,
                     "proto": "https",
                     "stripped": true
                 },
                 {
                     "port": 80,
                     "public": true,
-                    "restricted": true,
+                    "secured": true,
                     "proto": "https",
                     "stripped": false
                 }

@@ -74,10 +74,6 @@ spec:
                         type: object
                         required:
                           - port
-                        x-kubernetes-validations:
-                          - rule: "self.public >= self.restricted"
-                            message: "Only public port can be restricted!"
-                            fieldPath: ".restricted"
                         properties:
                           port:
                             type: integer
@@ -98,10 +94,10 @@ spec:
                             type: boolean
                             description: "Strip prefix for service exposure"
                             default: true
-                          restricted:
+                          secured:
                             type: boolean
                             description: "Apply the same authentication credentials as of the REST-API"
-                            default: false
+                            default: true
                 data:
                   type: object
                   description: "Data collection parameters"
