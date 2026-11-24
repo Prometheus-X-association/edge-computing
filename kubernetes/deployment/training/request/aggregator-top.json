@@ -28,6 +28,10 @@
       "config": {
         "env": [
           {
+            "key": "MLFLOW_AUTH_ADMIN_PASSWORD",
+            "value": "${MLFLOW_AUTH_ADMIN_PASSWORD}"
+          },
+          {
             "key": "mlflow_tracking_uri_internal",
             "value": "${AGG_MLFLOW_INT}"
           },

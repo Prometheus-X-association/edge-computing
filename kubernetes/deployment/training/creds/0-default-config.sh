@@ -35,7 +35,11 @@ GW_PORT=4443
 API_BASIC_USER="admin"
 API_BASIC_PASSWORD="admin"
 
-### Mocked datasource API default credentials
+### Demo credentials
+MLFLOW_AUTH_ADMIN_PASSWORD="mlflow-admin"
+
+### Datasource API default credentials
 DS_API_USER="admin"
 DS_API_PASSWORD="admin"
 DS_API_INSECURE="true"
+
