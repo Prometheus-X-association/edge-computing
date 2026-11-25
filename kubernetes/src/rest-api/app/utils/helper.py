@@ -129,21 +129,21 @@ def validate_pews_list(pews: list[PEW]) -> list[PEW]:
 ########################################################################################################################
 
 def assemble_worker_resource_url(request: fastapi.Request, name: str) -> str:
-    if not (proto := request.headers.get('x-forwarded-proto', "")):
+    if not (proto := request.headers.get('x-forwarded-proto')):
         proto = request.scope['scheme']
-    if not (base := request.headers.get('x-forwarded-host', "")):
+    if not (base := request.headers.get('x-forwarded-host')):
         base = request.headers['host']
     if not (root_path := request.scope.get('root_path')):
         root_path = CONFIG.ROOT_PATH
     return f"{proto}://{base}{root_path}/workers/{name}"
 
 
-def assemble_internal_worker_endpoint_url(name: str, port: int, proto: str = "https") -> str:
+def assemble_internal_worker_endpoint_url(name: str, port: int, proto: str = "http") -> str:
     return f"{proto.lower()}://{name}.{CONFIG.WORKER_NS}.svc.cluster.local:{port}"
 
 
 def assemble_exposed_worker_endpoint_url(request: fastapi.Request, name: str, proto: str = "https" ) -> str:
     proto = request.headers.get('x-forwarded-proto', proto.lower())
-    if not (base := request.headers.get('x-forwarded-host', "")):
+    if not (base := request.headers.get('x-forwarded-host')):
         base = request.headers['host']
     return f"{proto}://{base}/worker/{name}"
