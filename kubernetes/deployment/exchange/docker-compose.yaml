@@ -177,7 +177,7 @@ configs:
 
   # Dataset and resource descriptor for provider (Datasource)
   dp0.json:
-    content: '{"type": "REST", "content": {"url": "http://provider-api:8080/dp0/data.csv"}}'
+    content: '{"id1": "record", "id2": "record", "id3": "record"}'
 
   dp0-data.csv:
     content: |
@@ -238,6 +238,9 @@ configs:
           - source: payload
             name: data
             envname: HOOK_DATA
+          - source: payload
+            name: params.node
+            envname: HOOK_NODE
           - source: entire-payload
             envname: PAYLOAD
           ## For debugging purposes
@@ -264,6 +267,9 @@ configs:
             name: data
             envname: HOOK_DATA
           - source: payload
+            name: params.node
+            envname: HOOK_NODE
+          - source: payload
             name: params
             envname: HOOK_PARAMS
           ## For debugging purposes
@@ -275,7 +281,7 @@ configs:
   infra-handlers.sh:
     content: |
       #!/usr/bin/env sh
-      PROCESSED_DATA=$$(jo timestamp="$$(date +%s)" processed-by="$${HOSTNAME}" orig="$${HOOK_DATA}")
+      PROCESSED_DATA=$$(jo timestamp="$$(date +%s)" processed-by="$${HOOK_NODE:-$$HOSTNAME}" orig="$${HOOK_DATA}")
       if [ "$${1:?}" = "sync" ]; then
         # Overwrite payload data
         echo $$(echo "$${PAYLOAD}" | jo -f- -D data="$${PROCESSED_DATA}")
