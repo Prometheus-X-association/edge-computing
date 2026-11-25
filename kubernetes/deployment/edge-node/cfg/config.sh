@@ -166,6 +166,7 @@ BUILD_TIMEOUT=600
 ########################################################################################################################
 
 # Datasource configuration
+DATA_FILE=/data/software_pseudo_statements.json
 DS_PDC_LOGIN_FILE="${SCRIPT_DIR}/datasource/creds/pdc.login.token"
 DS_INTERNAL_NETWORK="datasource-internal"
 

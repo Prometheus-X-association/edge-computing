@@ -101,8 +101,9 @@ if [ "${FORCE_RECREATE}" = "true" ] || [ ! -d "${DS_PDC_DIR}" ] || [ -z "$( ls -
         git switch -C "build-${DS_PDC_VER}" --no-track "${DS_PDC_VER}"
     popd
 
-    log "Adjust docker setup..."
-    cat <<-'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
+    if [ "${DS_PDC_VER}" != "main" ]; then
+        log "Adjust docker setup fo fix issues and bugs..."
+        cat <<-'EOF' >"${DS_PDC_DIR}/docker/app/Dockerfile"
 # Use the official Node.js image as base image
 FROM node:22
 ARG ENV
@@ -137,12 +138,19 @@ EXPOSE 3000
 
 CMD ["./docker/scripts/start.sh", "$ENV"]
 EOF
-    ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
+        ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
 
-    if [ "${USE_NGROK}" = "false" ]; then
-        if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
-            warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
-        fi
+        log "Update PDC dpdc dependency..."
+
+        sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${DS_PDC_DIR}/package.json"
+        ls -alht "${DS_PDC_DIR}/package.json"
+        grep --color=always "dpcp-library" "${DS_PDC_DIR}/package.json"
+        echo
+
+        sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${DS_PDC_DIR}/docker/app/Dockerfile"
+        ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
+        grep --color=always "frozen-lockfile" "${DS_PDC_DIR}/docker/app/Dockerfile"
+        echo
     fi
 
     cat <<-'EOF' >"${DS_PDC_DIR}/docker-compose.yml"
@@ -196,6 +204,11 @@ networks:
 EOF
     ls -alht "${DS_PDC_DIR}/docker-compose.yml"
 
+    if [ "${USE_NGROK}" = "false" ]; then
+        if [ -v DS_NGROK_AUTHTOKEN ] && [ -v DS_NGROK_DOMAIN ]; then
+            warning """NGROK creds are given without enabling NGROK tunneling! Either enable it to bind it localhost or disable explicitly."
+        fi
+    fi
 
     # Loaded from creds/0-default-config.sh !
     ### PTX_*=
@@ -267,18 +280,6 @@ db.createUser({
 });
 EOF
     ls -alht "${DS_PDC_DIR}/mongo-init.js"
-
-    log "Update PDC dpdc dependency..."
-
-    sed -i -E 's|("dpcp-library": "[^"]+)(",)|\1#1.4.3\2|g' "${DS_PDC_DIR}/package.json"
-    ls -alht "${DS_PDC_DIR}/package.json"
-    grep --color=always "dpcp-library" "${DS_PDC_DIR}/package.json"
-    echo
-
-    sed -i -e 's|--frozen-lockfile|--no-frozen-lockfile|g' "${DS_PDC_DIR}/docker/app/Dockerfile"
-    ls -alht "${DS_PDC_DIR}/docker/app/Dockerfile"
-    grep --color=always "frozen-lockfile" "${DS_PDC_DIR}/docker/app/Dockerfile"
-    echo
 
     log "Build PDC..."
     pushd "${DS_PDC_DIR}"
