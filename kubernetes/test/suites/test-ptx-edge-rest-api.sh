@@ -86,16 +86,16 @@ testPTXEdgeRESTAPI() {
     INGRESS_IP=$(kubectl -n "${PTX}" get "ingress/${API}" -o jsonpath='{.status.loadBalancer.ingress[].ip}')
     assertNotNull "ingress IP not found!" "${INGRESS_IP}"
     #
-    echo "Check ==> http://${INGRESS_IP}:80/${PREFIX}/ui/"
-    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://${INGRESS_IP}:80/${PREFIX}/ui/")
+    echo "Check ==> http://${INGRESS_IP}:80/${PREFIX}/ui"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://${INGRESS_IP}:80/${PREFIX}/ui")
     assertSame "HTTP port exposure failed!" "200" "${HTTP_RESP}"
     #
-    echo "Check ==> https://${INGRESS_IP}:443/${PREFIX}/ui/"
-    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" -k "https://${INGRESS_IP}:443/${PREFIX}/ui/")
+    echo "Check ==> https://${INGRESS_IP}:443/${PREFIX}/ui"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" -k "https://${INGRESS_IP}:443/${PREFIX}/ui")
     assertSame "HTTPS port exposure failed!" "200" "${HTTP_RESP}"
     #
-    echo "Check ==> http://localhost:8080/${PREFIX}/ui/"
-    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://localhost:8080/${PREFIX}/ui/")
+    echo "Check ==> http://localhost:8080/${PREFIX}/ui"
+    HTTP_RESP=$(curl -SsLI -o /dev/null -w "%{http_code}" "http://localhost:8080/${PREFIX}/ui")
     assertSame "Local port exposure failed!" "200" "${HTTP_RESP}"
 }
 

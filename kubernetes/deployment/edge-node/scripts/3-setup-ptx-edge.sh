@@ -80,14 +80,14 @@ log "Waiting for API ingress:$(kubectl get ingress -l app.kubernetes.io/name=res
 sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/rest-api"
 
-_REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui/"
+_REST_API_URL="https://${CLUSTER_HOST}/${PREFIX}/ui"
 log ">>> rest-api is available on ${_REST_API_URL}"
 wget --spider -S -nv --ca-certificate="${CA_DIR}/ca.crt" --retry-on-http-error=500,502 --waitretry=2 \
             --read-timeout=3 --tries=10 --user="${API_BASIC_USER}" --password="${API_BASIC_PASSWORD}" "${_REST_API_URL}"
 curl -Ss --fail-with-body --cacert "${CA_DIR}/ca.crt" -u "${API_BASIC_USER}:${API_BASIC_PASSWORD}" \
                                                     "https://${CLUSTER_HOST}/${PREFIX}/version" | python3 -m json.tool
-log ">>> rest-api is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui/\n
->>> rest-api is also exposed on https://${GW_HOST}/${PREFIX}/ui/"
+log ">>> rest-api is also exposed on https://${PRIMARY_HOST}/${PREFIX}/ui\n
+>>> rest-api is also exposed on https://${GW_HOST}/${PREFIX}/ui"
 
 ########################################################################################################################
 

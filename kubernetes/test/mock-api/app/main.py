@@ -36,8 +36,7 @@ app = FastAPI(contact={'email': 'czentye.janos@vik.bme.hu'},
               root_path=ROUTE_PREFIX,
               servers=[dict(url=ROUTE_PREFIX,
                             description="PTX Edge Computing")],
-              docs_url="/ui/",
-              redoc_url="/ui/")
+              docs_url="/ui")
 
 
 @app.get('/versions', status_code=status.HTTP_200_OK)

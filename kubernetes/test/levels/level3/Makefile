@@ -46,11 +46,11 @@ run2:
 	$(eval NODE_PORT := `kubectl -n ${TEST} get service/${API} -o jsonpath="{.spec.ports[].nodePort}"`)
 	sleep 3s
 	@echo
-	@echo ">>> ${API} is available on http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui/"
-	@curl -I "http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui/"
+	@echo ">>> ${API} is available on http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui"
+	@curl -I "http://${NODE_IP}:${NODE_PORT}/${PREFIX}/ui"
 	@echo
-	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/${PREFIX}/ui/"
-	@curl -I "http://localhost:${PORT}/${PREFIX}/ui/"
+	@echo ">>> ${API} is also exposed on http://localhost:${PORT}/${PREFIX}/ui"
+	@curl -I "http://localhost:${PORT}/${PREFIX}/ui"
 
 test2: | build setup run2
 
@@ -70,11 +70,11 @@ run3:
 	$(eval LB_IP = `kubectl -n ${TEST} get service/${API} -o jsonpath='{.status.loadBalancer.ingress[?(@.ip)].ip}'`)
 	$(eval LB_IP_PORT = `docker ps -q -f "name=kindccm-*" | xargs -I {} -r docker port {} 8080 | head -1`)
 	@echo
-	@echo ">>> ${API} is available on http://${LB_IP}:${PORT}/${PREFIX}/ui/"
-	@curl -I "http://${LB_IP}:${PORT}/${PREFIX}/ui/"
+	@echo ">>> ${API} is available on http://${LB_IP}:${PORT}/${PREFIX}/ui"
+	@curl -I "http://${LB_IP}:${PORT}/${PREFIX}/ui"
 	@echo
-	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/${PREFIX}/ui/"
-	@curl -I "http://${LB_IP_PORT}/${PREFIX}/ui/"
+	@echo ">>> ${API} is also exposed on http://${LB_IP_PORT}/${PREFIX}/ui"
+	@curl -I "http://${LB_IP_PORT}/${PREFIX}/ui"
 
 test3: | build setup run3
 
@@ -100,11 +100,11 @@ run3-ingress:
 	$(eval INGRESS_IP = `kubectl -n ${INGRESS} get service/ingress-nginx-controller \
 					-o jsonpath='{.status.loadBalancer.ingress[].ip}'`)
 	@echo
-	@echo ">>> ${API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
-	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui/"
+	@echo ">>> ${API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui"
+	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui"
 	@echo
-	@echo ">>> ${API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
-	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui/"
+	@echo ">>> ${API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui"
+	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui"
 
 test3-ingress: | build setup run3-ingress
 

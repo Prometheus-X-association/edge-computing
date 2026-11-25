@@ -75,7 +75,7 @@ $ python3.8 -m swagger_server
 and open your browser to here for the API documentation:
 
 ```
-http://localhost:8080/ptx-edge/v1/ui/
+http://localhost:8080/ptx-edge/v1/ui
 ```
 
 Your OpenAPI definition lives here:
@@ -169,18 +169,18 @@ $ docker build -t ptx-edge-api:0.1 .
 
 # Starting up a container
 $ docker run --rm --name ptx-edge-api -p 8080:8080 -it ptx-edge-api:0.1
-INFO:__main__:The API documentation is available on http://localhost:8080/ptx-edge/v1/ui/
+INFO:__main__:The API documentation is available on http://localhost:8080/ptx-edge/v1/ui
  * Serving Flask app "__main__" (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
  * Debug mode: off
 INFO:werkzeug: * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
-INFO:werkzeug:172.17.0.1 - - [10/Feb/2025 16:22:17] "HEAD /ptx-edge/v1/ui/ HTTP/1.1" 200 -
+INFO:werkzeug:172.17.0.1 - - [10/Feb/2025 16:22:17] "HEAD /ptx-edge/v1/ui HTTP/1.1" 200 -
 
 
 # Testing the API
-$ curl -I http://127.0.0.1:8080/ptx-edge/v1/ui/
+$ curl -I http://127.0.0.1:8080/ptx-edge/v1/ui
 HTTP/1.0 200 OK
 Content-Type: text/html; charset=utf-8
 Content-Length: 1493

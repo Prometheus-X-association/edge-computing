@@ -81,8 +81,8 @@ ${KCTL} get all,ingress -l "app.kubernetes.io/name=${REST_API}"
 log "Waiting for ingress to set up..." && sleep 10
 ${KCTL} wait --for=jsonpath='{.status.loadBalancer.ingress[].ip}' --timeout="${TIMEOUT}s" "ingress/${REST_API}"
 
-log ">>> ${REST_API} is exposed on http://${LB_HOST}/${PREFIX}/ui/"
-curl -I "http://${LB_HOST}/${PREFIX}/ui/"
+log ">>> ${REST_API} is exposed on http://${LB_HOST}/${PREFIX}/ui"
+curl -I "http://${LB_HOST}/${PREFIX}/ui"
 curl -LSs "http://${LB_HOST}/${PREFIX}/versions" | python3 -m json.tool
 
 ########################################################################################################################

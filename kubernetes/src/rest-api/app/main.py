@@ -80,9 +80,10 @@ app = fastapi.FastAPI(title="PTX Edge Computing REST-API",
                                          description="Cluster-wide management API"),
                                     dict(name="Internal",
                                          description="Internal management API")],
-                      docs_url="/ui/",
+                      docs_url="/ui",
                       redoc_url=None,
-                      lifespan=lifespan)
+                      lifespan=lifespan,
+                      ignore_trailing_slash=True)
 
 
 ########################################################################################################################

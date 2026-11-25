@@ -38,10 +38,10 @@ ${KCOLOR} -n "${PTX}" get ingress
 
 log "Waiting for ingress to set up..." && sleep 10
 INGRESS_IP="$(kubectl -n "${PTX}" get "ingress/${REST_API}" -o jsonpath='{.status.loadBalancer.ingress[].ip}')"
-echo ">>> ${REST_API} is exposed on  http://${INGRESS_IP}:80/${PREFIX}/ui/"
-echo ">>> ${REST_API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
-echo ">>> ${REST_API} is exposed on  http://localhost:8080/${PREFIX}/ui/"
-curl -I "http://localhost:8080/${PREFIX}/ui/"
+echo ">>> ${REST_API} is exposed on  http://${INGRESS_IP}:80/${PREFIX}/ui"
+echo ">>> ${REST_API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui"
+echo ">>> ${REST_API} is exposed on  http://localhost:8080/${PREFIX}/ui"
+curl -I "http://localhost:8080/${PREFIX}/ui"
 
 log "Set up PTX-core sandbox"
 docker compose -f "${ROOT_DIR}"/src/ptx/sandbox/docker-compose.yaml up -d \

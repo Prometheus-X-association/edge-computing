@@ -532,7 +532,7 @@ Testing the endpoints can be performed using the following two approaches:
 
 - Executing the automated unit test cases with ``tox`` or ``nosetests`` tools.
 - Manual endpoint testing directly from the Swagger UI available on
-  http://localhost:8080/ptx-edge/v1/ui/
+  http://localhost:8080/ptx-edge/v1/ui
 
 > [!NOTE]
 >

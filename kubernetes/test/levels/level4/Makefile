@@ -52,14 +52,14 @@ run-api:
 	@ echo "Waiting for ingress to set up..." && sleep 10
 	$(eval INGRESS_IP = `kubectl -n ${PTX} get ingress/${REST_API} -o jsonpath='{.status.loadBalancer.ingress[].ip}'`)
 	@echo
-	@echo ">>> ${REST_API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui/"
-	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui/"
+	@echo ">>> ${REST_API} is exposed on http://${INGRESS_IP}:80/${PREFIX}/ui"
+	@curl -I "http://${INGRESS_IP}:80/${PREFIX}/ui"
 	@echo
-	@echo ">>> ${REST_API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui/"
-	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui/"
+	@echo ">>> ${REST_API} is exposed on https://${INGRESS_IP}:443/${PREFIX}/ui"
+	@curl -I -k "https://${INGRESS_IP}:443/${PREFIX}/ui"
 	@echo
-	@echo ">>> ${REST_API} is also exposed on http://localhost:8080/${PREFIX}/ui/"
-	@curl -I "http://localhost:8080/${PREFIX}/ui/"
+	@echo ">>> ${REST_API} is also exposed on http://localhost:8080/${PREFIX}/ui"
+	@curl -I "http://localhost:8080/${PREFIX}/ui"
 	curl -LSs "http://localhost:8080/${PREFIX}/versions" | python3 -m json.tool
 
 test-api: | build setup run-api

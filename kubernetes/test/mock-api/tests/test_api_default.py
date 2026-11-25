@@ -25,7 +25,7 @@ def test_openapi():
 
 
 def test_ui_doc():
-    response = tester.get("/ui/")
+    response = tester.get("/ui")
     assert response.status_code == 200
 
 

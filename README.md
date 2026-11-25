@@ -292,7 +292,7 @@ Python software code.
 #### REST-API
 
 - The REST-API uses the following base URL: ``http://<service_name>:8080/ptx-edge/api/v1/``.
-- The interactive API interface (**Swagger UI**) lives here: ``http://<service_name>:8080/ptx-edge/api/v1/ui/``
+- The interactive API interface (**Swagger UI**) lives here: ``http://<service_name>:8080/ptx-edge/api/v1/ui``
 - The OpenAPI specification is available at ``http://<service_name>:8080/ptx-edge/api/v1/openapi.json``
 
 Additionally, the latest OpenAPI specification is auto-generated and updated at every commit
