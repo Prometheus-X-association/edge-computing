@@ -85,8 +85,8 @@ log ::
 
 cleanup ::
 	docker image ls -q -f "reference=ptx/*" -f "reference=ptx-edge/*" \
-					 	-f "reference=ptx-sandbox/*" -f "reference=ghcr.io/alelevente/*" \
-					 	-f "reference=${KUBE_OPS_VIEW_IMG}" -f "reference=ngrok/ngrok" | xargs -r docker rmi --force
+					 	-f "reference=ptx-sandbox/*" -f "reference=ngrok/ngrok" \
+					 	-f "reference=${KUBE_OPS_VIEW_IMG}" | xargs -r docker rmi --force
 	docker image prune -f
 
 purge ::

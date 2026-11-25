@@ -27,6 +27,6 @@ kubernetes/src/samples/datasets/*.npz
 kubernetes/test/**/*.xml
 kubernetes/deployment/exchange/creds/
 kubernetes/deployment/exchange/pdc/
-kubernetes/deployment/edge-server/dva
-kubernetes/deployment/edge-server/datasource/pdc
-kubernetes/deployment/edge-server/datasource/api
+kubernetes/deployment/edge-node/dva
+kubernetes/deployment/edge-node/datasource/pdc
+kubernetes/deployment/edge-node/datasource/api
