@@ -157,7 +157,7 @@ EOF
 services:
   dataspace-connector:
     container_name: dataspace-connector
-    image: ptx/dataspace-connector:latest
+    image: ptx/dataspace-connector:${DS_PDC_VER}
     pull_policy: build
     build:
       context: .
