@@ -20,7 +20,7 @@ source "${ROOT_DIR}/creds/exchange.env"
 
 ########################################################################################################################
 
-LOG "Test Infra Service Chain with Adapter"
+LOG "Test Infra Service Chain with Multi-origin Infrastructure Services"
 
 _BASE_URL="https://${NGROK_DOMAIN}/service/pdc"
 
@@ -60,7 +60,7 @@ echo -e "\nBearer token: ${TOKEN}"
 
 ########################################################################################################################
 
-log "Initiate infra service chain with adapter..."
+log "Initiate infra service chain..."
 
 EXCHANGE_BODY=$(jq -n "$(cat <<EOF
 {

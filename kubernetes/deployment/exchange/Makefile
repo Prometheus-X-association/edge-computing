@@ -112,6 +112,27 @@ test-chain-infra-complex ::
 	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
 	SINCE=${SINCE} ${MAKE} -s logs
 
+test-chain-infra-double-provider ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_chain_infra_double_provider.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
+test-chain-infra-double-consumer ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_chain_infra_double_consumer.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
+test-chain-infra-alternate ::
+	$(eval SINCE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ"))
+	@echo "Test start time: ${SINCE}"
+	./tests/test_chain_infra_alternate.sh
+	@echo -e "\n#### Generated test case logs (since ${SINCE}):\n"
+	SINCE=${SINCE} ${MAKE} -s logs
+
 ########################################################################################################################
 
 logs ::
